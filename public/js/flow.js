@@ -223,6 +223,7 @@ register('espera', {
   files: F('V2-Espera-claro', 'V2-Espera'),
   mount(root) {
     startCountdown(root);
+    on(root, 'Ver tu camino a Belén', () => go('mapa', { from: 'espera' }, 'push'));
     on(root, 'Invitar a un amigo', () => go('invitacion', {}, 'push'));
     on(root, 'Ahora no', () => go('hoy', {}, 'down'));
     on(root, 'Cerrar', () => go('hoy', {}, 'down'));
@@ -291,10 +292,11 @@ register('reproductor', {
   files: F('S-05-Reproductor', 'S-05-Reproductor-oscuro'),
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
-    setText(root, /Meditación de la Escucha/, n === 0 ? '¿Qué es el Adviento?' : d.title);
+    setText(root, /Meditación de la Escucha/, p.nacimiento ? 'El nacimiento de Jesús' : p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
     const scene = $$(root, 'img').find(i => i.alt && i.alt.length > 10);
     if (scene) {
-      if (d.scene) { scene.src = A(d.scene); scene.alt = d.title; }
+      if (p.nacimiento) { scene.src = A(IMG.nacimiento); scene.alt = 'El nacimiento de Jesús'; }
+      else if (d.scene) { scene.src = A(d.scene); scene.alt = d.title; }
       else { scene.style.opacity = '.25'; const ph = document.createElement('div'); ph.textContent = 'Falta ilustración del día ' + n; ph.style.cssText = 'position:absolute;left:40px;right:40px;top:290px;text-align:center;color:#fff;font:700 18px Mulish;padding:14px;border:2px dashed rgba(255,255,255,.7);border-radius:18px'; root.appendChild(ph); }
       scene.style.transition = 'transform 9s linear'; requestAnimationFrame(() => { scene.style.transform = 'scale(1.06)'; });
     }
@@ -324,6 +326,8 @@ register('reproductor', {
     let ended = false;
     const end = () => {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
+      if (p.nacimiento) { go('final', { day: 26 }, 'down'); return; }
+      if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go('hub', { day: n }, 'down'); return; }
       if (p.replay) { toast('¡Otra vez con Teodoro!', 'Repetir no cambia tus panes'); go('mapa', {}, 'down'); return; }
       finishContent(n);
       if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', { from: 'hoy' }, 'down'); return; }
@@ -334,7 +338,7 @@ register('reproductor', {
     on(root, 'Adelantar 10 segundos', () => { t = Math.min(DUR, t + 1000); paint(); });
     if (slider) on(root, slider, ev => { const r = slider.getBoundingClientRect(); t = DUR * Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)); paint(); });
     ['Texto', 'Voz', 'Repetir'].forEach(k => on(root, k, (ev, el) => { const s = el.querySelector('span'); if (s) s.style.background = s.style.background.includes('255,255,255,.2') || s.style.background.includes('0.2') ? '#FFFFFF' : 'rgba(255,255,255,.2)'; toast(k, 'Control del reproductor de Theo (ya existe)'); }));
-    on(root, 'Bajar el reproductor', () => { cancelAnimationFrame(raf); go('mapa', {}, 'down'); });
+    on(root, 'Bajar el reproductor', () => { cancelAnimationFrame(raf); go(p.nacimiento ? 'final' : p.extra === 'cancion' ? 'hub' : 'mapa', { day: n }, 'down'); });
   },
 });
 
@@ -351,11 +355,11 @@ register('hub', {
     sparkles(root);
     on(root, 'Volver al mapa', () => go('mapa', {}, 'down'));
     on(root, 'Escuchar a Teodoro', () => toast('Teodoro explica el reto', 'Audio por grabar'));
-    on(root, 'Reto en familia', () => toast(d.reto || 'Reto en familia', '10 minutos juntos'));
+    on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true }, 'fade'));
     on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down'); return; } finishContent(n); confetti(layer, 195, 540); setTimeout(() => go('completado', { day: n }, 'fade'), 700); });
-    const download = what => premium() ? toast(`${what} descargado`, 'En la app real abre el PDF o el audio') : go('free', { back: 'hub', day: n }, 'up');
-    on(root, 'Imprimible', () => download('Imprimible'));
-    on(root, 'Canción', () => download('Canción'));
+    // los extras del reto son descargables: con free piden Premium
+    on(root, 'Imprimible', () => premium() ? go('imprimible', { day: n }, 'push') : go('free', { back: 'hub', day: n }, 'up'));
+    on(root, 'Canción', () => premium() ? go('reproductor', { day: n, extra: 'cancion' }, 'up') : go('free', { back: 'hub', day: n }, 'up'));
   },
 });
 
@@ -399,7 +403,7 @@ register('calificacion', {
       [...box.childNodes].forEach(c => { if (c.nodeType === 3 || (c.tagName !== 'svg' && !c.querySelector?.('svg'))) c.remove?.(); });
       box.appendChild(ta);
     }
-    const back = () => go(p.back || 'mapa', { day: p.day }, 'down');
+    const back = () => go(p.back || 'mapa', { day: p.day, c: p.c, fromHub: p.fromHub }, 'down');
     on(root, 'Enviar', () => { toast('¡Gracias!', S._voto ? `Votaste «${S._voto}»` : 'Calificación enviada'); back(); });
     on(root, 'Ahora no', back); on(root, 'Cerrar', back);
   },
@@ -534,11 +538,42 @@ register('final', {
     const scene = $$(root, 'img')[0]; scene?.classList.add('a-pop');
     sparkles(root);
     await wait(400); confetti(layer, 195, 220, 60);
-    on(root, 'Ver el nacimiento', el => hueco('Ver el nacimiento: ¿video o animación final?'));
-    on(root, 'Compartir con la familia', async () => {
-      try { if (navigator.share) await navigator.share({ title: 'Llegamos a Belén', text: `¡${S.nombre} y su familia caminaron ${doneCount()} de 26 días hasta Belén con Teodoro!` }); else toast('Compartir', 'En el celular abre el menú de compartir'); } catch { /* cancelado */ }
-    });
+    on(root, 'Ver el nacimiento', () => go('reproductor', { day: 26, nacimiento: true }, 'up'));
+    on(root, 'Compartir con la familia', () => go('finalCompartir', {}, 'push'));
     on(root, 'Cerrar', () => go('mapa', {}, 'down'));
+  },
+});
+
+register('finalCompartir', {
+  files: F('V2-Final-compartir-claro', 'V2-Final-compartir'),
+  mount(root, p, layer) {
+    const dias = doneCount();
+    const estrellas = Object.values(S.completos).reduce((s, c) => s + (c.estrellas || 0), 0);
+    replaceText(root, /Lucía/g, S.nombre);
+    const card = root.querySelector('[role=img][aria-label^="Tarjeta"]');
+    if (card) {
+      card.setAttribute('aria-label', `Tarjeta: Llegamos a Belén con Teodoro. ${dias} días y ${estrellas} estrellas`);
+      const nums = [...card.querySelectorAll('div')].filter(x => x.childElementCount === 0 && /^\d+$/.test(x.textContent.trim()));
+      if (nums[0]) nums[0].textContent = String(dias);
+      if (nums[1]) nums[1].textContent = String(estrellas);
+      card.classList.add('a-pop');
+    }
+    sparkles(root);
+    on(root, 'Compartir', async () => {
+      try { if (navigator.share) await navigator.share({ title: '¡Llegamos a Belén!', text: `${S.nombre} caminó ${dias} días con Teodoro hasta Belén y ganó ${estrellas} estrellas.` }); else toast('Compartir', 'En el celular se abre el menú para compartir'); } catch { /* cancelado */ }
+    });
+    on(root, 'Ahora no', () => go('final', { day: 26 }, 'back'));
+    on(root, 'Volver', () => go('final', { day: 26 }, 'back'));
+  },
+});
+
+register('imprimible', {
+  files: F('S-04c-Imprimible', 'S-04c-Imprimible-oscuro'),
+  mount(root, p) {
+    const sheet = [...root.querySelectorAll('div, img')].find(x => x.style.transform && /rotate/.test(x.style.transform));
+    sheet?.classList.add('a-pop');
+    on(root, 'Volver', () => go('hub', { day: p.day }, 'back'));
+    ['Imprimir', 'Guardar'].forEach(t => on(root, t, () => toast(t, 'En el celular se abre el menú del teléfono')));
   },
 });
 

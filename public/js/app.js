@@ -61,25 +61,26 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, ...extra }); fill(do
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
   { sec: 1, t: 'Sin inscribirse', mira: 'Tarjeta en Hoy → teaser → inscripción → espera', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-claro', 'V2-Teaser-claro', 'V2-Confirmacion-claro', 'V2-Espera-claro'] },
-  { sec: 1, t: 'Ya inscrito', mira: 'Hoy y tab Teodoro con la cuenta regresiva · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre la espera · su imagen lleva al mapa del día 0 · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
   { sec: 2, t: 'Un día de cuento', mira: 'Día 10 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(10, 9), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Equivocarse en la trivia', mira: 'Toca una respuesta mala: pista sutil y reintento', run: day(10, 9), go: 'mapa', covers: ['V2-08-Pista-claro', 'V2-08b-Reintento-claro'] },
-  { sec: 2, t: 'Reto en familia', mira: 'Día 13 · hub del reto, imprimible y canción', run: day(13, 12), go: 'mapa', covers: ['S-04-Hub-familia'] },
+  { sec: 2, t: 'Reto en familia', mira: 'Día 13 · hub: el reto abre el Desafío, la canción el reproductor y el imprimible su pantalla', run: day(13, 12), go: 'mapa', covers: ['S-04-Hub-familia', 'S-04c-Imprimible'] },
+  { sec: 2, t: 'Tocar un día cerrado', mira: 'Toca un día que aún no llega: globo con la fecha en que se abre', run: day(10, 9), go: 'mapa', covers: ['S-03d-Mapa-dia-cerrado'] },
   { sec: 2, t: 'Repetir un día ya hecho', mira: 'Toca un día con ✓ en el mapa: ver otra vez o repetir la trivia', run: day(10, 9), go: 'mapa', covers: ['S-03c-Mapa-dia-pasado'] },
   { sec: 2, t: 'Calificar el día', mira: '«Califícanos» al terminar: 3 caritas y comentario', run: day(10, 9), go: 'mapa', covers: ['V2-Calificacion-claro'] },
-  { sec: 3, t: 'Día de ruleta', mira: 'Día 11 · la ruleta sale antes del cuento, gira y da premio', run: day(11, 10), go: 'mapa', covers: ['S-05b-Ruleta-pop', 'S-05c-Ruleta-premio'] },
+  { sec: 3, t: 'Día de ruleta', mira: 'Día 11 · la hoja avisa «Ruleta de la semana · Hoy»; «Ver historia» la abre, gira y da premio', run: day(11, 10), go: 'mapa', covers: ['S-03f-Mapa-dia11', 'S-05b-Ruleta-pop', 'S-05c-Ruleta-premio'] },
   { sec: 3, t: 'Premio: cuarto nuevo', mira: 'La ruleta cae en la casa: cuarto de Nazaret', run: day(11, 10, { forzarPremio: 'cuarto' }), go: 'mapa', covers: ['S-09-Premio-cuarto', 'V3-Teodoro-nazaret'] },
-  { sec: 4, t: 'Memorama', mira: 'Día 14 · tras la trivia: ¡Hoy hay sorpresa!', run: day(14, 13), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-claro', 'V2-Memorama-reglas-claro', 'V2-Memorama-claro', 'V2-Memorama-fin-claro'] },
-  { sec: 4, t: 'Adivinanza', mira: 'Día 7 · 5 palabras con tiempo (pasa el teléfono)', run: day(7, 6), go: 'mapa', covers: ['V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-fin-claro'] },
-  { sec: 4, t: 'Desafío en familia', mira: 'Día 9 · una carta, otra carta, ¡lo hicimos!', run: day(9, 8), go: 'mapa', covers: ['V2-Desafio-intro-claro', 'V2-Desafio-claro', 'V2-Desafio-fin-claro'] },
+  { sec: 4, t: 'Memorama', mira: 'Día 3 · tras la trivia: «Hoy toca Memorama»', run: day(3, 2), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-claro', 'V2-Memorama-reglas-claro', 'V2-Memorama-claro', 'V2-Memorama-fin-claro'] },
+  { sec: 4, t: 'Adivinanza', mira: 'Día 6 · tras la trivia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
+  { sec: 4, t: 'Desafío en familia', mira: 'Día 9 · «Hoy toca Desafío» · sacar otra carta (Avemaría) · ¡lo hicimos!', run: day(9, 8), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Desafio-intro-claro', 'V2-Desafio-claro', 'V2-Desafio-carta2-claro', 'V2-Desafio-fin-claro'] },
   { sec: 5, t: 'Va atrasado', mira: 'En el día 9, hoy es el 11: puede ponerse al día', run: day(11, 8, { bateria: 3 }), go: 'hoy', covers: ['S-01-Hoy-atrasado'] },
   { sec: 5, t: 'Regreso tras una semana', mira: 'Teodoro le guardó el camino · batería en 0', run: day(16, 8, { bateria: 0, regreso: true }), go: 'hoy', covers: ['V2-10-Regreso'] },
-  { sec: 5, t: 'Teodoro cansado', mira: 'Batería 2 de 5 en Hoy y en el mapa', run: day(10, 9, { bateria: 2 }), go: 'hoy', covers: ['S-01-Energia'] },
+  { sec: 5, t: 'Teodoro cansado', mira: 'Batería 2 de 5 · en el mapa toca la batería: cómo está Teodoro', run: day(10, 9, { bateria: 2 }), go: 'mapa', covers: ['S-01-Energia', 'S-03e-Mapa-energia'] },
   { sec: 6, t: 'Hoy, tab Teodoro y Mundos', mira: 'Dónde aparece el camino dentro de la app', run: day(9, 8), go: 'teodoro', covers: ['V2-01-Hoy-completo', 'V3-Teodoro', 'V2-02-Mundos-claro'] },
   { sec: 7, t: 'Usuario free', mira: 'Día 13 · todo abierto, los descargables piden Premium', run: day(13, 12, { plan: 'free' }), go: 'mapa', covers: ['V2-24-Dia-completo-claro'] },
   { sec: 7, t: 'Primer día', mira: 'Día 1 · el camino recién empieza', run: day(1, 0), go: 'hoy', covers: ['V2-Mapa-completo-claro'] },
-  { sec: 8, t: 'Nochebuena', mira: 'Día 26 · llegada a Belén', run: day(26, 25), go: 'mapa', covers: ['V2-Mapa-d24-claro', 'V2-Final-claro'] },
+  { sec: 8, t: 'Nochebuena', mira: 'Día 26 · llegada a Belén · ver el nacimiento y compartir', run: day(26, 25), go: 'mapa', covers: ['V2-Mapa-d24-claro', 'V2-Final-claro', 'V2-Final-compartir-claro'] },
   { sec: 8, t: 'Terminó completo', mira: '25 de diciembre · 26 de 26 días', run: day(27, 26), go: 'hoy', covers: [] },
   { sec: 8, t: 'Terminó incompleto', mira: '25 de diciembre · le faltan 5 días', run: day(27, 21), go: 'hoy', covers: [] },
   { sec: 8, t: 'Se une tarde', mira: 'Día 5 sin inscribirse: «¡Ya salimos! ¿Vienes?»', run: () => { reset({ hoy: 5, inscrito: false }); S.completos = {}; }, go: 'hoy', covers: [] },
@@ -87,6 +88,10 @@ const REC = [
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
   'La barra de pestañas es la del tab Teodoro en todas las pantallas (en el lienzo, Hoy y Mundos usan otra barra clara e ilustrada, también en modo oscuro).',
+  'Los días 18 y 24 tienen ruleta (al empezar) y juego sorpresa (al final de la trivia): la regla «cada 3 días, y así sigue» cae en días de ruleta.',
+  'Títulos de la hoja de energía por nivel (dormido, durmiéndose, cansadito, tranquilo, travieso, feliz): el lienzo solo trae el de 5 de 5.',
+  'Extras del reto (imprimible y canción) piden Premium a usuarios free, como dice «El camino es para todos».',
+  'El Desafío abierto desde el hub del reto no da panes extra: se ganan al marcar «¡Lo hicimos!» en el hub.',
   'Repetir la trivia de un día pasado: si mejora las estrellas gana +10 panes; si no, solo cuenta como práctica.',
   'Al terminar la trivia, Teodoro camina en el mapa al día siguiente y luego aparece «Mañana seguimos».',
   'La trivia se completa con 5 preguntas propias por día (revisar con contenido): 3 imágenes, 4 textos o varias correctas.',
@@ -97,9 +102,7 @@ const DECISIONES = [
 const PENDIENTES_LIENZO = [
   'Escenas de los días 1 y 2 (Arte 5 las marca como «FALTA»).',
   'Ícono del día 25 · Video (Íconos del camino: «Aún sin ícono»).',
-  '«Ver el nacimiento» en Nochebuena no tiene pantalla.',
-  'Desafío y Desafío cumplido: dos imágenes rotas en el lienzo.',
-  'El aviso de batería baja y el hub como portada quedaron en Basura: confirmar que no vuelven.',
+  'Fuera de Theo Quest a propósito: pestañas Explorar, Música y Favoritos; villancicos y oraciones generales; paywall «Ver Theo Premium».',
 ];
 
 function advance(k) {

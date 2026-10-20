@@ -14,7 +14,7 @@ export const IMG = {
   bufanda: 'ed7f054b6f0d602d40b41b8d2706379a', bolso: '5395dc871861741f74c551c3a1031492',
   paja: '98a7495c73f5fff24bb7130fa01efe67', pan: '5bab1fe48e4c5009d62da468a9d7f69f',
   pesebre: '06d17746a01e5a05a453fdf6f0e24b1d', farol: '8f9cd03fb68bac90ed249fa5d45f0828',
-  dorso: '834fcca7dd481ce118a38c73d90f02cc', regalo: '40de1cf55d4441bd10615c06350dde30',
+  dorso: '834fcca7dd481ce118a38c73d90f02cc', regalo: '40de1cf55d4441bd10615c06350dde30', nacimiento: '455d2635515c50327d1e7cc360590069',
   // Teodoro por nivel de batería (Teodoro-Energia)
   t5: '345591e97560d37b84ead12837ff9c75', t4: '64167d45da19875626c545019275e29c',
   t3: '7bfff4a8f40290f70de7fc8e49ee7d4d', t2: '52ba38f10b723e04ad04beea396aba0c',
@@ -102,7 +102,8 @@ export const DAYS = [
 // Reglas acordadas con César (20-oct-2026)
 export const RULES = {
   ruleta: [4, 11, 18, 24],                  // al iniciar el día, pop-up sobre el cuento
-  sorpresa: { 2: 'memorama', 7: 'adivinanza', 9: 'desafio', 14: 'memorama', 16: 'adivinanza', 21: 'desafio' },
+  // cada 3 días, en orden fijo (lienzo, sección 4): 3 Memorama, 6 Adivinanza, 9 Desafío y así sigue
+  sorpresa: { 3: 'memorama', 6: 'adivinanza', 9: 'desafio', 12: 'memorama', 15: 'adivinanza', 18: 'desafio', 21: 'memorama', 24: 'adivinanza' },
   panes: { contenidoPremium: 15, contenidoFree: 7, trivia: 10, sorpresa: 15, ruleta: 20 },
   bateria: { contenido: 2, diaSinAdviento: -1 },
   regresoDias: 7,
@@ -317,9 +318,6 @@ export const ADIVINANZA = [
 // Desafío en familia: mazo de cartas
 export const DESAFIOS = [
   { t: 'Ayuda a alguien en casa hoy', sub: 'Como María, que fue de prisa a ayudar a Isabel' },
-  { t: 'Dile a cada uno algo bonito de él', sub: 'Las palabras buenas encienden luces' },
-  { t: 'Recen juntos un Padre Nuestro', sub: 'Tomados de la mano, antes de dormir' },
-  { t: 'Regala uno de tus juguetes', sub: 'Como los Reyes, que llevaron regalos al Niño' },
-  { t: 'Prepara la mesa para la cena', sub: 'Como José, que preparó todo para Jesús' },
-  { t: 'Pide perdón a alguien', sub: 'Un corazón limpio es la mejor cuna para Jesús' },
+  { t: 'Recen juntos un Avemaría', sub: 'Como el ángel Gabriel, que saludó a María' },
 ];
+export const SORPRESA_NOMBRE = { memorama: 'Memorama', adivinanza: 'Adivinanza en familia', desafio: 'Desafío en familia' };

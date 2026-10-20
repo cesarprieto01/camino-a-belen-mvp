@@ -156,7 +156,7 @@
   "h": 844,
   "title": "04b · Hub del día · reto en familia · ☾ oscuro",
   "dark": true,
-  "x": 7180,
+  "x": 8120,
   "y": 7728
  },
  "S-04-Hub-familia": {
@@ -164,7 +164,7 @@
   "h": 844,
   "title": "04b · Hub del día · reto en familia · ☀ claro",
   "dark": false,
-  "x": 7180,
+  "x": 8120,
   "y": 6628
  },
  "S-05-Reproductor-oscuro": {
@@ -188,7 +188,7 @@
   "h": 844,
   "title": "Día 11 (casa sorpresa) · al iniciar el día aparece la ruleta en pop-up sobre el cuento · ☾ oscuro",
   "dark": true,
-  "x": 0,
+  "x": 470,
   "y": 11083
  },
  "S-05b-Ruleta-pop": {
@@ -196,7 +196,7 @@
   "h": 844,
   "title": "Día 11 (casa sorpresa) · al iniciar el día aparece la ruleta en pop-up sobre el cuento · ☀ claro",
   "dark": true,
-  "x": 0,
+  "x": 470,
   "y": 9648
  },
  "S-05c-Ruleta-premio-oscuro": {
@@ -204,7 +204,7 @@
   "h": 844,
   "title": "Día 11 · premio en pop-up → «Empezar el cuento» · ☾ oscuro",
   "dark": true,
-  "x": 470,
+  "x": 940,
   "y": 11083
  },
  "S-05c-Ruleta-premio": {
@@ -212,7 +212,7 @@
   "h": 844,
   "title": "Día 11 · premio en pop-up → «Empezar el cuento» · ☀ claro",
   "dark": true,
-  "x": 470,
+  "x": 940,
   "y": 9648
  },
  "S-06-Completado-oscuro": {
@@ -236,7 +236,7 @@
   "h": 844,
   "title": "09f · Premio: cuarto nuevo (también la casa sorpresa de la semana) · ☾ oscuro",
   "dark": true,
-  "x": 1140,
+  "x": 1610,
   "y": 11083
  },
  "S-09-Premio-cuarto": {
@@ -244,7 +244,7 @@
   "h": 844,
   "title": "09f · Premio: cuarto nuevo (también la casa sorpresa de la semana) · ☀ claro",
   "dark": false,
-  "x": 1140,
+  "x": 1610,
   "y": 9648
  },
  "Simple-Flujo": {
@@ -340,7 +340,7 @@
   "h": 844,
   "title": "Trivia · 4 opciones en grilla 2×2 · ☀ claro",
   "dark": false,
-  "x": 7650,
+  "x": 9060,
   "y": 6628
  },
  "V2-06b-Trivia-4-opciones": {
@@ -348,7 +348,7 @@
   "h": 844,
   "title": "Trivia · 4 opciones en grilla 2×2 · ☾ oscuro",
   "dark": true,
-  "x": 7650,
+  "x": 9060,
   "y": 7728
  },
  "V2-06c-Trivia-varias-claro": {
@@ -356,7 +356,7 @@
   "h": 844,
   "title": "Trivia sin imagen · varias correctas · ☀ claro",
   "dark": false,
-  "x": 8120,
+  "x": 9530,
   "y": 6628
  },
  "V2-06c-Trivia-varias": {
@@ -364,7 +364,7 @@
   "h": 844,
   "title": "Trivia sin imagen · varias correctas · ☾ oscuro",
   "dark": true,
-  "x": 8120,
+  "x": 9530,
   "y": 7728
  },
  "V2-07-Correcto-claro": {
@@ -452,7 +452,7 @@
   "h": 844,
   "title": "Adivinanza · 5 palabras: en juego · ☀ claro",
   "dark": false,
-  "x": 2750,
+  "x": 3020,
   "y": 13338
  },
  "V2-Adivinanza-fin-claro": {
@@ -460,7 +460,7 @@
   "h": 844,
   "title": "Adivinanza: fin de la ronda · 4 de 5, +15 panes · ☀ claro",
   "dark": false,
-  "x": 4630,
+  "x": 4900,
   "y": 13338
  },
  "V2-Adivinanza-fin": {
@@ -468,7 +468,7 @@
   "h": 844,
   "title": "Adivinanza: fin de la ronda · 4 de 5, +15 panes · ☾ oscuro",
   "dark": true,
-  "x": 4630,
+  "x": 4900,
   "y": 14302
  },
  "V2-Adivinanza-intro-claro": {
@@ -476,7 +476,7 @@
   "h": 844,
   "title": "Adivinanza · antes de jugar: «¿Adivinan la palabra?» · ☀ claro",
   "dark": false,
-  "x": 2280,
+  "x": 2550,
   "y": 13338
  },
  "V2-Adivinanza-intro": {
@@ -484,7 +484,7 @@
   "h": 844,
   "title": "Adivinanza · antes de jugar: «¿Adivinan la palabra?» · ☾ oscuro",
   "dark": true,
-  "x": 2280,
+  "x": 2550,
   "y": 14302
  },
  "V2-Adivinanza-pasar-claro": {
@@ -492,7 +492,7 @@
   "h": 844,
   "title": "Adivinanza: pasar de palabra · ☀ claro",
   "dark": false,
-  "x": 3220,
+  "x": 3490,
   "y": 13338
  },
  "V2-Adivinanza-pasar": {
@@ -500,7 +500,7 @@
   "h": 844,
   "title": "Adivinanza: pasar de palabra · ☾ oscuro",
   "dark": true,
-  "x": 3220,
+  "x": 3490,
   "y": 14302
  },
  "V2-Adivinanza-siguiente-claro": {
@@ -508,7 +508,7 @@
   "h": 844,
   "title": "Adivinanza: siguiente palabra · ☀ claro",
   "dark": false,
-  "x": 3690,
+  "x": 3960,
   "y": 13338
  },
  "V2-Adivinanza-siguiente": {
@@ -516,7 +516,7 @@
   "h": 844,
   "title": "Adivinanza: siguiente palabra · ☾ oscuro",
   "dark": true,
-  "x": 3690,
+  "x": 3960,
   "y": 14302
  },
  "V2-Adivinanza-tiempo-claro": {
@@ -524,7 +524,7 @@
   "h": 844,
   "title": "Adivinanza · se acabó el tiempo · ☀ claro",
   "dark": false,
-  "x": 4160,
+  "x": 4430,
   "y": 13338
  },
  "V2-Adivinanza-tiempo": {
@@ -532,7 +532,7 @@
   "h": 844,
   "title": "Adivinanza · se acabó el tiempo · ☾ oscuro",
   "dark": true,
-  "x": 4160,
+  "x": 4430,
   "y": 14302
  },
  "V2-Adivinanza": {
@@ -540,7 +540,7 @@
   "h": 844,
   "title": "Adivinanza · 5 palabras: en juego · ☾ oscuro",
   "dark": true,
-  "x": 2750,
+  "x": 3020,
   "y": 14302
  },
  "V2-Calificacion-claro": {
@@ -596,7 +596,7 @@
   "h": 844,
   "title": "Desafío en familia · 1 reto: la carta · ☀ claro",
   "dark": false,
-  "x": 5770,
+  "x": 6510,
   "y": 13338
  },
  "V2-Desafio-fin-claro": {
@@ -604,7 +604,7 @@
   "h": 844,
   "title": "Desafío en familia: cumplido, +15 panes · ☀ claro",
   "dark": false,
-  "x": 6240,
+  "x": 7450,
   "y": 13338
  },
  "V2-Desafio-fin": {
@@ -612,7 +612,7 @@
   "h": 844,
   "title": "Desafío en familia: cumplido, +15 panes · ☾ oscuro",
   "dark": true,
-  "x": 6240,
+  "x": 7450,
   "y": 14302
  },
  "V2-Desafio-intro-claro": {
@@ -620,7 +620,7 @@
   "h": 844,
   "title": "Desafío en familia · antes de empezar: «¿Listos para el reto?» · ☀ claro",
   "dark": false,
-  "x": 5300,
+  "x": 6040,
   "y": 13338
  },
  "V2-Desafio-intro": {
@@ -628,7 +628,7 @@
   "h": 844,
   "title": "Desafío en familia · antes de empezar: «¿Listos para el reto?» · ☾ oscuro",
   "dark": true,
-  "x": 5300,
+  "x": 6040,
   "y": 14302
  },
  "V2-Desafio": {
@@ -636,7 +636,7 @@
   "h": 844,
   "title": "Desafío en familia · 1 reto: la carta · ☾ oscuro",
   "dark": true,
-  "x": 5770,
+  "x": 6510,
   "y": 14302
  },
  "V2-Espera-claro": {
@@ -748,7 +748,7 @@
   "h": 844,
   "title": "Memorama · 6 parejas: en juego · ☀ claro",
   "dark": false,
-  "x": 1140,
+  "x": 940,
   "y": 13338
  },
  "V2-Memorama-fin-claro": {
@@ -756,7 +756,7 @@
   "h": 844,
   "title": "Memorama: fin · +15 panes, estrellas guardadas · ☀ claro",
   "dark": false,
-  "x": 1610,
+  "x": 1410,
   "y": 13338
  },
  "V2-Memorama-fin": {
@@ -764,7 +764,7 @@
   "h": 844,
   "title": "Memorama: fin · +15 panes, estrellas guardadas · ☾ oscuro",
   "dark": true,
-  "x": 1610,
+  "x": 1410,
   "y": 14302
  },
  "V2-Memorama-reglas-claro": {
@@ -772,7 +772,7 @@
   "h": 844,
   "title": "Memorama · antes de jugar: «¿Encuentras las parejas?» · ☀ claro",
   "dark": false,
-  "x": 670,
+  "x": 470,
   "y": 13338
  },
  "V2-Memorama-reglas": {
@@ -780,7 +780,7 @@
   "h": 844,
   "title": "Memorama · antes de jugar: «¿Encuentras las parejas?» · ☾ oscuro",
   "dark": true,
-  "x": 670,
+  "x": 470,
   "y": 14302
  },
  "V2-Memorama": {
@@ -788,7 +788,7 @@
   "h": 844,
   "title": "Memorama · 6 parejas: en juego · ☾ oscuro",
   "dark": true,
-  "x": 1140,
+  "x": 940,
   "y": 14302
  },
  "V2-Pre-Hoy-claro": {
@@ -882,7 +882,7 @@
  "V2-Trivia-fin-sorpresa-claro": {
   "w": 390,
   "h": 844,
-  "title": "Trivia: resultado en día sorpresa → abrir la sorpresa · ☀ claro",
+  "title": "Trivia: resultado en día sorpresa (día 3) → Memorama · ☀ claro",
   "dark": false,
   "x": 0,
   "y": 13338
@@ -890,7 +890,7 @@
  "V2-Trivia-fin-sorpresa": {
   "w": 390,
   "h": 844,
-  "title": "Trivia: resultado en día sorpresa → abrir la sorpresa · ☾ oscuro",
+  "title": "Trivia: resultado en día sorpresa (día 3) → Memorama · ☾ oscuro",
   "dark": true,
   "x": 0,
   "y": 14302
@@ -908,7 +908,7 @@
   "h": 1315,
   "title": "10 · El premio ya en el cuarto de Teodoro · ☾ oscuro · ícono flotante de Adviento junto a Teodoro + tarjeta",
   "dark": true,
-  "x": 1610,
+  "x": 2080,
   "y": 11083
  },
  "V3-Teodoro-nazaret": {
@@ -916,7 +916,7 @@
   "h": 1315,
   "title": "10 · El premio ya en el cuarto de Teodoro · ☀ claro · ícono flotante de Adviento junto a Teodoro + tarjeta",
   "dark": false,
-  "x": 1610,
+  "x": 2080,
   "y": 9648
  },
  "V3-Teodoro-oscuro": {
@@ -950,5 +950,133 @@
   "dark": true,
   "x": 6510,
   "y": 7728
+ },
+ "S-03d-Mapa-dia-cerrado": {
+  "w": 390,
+  "h": 844,
+  "title": "03d · Mapa: tocar un día cerrado → globo «Se abre el 9 de diciembre» · ☀ claro",
+  "dark": false,
+  "x": 6980,
+  "y": 6628
+ },
+ "S-03d-Mapa-dia-cerrado-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "03d · Mapa: tocar un día cerrado → globo «Se abre el 9 de diciembre» · ☾ oscuro",
+  "dark": true,
+  "x": 6980,
+  "y": 7728
+ },
+ "S-03e-Mapa-energia": {
+  "w": 390,
+  "h": 844,
+  "title": "03e · Mapa: tocar la batería → cómo está Teodoro · ☀ claro",
+  "dark": false,
+  "x": 7450,
+  "y": 6628
+ },
+ "S-03e-Mapa-energia-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "03e · Mapa: tocar la batería → cómo está Teodoro · ☾ oscuro",
+  "dark": true,
+  "x": 7450,
+  "y": 7728
+ },
+ "S-03f-Mapa-dia11": {
+  "w": 390,
+  "h": 844,
+  "title": "03f · Mapa día 11 (casa sorpresa) → «Ver historia» abre la ruleta · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 9648
+ },
+ "S-03f-Mapa-dia11-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "03f · Mapa día 11 (casa sorpresa) → «Ver historia» abre la ruleta · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 11083
+ },
+ "S-04c-Imprimible": {
+  "w": 390,
+  "h": 844,
+  "title": "04c · Hub familia: imprimible del pesebre para colorear · ☀ claro",
+  "dark": false,
+  "x": 8590,
+  "y": 6628
+ },
+ "S-04c-Imprimible-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "04c · Hub familia: imprimible del pesebre para colorear · ☾ oscuro",
+  "dark": true,
+  "x": 8590,
+  "y": 7728
+ },
+ "V2-Desafio-carta2-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Desafío en familia · «Sacar otra carta»: otro reto · ☀ claro",
+  "dark": false,
+  "x": 6980,
+  "y": 13338
+ },
+ "V2-Desafio-carta2": {
+  "w": 390,
+  "h": 844,
+  "title": "Desafío en familia · «Sacar otra carta»: otro reto · ☾ oscuro",
+  "dark": true,
+  "x": 6980,
+  "y": 14302
+ },
+ "V2-Final-compartir-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Día 26 · compartir la llegada con la familia · ☀ claro",
+  "dark": false,
+  "x": 940,
+  "y": 28915
+ },
+ "V2-Final-compartir": {
+  "w": 390,
+  "h": 844,
+  "title": "Día 26 · compartir la llegada con la familia · ☾ oscuro",
+  "dark": true,
+  "x": 940,
+  "y": 29879
+ },
+ "V2-Trivia-fin-sorpresa-adivinanza-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 6) → Adivinanza · ☀ claro",
+  "dark": false,
+  "x": 2080,
+  "y": 13338
+ },
+ "V2-Trivia-fin-sorpresa-adivinanza": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 6) → Adivinanza · ☾ oscuro",
+  "dark": true,
+  "x": 2080,
+  "y": 14302
+ },
+ "V2-Trivia-fin-sorpresa-desafio-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 9) → Desafío en familia · ☀ claro",
+  "dark": false,
+  "x": 5570,
+  "y": 13338
+ },
+ "V2-Trivia-fin-sorpresa-desafio": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 9) → Desafío en familia · ☾ oscuro",
+  "dark": true,
+  "x": 5570,
+  "y": 14302
  }
 }

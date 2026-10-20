@@ -19,7 +19,7 @@ const CASES = [
   ['trivia-reintento', 'V2-08b-Reintento-claro', 'V2-08b-Reintento', `${D9}; await go('trivia',{day:9,i:1,ok:1}); await wait(900); tap('José'); await wait(600); tap('Gabriel')`],
   ['trivia-varias', 'V2-06c-Trivia-varias-claro', 'V2-06c-Trivia-varias', `${D9}; go('trivia',{day:1,i:4,ok:4})`],
   ['trivia-fin', 'V2-Trivia-fin-claro', 'V2-Trivia-fin', `fill(9,10); S.completos[10]={contenido:true}; go('triviaFin',{day:10,ok:4})`],
-  ['trivia-fin-sorpresa', 'V2-Trivia-fin-sorpresa-claro', 'V2-Trivia-fin-sorpresa', `${D9}; S.completos[9]={contenido:true}; go('triviaFin',{day:9,ok:4})`],
+  ['trivia-fin-sorpresa', 'V2-Trivia-fin-sorpresa-claro', 'V2-Trivia-fin-sorpresa', `fill(2,3); S.completos[3]={contenido:true}; go('triviaFin',{day:3,ok:4})`],
   ['cerrado', 'V2-Cerrado', 'V2-Cerrado-oscuro', `fill(9,9); go('cerrado')`],
   ['calificacion', 'V2-Calificacion-claro', 'V2-Calificacion', `${D9}; go('calificacion',{back:'completado',day:9})`],
   ['hub', 'S-04-Hub-familia', 'S-04-Hub-familia-oscuro', `fill(12,13); go('hub',{day:13})`],
@@ -50,6 +50,14 @@ const CASES = [
   ['confirmacion', 'V2-Confirmacion-claro', 'V2-Confirmacion', `reset({hoy:0,inscrito:false}); go('confirmacion')`],
   ['espera', 'V2-Espera-claro', 'V2-Espera', `reset({hoy:0,inscrito:true}); go('espera')`],
   ['invitacion', 'V2-Invitacion-claro', 'V2-Invitacion', `reset({hoy:0,inscrito:true}); go('invitacion')`],
+  ['mapa-cerrado', 'S-03d-Mapa-dia-cerrado', 'S-03d-Mapa-dia-cerrado-oscuro', `${D9}; await go('mapa'); await wait(900); document.querySelector('#viewport .layer:last-child a[aria-label^="Día 11,"]').click()`],
+  ['mapa-energia', 'S-03e-Mapa-energia', 'S-03e-Mapa-energia-oscuro', `${D9}; await go('mapa'); await wait(900); tap('Energía de Teodoro')`],
+  ['mapa-dia11', 'S-03f-Mapa-dia11', 'S-03f-Mapa-dia11-oscuro', `fill(10,11); go('mapa')`],
+  ['imprimible', 'S-04c-Imprimible', 'S-04c-Imprimible-oscuro', `fill(12,13); go('imprimible',{day:13})`],
+  ['desafio-carta2', 'V2-Desafio-carta2-claro', 'V2-Desafio-carta2', `${D9}; go('desafio',{day:9,c:1})`],
+  ['final-compartir', 'V2-Final-compartir-claro', 'V2-Final-compartir', `fill(25,26); S.completos[26]={contenido:true}; go('finalCompartir')`],
+  ['fin-sorpresa-adiv', 'V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Trivia-fin-sorpresa-adivinanza', `fill(5,6); S.completos[6]={contenido:true}; go('triviaFin',{day:6,ok:4})`],
+  ['fin-sorpresa-desafio', 'V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Trivia-fin-sorpresa-desafio', `fill(8,9); S.completos[9]={contenido:true}; go('triviaFin',{day:9,ok:4})`],
   ['mapa-d26', 'V2-Mapa-d24-claro', 'V2-Mapa-oscuro', `fill(25,26); go('mapa')`],
   ['final', 'V2-Final-claro', 'V2-Final', `fill(25,26); go('final',{day:26})`],
 ];
@@ -68,7 +76,7 @@ for (const [name, fc, fo, setup] of CASES) {
   await a.evaluate(async ([setup, tema]) => {
     const c = await import('/js/core.js'); const data = await import('/js/data.js');
     const { go, reset, save, wait } = c; const ADIV = data.ADIVINANZA;
-    const fill = (upto, hoy) => { reset({ hoy }); const S = c.S; S.completos = { 0: { contenido: true } }; for (let n = 1; n <= upto; n++) S.completos[n] = { contenido: true, trivia: true, estrellas: [3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 3, 1, 3, 2, 3, 3, 2, 3][n - 1] || 3 }; S.ruletas = {}; [4, 11, 18, 24].forEach((d, i) => { if (d <= upto) S.ruletas[d] = ['gorro', 'bufanda', 'bolso', 'paja'][i]; }); S.sorpresas = {}; [2, 7, 9, 14, 16, 21].forEach(d => { if (d <= upto) S.sorpresas[d] = 'hecha'; }); S.tema = tema; S.pasoAnimado = null; S.bateria = 5; S.plan = 'premium'; S.cuartoNuevo = false; S.regreso = false; };
+    const fill = (upto, hoy) => { reset({ hoy }); const S = c.S; S.completos = { 0: { contenido: true } }; for (let n = 1; n <= upto; n++) S.completos[n] = { contenido: true, trivia: true, estrellas: [3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 3, 1, 3, 2, 3, 3, 2, 3][n - 1] || 3 }; S.ruletas = {}; [4, 11, 18, 24].forEach((d, i) => { if (d <= upto) S.ruletas[d] = ['gorro', 'bufanda', 'bolso', 'paja'][i]; }); S.sorpresas = {}; [3, 6, 9, 12, 15, 18, 21, 24].forEach(d => { if (d <= upto) S.sorpresas[d] = 'hecha'; }); S.tema = tema; S.pasoAnimado = null; S.bateria = 5; S.plan = 'premium'; S.cuartoNuevo = false; S.regreso = false; };
     const tap = q => { const L = document.querySelector('#viewport .layer:last-child'); const el = [...L.querySelectorAll('[aria-label],a,button')].find(e => (e.getAttribute('aria-label') || e.textContent || '').trim().startsWith(q)); el?.click(); };
     window.__qa = { get S() { return c.S; }, go, reset, save, wait, fill, tap, ADIV };
     // eslint-disable-next-line no-new-func

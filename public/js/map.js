@@ -1,7 +1,7 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
 import { S, save, A, $, $$, on, frag, go, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
-import { DAYS, TYPES, RULES, IMG, dateOf, iconOf } from './data.js';
+import { DAYS, TYPES, RULES, IMG, dateOf, iconOf, SORPRESA_NOMBRE } from './data.js';
 import { startDay, ctaLabel } from './flow.js';
 
 const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
@@ -18,6 +18,12 @@ async function templates() {
   const past = await frag(key === 'claro' ? 'S-03c-Mapa-dia-pasado' : 'S-03c-Mapa-dia-pasado-oscuro');
   const pastSheet = [...past.children].find(el => el.style.bottom === '10px');
   const pastNode = past.querySelector('a[aria-label*="elegido"]');
+  const closed = await frag(key === 'claro' ? 'S-03d-Mapa-dia-cerrado' : 'S-03d-Mapa-dia-cerrado-oscuro');
+  const bubble = closed.querySelector('[role=status]');
+  const energy = await frag(key === 'claro' ? 'S-03e-Mapa-energia' : 'S-03e-Mapa-energia-oscuro');
+  const energySheet = [...energy.children].find(el => el.style.bottom === '10px');
+  const d11 = await frag(key === 'claro' ? 'S-03f-Mapa-dia11' : 'S-03f-Mapa-dia11-oscuro');
+  const d11Rows = [...[...d11.children].find(el => el.style.bottom === '10px').children].filter(el => el.style.height === '58px');
   const trivSheet = [...triv.children].find(el => el.style.bottom === '10px');
   const trivRows = [...trivSheet.children].filter(el => el.style.height === '58px');
   const sheet26 = [...d26.children].find(el => el.style.bottom === '10px' || /Llegamos a Belén/.test(el.textContent || '') && el.style.position === 'absolute' && parseFloat(el.style.left) <= 20);
@@ -25,7 +31,7 @@ async function templates() {
   const badge = n => { const s = node(n).querySelector(':scope > span[aria-hidden]'); return s ? s.outerHTML : ''; };
   const icons = {};
   for (let n = 1; n <= 26; n++) { const i = zero.querySelector(`a[aria-label^="Día ${n},"] img`); if (i) icons[n] = i.getAttribute('src'); }
-  const houses = $$(full, 'a[aria-label^="Ruleta sorpresa"]').map(a => a.innerHTML);
+  const houses = $$(full, '[aria-label^="Ruleta sorpresa"]').map(a => a.innerHTML);
   const sheet = [...full.children].find(el => el.style.bottom === '10px');
   const rows = [...sheet.children].filter(el => el.style.height === '58px');
   tpl = {
@@ -45,6 +51,8 @@ async function templates() {
     trivIcon: rows[1].querySelector('img')?.getAttribute('src'),
     sheet26: sheet26 ? sheet26.outerHTML : null,
     pastSheet: pastSheet?.outerHTML, selShadow: pastNode?.style.boxShadow,
+    bubble: bubble?.outerHTML, bubbleArrow: bubble?.nextElementSibling?.outerHTML,
+    energySheet: energySheet?.outerHTML, ruletaRow: d11Rows[1]?.outerHTML,
   };
   return tpl;
 }
@@ -134,21 +142,19 @@ register('mapa', {
     }
 
     // 4) Casas de la ruleta (semanas 1–4)
-    $$(root, 'a[aria-label^="Ruleta sorpresa"]').forEach((a, i) => {
+    $$(root, '[aria-label^="Ruleta sorpresa"]').forEach((a, i) => {
       const d = RULES.ruleta[i];
       const img = a.querySelector('img').getAttribute('src');
       const opened = !!S.ruletas[d];
       const nextUp = !opened && RULES.ruleta.find(x => !S.ruletas[x]) === d;
       a.innerHTML = (opened ? T.houseOpen : nextUp ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = opened ? 'Abierta' : d <= lastDay() ? '¡Ábrela!' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
+      const label = opened ? 'Abierta' : d === lastDay() ? 'Hoy' : d < lastDay() ? 'Pendiente' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
       replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
-      a.setAttribute('aria-label', `Ruleta sorpresa de la semana ${i + 1}: ${label}`);
       if (nextUp || (d <= lastDay() && !opened)) a.querySelector('img').classList.add('a-sway');
-      on(root, a, () => {
-        if (opened) go('ruletaPremio', { premio: S.ruletas[d], day: d, from: 'mapa' }, 'modal');
-        else if (d <= lastDay()) go('ruletaPop', { day: d, from: 'mapa' }, 'modal');
-        else { animate(a, 'a-shake'); toast(`La ruleta de la semana ${i + 1}`, `Aparece al iniciar el día ${d}`); }
-      });
+      // lienzo: la casa ya no es un botón; solo la abierta deja ver su premio
+      a.setAttribute('aria-label', opened ? `Ruleta sorpresa de la semana ${i + 1}: ya la abriste. Ver tu premio` : `Ruleta sorpresa de la semana ${i + 1}: aparece al iniciar el día ${d}`);
+      if (opened) on(root, a, () => go(S.ruletas[d] === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: S.ruletas[d], day: d, from: 'mapa' }, 'modal'));
+      else { a.removeAttribute('href'); a.dataset.bound = '1'; a.setAttribute('role', 'img'); a.style.cursor = 'default'; }
     });
 
     // Casa del día 0
@@ -163,9 +169,9 @@ register('mapa', {
     const chip = layer.querySelector('[aria-label^="Día 9 de 26"]');
     chip?.setAttribute('aria-label', `Día ${focus} de 26`);
     paintEnergy(layer);
-    on(layer, 'Volver a Mundos', () => go(params.from === 'hoy' ? 'hoy' : 'mundos', {}, 'back'));
+    on(layer, 'Volver a Mundos', () => go(params.from === 'espera' ? 'espera' : params.from === 'hoy' ? 'hoy' : 'mundos', {}, 'back'));
     const bat = layer.querySelector('[aria-label^="Energía de Teodoro"]');
-    if (bat) on(layer, bat, () => toast(`Energía de Teodoro: ${S.bateria} de 5`, 'Sube al terminar el contenido (+2) y se llena con la trivia'));
+    if (bat) on(layer, bat, () => showEnergy(layer));
     const backHoy = layer.querySelector('[aria-label="Volver a hoy"]');
     if (backHoy) {
       replaceText(backHoy, /Hoy · día \d+/, `Hoy · día ${focus}`);
@@ -239,9 +245,49 @@ function tapNode(n, el, layer) {
   if (n === act) { if (layer.dataset.past) { go('mapa', {}, 'none'); return; } startDay(n); return; }
   if (isDone(n)) { showPast(layer, n, el); return; }
   if (n <= lastDay()) { animate(el, 'a-shake'); toast(`Primero el día ${act}`, `El día ${n} te espera justo después`); return; }
-  animate(el, 'a-shake');
+  showBubble(layer, n, el);
+}
+
+/** Día cerrado: globo «Se abre el 9 de diciembre» encima del nodo (lienzo 03d). */
+function showBubble(layer, n, el) {
+  const T = tpl; const root = el.parentElement;
+  root.querySelectorAll('[data-bubble]').forEach(x => x.remove());
   const f = dateOf(n);
-  toast(`Día ${n} · ${TYPES[d.type].label}`, `Se abre el ${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`);
+  const t = document.createElement('template'); t.innerHTML = T.bubble + (T.bubbleArrow || '');
+  const [b, arrow] = t.content.children;
+  b.dataset.bubble = '1'; if (arrow) arrow.dataset.bubble = '1';
+  const strong = b.querySelector('span'); if (strong) strong.textContent = `${f.dd} de ${f.mes.toLowerCase()}`;
+  b.setAttribute('aria-label', `Día ${n}: se abre el ${f.dd} de ${f.mes.toLowerCase()}`);
+  root.append(b); if (arrow) root.append(arrow);
+  const size = parseFloat(el.style.width) || 64, cx = parseFloat(el.style.left) + size / 2, top = parseFloat(el.style.top);
+  b.style.left = Math.max(12, Math.min(390 - 12 - b.offsetWidth, cx - b.offsetWidth / 2)) + 'px';
+  b.style.top = (top - 64) + 'px';
+  if (arrow) { arrow.style.left = (cx - 11) + 'px'; arrow.style.top = (top - 18) + 'px'; }
+  [b, arrow].forEach(x => x && x.animate([{ opacity: 0, transform: 'translateY(6px) scale(.94)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1.2)' }));
+  animate(el, 'a-shake');
+  seen('S-03d-Mapa-dia-cerrado');
+  clearTimeout(showBubble.t);
+  showBubble.t = setTimeout(() => [b, arrow].forEach(x => x?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }).finished.then(() => x.remove())), 2600);
+}
+
+const ENERGY_TITLE = ['Teodoro se quedó dormido', 'Teodoro se está durmiendo', 'Teodoro está cansadito', 'Teodoro está tranquilo', 'Teodoro está travieso y con ganas', 'Teodoro está feliz y con ganas'];
+/** Tocar la batería: cómo está Teodoro (lienzo 03e). */
+function showEnergy(layer) {
+  const T = tpl; if (!T?.energySheet) return;
+  const old = layer.querySelector('[data-sheet]');
+  const t = document.createElement('template'); t.innerHTML = T.energySheet;
+  const sheet = t.content.firstElementChild; sheet.dataset.sheet = '1';
+  old.replaceWith(sheet);
+  layer.dataset.past = 'energia';
+  const title = [...sheet.querySelectorAll('div')].find(x => x.childElementCount === 0 && /Teodoro está/.test(x.textContent));
+  if (title) title.textContent = ENERGY_TITLE[S.bateria];
+  const imgs = sheet.querySelectorAll('img');
+  if (imgs[0]) { imgs[0].src = teodoroImg(); imgs[0].classList.add('a-bob'); }
+  paintEnergy(sheet);
+  const cta = [...sheet.querySelectorAll('a')].pop();
+  on(layer, cta, () => go('mapa', {}, 'none'));
+  sheet.classList.add('in-up');
+  seen('S-03e-Mapa-energia');
 }
 
 /** Lo que se ve al tocar un día ya hecho (lienzo: «Mapa · tocar un día ya hecho»). */
@@ -333,11 +379,16 @@ function paintSheet(layer, T) {
   const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : null;
   const list = [];
   list.push(build(!contentDone(n), CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : 'now', rowIcon));
-  if (n !== 0 && n !== 26) {
+  const ruletaHoy = RULES.ruleta.includes(n) && !S.ruletas[n] && !contentDone(n) && T.ruletaRow;
+  if (ruletaHoy) {
+    const t = document.createElement('template'); t.innerHTML = T.ruletaRow;
+    list.push(t.content.firstElementChild);
+    seen('S-03f-Mapa-dia11');
+  } else if (n !== 0 && n !== 26) {
     const trivOn = contentDone(n) && !isDone(n);
     list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Se abre al terminar ${CONT[2]}`, isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
     const sorp = RULES.sorpresa[n];
-    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay sorpresa!', 'Un juego extra que da panes', 'now', A(IMG.regalo)));
+    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));
   }
   list.forEach(r => cta.before(r));
   if (list.length > 2) { sheet.style.height = 'auto'; }

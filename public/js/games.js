@@ -192,7 +192,11 @@ register('trivia', {
 });
 
 register('triviaFin', {
-  file: p => !p.replay && RULES.sorpresa[p.day] && S.sorpresas[p.day] !== 'hecha' ? F('V2-Trivia-fin-sorpresa-claro', 'V2-Trivia-fin-sorpresa') : F('V2-Trivia-fin-claro', 'V2-Trivia-fin'),
+  file: p => {
+    const g = !p.replay && S.sorpresas[p.day] !== 'hecha' && RULES.sorpresa[p.day];
+    if (!g) return F('V2-Trivia-fin-claro', 'V2-Trivia-fin');
+    return { memorama: F('V2-Trivia-fin-sorpresa-claro', 'V2-Trivia-fin-sorpresa'), adivinanza: F('V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Trivia-fin-sorpresa-adivinanza'), desafio: F('V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Trivia-fin-sorpresa-desafio') }[g];
+  },
   async mount(root, p, layer) {
     const n = p.day;
     const { est, first, gana, mejoro } = finishTrivia(n, p.ok, p.replay);
@@ -230,7 +234,7 @@ function sorpresaHecha(n, layer) {
   if (first) { S.sorpresas[n] = 'hecha'; addPanes(RULES.panes.sorpresa); save(); }
   return first;
 }
-function paintFin(root, layer, n, first) {
+function paintFin(root, layer, n, first, bind = true) {
   replaceText(root, /guardadas en el día \d+/, `guardadas en el día ${n}`);
   const s = stars(n);
   const box = textEl(root, /guardadas en el día/)?.parentElement;
@@ -240,7 +244,7 @@ function paintFin(root, layer, n, first) {
   if (first) floaty(layer, `+${RULES.panes.sorpresa}`, 230, 380); else setText(root, /Ganaste \d+ panes/, 'Ya ganaste estos panes');
   $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).forEach(i => i.classList.add('a-hop'));
   confetti(layer, 195, 260, 44);
-  on(root, 'Volver al camino', toMapAfterGame); on(root, 'Cerrar', toMapAfterGame);
+  if (bind) { on(root, 'Volver al camino', toMapAfterGame); on(root, 'Cerrar', toMapAfterGame); }
 }
 const later = n => () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(); };
 
@@ -372,6 +376,7 @@ register('adivinanza', {
       if (ok) floaty(layer, '¡Sí!', 170, 300, null);
       setTimeout(() => k < 4 ? go('adivinanza', { ...p, k: k + 1, res: r }, 'none') : go('adivinanzaFin', { day: n, res: r }, 'fade'), 330);
     };
+    if (timer) on(root, timer, () => { if (done) return; done = true; go('adivinanzaTiempo', { ...p, res: [...res, { w: w.w, ok: false }] }, 'modal'); });
     on(root, '¡La adivinaron!', () => next(true));
     on(root, 'Pasar a otra palabra', () => next(false));
     on(root, 'Salir', () => { done = true; later(n)(); });
@@ -422,8 +427,9 @@ register('adivinanzaFin', {
 register('desafioIntro', {
   file: () => F('V2-Desafio-intro-claro', 'V2-Desafio-intro'),
   mount(root, p) {
-    on(root, '¡Vamos!', () => go('desafio', { day: p.day, c: Math.floor(Math.random() * DESAFIOS.length) }, 'fade'));
-    on(root, 'Ahora no', later(p.day)); on(root, 'Cerrar', later(p.day));
+    const back = p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day);
+    on(root, '¡Vamos!', () => go('desafio', { day: p.day, c: 0, fromHub: p.fromHub }, 'fade'));
+    on(root, 'Ahora no', back); on(root, 'Cerrar', back);
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
     $$(root, '[style*="rotate"]').forEach(c => c.classList.add('a-sway'));
   },
@@ -442,11 +448,11 @@ register('desafio', {
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
     on(root, 'Sacar otra carta', async () => {
       await scroll.animate([{ transform: 'none' }, { transform: 'rotateY(90deg) scale(.9)' }], { duration: 200, easing: 'ease-in', fill: 'forwards' }).finished;
-      c = (c + 1 + Math.floor(Math.random() * (DESAFIOS.length - 1))) % DESAFIOS.length; paint2();
+      c = (c + 1) % DESAFIOS.length; paint2(); if (c === 1) seen('V2-Desafio-carta2-claro');
       scroll.animate([{ transform: 'rotateY(-90deg) scale(.9)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
     });
-    on(root, '¡Lo hicimos!', () => { confetti(layer, 195, 520, 30); setTimeout(() => go('desafioFin', { day: p.day, c }, 'fade'), 500); });
-    on(root, 'Salir', later(p.day));
+    on(root, '¡Lo hicimos!', () => { confetti(layer, 195, 520, 30); setTimeout(() => go('desafioFin', { day: p.day, c, fromHub: p.fromHub }, 'fade'), 500); });
+    on(root, 'Salir', p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day));
   },
 });
 register('desafioFin', {
@@ -458,7 +464,16 @@ register('desafioFin', {
     const stamp = $$(root, '*').find(el => /HECHO EN/.test(el.textContent) && el.childElementCount <= 3 && el.style.borderRadius === '50%');
     if (stamp) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';
     $$(root, 'img').forEach(i => { i.addEventListener('error', () => { i.src = A(IMG.corona); }, { once: true }); if (i.complete && !i.naturalWidth) i.src = A(IMG.corona); });
-    on(root, 'Califícanos', () => go('calificacion', { back: 'desafioFin', day: p.day, c: p.c }, 'up'));
+    on(root, 'Califícanos', () => go('calificacion', { back: 'desafioFin', day: p.day, c: p.c, fromHub: p.fromHub }, 'up'));
+    if (p.fromHub) {
+      // el reto del hub: los panes se ganan al marcar «¡Lo hicimos!» en el hub
+      paintFin(root, layer, p.day, false, false);
+      setText(root, /Ya ganaste estos panes/, 'Ahora márcalo en el reto');
+      const back = () => go('hub', { day: p.day }, 'back');
+      on(root, 'Volver al camino', back); on(root, 'Cerrar', back);
+      setText(root, 'Volver al camino', 'Volver al reto');
+      return;
+    }
     const first = sorpresaHecha(p.day, layer);
     paintFin(root, layer, p.day, first);
   },

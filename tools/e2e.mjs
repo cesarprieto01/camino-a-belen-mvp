@@ -73,10 +73,10 @@ const flows = {
   },
   async memorama() {
     await scenario('Memorama'); await shot('mapa');
-    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.completos[14] = { contenido: true }; c.save(); });
-    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('trivia', { day: 14, i: 4, ok: 4 }); });
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.completos[3] = { contenido: true }; c.save(); });
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('trivia', { day: 3, i: 4, ok: 4 }); });
     await p.waitForTimeout(800);
-    const info = await p.evaluate(async () => { const { TRIVIA } = await import('/js/data.js'); const q = TRIVIA[14][4]; return { a: q.a, o: q.o.map(o => o.t || o) }; });
+    const info = await p.evaluate(async () => { const { TRIVIA } = await import('/js/data.js'); const q = TRIVIA[3][4]; return { a: q.a, o: q.o.map(o => o.t || o) }; });
     if (Array.isArray(info.a)) { for (const i of info.a) await tap(info.o[i]); await tap('Comprobar'); } else await tap(info.o[info.a]);
     await tap('Ver resultado'); await shot('fin-sorpresa');
     await tap('Abrir la sorpresa'); await shot('memorama-reglas');
