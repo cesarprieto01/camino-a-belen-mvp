@@ -1,5 +1,5 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
-import { S, save, A, $, $$, on, find, go, register, seen, toast, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, find, go, back, register, seen, toast, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf } from './data.js';
@@ -32,7 +32,7 @@ export function ctaLabel(n) {
   const verbo = { domingo: 'Escuchar el Evangelio', meditacion: 'Ver historia', cuento: 'Ver historia', amigos: 'Ver historia', cancion: 'Escuchar canción', reto: 'Ver el reto', juego: 'Jugar con Teodoro', video: 'Ver video', intro: 'Ver historia', nochebuena: 'Comenzar' }[d.type];
   if (n === 26 && !contentDone(26)) return { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
-  if (n === 0) return { text: 'Te avisamos el 29 de noviembre', go: () => go('hoy', {}, 'back') };
+  if (n === 0) return { text: 'Te avisamos el 29 de noviembre', go: () => back('hoy') };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Abrir la sorpresa', go: () => openSorpresa(n) };
   const a = activeDay();
@@ -66,8 +66,8 @@ export function finishTrivia(n, aciertos, replay = false) {
 
 // Barra de pestañas de la app (igual en todas)
 function tabs(root) {
-  on(root, 'Hoy', () => go('hoy', {}, 'fade'));
-  on(root, 'Teodoro', () => go('teodoro', {}, 'fade'));
+  on(root, 'Hoy', () => go('hoy', {}, 'fade', { tab: true }));
+  on(root, 'Teodoro', () => go('teodoro', {}, 'fade', { tab: true }));
   ['Explorar', 'Música', 'Favoritos'].forEach(t => on(root, t, () => toast(`Pestaña «${t}» de Theo`, 'Ya existe en la app; fuera del reto')));
   on(root, 'Ajustes', () => toast('Ajustes de Theo', 'Ya existen en la app'));
 }
@@ -80,22 +80,41 @@ export function sparkles(root) {
   $$(root, 'svg').filter(s => s.style.position === 'absolute' && !s.closest('a, button, nav') && /#F5D|#F5C|#FFF3|#F7C/i.test(s.innerHTML))
     .forEach((s, i) => { s.classList.add('a-twinkle'); s.style.animationDelay = (i * .35) + 's'; });
 }
+/** Estado de la tarjeta del reto (lienzo «Estados del reto»), igual en Hoy y en el tab Teodoro. */
+export function cardState() {
+  const act = activeDay();
+  if (fase() === 'antes') return S.inscrito ? { key: 2 } : { key: 1 };
+  if (!S.inscrito) return { key: 4, title: '¡Ya salimos! ¿Vienes?', sub: 'Aún llegas a Belén', cta: 'Unirme al camino' };
+  if (S.hoy >= 27) {
+    const faltan = 26 - doneCount();
+    return faltan ? { key: 6, title: `Te faltan ${faltan} días`, sub: 'Hasta el 6 de enero', cta: 'Seguir caminando' }
+      : { key: 5, title: '¡Llegaste a Belén!', sub: '26 de 26 días', cta: 'Ver mi camino' };
+  }
+  return { key: 3, done: act == null };
+}
 const dayLine = n => n === 0 ? 'Día 0 · ¿Qué es el Adviento?' : `Día ${n} · ${DAYS[n].title}`;
 
 // Cuenta regresiva real hasta el 29 de noviembre de 2026
+// cuenta regresiva en vivo: revisa cada segundo y el número rueda cuando cambia
+function roll(el, v) {
+  if (el.textContent === v) return;
+  el.textContent = v;
+  el.style.display ||= 'inline-block';
+  el.animate([{ transform: 'translateY(-45%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+}
 function startCountdown(layer) {
   const target = new Date(2026, 10, 29, 0, 0, 0);
+  // los tres números del lienzo (09 · 14 · 32)
+  const cells = [...layer.querySelectorAll('*')].filter(el => el.childElementCount === 0 && /^(09|9|14|32)$/.test(el.textContent.trim()));
+  cells.forEach(el => { el.dataset.cd = el.textContent.trim(); });
   const tick = () => {
     const ms = Math.max(0, target - new Date());
     const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
-    const pad = v => String(v).padStart(2, '0');
-    // los tres números del lienzo (09 · 14 · 32)
-    const cells = [...layer.querySelectorAll('*')].filter(el => el.childElementCount === 0 && /^(09|9|14|32)$/.test(el.textContent.trim()));
-    const vals = { '09': pad(d), '9': String(d), '14': String(h), '32': pad(m) };
-    cells.forEach(el => { el.dataset.cd ??= el.textContent.trim(); el.textContent = vals[el.dataset.cd]; });
+    const vals = { '09': String(d).padStart(2, '0'), '9': String(d), '14': String(h), '32': String(m).padStart(2, '0') };
+    cells.forEach(el => roll(el, vals[el.dataset.cd]));
   };
   tick();
-  const iv = setInterval(() => { if (!layer.isConnected) clearInterval(iv); else tick(); }, 15000);
+  const iv = setInterval(() => { if (!layer.isConnected) clearInterval(iv); else tick(); }, 1000);
 }
 
 // ---------- Hoy ----------
@@ -149,16 +168,12 @@ register('hoy', {
     const btn = find(card, 'Continuar la Aventura');
     const btnText = btn && [...btn.querySelectorAll('*'), btn].map(e => [...e.childNodes]).flat().find(c => c.nodeType === 3 && c.nodeValue.trim());
     const title = textEl(card, 'Camino a Belén');
-    if (!S.inscrito) {
-      if (title) title.textContent = '¡Ya salimos! ¿Vienes?';
-      if (sub) sub.textContent = 'Camino a Belén · Aún llegas a Belén';
-      if (btnText) btnText.nodeValue = 'Unirme al camino';
-    } else if (S.hoy >= 27) {
-      const faltan = 26 - doneCount();
-      if (title) title.textContent = faltan ? `Te faltan ${faltan} días` : '¡Llegaste a Belén!';
-      if (sub) sub.textContent = faltan ? 'Hasta el 6 de enero' : '26 de 26 días';
-      if (btnText) btnText.nodeValue = faltan ? 'Seguir caminando' : 'Ver mi camino';
-    } else if (act == null) {
+    const st = cardState();
+    if (st.title) {
+      if (title) title.textContent = st.title;
+      if (sub) sub.textContent = st.sub;
+      if (btnText) btnText.nodeValue = st.cta;
+    } else if (st.done) {
       if (sub) sub.textContent = `Día ${n} · ¡Listo! Mañana seguimos`;
     }
     // pastillas «días que te esperan» (pantalla atrasado)
@@ -184,7 +199,7 @@ register('hoy', {
       on(root, /Empezar por el día/.source ? 'Empezar por el día' : '', () => { close(); go('mapa', { from: 'hoy' }, 'push'); });
       setText(root, /Empezar por el día \d+/, `Empezar por el día ${n}`);
       on(root, 'Ver el mapa', () => { close(); go('mapa', { from: 'hoy' }, 'push'); });
-      on(root, 'Cerrar', () => { close(); go('hoy', {}, 'fade'); });
+      on(root, 'Cerrar', () => { close(); go('hoy', {}, 'fade', { replace: true }); });
       const teo = $$(root, 'img').find(i => i.src.includes(IMG.tCelebra));
       teo?.classList.add('a-hop');
     }
@@ -194,11 +209,13 @@ register('hoy', {
 // ---------- Antes del 29 ----------
 register('teaser', {
   files: F('V2-Teaser-claro', 'V2-Teaser'),
-  mount(root) {
+  mount(root, p = {}) {
     startCountdown(root);
-    on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
-    on(root, 'Ahora no', () => go('hoy', {}, 'fade'));
-    on(root, 'Cerrar', () => go('hoy', {}, 'fade'));
+    // desde la invitación: es la vista de tu amigo; tú ya estás inscrito
+    if (p.preview) on(root, 'Inscribirme', () => { toast('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
+    else on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
+    on(root, 'Ahora no', () => back('hoy', 'fade'));
+    on(root, 'Cerrar', () => back('hoy', 'fade'));
     tabs(root); appContent(root);
     ['Ver el camino', 'Ir al camino'].forEach(t => on(root, t, () => toast('Primero inscríbete')));
     const hero = $$(root, 'img').find(i => i.src.includes(IMG.t5) || /Teodoro/.test(i.alt));
@@ -217,7 +234,7 @@ register('confirmacion', {
     confetti(layer, 195, 330, 28);
     on(root, '¡Listo, te inscribiste!', () => next());
     let done = false;
-    const next = () => { if (done) return; done = true; fase() === 'antes' ? go('espera', {}, 'fade') : go('mapa', { from: 'hoy' }, 'fade'); };
+    const next = () => { if (done) return; done = true; fase() === 'antes' ? go('espera', {}, 'fade', { replace: true }) : go('mapa', {}, 'fade', { replace: true }); };
     await wait(2000); if (layer.isConnected) next();
   },
 });
@@ -227,8 +244,9 @@ register('espera', {
     startCountdown(root);
     on(root, 'Ver tu camino a Belén', () => go('mapa', { from: 'espera' }, 'push'));
     on(root, 'Invitar a un amigo', () => go('invitacion', {}, 'push'));
-    on(root, 'Ahora no', () => go('hoy', {}, 'down'));
-    on(root, 'Cerrar', () => go('hoy', {}, 'down'));
+    // vuelve a donde estaba (Hoy o Teodoro), sin pasar otra vez por el teaser
+    on(root, 'Ahora no', () => back('hoy', 'down', ['teaser', 'confirmacion']));
+    on(root, 'Cerrar', () => back('hoy', 'down', ['teaser', 'confirmacion']));
     const fam = textEl(root, /2\.418 familias/);
     if (fam && !reduced()) {
       const fmt = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -241,9 +259,12 @@ register('invitacion', {
   files: F('V2-Invitacion-claro', 'V2-Invitacion'),
   mount(root) {
     seen('Invitacion-imagen');
-    on(root, 'Vista previa del enlace', () => { toast('Así lo ve tu amigo al tocar el enlace'); go('teaser', {}, 'modal'); });
-    const back = $$(root, 'a, button')[0];
-    if (back && !back.dataset.bound) on(root, back, () => go(fase() === 'antes' ? 'espera' : 'hoy', {}, 'back'));
+    on(root, 'Vista previa del enlace', () => { toast('Así lo ve tu amigo al tocar el enlace'); go('teaser', { preview: true }, 'modal'); });
+    const flecha = document.createElement('button');
+    flecha.type = 'button'; flecha.setAttribute('aria-label', 'Volver');
+    flecha.style.cssText = 'position:absolute;left:4px;top:52px;width:48px;height:48px;border:0;background:transparent;cursor:pointer;z-index:5';
+    root.appendChild(flecha);
+    on(root, flecha, () => back(fase() === 'antes' ? 'espera' : 'hoy'));
     on(root, 'Mensaje', () => toast('Chat de ejemplo', 'Simula WhatsApp/iMessage'));
     $$(root, '[style*="border-radius"]').slice(-3).forEach((el, i) => { el.classList.add('a-rise'); el.style.animationDelay = (.25 + i * .25) + 's'; });
   },
@@ -261,7 +282,20 @@ register('teodoro', {
     const n = activeDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     replaceText(root, /^Día 9$/, `Día ${n}`);
+    const st = cardState();
+    if (st.title && fase() !== 'antes') {
+      const card = find(root, 'Entrar al camino')?.parentElement;
+      if (card) {
+        const t = textEl(card, 'Adviento'); if (t) t.textContent = st.title;
+        const s = textEl(card, 'Sigue la estrella hasta Belén'); if (s) s.textContent = st.sub;
+        const chip = textEl(card, /Día \d+ de 26/); if (chip) chip.textContent = st.key === 5 ? '26 de 26' : st.key === 6 ? `${doneCount()} de 26` : 'Día ' + S.hoy;
+        setText(card, 'Entrar al camino', st.cta);
+      }
+    } else if (st.done) {
+      const s = textEl(root, 'Sigue la estrella hasta Belén'); if (s) s.textContent = '¡Listo por hoy! Mañana seguimos';
+    }
     paintEnergy(root);
+    if (fase() === 'antes') startCountdown(root);
     const toMap = () => S.inscrito || fase() !== 'antes' ? (S.inscrito ? go('mapa', { from: 'teodoro' }, 'push') : go('confirmacion', { late: true }, 'fade')) : go('teaser', {}, 'modal');
     on(root, 'Adviento', toMap);
     on(root, 'Entrar al camino', toMap);
@@ -273,7 +307,7 @@ register('teodoro', {
     on(root, 'Entrar', () => go('espera', {}, 'up'));
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).slice(0, 1).forEach(i => i.classList.add('a-bob'));
     // prendas ganadas en la ruleta, visibles en el cuarto
-    if (S.prendas.length) toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`);
+    if (S.prendas.length > (S.prendasVistas || 0)) { S.prendasVistas = S.prendas.length; save(); toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`); }
   },
 });
 register('mundos', {
@@ -283,7 +317,7 @@ register('mundos', {
     const n = activeDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     on(root, 'Adviento', () => go('mapa', { from: 'mundos' }, 'push'));
-    on(root, 'Volver al cuarto de Teodoro', () => go('teodoro', {}, 'back'));
+    on(root, 'Volver al cuarto de Teodoro', () => back('teodoro'));
     on(root, 'Enero', () => toast('Enero', 'El próximo mundo: pronto'));
     $$(root, 'img').forEach((i, k) => { if (k % 3 === 0) i.classList.add('a-bob'); });
   },
@@ -328,19 +362,19 @@ register('reproductor', {
     let ended = false;
     const end = () => {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
-      if (p.nacimiento) { go('final', { day: 26 }, 'down'); return; }
-      if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go('hub', { day: n }, 'down'); return; }
-      if (p.replay) { setBateria(5); S.ultimoJugado = S.hoy; save(); toast('¡Otra vez con Teodoro!', 'Teodoro quedó al 100%'); go('mapa', {}, 'down'); return; }
+      if (p.nacimiento) { go('final', { day: 26 }, 'down', { replace: true }); return; }
+      if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go('hub', { day: n }, 'down', { replace: true }); return; }
+      if (p.replay) { setBateria(5); S.ultimoJugado = S.hoy; save(); toast('¡Otra vez con Teodoro!', 'Teodoro quedó al 100%'); go('mapa', {}, 'down', { replace: true }); return; }
       finishContent(n);
-      if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', { from: 'hoy' }, 'down'); return; }
-      go('completado', { day: n }, 'fade');
+      if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', {}, 'down', { replace: true }); return; }
+      go('completado', { day: n }, 'fade', { replace: true });
     };
     on(root, play, () => setPlaying(!playing));
     on(root, 'Retroceder 10 segundos', () => { t = Math.max(0, t - 1000); paint(); });
     on(root, 'Adelantar 10 segundos', () => { t = Math.min(DUR, t + 1000); paint(); });
     if (slider) on(root, slider, ev => { const r = slider.getBoundingClientRect(); t = DUR * Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)); paint(); });
     ['Texto', 'Voz', 'Repetir'].forEach(k => on(root, k, (ev, el) => { const s = el.querySelector('span'); if (s) s.style.background = s.style.background.includes('255,255,255,.2') || s.style.background.includes('0.2') ? '#FFFFFF' : 'rgba(255,255,255,.2)'; toast(k, 'Control del reproductor de Theo (ya existe)'); }));
-    on(root, 'Bajar el reproductor', () => { cancelAnimationFrame(raf); go(p.nacimiento ? 'final' : p.extra === 'cancion' ? 'hub' : 'mapa', { day: n }, 'down'); });
+    on(root, 'Bajar el reproductor', () => { cancelAnimationFrame(raf); go(p.nacimiento ? 'final' : p.extra === 'cancion' ? 'hub' : 'mapa', { day: n }, 'down', { replace: true }); });
   },
 });
 
@@ -355,10 +389,10 @@ register('hub', {
     setText(root, 'Pesebre para colorear', d.retoSub || 'Para hacer en casa');
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-bob'));
     sparkles(root);
-    on(root, 'Volver al mapa', () => go('mapa', {}, 'down'));
+    on(root, 'Volver al mapa', () => go('mapa', {}, 'down', { replace: true }));
     on(root, 'Escuchar a Teodoro', () => toast('Teodoro explica el reto', 'Audio por grabar'));
     on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true }, 'fade'));
-    on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down'); return; } finishContent(n); confetti(layer, 195, 540); setTimeout(() => go('completado', { day: n }, 'fade'), 700); });
+    on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); confetti(layer, 195, 540); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 700); });
     // los extras del reto son descargables: con free piden Premium
     on(root, 'Imprimible', () => premium() ? go('imprimible', { day: n }, 'push') : go('free', { back: 'hub', day: n }, 'up'));
     on(root, 'Canción', () => premium() ? go('reproductor', { day: n, extra: 'cancion' }, 'up') : go('free', { back: 'hub', day: n }, 'up'));
@@ -379,9 +413,9 @@ register('completado', {
     $$(root, '[style*="rotate(-12deg)"], [style*="rotate(12deg)"]').forEach((c, i) => { c.style.setProperty('--r', i ? '12deg' : '-12deg'); c.style.animation = `popRot .55s ${.15 + i * .1}s cubic-bezier(.2,.9,.3,1.3) both`; });
     $$(root, 'img').find(i => i.src.includes(IMG.tPregunta))?.classList.add('a-bob');
     confetti(layer, 195, 260, 30);
-    on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push'));
+    on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push', { replace: true }));
     on(root, 'Califícanos', () => go('calificacion', { back: 'completado', day: n }, 'up'));
-    const out = () => go('mapa', {}, 'down');
+    const out = () => go('mapa', {}, 'down', { replace: true });
     on(root, 'Ahora no', out); on(root, 'Cerrar', out); on(root, chip, out);
   },
 });
@@ -405,18 +439,18 @@ register('calificacion', {
       [...box.childNodes].forEach(c => { if (c.nodeType === 3 || (c.tagName !== 'svg' && !c.querySelector?.('svg'))) c.remove?.(); });
       box.appendChild(ta);
     }
-    const back = () => go(p.back || 'mapa', { day: p.day, c: p.c, fromHub: p.fromHub }, 'down');
-    on(root, 'Enviar', () => { toast('¡Gracias!', S._voto ? `Votaste «${S._voto}»` : 'Calificación enviada'); back(); });
-    on(root, 'Ahora no', back); on(root, 'Cerrar', back);
+    const volver = () => back(p.back || 'mapa', 'down');
+    on(root, 'Enviar', () => { toast('¡Gracias!', S._voto ? `Votaste «${S._voto}»` : 'Calificación enviada'); volver(); });
+    on(root, 'Ahora no', volver); on(root, 'Cerrar', volver);
   },
 });
 
 register('free', {
   files: F('V2-24-Dia-completo-claro', 'V2-24-Dia-completo'),
   mount(root, p) {
-    const back = () => go(p.back || 'mapa', { day: p.day }, 'down');
+    const volver = () => back(p.back || 'mapa', 'down');
     on(root, 'Ver Theo Premium', () => toast('Paywall de Theo Premium', 'Ya existe en la app'));
-    on(root, 'Volver al mapa', back); on(root, 'Cerrar', back);
+    on(root, 'Volver al mapa', volver); on(root, 'Cerrar', volver);
     $$(root, 'img').slice(1, 2).forEach(i => i.classList.add('a-sway'));
   },
 });
@@ -439,10 +473,10 @@ register('cerrado', {
     const cdEl = textEl(root, /Faltan \d+ h \d+ min/);
     const cd = cdEl && [...cdEl.childNodes].find(c => c.nodeType === 3 && /Faltan/.test(c.nodeValue));
     const tick = () => { const now = new Date(); const mid = new Date(now); mid.setHours(24, 0, 0, 0); const ms = mid - now; if (cd) cd.nodeValue = `Faltan ${Math.floor(ms / 36e5)} h ${Math.floor(ms / 6e4) % 60} min`; };
-    tick(); const iv = setInterval(() => layer.isConnected ? tick() : clearInterval(iv), 20000);
+    tick(); const iv = setInterval(() => layer.isConnected ? tick() : clearInterval(iv), 1000);
     $$(root, 'span').filter(s => s.textContent.trim() === 'z').forEach((z, i) => { z.style.display = 'inline-block'; z.style.animation = `zz 2.4s ${i * .8}s ease-out infinite`; });
     $$(root, 'img').find(i => /duerme/.test(i.alt || ''))?.classList.add('a-bob');
-    on(root, 'Entendido', () => go('hoy', {}, 'down'));
+    on(root, 'Entendido', () => go('hoy', {}, 'down', { tab: true }));
     on(root, 'Volver a Mundos', () => go('mundos', {}, 'back'));
     $$(root, 'a[aria-label^="Día"]').forEach(a => on(root, a, () => go('mapa', {}, 'down')));
   },
@@ -483,11 +517,11 @@ register('ruletaPop', {
       save();
       confetti(layer, 195, 410, 40);
       await wait(500);
-      go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n, from: p.from }, 'modal');
+      go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n, from: p.from }, 'modal', { replace: true });
     });
     on(root, 'Más tarde', () => {
       S.ruletaPendiente[n] = true; save();
-      if (p.from === 'mapa') go('mapa', {}, 'down'); else go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade');
+      if (p.from === 'mapa') go('mapa', {}, 'down', { replace: true }); else go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     });
   },
 });
@@ -507,7 +541,7 @@ register('ruletaPremio', {
     if (!info.sub && subEl) subEl.style.visibility = 'hidden';
     else if (p.premio === 'manzana' && subEl) subEl.textContent = 'Teodoro la guardó para su merienda';
     if (p.premio !== 'cuarto') floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
-    const cont = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down') : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade');
+    const cont = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     on(root, 'Empezar el cuento', cont);
     if (p.from === 'mapa' || contentDone(n)) setText(root, 'Empezar el cuento', 'Volver al camino');
     on(root, 'Ver a Teodoro', () => go('teodoro', {}, 'fade'));
@@ -523,7 +557,7 @@ register('premioCuarto', {
     const nextW = RULES.ruleta.find(x => !S.ruletas[x]);
     setText(root, /La próxima ruleta.*/, nextW ? `La próxima ruleta, el día ${nextW}` : 'Ya abriste todas las ruletas');
     on(root, 'Ver su cuarto nuevo', () => go('teodoro', {}, 'fade'));
-    const out = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down') : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade');
+    const out = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     on(root, 'Salir de la ruleta', out); on(root, 'Cerrar', out);
   },
 });
@@ -542,7 +576,7 @@ register('final', {
     await wait(400); confetti(layer, 195, 220, 60);
     on(root, 'Ver el nacimiento', () => go('reproductor', { day: 26, nacimiento: true }, 'up'));
     on(root, 'Compartir con la familia', () => go('finalCompartir', {}, 'push'));
-    on(root, 'Cerrar', () => go('mapa', {}, 'down'));
+    on(root, 'Cerrar', () => go('mapa', {}, 'down', { replace: true }));
   },
 });
 
@@ -564,8 +598,8 @@ register('finalCompartir', {
     on(root, 'Compartir', async () => {
       try { if (navigator.share) await navigator.share({ title: '¡Llegamos a Belén!', text: `${S.nombre} caminó ${dias} días con Teodoro hasta Belén y ganó ${estrellas} estrellas.` }); else toast('Compartir', 'En el celular se abre el menú para compartir'); } catch { /* cancelado */ }
     });
-    on(root, 'Ahora no', () => go('final', { day: 26 }, 'back'));
-    on(root, 'Volver', () => go('final', { day: 26 }, 'back'));
+    on(root, 'Ahora no', () => back('final'));
+    on(root, 'Volver', () => back('final'));
   },
 });
 
@@ -574,7 +608,7 @@ register('imprimible', {
   mount(root, p) {
     const sheet = [...root.querySelectorAll('div, img')].find(x => x.style.transform && /rotate/.test(x.style.transform));
     sheet?.classList.add('a-pop');
-    on(root, 'Volver', () => go('hub', { day: p.day }, 'back'));
+    on(root, 'Volver', () => back('hub'));
     ['Imprimir', 'Guardar'].forEach(t => on(root, t, () => toast(t, 'En el celular se abre el menú del teléfono')));
   },
 });

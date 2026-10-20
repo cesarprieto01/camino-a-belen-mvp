@@ -1,5 +1,5 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
-import { S, save, A, $, $$, on, find, go, register, toast, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
+import { S, save, A, $, $$, on, find, go, back, register, toast, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
   floaty, confetti, addPanes, dark, stars, isDone } from './core.js';
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS } from './data.js';
 import { finishTrivia, openSorpresa } from './flow.js';
@@ -12,7 +12,7 @@ const speak = text => {
   } catch { toast('Escuchar', 'Este navegador no lee en voz alta'); }
 };
 const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
-const toMapAfterGame = () => go('mapa', { thenCerrado: true }, 'down');
+const toMapAfterGame = () => go('mapa', { thenCerrado: true }, 'down', { replace: true });
 
 // ================= TRIVIA =================
 const isMulti = q => Array.isArray(q.a);
@@ -111,8 +111,8 @@ register('trivia', {
       if (i === 4) a.textContent = 'Ver resultado';
       root.appendChild(a); a.classList.add('a-rise');
       on(root, a, () => {
-        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'push');
-        else go('triviaFin', { day: n, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'modal');
+        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'push', { replace: true });
+        else go('triviaFin', { day: n, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'modal', { replace: true });
       });
     };
     const correct = (picked) => {
@@ -187,7 +187,7 @@ register('trivia', {
         k === q.a ? correct(k) : wrong(k, opts[k]);
       }));
     }
-    on(root, 'Salir de la trivia', () => go('mapa', {}, 'down'));
+    on(root, 'Salir de la trivia', () => go('mapa', {}, 'down', { replace: true }));
   },
 });
 
@@ -221,7 +221,7 @@ register('triviaFin', {
     const dlg = root.querySelector('[role=dialog]'); dlg?.classList.add('a-rise');
     $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).slice(-1).forEach(i => i.classList.add('a-hop'));
     if (est >= 2) confetti(layer, 195, 300, est === 3 ? 60 : 30);
-    on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down') : toMapAfterGame());
+    on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame());
     on(root, 'Jugar otra vez', () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'fade'));
     on(root, 'Abrir la sorpresa', () => openSorpresa(n));
     on(root, 'Ahora no', () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(); });
@@ -427,9 +427,9 @@ register('adivinanzaFin', {
 register('desafioIntro', {
   file: () => F('V2-Desafio-intro-claro', 'V2-Desafio-intro'),
   mount(root, p) {
-    const back = p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day);
+    const salir = p.fromHub ? () => back('hub') : later(p.day);
     on(root, '¡Vamos!', () => go('desafio', { day: p.day, c: 0, fromHub: p.fromHub }, 'fade'));
-    on(root, 'Ahora no', back); on(root, 'Cerrar', back);
+    on(root, 'Ahora no', salir); on(root, 'Cerrar', salir);
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
     $$(root, '[style*="rotate"]').forEach(c => c.classList.add('a-sway'));
   },

@@ -102,6 +102,7 @@ const DECISIONES = [
 const PENDIENTES_LIENZO = [
   'Escenas de los días 1 y 2 (Arte 5 las marca como «FALTA»).',
   'Ícono del día 25 · Video (Íconos del camino: «Aún sin ícono»).',
+  'Tab Teodoro dice «Ces» y racha 1 (va dentro de la imagen); Hoy dice «Lucía» y racha 3. Unificar en el lienzo.',
   'Fuera de Theo Quest a propósito: pestañas Explorar, Música y Favoritos; villancicos y oraciones generales; paywall «Ver Theo Premium».',
 ];
 

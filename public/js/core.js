@@ -149,10 +149,28 @@ export const register = (name, def) => { SCREENS[name] = def; };
 export const screens = () => SCREENS;
 let busy = Promise.resolve();
 
-export function go(name, params = {}, anim = 'push') {
+// Historial: para que «volver», «Ahora no» y cerrar regresen a donde estaba la familia
+const stack = [];
+const TABS = ['hoy', 'teodoro', 'mundos'];
+/** Ir a una pantalla. opts.replace: no deja la actual en el historial (pasos automáticos). */
+export function go(name, params = {}, anim = 'push', opts = {}) {
+  if (cur && !opts.fromBack && !opts.replace && cur.name !== 'estatica') {
+    stack.push({ name: cur.name, params: cur.params });
+    if (stack.length > 60) stack.shift();
+  }
+  // las pestañas principales empiezan un historial nuevo
+  if (TABS.includes(name) && !opts.fromBack && opts.keepStack !== true && opts.tab) stack.length = 0;
   busy = busy.then(() => _go(name, params, anim)).catch(e => { console.error(e); toast('Algo falló al abrir la pantalla', e.message); });
   return busy;
 }
+/** Volver a la pantalla anterior (o a fallback si no hay historial). Salta las que se indiquen. */
+export function back(fallback = 'hoy', anim = 'back', skip = []) {
+  let prev = stack.pop();
+  while (prev && (skip.includes(prev.name) || prev.name === cur?.name)) prev = stack.pop();
+  if (prev) return go(prev.name, prev.params, anim, { fromBack: true });
+  return go(fallback, {}, anim, { fromBack: true });
+}
+export const clearHistory = () => { stack.length = 0; };
 async function _go(name, params, anim) {
   const def = SCREENS[name];
   if (!def) { hueco(`Pantalla «${name}» sin definir`); return; }

@@ -28,9 +28,10 @@ const tap = async (q) => {
   }, q);
   if (!ok) errs.push(`NO ENCONTRADO «${q}» en ${await screen()}`);
   await p.waitForTimeout(600);
+  if (process.env.DEBUG) console.log('tap', q, '→', await p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen).join('>')));
   return ok;
 };
-const scenario = async (i) => { await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
+const scenario = async (i) => { if (!(await p.evaluate(() => document.querySelectorAll('[data-tab]').length))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
 const answerTrivia = async () => {
   for (let q = 0; q < 5; q++) {
     // contesta bien leyendo los datos del juego
@@ -119,6 +120,27 @@ const flows = {
     await p.waitForTimeout(9500); await tap('¡A jugar!'); await shot('trivia'); await answerTrivia(); await shot('fin');
   },
   async post() { await scenario('Terminó incompleto'); await shot('hoy-incompleto'); await scenario('Terminó completo'); await shot('hoy-completo'); },
+  // regresos al origen: cada «Ahora no», «Cerrar» o «Volver» deja donde estabas
+  async nav() {
+    const expect = async (want, why) => { await p.waitForTimeout(700); const s = await screen(); if (s !== want) errs.push(`${why}: esperaba ${want}, quedó ${s}`); };
+    const card = async (txt, why) => { const ok = await p.evaluate(t => document.querySelector('#viewport .layer:last-child').textContent.includes(t), txt); if (!ok) errs.push(`${why}: falta «${txt}»`); };
+    await scenario('Sin inscribirse'); await p.waitForTimeout(1500);
+    await expect('teaser', 'teaser automático'); await tap('Ahora no'); await expect('hoy', 'teaser Ahora no');
+    await tap('Teodoro'); await expect('teodoro', 'tab Teodoro'); await shot('teodoro-sin');
+    await tap('Inscribirme'); await p.waitForTimeout(2400); await expect('espera', 'inscribirme desde Teodoro'); await shot('espera');
+    await tap('Invitar a un amigo'); await expect('invitacion', 'invitar'); await shot('invitacion');
+    await tap('Volver'); await expect('espera', 'volver de invitación');
+    await tap('Ahora no'); await expect('teodoro', 'espera Ahora no vuelve a Teodoro'); await shot('teodoro-dentro');
+    await card('Entrar', 'tarjeta inscrito en Teodoro');
+    await tap('Entrar'); await expect('espera', 'Entrar'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
+    await tap('Invitar'); await expect('invitacion', 'invitar desde Teodoro'); await tap('Volver'); await expect('teodoro', 'volver a Teodoro');
+    await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
+    await tap('Invitar'); await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Inscribirme'); await expect('invitacion', 'vista previa vuelve');
+    await tap('Volver'); await expect('hoy', 'invitación vuelve a Hoy');
+    // ya empezó: mapa desde Teodoro → volver
+    await scenario('Hoy, tab Teodoro y Mundos'); await tap('Teodoro'); await tap('Ver mis mundos'); await tap('Adviento'); await expect('mapa', 'mapa desde mundos');
+    await tap('Volver a Mundos'); await expect('mundos', 'volver del mapa'); await tap('Volver'); await expect('teodoro', 'mundos vuelve a Teodoro');
+  },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };
 for (const name of scen.split(',')) {

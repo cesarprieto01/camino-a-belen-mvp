@@ -1,5 +1,5 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
-import { S, save, A, $, $$, on, frag, go, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, frag, go, clearHistory, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
 import { DAYS, TYPES, RULES, IMG, dateOf, iconOf, SORPRESA_NOMBRE } from './data.js';
 import { startDay, ctaLabel } from './flow.js';
@@ -8,6 +8,7 @@ const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
 const F0 = { claro: 'V2-Mapa-dia0-claro', oscuro: 'V2-Mapa-dia0' };
 
 let tpl = null; // piezas sacadas de las plantillas, por tema
+let mapOrigin = null; // pantalla desde la que se entró al camino
 async function templates() {
   const key = dark() ? 'oscuro' : 'claro';
   if (tpl?.key === key) return tpl;
@@ -169,7 +170,9 @@ register('mapa', {
     const chip = layer.querySelector('[aria-label^="Día 9 de 26"]');
     chip?.setAttribute('aria-label', `Día ${focus} de 26`);
     paintEnergy(layer);
-    on(layer, 'Volver a Mundos', () => go(params.from === 'espera' ? 'espera' : params.from === 'hoy' ? 'hoy' : 'mundos', {}, 'back'));
+    // el mapa recuerda desde dónde se entró al camino (Hoy, Teodoro, Mundos o la espera)
+    if (params.from) mapOrigin = params.from;
+    on(layer, 'Volver a Mundos', leaveMap);
     const bat = layer.querySelector('[aria-label^="Energía de Teodoro"]');
     if (bat) on(layer, bat, () => showEnergy(layer));
     const backHoy = layer.querySelector('[aria-label="Volver a hoy"]');
@@ -399,6 +402,8 @@ function paintSheet(layer, T) {
   if (txt) txt.nodeValue = label.text;
   const icon = cta.querySelector('svg');
   if (icon && !label.play) icon.style.display = 'none';
-  on(layer, cta, label.go);
+  // día 0 listo: el botón vuelve a donde se entró al camino (Hoy, Teodoro o la espera)
+  on(layer, cta, n === 0 && contentDone(0) ? leaveMap : label.go);
   sheet.classList.add('in-up');
 }
+function leaveMap() { clearHistory(); go(mapOrigin || 'hoy', {}, 'back', { fromBack: true }); }
