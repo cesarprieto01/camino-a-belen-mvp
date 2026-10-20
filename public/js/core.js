@@ -24,7 +24,7 @@ export const DEFAULT = () => ({
   regreso: false, teaserVisto: false, ultimoJugado: 9,
   pasoAnimado: null,   // día recién completado (animación en el mapa)
   forzarPremio: '',    // panel: forzar casilla de la ruleta
-  notas: {}, huecos: [],
+  notas: {}, huecos: [], vistas: {},
 });
 export let S = load();
 function load() {
@@ -35,7 +35,7 @@ function load() {
   try { return { ...DEFAULT(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULT(); }
 }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* navegador privado */ } emit(); }
-export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema }; S = Object.assign(DEFAULT(), keep, over); save(); }
+export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas }; S = Object.assign(DEFAULT(), keep, over); save(); }
 export function shareURL() {
   const { notas, huecos, ...rest } = S;
   return location.origin + location.pathname + '#estado=' + btoa(unescape(encodeURIComponent(JSON.stringify(rest)))) + '&pantalla=' + (cur?.name || 'hoy');
@@ -67,7 +67,56 @@ export function setBateria(v) { S.bateria = Math.max(0, Math.min(5, v)); }
 // ---------- Pantallas del lienzo ----------
 let MAN = {};
 const cache = new Map();
-export async function boot() { MAN = await (await fetch('screens/manifest.json')).json(); }
+export async function boot() {
+  MAN = await (await fetch('screens/manifest.json')).json();
+  // Barra de pestañas: la del tab Teodoro (la más reciente del lienzo) para toda la app
+  for (const [k, f] of [['c', 'V3-Teodoro'], ['o', 'V3-Teodoro-oscuro']]) NAV[k] = (await frag(f)).querySelector('nav').outerHTML;
+}
+const NAV = {};
+const TAB_OF = { teodoro: 'Teodoro', mundos: 'Teodoro' };
+/** Cambia cualquier barra de pestañas por la estándar, con la pestaña activa correcta. */
+function unifyNav(root, name) {
+  const old = root.querySelector('nav');
+  if (!old || !NAV.c) return;
+  const dk = dark();
+  const t = document.createElement('template');
+  t.innerHTML = NAV[dk ? 'o' : 'c'];
+  const nav = t.content.firstElementChild;
+  nav.style.top = ''; nav.style.bottom = '0'; nav.style.zIndex = '20';
+  nav.setAttribute('aria-label', 'Pestañas de Theo');
+  const active = TAB_OF[name] || 'Hoy';
+  nav.querySelectorAll('a').forEach(a => {
+    const label = a.textContent.trim();
+    const on = label === active;
+    a.removeAttribute('href');
+    a.setAttribute('aria-label', label);
+    on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
+    a.style.color = on ? (dk ? '#FFFFFF' : '#1E8DA5') : (dk ? '#C3CCDA' : '#5F5F5F');
+    a.style.fontWeight = on ? '900' : '700';
+  });
+  old.replaceWith(nav);
+  // indicador de inicio del iPhone, en el color del tema
+  [...root.children].filter(el => el.style.width === '134px' && el.style.height === '5px').forEach(e => e.remove());
+  const hi = document.createElement('div');
+  hi.setAttribute('aria-hidden', 'true'); hi.dataset.home = '1';
+  hi.style.cssText = `position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:${dk ? '#FFFFFF' : '#111111'};z-index:21`;
+  root.appendChild(hi);
+}
+
+// ---------- Cobertura: qué pantallas del lienzo ya se vieron en el flujo ----------
+export const logical = file => (MAN[file]?.title || file).replace(/\s*·\s*[☀☾]\s*(claro|oscuro)/g, '').trim();
+export function seen(...files) {
+  let changed = false;
+  S.vistas ||= {};
+  files.forEach(f => { const k = logical(f); if (MAN[f] && !S.vistas[k]) { S.vistas[k] = true; changed = true; } });
+  if (changed) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* */ } }
+}
+/** Pantallas del lienzo que forman el flujo (secciones 1 a 8). */
+export function flowScreens() {
+  const keys = new Map();
+  Object.entries(MAN).forEach(([f, m]) => { if (m.y >= 3380 && m.y < 30923) keys.set(logical(f), { file: f, y: m.y, x: m.x }); });
+  return keys;
+}
 export const manifest = () => MAN;
 export async function html(file) {
   if (!cache.has(file)) cache.set(file, fetch('screens/' + file + '.html').then(r => r.text()));
@@ -108,6 +157,8 @@ async function _go(name, params, anim) {
   const prev = cur;
   cur = { name, layer, params, file };
   vp().appendChild(layer);
+  unifyNav(root, name);
+  if (name !== 'estatica') seen(file);
   try { await def.mount?.(root, params, layer); } catch (e) { console.error(e); toast('Error en ' + name, e.message); }
   if (h > 844 && !def.noScroll) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
   bindFallback(layer, layer);
@@ -131,7 +182,7 @@ async function _go(name, params, anim) {
 function pinBottom(layer, root, h) {
   const kids = [...root.children].filter(el => {
     const st = el.style; const top = parseFloat(st.top); const bottom = st.bottom;
-    return (bottom !== '' && parseFloat(bottom) < 40 && !el.matches('img')) || (top > h - 130 && (st.left === '0px' || st.left === '0'));
+    return el.matches('nav, [data-home]') || (bottom !== '' && parseFloat(bottom) < 40 && !el.matches('img')) || (top > h - 130 && el.offsetHeight < 140);
   });
   if (!kids.length) return;
   // Un ancla «sticky» al final del scroll mantiene la barra pegada abajo
@@ -141,7 +192,7 @@ function pinBottom(layer, root, h) {
   inner.style.cssText = 'position:absolute;left:0;bottom:0;width:390px;height:844px;pointer-events:none';
   kids.forEach(el => {
     const top = parseFloat(el.style.top);
-    if (!isNaN(top)) el.style.top = (844 - (h - top)) + 'px';
+    if (!isNaN(top) && el.style.top) el.style.top = (844 - (h - top)) + 'px';
     el.style.pointerEvents = 'auto';
     inner.appendChild(el);
   });

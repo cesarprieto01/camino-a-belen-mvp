@@ -1,5 +1,5 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
-import { S, save, A, $, $$, on, find, go, register, toast, frag, wait, reduced, animate, replaceText, setText, textEl,
+import { S, save, A, $, $$, on, find, go, register, toast, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
   floaty, confetti, addPanes, dark, stars, isDone } from './core.js';
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS } from './data.js';
 import { finishTrivia, openSorpresa } from './flow.js';
@@ -49,6 +49,8 @@ register('trivia', {
     const q = TRIVIA[n][i];
     let fallos = 0, answered = false;
 
+    if (!isPic(q)) seen(isMulti(q) ? 'V2-06c-Trivia-varias-claro' : 'V2-06b-Trivia-4-opciones-claro');
+    if (isPic(q) && i > 0) seen('V2-06-Trivia-claro');
     // progreso (5 puntitos)
     const bar = root.querySelector('[role=progressbar]');
     if (bar) {
@@ -115,6 +117,7 @@ register('trivia', {
     };
     const correct = (picked) => {
       answered = true;
+      seen(fallos ? 'V2-08b-Reintento-claro' : 'V2-07-Correcto-claro');
       clearFeedback(); hint && (hint.style.display = 'none'); check && (check.style.display = 'none');
       opts.forEach((el, k) => {
         const right = isMulti(q) ? q.a.includes(k) : k === q.a;
@@ -142,6 +145,7 @@ register('trivia', {
     };
     const wrong = (k, el) => {
       fallos++;
+      seen('V2-08-Pista-claro');
       clearFeedback();
       if (isPic(q) && el) {
         const t = document.createElement('template'); t.innerHTML = T.picBad; const c = t.content.firstElementChild;
@@ -361,6 +365,7 @@ register('adivinanza', {
       if (done) return; done = true;
       const r = [...res, { w: w.w, ok }];
       if (card) card.animate([{ transform: 'none', opacity: 1 }, { transform: `translateX(${ok ? 420 : -420}px) rotate(${ok ? 12 : -12}deg)`, opacity: 0 }], { duration: 320, easing: 'ease-in', fill: 'forwards' });
+      seen(ok ? 'V2-Adivinanza-siguiente-claro' : 'V2-Adivinanza-pasar-claro');
       if (ok) floaty(layer, '¡Sí!', 170, 300, null);
       setTimeout(() => k < 4 ? go('adivinanza', { ...p, k: k + 1, res: r }, 'none') : go('adivinanzaFin', { day: n, res: r }, 'fade'), 330);
     };

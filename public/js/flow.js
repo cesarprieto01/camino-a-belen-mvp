@@ -1,5 +1,5 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
-import { S, save, A, $, $$, on, find, go, register, toast, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, find, go, register, seen, toast, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf } from './data.js';
@@ -98,6 +98,7 @@ register('hoy', {
   },
   async mount(root, p, layer) {
     tabs(root); appContent(root);
+    if (fase() !== 'antes') seen('S-01-Hoy', 'S-01-Energia');
     const now = fase() === 'antes' ? new Date() : null;
     const f = now ? { label: `${['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'][now.getDay()]} ${now.getDate()} DE ${['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][now.getMonth()]}` } : dateOf(Math.min(Math.max(S.hoy, 1), 26));
     if (S.hoy >= 27) f.label = 'VIERNES 25 DE DICIEMBRE';
@@ -224,6 +225,7 @@ register('espera', {
 register('invitacion', {
   files: F('V2-Invitacion-claro', 'V2-Invitacion'),
   mount(root) {
+    seen('Invitacion-imagen');
     on(root, 'Vista previa del enlace', () => { toast('Así lo ve tu amigo al tocar el enlace'); go('teaser', {}, 'modal'); });
     const back = $$(root, 'a, button')[0];
     if (back && !back.dataset.bound) on(root, back, () => go(fase() === 'antes' ? 'espera' : 'hoy', {}, 'back'));

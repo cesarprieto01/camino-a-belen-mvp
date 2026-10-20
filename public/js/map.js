@@ -1,5 +1,5 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
-import { S, save, A, $, $$, on, frag, go, toast, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, frag, go, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
 import { DAYS, TYPES, RULES, dateOf } from './data.js';
 import { startDay, ctaLabel } from './flow.js';
@@ -168,6 +168,10 @@ register('mapa', {
 
     // 6) Hoja inferior según el estado del día
     paintSheet(layer, T);
+    seen('S-03-Mapa');
+    if (act != null && contentDone(act) && !isDone(act)) seen('S-03b-Mapa-trivia');
+    if (focus === 0) seen('V2-Mapa-dia0-claro');
+    if (focus >= 24) seen('V2-Mapa-d24-claro');
 
     const scrollToNode = (n, smooth) => {
       const t = nodes[n]; if (!t) { scroller.scrollTop = scroller.scrollHeight; return; }
