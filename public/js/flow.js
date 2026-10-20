@@ -49,13 +49,17 @@ function finishContent(n) {
   save();
   return first;
 }
-export function finishTrivia(n, aciertos) {
+export function finishTrivia(n, aciertos, replay = false) {
   const est = aciertos >= 5 ? 3 : aciertos >= 3 ? 2 : 1;
   const first = !isDone(n);
-  S.completos[n] = { ...(S.completos[n] || {}), contenido: true, trivia: true, estrellas: Math.max(est, stars(n)), aciertos };
-  if (first) { setBateria(5); addPanes(RULES.panes.trivia); S.pasoAnimado = n; }
+  const prev = stars(n);
+  S.completos[n] = { ...(S.completos[n] || {}), contenido: true, trivia: true, estrellas: Math.max(est, prev), aciertos };
+  // primera vez: llena la batería y suma; al repetir solo suma si mejora las estrellas
+  const gana = first || (replay && est > prev);
+  if (first) { setBateria(5); S.pasoAnimado = n; }
+  if (gana) addPanes(RULES.panes.trivia);
   save();
-  return { est, first };
+  return { est, first, gana, mejoro: replay && est > prev };
 }
 
 // Barra de pestañas de la app (igual en todas)
@@ -119,7 +123,7 @@ register('hoy', {
       on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
       on(root, 'Ver Camino a Belén', () => go('espera', {}, 'up'));
       on(root, 'Invitar', () => go('invitacion', {}, 'push'));
-      on(root, 'Entrar', () => go('mapa', { from: 'hoy' }, 'push'));
+      on(root, 'Entrar', () => go('espera', {}, 'up'));
       if (!S.inscrito && !S.teaserVisto) { S.teaserVisto = true; save(); await wait(900); if (layer.isConnected) go('teaser', {}, 'modal'); }
       return;
     }
@@ -162,7 +166,7 @@ register('hoy', {
     const toMap = () => S.inscrito ? go('mapa', { from: 'hoy' }, 'push') : go('confirmacion', { late: true }, 'fade');
     on(root, 'Ver el camino', toMap);
     on(root, 'Continuar la Aventura', toMap);
-    on(root, 'Energía de Teodoro', () => toast(`Energía: ${S.bateria} de 5`, ['Dormido', 'Cabeceando', 'Agotado', 'Tranquilo', 'Travieso', 'Emocionado'][S.bateria]));
+    on(root, 'Energía de Teodoro', () => toast(`Energía: ${S.bateria} de 5`, ['Dormido', 'Cabeceando', 'Agotado', 'Tranquilo', 'Travieso', 'Feliz'][S.bateria]));
 
     // Modal de regreso (una semana o más sin caminar)
     if (S.regreso) {
@@ -263,7 +267,7 @@ register('teodoro', {
     on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
     on(root, 'Ver Camino a Belén', () => go('espera', {}, 'up'));
     on(root, 'Invitar', () => go('invitacion', {}, 'push'));
-    on(root, 'Entrar', () => go('mapa', { from: 'teodoro' }, 'push'));
+    on(root, 'Entrar', () => go('espera', {}, 'up'));
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).slice(0, 1).forEach(i => i.classList.add('a-bob'));
     // prendas ganadas en la ruleta, visibles en el cuarto
     if (S.prendas.length) toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`);
@@ -320,6 +324,7 @@ register('reproductor', {
     let ended = false;
     const end = () => {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
+      if (p.replay) { toast('¡Otra vez con Teodoro!', 'Repetir no cambia tus panes'); go('mapa', {}, 'down'); return; }
       finishContent(n);
       if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', { from: 'hoy' }, 'down'); return; }
       go('completado', { day: n }, 'fade');
@@ -347,7 +352,7 @@ register('hub', {
     on(root, 'Volver al mapa', () => go('mapa', {}, 'down'));
     on(root, 'Escuchar a Teodoro', () => toast('Teodoro explica el reto', 'Audio por grabar'));
     on(root, 'Reto en familia', () => toast(d.reto || 'Reto en familia', '10 minutos juntos'));
-    on(root, '¡Lo hicimos!', (ev, el) => { finishContent(n); confetti(layer, 195, 540); setTimeout(() => go('completado', { day: n }, 'fade'), 700); });
+    on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down'); return; } finishContent(n); confetti(layer, 195, 540); setTimeout(() => go('completado', { day: n }, 'fade'), 700); });
     const download = what => premium() ? toast(`${what} descargado`, 'En la app real abre el PDF o el audio') : go('free', { back: 'hub', day: n }, 'up');
     on(root, 'Imprimible', () => download('Imprimible'));
     on(root, 'Canción', () => download('Canción'));

@@ -111,8 +111,8 @@ register('trivia', {
       if (i === 4) a.textContent = 'Ver resultado';
       root.appendChild(a); a.classList.add('a-rise');
       on(root, a, () => {
-        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0) }, 'push');
-        else go('triviaFin', { day: n, ok: ok + (fallos === 0 ? 1 : 0) }, 'modal');
+        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'push');
+        else go('triviaFin', { day: n, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'modal');
       });
     };
     const correct = (picked) => {
@@ -192,10 +192,10 @@ register('trivia', {
 });
 
 register('triviaFin', {
-  file: p => RULES.sorpresa[p.day] && S.sorpresas[p.day] !== 'hecha' ? F('V2-Trivia-fin-sorpresa-claro', 'V2-Trivia-fin-sorpresa') : F('V2-Trivia-fin-claro', 'V2-Trivia-fin'),
+  file: p => !p.replay && RULES.sorpresa[p.day] && S.sorpresas[p.day] !== 'hecha' ? F('V2-Trivia-fin-sorpresa-claro', 'V2-Trivia-fin-sorpresa') : F('V2-Trivia-fin-claro', 'V2-Trivia-fin'),
   async mount(root, p, layer) {
     const n = p.day;
-    const { est, first } = finishTrivia(n, p.ok);
+    const { est, first, gana, mejoro } = finishTrivia(n, p.ok, p.replay);
     setText(root, /^\d de 5$/, `${p.ok} de 5`);
     setText(root, '¡Gran trivia!', est === 3 ? '¡Trivia perfecta!' : est === 2 ? '¡Gran trivia!' : '¡Buen intento!');
     const starsBox = root.querySelector('[role=img][aria-label^="Ganaste"]');
@@ -211,13 +211,14 @@ register('triviaFin', {
       });
     }
     const chip = root.querySelector('[aria-label^="Ganaste 10 panes"]');
-    if (!first && chip) chip.style.visibility = 'hidden';
+    if (mejoro) setTimeout(() => toast('¡Mejoraste tus estrellas!', `+${RULES.panes.trivia} panes`), 600);
+    if (!gana && chip) chip.style.visibility = 'hidden';
     else if (chip) { chip.classList.add('a-pop'); floaty(layer, `+${RULES.panes.trivia}`, 230, 430); }
     const dlg = root.querySelector('[role=dialog]'); dlg?.classList.add('a-rise');
     $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).slice(-1).forEach(i => i.classList.add('a-hop'));
     if (est >= 2) confetti(layer, 195, 300, est === 3 ? 60 : 30);
-    on(root, 'Volver al camino', () => toMapAfterGame());
-    on(root, 'Jugar otra vez', () => go('trivia', { day: n, i: 0, ok: 0 }, 'fade'));
+    on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down') : toMapAfterGame());
+    on(root, 'Jugar otra vez', () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'fade'));
     on(root, 'Abrir la sorpresa', () => openSorpresa(n));
     on(root, 'Ahora no', () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(); });
   },

@@ -66,9 +66,13 @@ export function setBateria(v) { S.bateria = Math.max(0, Math.min(5, v)); }
 
 // ---------- Pantallas del lienzo ----------
 let MAN = {};
+let SECS = [];
+/** Secciones del lienzo, leídas de sus notas «N · …» */
+export const sections = () => SECS;
 const cache = new Map();
 export async function boot() {
   MAN = await (await fetch('screens/manifest.json')).json();
+  try { SECS = await (await fetch('screens/sections.json')).json(); } catch { SECS = []; }
   // Barra de pestañas: la del tab Teodoro (la más reciente del lienzo) para toda la app
   for (const [k, f] of [['c', 'V3-Teodoro'], ['o', 'V3-Teodoro-oscuro']]) NAV[k] = (await frag(f)).querySelector('nav').outerHTML;
 }
@@ -114,7 +118,8 @@ export function seen(...files) {
 /** Pantallas del lienzo que forman el flujo (secciones 1 a 8). */
 export function flowScreens() {
   const keys = new Map();
-  Object.entries(MAN).forEach(([f, m]) => { if (m.y >= 3380 && m.y < 30923) keys.set(logical(f), { file: f, y: m.y, x: m.x }); });
+  const from = SECS.find(s => s.n === 1)?.y ?? 3380, to = SECS.find(s => s.n === 9)?.y ?? 31163;
+  Object.entries(MAN).forEach(([f, m]) => { if (m.y >= from && m.y < to) keys.set(logical(f), { file: f, y: m.y, x: m.x }); });
   return keys;
 }
 export const manifest = () => MAN;

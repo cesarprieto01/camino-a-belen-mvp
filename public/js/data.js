@@ -16,7 +16,7 @@ export const IMG = {
   pesebre: '06d17746a01e5a05a453fdf6f0e24b1d', farol: '8f9cd03fb68bac90ed249fa5d45f0828',
   dorso: '834fcca7dd481ce118a38c73d90f02cc', regalo: '40de1cf55d4441bd10615c06350dde30',
   // Teodoro por nivel de batería (Teodoro-Energia)
-  t5: '1f0de9c14d2ad71b51f76947ec513fc6', t4: '64167d45da19875626c545019275e29c',
+  t5: '345591e97560d37b84ead12837ff9c75', t4: '64167d45da19875626c545019275e29c',
   t3: '7bfff4a8f40290f70de7fc8e49ee7d4d', t2: '52ba38f10b723e04ad04beea396aba0c',
   t1: '976c9b59c0fcc1d60682381e421591ee', t0: '55c6a5fd9cf68d7041920d65829c3c80',
   tCelebra: 'a98be2e11e018975563512bddc52be5a', tPregunta: 'cd7abd57ac6154597b18285ae710d7ba',
@@ -33,7 +33,7 @@ export function iconOf(n, dark) { return DAY_ICONS[n]?.[dark ? 1 : 0] || null; }
 
 export const BATTERY_IDS = [IMG.b0, IMG.b1, IMG.b2, IMG.b3, IMG.b4, IMG.b5];
 export const TEODORO_IDS = [IMG.t0, IMG.t1, IMG.t2, IMG.t3, IMG.t4, IMG.t5];
-export const ENERGY_NAMES = ['Dormido', 'Cabeceando', 'Agotado', 'Tranquilo', 'Travieso', 'Emocionado'];
+export const ENERGY_NAMES = ['Dormido', 'Cabeceando', 'Agotado', 'Tranquilo', 'Travieso', 'Feliz'];
 
 // Escenas por día (Arte 5): días 3–26 listas; 1 y 2 «FALTA»
 const SCENES = {

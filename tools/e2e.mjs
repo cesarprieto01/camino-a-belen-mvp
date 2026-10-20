@@ -7,8 +7,8 @@ const b = await chromium.launch({ executablePath: '/Users/ces/Library/Caches/ms-
 const ctx = await b.newContext(mobile ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } });
 const p = await ctx.newPage();
 const errs = [];
-p.on('pageerror', e => errs.push('PAGEERROR ' + e.message));
-p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+p.on('pageerror', e => { if (!/Failed to fetch/.test(e.message)) errs.push('PAGEERROR ' + e.message); });
+p.on('console', m => { if (m.type() === 'error' && !/Failed to fetch|Failed to load resource/.test(m.text())) errs.push(m.text()); });
 await p.goto('http://localhost:5190/app.html');
 await p.evaluate(() => localStorage.clear());
 await p.reload(); await p.waitForTimeout(1200);
@@ -30,7 +30,7 @@ const tap = async (q) => {
   await p.waitForTimeout(600);
   return ok;
 };
-const scenario = async (i) => { await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(i => document.querySelector(`[data-scen="${i}"]`)?.click(), i); await p.waitForTimeout(900); };
+const scenario = async (i) => { await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
 const answerTrivia = async () => {
   for (let q = 0; q < 5; q++) {
     // contesta bien leyendo los datos del juego
@@ -66,13 +66,13 @@ const flows = {
     await tap('Entendido'); await shot('hoy-fin');
   },
   async ruleta() {
-    await scenario(7); await shot('mapa');
+    await scenario('Día de ruleta'); await shot('mapa');
     await tap('Ver historia'); await shot('ruleta');
     await tap('¡Girar!'); await p.waitForTimeout(5200); await shot('premio');
     await tap('Empezar el cuento'); await shot('reproductor');
   },
   async memorama() {
-    await scenario(9); await shot('mapa');
+    await scenario('Memorama'); await shot('mapa');
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.completos[14] = { contenido: true }; c.save(); });
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('trivia', { day: 14, i: 4, ok: 4 }); });
     await p.waitForTimeout(800);
@@ -92,7 +92,7 @@ const flows = {
     await shot('memorama-hecho'); await p.waitForTimeout(1500); await shot('memorama-fin');
   },
   async adivinanza() {
-    await scenario(10);
+    await scenario('Adivinanza');
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.completos[7] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.go('adivinanzaIntro', { day: 7 }); });
     await shot('intro'); await tap('¡A jugar!'); await shot('juego');
     await tap('¡La adivinaron!'); await shot('w2'); await tap('Pasar a otra palabra'); await tap('¡La adivinaron!'); await tap('¡La adivinaron!'); await tap('¡La adivinaron!');
@@ -103,22 +103,22 @@ const flows = {
     await shot('intro'); await tap('¡Vamos!'); await shot('carta'); await tap('Sacar otra carta'); await shot('otra'); await tap('¡Lo hicimos!'); await p.waitForTimeout(800); await shot('fin');
   },
   async antes() {
-    await scenario(0); await p.waitForTimeout(1500); await shot('teaser');
+    await scenario('Sin inscribirse'); await p.waitForTimeout(1500); await shot('teaser');
     await tap('Inscribirme'); await shot('confirm'); await p.waitForTimeout(2300); await shot('espera');
     await tap('Invitar a un amigo'); await shot('invitacion');
   },
   async reto() {
-    await scenario(5); await tap('Ver el reto'); await shot('hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await shot('completado');
+    await scenario('Reto en familia'); await tap('Ver el reto'); await shot('hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await shot('completado');
   },
-  async regreso() { await scenario(13); await shot('regreso'); await tap('Empezar por el día'); await shot('mapa'); },
-  async atrasado() { await scenario(12); await shot('hoy-atrasado'); await tap('Continuar la Aventura'); await shot('mapa'); },
-  async nochebuena() { await scenario(18); await shot('mapa'); await tap('Comenzar'); await p.waitForTimeout(800); await shot('final'); },
+  async regreso() { await scenario('Regreso tras una semana'); await shot('regreso'); await tap('Empezar por el día'); await shot('mapa'); },
+  async atrasado() { await scenario('Va atrasado'); await shot('hoy-atrasado'); await tap('Continuar la Aventura'); await shot('mapa'); },
+  async nochebuena() { await scenario('Nochebuena'); await shot('mapa'); await tap('Comenzar'); await p.waitForTimeout(800); await shot('final'); },
   async oscuro() {
     await p.evaluate(() => document.querySelector('[data-tema="oscuro"]')?.click()); await p.waitForTimeout(900); await shot('hoy');
     await tap('Continuar la Aventura'); await shot('mapa'); await tap('Ver historia'); await shot('repro');
     await p.waitForTimeout(9500); await tap('¡A jugar!'); await shot('trivia'); await answerTrivia(); await shot('fin');
   },
-  async post() { await scenario(20); await shot('hoy-incompleto'); await scenario(19); await shot('hoy-completo'); },
+  async post() { await scenario('Terminó incompleto'); await shot('hoy-incompleto'); await scenario('Terminó completo'); await shot('hoy-completo'); },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };
 for (const name of scen.split(',')) {

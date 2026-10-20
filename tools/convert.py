@@ -85,3 +85,12 @@ print(f'{len(manifest)} pantallas · assets {total/1e6:.1f} MB')
 # Mapa id -> archivo para el JS del MVP
 files = {f.stem: f.name for f in ASSETS.iterdir()}
 (ROOT / 'public' / 'js' / 'assets.js').write_text('export const FILES = ' + json.dumps(files, sort_keys=True) + ';\n')
+
+# Secciones del lienzo (notas «N · …»), para que el panel siga el orden aunque se muevan cosas
+secs = []
+for n in canvas.get('notes', {}).values():
+    if n.get('page') in (None, 'page-1') and n.get('kind') == 'title1':
+        m = re.match(r'^(\d+)\s*·\s*(.+?)(?:\s+·|$)', n['text'])
+        if m: secs.append({'n': int(m.group(1)), 'title': m.group(2).strip(), 'y': n['y']})
+secs.sort(key=lambda s: s['y'])
+(OUT / 'sections.json').write_text(json.dumps(secs, ensure_ascii=False, indent=1))

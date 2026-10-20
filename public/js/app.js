@@ -1,6 +1,6 @@
 // Arranque del MVP y panel de control para el equipo.
 // El panel sigue el orden del lienzo (secciones 1 a 8) para que diseño y prueba hablen el mismo idioma.
-import { S, save, reset, boot, go, cur, onChange, toast, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, prefetch, logical, flowScreens } from './core.js';
+import { S, save, reset, boot, go, cur, onChange, toast, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, prefetch, logical, flowScreens, sections } from './core.js';
 import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf } from './data.js';
 import './flow.js';
 import './map.js';
@@ -26,10 +26,12 @@ const SECTION_OF = name => {
   if (name === 'final') return 8;
   return 2;
 };
+// Nombres cortos; la posición (y) sale de las notas del lienzo al arrancar
 const SECTIONS = [
-  [1, 'Antes del 29 de noviembre', 3380], [2, 'Un día normal', 5888], [3, 'Día de ruleta', 8908], [4, 'Juegos sorpresa', 12598],
-  [5, 'La energía de Teodoro', 15346], [6, 'Dónde vive el Adviento', 18126], [7, 'Durante el camino', 22120], [8, 'Nochebuena y después', 28415],
+  [1, 'Antes del 29 de noviembre', 3380], [2, 'Un día normal', 6128], [3, 'Día de ruleta', 9148], [4, 'Juegos sorpresa', 12838],
+  [5, 'La energía de Teodoro', 15586], [6, 'Dónde vive el Adviento', 18366], [7, 'Durante el camino', 22360], [8, 'Nochebuena y después', 28655],
 ];
+const syncSections = () => sections().forEach(s => { const row = SECTIONS.find(r => r[0] === s.n); if (row) row[2] = s.y; });
 const sectionOfY = y => [...SECTIONS].reverse().find(s => y >= s[2]) || SECTIONS[0];
 
 // ---------- Escala del teléfono ----------
@@ -64,6 +66,7 @@ const REC = [
   { sec: 2, t: 'Un día de cuento', mira: 'Día 10 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(10, 9), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Equivocarse en la trivia', mira: 'Toca una respuesta mala: pista sutil y reintento', run: day(10, 9), go: 'mapa', covers: ['V2-08-Pista-claro', 'V2-08b-Reintento-claro'] },
   { sec: 2, t: 'Reto en familia', mira: 'Día 13 · hub del reto, imprimible y canción', run: day(13, 12), go: 'mapa', covers: ['S-04-Hub-familia'] },
+  { sec: 2, t: 'Repetir un día ya hecho', mira: 'Toca un día con ✓ en el mapa: ver otra vez o repetir la trivia', run: day(10, 9), go: 'mapa', covers: ['S-03c-Mapa-dia-pasado'] },
   { sec: 2, t: 'Calificar el día', mira: '«Califícanos» al terminar: 3 caritas y comentario', run: day(10, 9), go: 'mapa', covers: ['V2-Calificacion-claro'] },
   { sec: 3, t: 'Día de ruleta', mira: 'Día 11 · la ruleta sale antes del cuento, gira y da premio', run: day(11, 10), go: 'mapa', covers: ['S-05b-Ruleta-pop', 'S-05c-Ruleta-premio'] },
   { sec: 3, t: 'Premio: cuarto nuevo', mira: 'La ruleta cae en la casa: cuarto de Nazaret', run: day(11, 10, { forzarPremio: 'cuarto' }), go: 'mapa', covers: ['S-09-Premio-cuarto', 'V3-Teodoro-nazaret'] },
@@ -84,7 +87,7 @@ const REC = [
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
   'La barra de pestañas es la del tab Teodoro en todas las pantallas (en el lienzo, Hoy y Mundos usan otra barra clara e ilustrada, también en modo oscuro).',
-  '«Entrar» antes del 29 lleva al día 0 («¿Qué es el Adviento?»); en el lienzo apuntaba al Desafío.',
+  'Repetir la trivia de un día pasado: si mejora las estrellas gana +10 panes; si no, solo cuenta como práctica.',
   'Al terminar la trivia, Teodoro camina en el mapa al día siguiente y luego aparece «Mañana seguimos».',
   'La trivia se completa con 5 preguntas propias por día (revisar con contenido): 3 imágenes, 4 textos o varias correctas.',
   'Estrellas: 5 de 5 = 3 estrellas · 3 o 4 = 2 · menos = 1. Solo cuenta el primer intento de cada pregunta.',
@@ -94,7 +97,6 @@ const DECISIONES = [
 const PENDIENTES_LIENZO = [
   'Escenas de los días 1 y 2 (Arte 5 las marca como «FALTA»).',
   'Ícono del día 25 · Video (Íconos del camino: «Aún sin ícono»).',
-  'Qué pasa al tocar un día ya completado en el mapa.',
   '«Ver el nacimiento» en Nochebuena no tiene pantalla.',
   'Desafío y Desafío cumplido: dos imágenes rotas en el lienzo.',
   'El aviso de batería baja y el hub como portada quedaron en Basura: confirmar que no vuelven.',
@@ -280,6 +282,7 @@ let rT; onChange(() => { syncTheme(); clearTimeout(rT); rT = setTimeout(() => { 
   fit();
   syncTheme();
   await boot();
+  syncSections();
   prefetch(['V2-01-Hoy-completo', 'V2-Mapa-completo-claro', 'V2-Mapa-dia0-claro', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-06c-Trivia-varias-claro', 'V2-07-Correcto-claro', 'V2-08-Pista-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado']);
   const hp = new URLSearchParams(location.hash.slice(1));
   let fresh = true; try { fresh = !localStorage.getItem('cab-mvp-v1'); } catch { /* */ }

@@ -15,6 +15,9 @@ async function templates() {
   const zero = await frag(F0[key]);
   const triv = await frag(key === 'claro' ? 'S-03b-Mapa-trivia' : 'S-03b-Mapa-trivia-oscuro');
   const d26 = await frag(key === 'claro' ? 'V2-Mapa-d24-claro' : 'V2-Mapa-oscuro');
+  const past = await frag(key === 'claro' ? 'S-03c-Mapa-dia-pasado' : 'S-03c-Mapa-dia-pasado-oscuro');
+  const pastSheet = [...past.children].find(el => el.style.bottom === '10px');
+  const pastNode = past.querySelector('a[aria-label*="elegido"]');
   const trivSheet = [...triv.children].find(el => el.style.bottom === '10px');
   const trivRows = [...trivSheet.children].filter(el => el.style.height === '58px');
   const sheet26 = [...d26.children].find(el => el.style.bottom === '10px' || /Llegamos a Belén/.test(el.textContent || '') && el.style.position === 'absolute' && parseFloat(el.style.left) <= 20);
@@ -41,6 +44,7 @@ async function templates() {
     doneBadge: trivRows[0].lastElementChild.outerHTML,
     trivIcon: rows[1].querySelector('img')?.getAttribute('src'),
     sheet26: sheet26 ? sheet26.outerHTML : null,
+    pastSheet: pastSheet?.outerHTML, selShadow: pastNode?.style.boxShadow,
   };
   return tpl;
 }
@@ -232,21 +236,60 @@ register('mapa', {
 function tapNode(n, el, layer) {
   const act = activeDay();
   const d = DAYS[n];
-  if (n === act) { startDay(n); return; }
-  if (isDone(n)) { hueco(`Día ${n} completado (${'★'.repeat(stars(n))}${'☆'.repeat(3 - stars(n))}): ¿se puede repetir?`, el); return; }
+  if (n === act) { if (layer.dataset.past) { go('mapa', {}, 'none'); return; } startDay(n); return; }
+  if (isDone(n)) { showPast(layer, n, el); return; }
   if (n <= lastDay()) { animate(el, 'a-shake'); toast(`Primero el día ${act}`, `El día ${n} te espera justo después`); return; }
   animate(el, 'a-shake');
   const f = dateOf(n);
   toast(`Día ${n} · ${TYPES[d.type].label}`, `Se abre el ${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`);
 }
 
+/** Lo que se ve al tocar un día ya hecho (lienzo: «Mapa · tocar un día ya hecho»). */
+function showPast(layer, n, el) {
+  const T = tpl; if (!T?.pastSheet) return;
+  const d = DAYS[n];
+  layer.querySelectorAll('[data-sel]').forEach(x => { x.style.boxShadow = x.dataset.sel; delete x.dataset.sel; });
+  el.dataset.sel = el.style.boxShadow; el.style.boxShadow = T.selShadow; animate(el, 'a-pop');
+  const sc = layer.firstElementChild; if (sc) sc.scrollTo({ top: parseFloat(el.style.top) - 330, behavior: reduced() ? 'auto' : 'smooth' });
+  layer.dataset.past = n;
+  const old = layer.querySelector('[data-sheet]');
+  const t = document.createElement('template'); t.innerHTML = T.pastSheet;
+  const sheet = t.content.firstElementChild; sheet.dataset.sheet = '1';
+  old.replaceWith(sheet);
+  const head = [...sheet.children].find(x => /YA LO HICISTE/.test(x.textContent));
+  head.children[0].textContent = `YA LO HICISTE · DÍA ${n}`;
+  head.children[1].textContent = d.type === 'domingo' ? `Domingo · ${d.vela}.ª velita` : d.title;
+  const [r1, r2] = [...sheet.children].filter(x => x.style.height === '58px');
+  const C = contOf(d.type);
+  const ic = iconOf(n, dark()); if (ic) r1.querySelector('img').src = A(ic);
+  const [t1, s1] = r1.querySelector(':scope > div').children; t1.textContent = C[0]; s1.textContent = C[1];
+  on(layer, r1.querySelector('a'), () => go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
+  const st = stars(n);
+  r2.querySelectorAll('[role=img] svg path').forEach((p, i) => p.setAttribute('fill', i < st ? '#F7C948' : (dark() ? 'rgba(255,255,255,.28)' : '#D3DDE5')));
+  r2.querySelector('[role=img]')?.setAttribute('aria-label', `${st} de 3 estrellas`);
+  const s2 = r2.querySelector(':scope > div').children[1]; if (st === 3) s2.textContent = '¡Ya tienes las 3 estrellas!';
+  const cta = [...sheet.children].find(x => x.tagName === 'A');
+  on(layer, cta, () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push'));
+  sheet.classList.add('in-up');
+  seen('S-03c-Mapa-dia-pasado');
+}
+export function contOf(type) {
+  return {
+    meditacion: ['Historia', 'Ya la viste', 'la historia'], cuento: ['Historia', 'Ya la viste', 'la historia'], amigos: ['Historia', 'Ya la viste', 'la historia'],
+    intro: ['Historia', 'Ya la viste', 'la historia'], domingo: ['Evangelio', 'Ya lo escuchaste', 'el Evangelio'], cancion: ['Canción', 'Ya la cantaste', 'la canción'],
+    reto: ['Reto en familia', 'Ya lo hicieron', 'el reto'], juego: ['Juego con Teodoro', 'Ya jugaste', 'el juego'], video: ['Video', 'Ya lo viste', 'el video'],
+    nochebuena: ['Actividad final', 'Ya llegaste', 'la actividad'],
+  }[type];
+}
+
 function paintSheet(layer, T) {
   let sheet = [...layer.children].find(el => el.style.bottom === '10px');
   if (!sheet) return;
+  sheet.dataset.sheet = '1';
   const act = activeDay();
   if (act === 26 && !contentDone(26) && T.sheet26) {
     const t = document.createElement('template'); t.innerHTML = T.sheet26;
-    const s26 = t.content.firstElementChild; sheet.replaceWith(s26); sheet = s26;
+    const s26 = t.content.firstElementChild; s26.dataset.sheet = '1'; sheet.replaceWith(s26); sheet = s26;
     const a = sheet.querySelector('a'); if (a) on(layer, a, () => startDay(26));
     sheet.classList.add('in-up');
     return;
@@ -285,12 +328,7 @@ function paintSheet(layer, T) {
     }
     return r;
   };
-  const CONT = {
-    meditacion: ['Historia', 'Ya la viste', 'la historia'], cuento: ['Historia', 'Ya la viste', 'la historia'], amigos: ['Historia', 'Ya la viste', 'la historia'],
-    intro: ['Historia', 'Ya la viste', 'la historia'], domingo: ['Evangelio', 'Ya lo escuchaste', 'el Evangelio'], cancion: ['Canción', 'Ya la cantaste', 'la canción'],
-    reto: ['Reto en familia', 'Ya lo hicieron', 'el reto'], juego: ['Juego con Teodoro', 'Ya jugaste', 'el juego'], video: ['Video', 'Ya lo viste', 'el video'],
-    nochebuena: ['Actividad final', 'Ya llegaste', 'la actividad'],
-  }[d.type];
+  const CONT = contOf(d.type);
   const ty = TYPES[d.type];
   const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : null;
   const list = [];
