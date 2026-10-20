@@ -374,3 +374,33 @@ TRIVIA[1][3] = P('¿Qué nos pide Jesús en el Evangelio de hoy?', ['Dormir much
 TRIVIA[8][0] = P('¿Quién gritaba en el desierto «Preparen el camino del Señor»?', ['Un rey', 'Juan el Bautista', 'Un pastor', 'Un soldado'], 1, 'vivía en el desierto y comía miel silvestre', 'Juan el Bautista preparó el camino para Jesús (Mc 1,1-8).');
 TRIVIA[15][2] = P('Juan dijo: «Yo soy la voz que grita en el…»', ['mar', 'castillo', 'desierto', 'mercado'], 2, 'un lugar seco y lleno de arena', 'Juan era la voz que anunciaba que Jesús llegaba (Jn 1,23).');
 TRIVIA[22][4] = P('¿Qué le dijo el ángel Gabriel a María?', ['Vete a dormir', 'Cuidado con el lobo', 'Alégrate, llena de gracia', 'Prepara la cena'], 2, 'una palabra de alegría', 'El ángel le anunció que sería la mamá de Jesús (Lc 1,26-38).');
+
+// Revisión pastoral (21-oct-2026): exactitud bíblica, una sola respuesta válida y lenguaje para 5–8 años
+{
+  const fix = (k, patch) => { const [d, i] = k.split('.').map(Number); if (TRIVIA[d]?.[i]) Object.assign(TRIVIA[d][i], patch); };
+  const set = (k, q) => { const [d, i] = k.split('.').map(Number); if (TRIVIA[d]) TRIVIA[d][i] = q; };
+  // errores de fondo
+  set('9.4', P('Cuando nació Jesús y llegaron los pastores, ¿qué hacía María con todo lo que pasaba?', ['Lo guardaba en su corazón', 'Lo olvidaba', 'Se reía de todo', 'No le importaba'], 0, 'muy dentro de ella', 'María guardaba todo en su corazón (Lc 2,19).'));
+  fix('2.4', { q: '¿Quién llevó a Jesús en su vientre mientras lo esperaba?', pista: 'es su mamá', ok: 'María lo esperó nueve meses con amor' });
+  fix('21.4', { q: '¿Cómo se llama el burrito que nos acompaña hasta Belén?', pista: 'tiene orejas grandes', ok: '¡Teodoro! Y Jesús camina siempre con nosotros' });
+  fix('7.0', { ok: '¡Teodoro! Y Dios también camina con nosotros' });
+  // una sola respuesta válida
+  fix('8.2', { q: '¿Quién le dijo «sí» al ángel Gabriel?', pista: 'dijo «hágase»', ok: 'María creyó y dijo que sí' });
+  set('13.0', P('¿Dónde acostaron a Jesús al nacer?', ['En un pesebre', 'En un castillo', 'En un barco', 'En una caja de regalo'], 0, 'donde comen los animales', 'En un pesebre (Lc 2,7)'));
+  set('13.1', P('¿Quiénes estaban en el portal de Belén?', ['María', 'José', 'Un dragón', 'Jesús'], [0, 1, 3], 'son tres', '¡La Sagrada Familia!'));
+  set('13.4', P('¿Con quién coloreamos el pesebre?', ['Con mi familia', 'Con nadie', 'Con un robot', 'Con un rey'], 0, 'era un reto en familia', '¡En familia!'));
+  set('18.1', P('¿Cuántas ovejas se perdieron?', ['Una', 'Diez', 'Ninguna', 'Cien'], 0, 'solo una', 'Una sola, ¡y el pastor fue a buscarla!'));
+  if (TRIVIA[18]?.[3]?.o?.[3]) TRIVIA[18][3].o[3] = pic('Una oveja', 'oveja');
+  set('19.1', P('¿Dónde se pone una lámpara?', ['En lo alto, para que alumbre', 'Debajo de la cama', 'Dentro de una caja', 'Escondida en un rincón'], 0, 'para que alumbre a todos', 'En lo alto, para alumbrar a todos (Mt 5,15)'));
+  set('19.4', P('El reto de hoy fue…', ['Hacer algo bueno en secreto', 'Esconderse', 'Apagar las luces', 'Ver la tele'], 0, 'nadie lo supo', '¡Tu Padre del cielo ve el bien que haces en secreto! (Mt 6,4)'));
+  set('6.3', P('¿Cuál es el reto de hoy?', ['Escribir una carta a Jesús', 'Hacer una carrera', 'Hornear un pastel', 'Ver la tele'], 0, 'algo para escribir', '¡Una carta para Jesús!'));
+  // estilo y matices
+  fix('3.1', { pista: 'ábrele la puerta' });
+  fix('9.1', { pista: 'un ángel enviado por Dios' });
+  fix('6.0', { pista: 'era pariente de Jesús' });
+  fix('6.2', { pista: 'era pariente de María' });
+  fix('18.4', { ok: '¡Llamó a sus amigos para celebrar! Así se alegra el cielo (Lc 15,6-7)' });
+  fix('20.2', { q: 'Jesús usa su poder para…' });
+  fix('21.2', { q: '¿Quién cuidó a Jesús como papá aquí en la tierra?', pista: 'era carpintero', ok: '¡San José!' });
+  if (DAYS[19]) DAYS[19].retoSub = 'Tu Padre del cielo lo ve';
+}

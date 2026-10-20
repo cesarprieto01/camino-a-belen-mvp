@@ -95,7 +95,7 @@ const DECISIONES = [
   'El Desafío abierto desde el hub del reto no da panes extra: se ganan al marcar «¡Lo hicimos!» en el hub.',
   'Repetir la trivia de un día pasado: si mejora las estrellas gana +10 panes; si no, solo cuenta como práctica.',
   'Al terminar la trivia, Teodoro camina en el mapa al día siguiente y luego aparece «Mañana seguimos».',
-  'La trivia se completa con 5 preguntas propias por día (revisar con contenido): 3 imágenes, 4 textos o varias correctas.',
+  'Trivia: 5 preguntas por día, todas con 4 respuestas; revisión pastoral hecha (exactitud bíblica, una sola respuesta válida, lenguaje para 5–8 años). Falta la aprobación final del equipo de contenido.',
   'Estrellas: 5 de 5 = 3 estrellas · 3 o 4 = 2 · menos = 1. Solo cuenta el primer intento de cada pregunta.',
   'Ruleta: 10 casillas (7 panes, manzana, prenda de la semana, cuarto). Prendas: gorro, bufanda, bolso y cama de paja.',
   'La historia del reproductor dura 9 segundos para poder probar rápido.',
