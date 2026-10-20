@@ -63,14 +63,14 @@ const flows = {
     await tap('¡A jugar!'); await shot('trivia');
     await answerTrivia(); await shot('trivia-fin');
     await tap('Ahora no'); await p.waitForTimeout(1500); await shot('mapa-avanza');
-    await p.waitForTimeout(2500); await shot('cerrado');
-    await tap('Entendido'); await shot('hoy-fin');
+    await shot('mapa-sorpresa');
+    await tap('Atrás'); await shot('hoy-sorpresa');
   },
   async ruleta() {
     await scenario('Día de ruleta'); await shot('mapa');
     await tap('Ver historia'); await shot('ruleta');
     await tap('¡Girar!'); await p.waitForTimeout(5200); await shot('premio');
-    await tap('Empezar el cuento'); await shot('reproductor');
+    await tap('Ver historia'); await shot('reproductor');
   },
   async memorama() {
     await scenario('Memorama'); await shot('mapa');
@@ -123,23 +123,37 @@ const flows = {
   // regresos al origen: cada «Ahora no», «Cerrar» o «Volver» deja donde estabas
   async nav() {
     const expect = async (want, why) => { await p.waitForTimeout(700); const s = await screen(); if (s !== want) errs.push(`${why}: esperaba ${want}, quedó ${s}`); };
-    const card = async (txt, why) => { const ok = await p.evaluate(t => document.querySelector('#viewport .layer:last-child').textContent.includes(t), txt); if (!ok) errs.push(`${why}: falta «${txt}»`); };
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500);
     await expect('teaser', 'teaser automático'); await tap('Ahora no'); await expect('hoy', 'teaser Ahora no');
     await tap('Teodoro'); await expect('teodoro', 'tab Teodoro'); await shot('teodoro-sin');
     await tap('Inscribirme'); await p.waitForTimeout(2400); await expect('espera', 'inscribirme desde Teodoro'); await shot('espera');
     await tap('Invitar a un amigo'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Volver'); await expect('espera', 'volver de invitación');
-    await tap('Ahora no'); await expect('teodoro', 'espera Ahora no vuelve a Teodoro'); await shot('teodoro-dentro');
-    await card('Entrar', 'tarjeta inscrito en Teodoro');
-    await tap('Entrar'); await expect('espera', 'Entrar'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
+    await tap('Cerrar'); await expect('teodoro', 'espera Cerrar vuelve a Teodoro'); await shot('teodoro-dentro');
+    await tap('Entrar'); await expect('mapa', 'Entrar abre el camino'); await shot('mapa-dia0');
+    await tap('Atrás'); await expect('teodoro', 'del camino a Teodoro');
+    await tap('Ver Camino a Belén'); await expect('espera', 'la ilustración abre la espera'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
     await tap('Invitar'); await expect('invitacion', 'invitar desde Teodoro'); await tap('Volver'); await expect('teodoro', 'volver a Teodoro');
     await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
     await tap('Invitar'); await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Inscribirme'); await expect('invitacion', 'vista previa vuelve');
     await tap('Volver'); await expect('hoy', 'invitación vuelve a Hoy');
-    // ya empezó: mapa desde Teodoro → volver
-    await scenario('Hoy, tab Teodoro y Mundos'); await tap('Teodoro'); await tap('Ver mis mundos'); await tap('Adviento'); await expect('mapa', 'mapa desde mundos');
-    await tap('Volver a Mundos'); await expect('mundos', 'volver del mapa'); await tap('Volver'); await expect('teodoro', 'mundos vuelve a Teodoro');
+    // ya empezó y no está inscrito: «Unirme al camino» entra directo
+    await scenario('Hoy, tab Teodoro y Mundos'); await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.inscrito = false; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(900);
+    await tap('Unirme al camino'); await expect('mapa', 'unirse tarde'); await tap('Atrás'); await expect('hoy', 'unirse vuelve a Hoy');
+    await tap('Teodoro'); await tap('Ver mis mundos'); await tap('Adviento'); await expect('mapa', 'mapa desde mundos');
+    await tap('Atrás'); await expect('mundos', 'volver del mapa'); await tap('Volver'); await expect('teodoro', 'mundos vuelve a Teodoro');
+    // atrás del sistema
+    await tap('Adviento'); await expect('mapa', 'mapa otra vez'); await p.goBack(); await expect('teodoro', 'atrás del sistema en el mapa'); await tap('Ver mis mundos'); await p.goBack(); await expect('teodoro', 'atrás del sistema en mundos'); await p.goBack(); await expect('teodoro', 'atrás en una pestaña no sale');
+  },
+  // un día sin sorpresa: el mapa avanza y sale «Mañana seguimos» como hoja sobre el mapa
+  async cerrado() {
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 10, inscrito: true }); for (let d = 0; d < 10; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.completos[10] = { contenido: true, trivia: true, estrellas: 3 }; c.S.pasoAnimado = 10; c.save(); c.go('mapa', { thenCerrado: true }, 'none'); });
+    await p.waitForTimeout(3200); await shot('cerrado');
+    const ov = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen).join('>'));
+    if (ov !== 'mapa>cerrado') errs.push('cerrado no es hoja sobre el mapa: ' + ov);
+    await tap('¿Les gustó hoy?'); await shot('calificar'); await tap('¡Mucho!'); await shot('calificar-elegido'); await tap('Enviar'); await p.waitForTimeout(800);
+    if (await screen() !== 'mapa') errs.push('tras calificar: esperaba mapa, quedó ' + await screen());
+    await tap('Atrás'); await shot('hoy-fin');
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };

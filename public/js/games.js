@@ -1,5 +1,5 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
-import { S, save, A, $, $$, on, find, go, back, register, toast, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
+import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
   floaty, confetti, addPanes, dark, stars, isDone } from './core.js';
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS } from './data.js';
 import { finishTrivia, openSorpresa } from './flow.js';
@@ -9,10 +9,11 @@ const speak = text => {
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text); u.lang = 'es-MX'; u.rate = .95; speechSynthesis.speak(u);
-  } catch { toast('Escuchar', 'Este navegador no lee en voz alta'); }
+  } catch { nota('Escuchar', 'Este navegador no lee en voz alta'); }
 };
 const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
-const toMapAfterGame = () => go('mapa', { thenCerrado: true }, 'down', { replace: true });
+// al mapa; «Mañana seguimos» solo si ya no queda nada del día (ni la sorpresa)
+const toMapAfterGame = (n) => go('mapa', { thenCerrado: !(n != null && RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') }, 'down', { replace: true });
 
 // ================= TRIVIA =================
 const isMulti = q => Array.isArray(q.a);
@@ -111,6 +112,7 @@ register('trivia', {
       if (i === 4) a.textContent = 'Ver resultado';
       root.appendChild(a); a.classList.add('a-rise');
       on(root, a, () => {
+        if (!p.replay && i < 4) { (S.triviaProgreso ||= {})[n] = { i: i + 1, ok: ok + (fallos === 0 ? 1 : 0) }; save(); }
         if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'push', { replace: true });
         else go('triviaFin', { day: n, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'modal', { replace: true });
       });
@@ -201,6 +203,8 @@ register('triviaFin', {
     const n = p.day;
     const { est, first, gana, mejoro } = finishTrivia(n, p.ok, p.replay);
     setText(root, /^\d de 5$/, `${p.ok} de 5`);
+    setText(root, 'respuestas correctas', 'a la primera');
+    if (S.triviaProgreso) delete S.triviaProgreso[n];
     setText(root, '¡Gran trivia!', est === 3 ? '¡Trivia perfecta!' : est === 2 ? '¡Gran trivia!' : '¡Buen intento!');
     const starsBox = root.querySelector('[role=img][aria-label^="Ganaste"]');
     if (starsBox) {
@@ -221,10 +225,10 @@ register('triviaFin', {
     const dlg = root.querySelector('[role=dialog]'); dlg?.classList.add('a-rise');
     $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).slice(-1).forEach(i => i.classList.add('a-hop'));
     if (est >= 2) confetti(layer, 195, 300, est === 3 ? 60 : 30);
-    on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame());
+    on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame(n));
     on(root, 'Jugar otra vez', () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'fade'));
     on(root, 'Abrir la sorpresa', () => openSorpresa(n));
-    on(root, 'Ahora no', () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(); });
+    on(root, 'Ahora no', () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(n); });
   },
 });
 
@@ -235,9 +239,9 @@ function sorpresaHecha(n, layer) {
   return first;
 }
 function paintFin(root, layer, n, first, bind = true) {
-  replaceText(root, /guardadas en el día \d+/, `guardadas en el día ${n}`);
+  replaceText(root, /guardadas en el día \d+/, `Tus estrellas del día ${n}`);
   const s = stars(n);
-  const box = textEl(root, /guardadas en el día/)?.parentElement;
+  const box = textEl(root, /estrellas del día/)?.parentElement;
   if (box) $$(box, 'svg').forEach((sv, k) => sv.querySelectorAll('path').forEach(pt => pt.setAttribute('fill', k < s ? '#F7C948' : '#D3DDE5')));
   const bread = $$(root, 'img').find(i => i.src.includes(IMG.pan) && parseFloat(i.style.width) > 60);
   bread?.parentElement?.classList.add('a-pop');
@@ -246,7 +250,7 @@ function paintFin(root, layer, n, first, bind = true) {
   confetti(layer, 195, 260, 44);
   if (bind) { on(root, 'Volver al camino', toMapAfterGame); on(root, 'Cerrar', toMapAfterGame); }
 }
-const later = n => () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(); };
+const later = n => () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(n); };
 
 // ================= MEMORAMA =================
 register('memoramaReglas', {
@@ -255,7 +259,6 @@ register('memoramaReglas', {
     on(root, '¡A jugar!', () => go('memorama', { day: p.day }, 'fade'));
     on(root, 'Ahora no', later(p.day)); on(root, 'Cerrar', later(p.day));
     $$(root, 'img').forEach((i, k) => { if (/Teodoro/.test(i.alt || '') || k === 2) i.classList.add('a-bob'); });
-    $$(root, '[style*="rotate"]').forEach(c => c.classList.add('a-sway'));
   },
 });
 register('memorama', {
@@ -280,7 +283,7 @@ register('memorama', {
     deck.forEach((k, idx) => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'mm-card'; b.dataset.bound = '1';
-      b.setAttribute('aria-label', 'Carta boca abajo');
+      b.setAttribute('aria-label', `Carta ${idx + 1}, boca abajo`);
       b.innerHTML = `<span class="mm-in"><span class="mm-face"><img src="${A(IMG.dorso)}" alt="" style="width:100%;height:100%;object-fit:cover"></span><span class="mm-face mm-back" style="${faceStyle};position:absolute;inset:0;width:auto;height:auto;display:grid;place-items:center;transform:rotateY(180deg)"><img src="${A(IMG[k])}" alt="" style="width:84px;height:${k === 'teodoro' ? 108 : 100}px;object-fit:contain"></span></span>`;
       b.style.animation = `pop .4s ${idx * .035}s cubic-bezier(.2,.9,.3,1.3) both`;
       b.addEventListener('click', async () => {
@@ -294,7 +297,7 @@ register('memorama', {
           found++; paint(); a.b.classList.add('done'); c.b.classList.add('done');
           if (hintEl) hintEl.textContent = found === 6 ? '¡Encontraste todas!' : `¡Pareja! ${NAMES[k]}`;
           lock = false;
-          if (found === 6) { confetti(layer, 195, 400, 50); await wait(900); go('memoramaFin', { day: n, moves }, 'fade'); }
+          if (found === 6) { await wait(700); go('memoramaFin', { day: n, moves }, 'fade'); }
         } else {
           await wait(850);
           a.b.classList.remove('up'); c.b.classList.remove('up');
@@ -327,7 +330,6 @@ register('adivinanzaIntro', {
     on(root, '¡A jugar!', () => go('adivinanza', { day: p.day, words: shuffle(ADIVINANZA).slice(0, 5), k: 0, res: [] }, 'fade'));
     on(root, 'Ahora no', later(p.day)); on(root, 'Cerrar', later(p.day));
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
-    $$(root, '[style*="rotate"]').forEach(c => c.classList.add('a-sway'));
   },
 });
 const SECS = 45;
@@ -340,7 +342,7 @@ register('adivinanza', {
     const prog = root.querySelector('[role=progressbar]');
     if (prog) {
       prog.setAttribute('aria-label', `Palabra ${k + 1} de 5`);
-      const fill = prog.querySelector('div > div'); if (fill) fill.style.width = (k / 5 * 100) + '%';
+      const fill = prog.querySelector(':scope > div > div') || prog.querySelector('div > div'); if (fill) fill.style.width = (k / 5 * 100) + '%'; prog.setAttribute('aria-valuenow', String(k));
       setText(prog, /^\d\/5$/, `${k + 1}/5`);
     }
     const okCount = res.filter(r => r.ok).length;
@@ -356,7 +358,7 @@ register('adivinanza', {
     $$(root, '[style*="rotate(1.6deg)"], [style*="rotate(-1.6deg)"]').forEach((c, i) => c.style.opacity = k < 4 - i ? '1' : '0');
     // temporizador
     const timer = root.querySelector('[aria-label^="Quedan"]');
-    const tFill = timer?.querySelector('div > div'), tTxt = timer && textEl(timer, /\d+s/);
+    const tFill = timer?.querySelector(':scope > div > div') || timer?.querySelector('div > div'), tTxt = timer && textEl(timer, /\d+s/);
     let left = SECS, done = false;
     const t0 = performance.now();
     const tick = () => {
@@ -373,14 +375,13 @@ register('adivinanza', {
       const r = [...res, { w: w.w, ok }];
       if (card) card.animate([{ transform: 'none', opacity: 1 }, { transform: `translateX(${ok ? 420 : -420}px) rotate(${ok ? 12 : -12}deg)`, opacity: 0 }], { duration: 320, easing: 'ease-in', fill: 'forwards' });
       seen(ok ? 'V2-Adivinanza-siguiente-claro' : 'V2-Adivinanza-pasar-claro');
-      if (ok) floaty(layer, '¡Sí!', 170, 300, null);
+      if (ok) { floaty(layer, '¡Sí!', 170, 300, null); navigator.vibrate?.(20); }
       setTimeout(() => k < 4 ? go('adivinanza', { ...p, k: k + 1, res: r }, 'none') : go('adivinanzaFin', { day: n, res: r }, 'fade'), 330);
     };
-    if (timer) on(root, timer, () => { if (done) return; done = true; go('adivinanzaTiempo', { ...p, res: [...res, { w: w.w, ok: false }] }, 'modal'); });
+    if (timer) { timer.removeAttribute('role'); timer.style.cursor = 'default'; }
     on(root, '¡La adivinaron!', () => next(true));
     on(root, 'Pasar a otra palabra', () => next(false));
     on(root, 'Salir', () => { done = true; later(n)(); });
-    ['Haz mímica', 'Haz sonidos', 'Descríbela'].forEach(t => { const el = textEl(root, t)?.parentElement; if (el) on(root, el, () => { animate(el, 'a-pop'); toast(t, 'Una idea para dar pistas'); }); });
   },
 });
 register('adivinanzaTiempo', {
@@ -391,7 +392,6 @@ register('adivinanzaTiempo', {
     const img = $$(root, 'img').find(i => i.src.includes(IMG.estrella)); if (img) img.src = A(IMG[w.img]);
     const dlg = [...root.children].reverse().find(el => el.style.background === 'rgb(255, 255, 255)' || el.getAttribute('role') === 'dialog');
     dlg?.classList.add('a-rise');
-    $$(root, 'div').filter(el => el.style.borderRadius === '50%').slice(-1).forEach(el => el.classList.add('a-sway'));
     on(root, 'Siguiente', () => p.k < 4 ? go('adivinanza', { ...p, k: p.k + 1 }, 'fade') : go('adivinanzaFin', { day: p.day, res: p.res }, 'fade'));
   },
 });
@@ -428,16 +428,16 @@ register('desafioIntro', {
   file: () => F('V2-Desafio-intro-claro', 'V2-Desafio-intro'),
   mount(root, p) {
     const salir = p.fromHub ? () => back('hub') : later(p.day);
-    on(root, '¡Vamos!', () => go('desafio', { day: p.day, c: 0, fromHub: p.fromHub }, 'fade'));
+    on(root, '¡Vamos!', () => go('desafio', { day: p.day, fromHub: p.fromHub }, 'fade'));
     on(root, 'Ahora no', salir); on(root, 'Cerrar', salir);
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
-    $$(root, '[style*="rotate"]').forEach(c => c.classList.add('a-sway'));
   },
 });
 register('desafio', {
   file: () => F('V2-Desafio-claro', 'V2-Desafio'),
   mount(root, p, layer) {
-    let c = p.c ?? 0;
+    // cada día de desafío empieza en otra carta del mazo
+    let c = p.c ?? (Math.floor(p.day / 3) * 2) % DESAFIOS.length;
     const scroll = [...root.children].find(el => el.style.top === '360px');
     const tx = $$(scroll, 'div, span').filter(el => el.childElementCount === 0 && el.textContent.trim());
     const paint2 = () => { const d = DESAFIOS[c]; if (tx[0]) tx[0].textContent = d.t; if (tx[1]) tx[1].textContent = d.sub; };
@@ -448,10 +448,10 @@ register('desafio', {
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
     on(root, 'Sacar otra carta', async () => {
       await scroll.animate([{ transform: 'none' }, { transform: 'rotateY(90deg) scale(.9)' }], { duration: 200, easing: 'ease-in', fill: 'forwards' }).finished;
-      c = (c + 1) % DESAFIOS.length; paint2(); if (c === 1) seen('V2-Desafio-carta2-claro');
+      c = (c + 1) % DESAFIOS.length; paint2(); seen('V2-Desafio-carta2-claro');
       scroll.animate([{ transform: 'rotateY(-90deg) scale(.9)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
     });
-    on(root, '¡Lo hicimos!', () => { confetti(layer, 195, 520, 30); setTimeout(() => go('desafioFin', { day: p.day, c, fromHub: p.fromHub }, 'fade'), 500); });
+    on(root, '¡Lo hicimos!', (ev, el) => { animate(el, 'a-pop'); navigator.vibrate?.(20); setTimeout(() => go('desafioFin', { day: p.day, c, fromHub: p.fromHub }, 'fade'), 260); });
     on(root, 'Salir', p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day));
   },
 });
@@ -464,7 +464,7 @@ register('desafioFin', {
     const stamp = $$(root, '*').find(el => /HECHO EN/.test(el.textContent) && el.childElementCount <= 3 && el.style.borderRadius === '50%');
     if (stamp) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';
     $$(root, 'img').forEach(i => { i.addEventListener('error', () => { i.src = A(IMG.corona); }, { once: true }); if (i.complete && !i.naturalWidth) i.src = A(IMG.corona); });
-    on(root, 'Califícanos', () => go('calificacion', { back: 'desafioFin', day: p.day, c: p.c, fromHub: p.fromHub }, 'up'));
+    const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
     if (p.fromHub) {
       // el reto del hub: los panes se ganan al marcar «¡Lo hicimos!» en el hub
       paintFin(root, layer, p.day, false, false);

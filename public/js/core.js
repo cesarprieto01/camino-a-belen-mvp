@@ -150,17 +150,20 @@ export const screens = () => SCREENS;
 let busy = Promise.resolve();
 
 // Historial: para que «volver», «Ahora no» y cerrar regresen a donde estaba la familia
-const stack = [];
+const stack = []; export const _stack = stack;
 const TABS = ['hoy', 'teodoro', 'mundos'];
 /** Ir a una pantalla. opts.replace: no deja la actual en el historial (pasos automáticos). */
 export function go(name, params = {}, anim = 'push', opts = {}) {
+  if (inFlight === name) return busy; // doble toque
   if (cur && !opts.fromBack && !opts.replace && cur.name !== 'estatica') {
-    stack.push({ name: cur.name, params: cur.params });
+    const { thenCerrado, ...keep } = cur.params || {}; // lo de un solo uso no vuelve al regresar
+    stack.push({ name: cur.name, params: keep });
     if (stack.length > 60) stack.shift();
   }
   // las pestañas principales empiezan un historial nuevo
   if (TABS.includes(name) && !opts.fromBack && opts.keepStack !== true && opts.tab) stack.length = 0;
-  busy = busy.then(() => _go(name, params, anim)).catch(e => { console.error(e); toast('Algo falló al abrir la pantalla', e.message); });
+  inFlight = name;
+  busy = busy.then(() => _go(name, params, anim)).catch(e => { console.error(e); nota('Algo falló al abrir la pantalla', e.message); }).finally(() => { inFlight = null; });
   return busy;
 }
 /** Volver a la pantalla anterior (o a fallback si no hay historial). Salta las que se indiquen. */
@@ -171,9 +174,59 @@ export function back(fallback = 'hoy', anim = 'back', skip = []) {
   return go(fallback, {}, anim, { fromBack: true });
 }
 export const clearHistory = () => { stack.length = 0; };
+// «Atrás» del sistema (gesto en iPhone, botón en Android, flecha del navegador): hace lo mismo que «Volver».
+// Se mantiene siempre una entrada de más en el historial para atraparlo sin salir de la app.
+try { history.replaceState({ cab: 0 }, ''); history.pushState({ cab: 1 }, ''); } catch { /* */ }
+addEventListener('popstate', () => {
+  try { history.pushState({ cab: 1 }, ''); } catch { /* */ }
+  const L = document.querySelector('#viewport .layer:last-child');
+  // primero se cierra lo que esté abierto encima (hoja, globo, menú)
+  const close = L && [...L.querySelectorAll('[data-dismiss]')].pop();
+  if (close) { close.click(); return; }
+  // en el mapa: hoja de un día pasado o de la energía → vuelve a la hoja de hoy
+  if (L?.classList.contains('overlay')) return; // pop-up que se cierra solo con sus botones
+  if (L?.dataset.past != null) { go(cur.name, cur.params, 'none', { replace: true }); return; }
+  if (!stack.length && TABS.includes(cur?.name)) return;
+  back(TABS.includes(cur?.name) ? cur.name : 'hoy');
+});
+// Pop-ups de verdad: con 'modal' u 'sheet', la pantalla de abajo sigue montada y quieta;
+// encima entran un velo y el diálogo (u hoja). Al cerrar se destapa sin volver a montarla.
+const OVERLAY = new Set(['modal', 'sheet']);
+const snap = () => JSON.stringify([S.hoy, S.inscrito, S.completos, S.bateria, S.panes, S.prendas, S.plan, S.cuartoNuevo, S.tema, S.ruletas, S.regreso]);
+const sameParams = (a = {}, b = {}) => { const s = ({ thenCerrado, ...x }) => JSON.stringify(x); return s(a) === s(b); };
+let inFlight = null;
+/** Deja del lienzo solo el velo y el diálogo: lo de antes del velo era un fondo de muestra. */
+function asOverlay(layer, root, anim) {
+  const kids = [...root.children];
+  const isScrim = el => /rgba\(/.test(el.style.background) && el.style.top === '0px' && el.style.bottom === '0px' && el.style.left === '0px' && !el.children.length;
+  const i = kids.findIndex(isScrim);
+  if (i < 0) return false;
+  kids.slice(0, i).forEach(el => el.remove());
+  root.style.background = 'transparent'; root.style.backgroundImage = 'none';
+  kids.slice(i + 1).filter(el => el.style.top === '0px' && /^\s*9:41/.test(el.textContent)).forEach(el => el.remove());
+  const scrim = kids[i]; scrim.classList.add('ov-scrim');
+  const dismiss = SCREENS[layer.dataset.screen]?.dismiss;
+  if (dismiss) { scrim.dataset.dismiss = ''; scrim.addEventListener('click', () => dismiss()); scrim.style.cursor = 'pointer'; }
+  const body = document.createElement('div'); body.className = 'ov-body';
+  kids.slice(i + 1).filter(el => el.isConnected).forEach(el => body.appendChild(el));
+  root.appendChild(body);
+  layer.classList.add('overlay', anim === 'sheet' ? 'ov-sheet' : 'ov-modal');
+  return true;
+}
+function closeOverlay(ov, keepBase) {
+  ov.layer.inert = true;
+  ov.layer.classList.add('ov-out');
+  setTimeout(() => ov.layer.remove(), 260);
+  if (keepBase) { ov.base.layer.inert = false; ov.base.layer.classList.remove('under'); }
+}
 async function _go(name, params, anim) {
   const def = SCREENS[name];
   if (!def) { hueco(`Pantalla «${name}» sin definir`); return; }
+  const prev = cur;
+  // cerrar un pop-up y volver a la pantalla de abajo tal cual estaba
+  if (prev?.base && prev.base.name === name && sameParams(prev.base.params, params) && prev.snap === snap()) {
+    closeOverlay(prev, true); cur = prev.base; history.replaceState(null, '', '#pantalla=' + name); emit(); return;
+  }
   const file = typeof def.file === 'function' ? def.file(params) : def.files[dark() ? 1 : 0];
   const markup = await html(file);
   const layer = document.createElement('div');
@@ -182,26 +235,38 @@ async function _go(name, params, anim) {
   layer.innerHTML = '<div class="root">' + markup + '</div>';
   const root = layer.firstElementChild.firstElementChild;
   const h = MAN[file]?.h || 844;
-  const prev = cur;
+  const isOv = OVERLAY.has(anim) && prev && asOverlay(layer, root, anim);
+  // la pantalla que se va: si era un pop-up, también se va lo que tenía debajo
+  const leaving = prev ? (prev.base ? [prev, prev.base] : [prev]) : [];
   cur = { name, layer, params, file };
-  vp().appendChild(layer);
+  if (isOv) { cur.base = prev.base || prev; cur.snap = snap(); }
+  // volver a la pantalla de abajo con el estado cambiado: se monta debajo y el pop-up se va encima
+  const underOv = !isOv && prev?.base && prev.base.name === name;
+  if (underOv) vp().insertBefore(layer, prev.layer); else vp().appendChild(layer);
   unifyNav(root, name);
   if (name !== 'estatica') seen(file);
-  try { await def.mount?.(root, params, layer); } catch (e) { console.error(e); toast('Error en ' + name, e.message); }
-  if (h > 844 && !def.noScroll) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
+  // la transición no espera las animaciones internas del mount (p. ej. Teodoro caminando): solo lo que pinta la pantalla
+  try {
+    const m = def.mount?.(root, params, layer);
+    if (m?.then) await Promise.race([m.catch(e => { console.error(e); nota('Error en ' + name, e.message); }), new Promise(r => setTimeout(r, 120))]);
+  } catch (e) { console.error(e); nota('Error en ' + name, e.message); }
+  if (h > 844 && !def.noScroll && !isOv) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
   bindFallback(layer, layer);
-  const a = reduced() ? 'fade' : anim;
-  if (prev) {
-    const inC = { push: 'in-push', back: 'in-back', fade: 'in-fade', modal: 'in-modal', up: 'in-up', down: 'in-fade', none: '' }[a];
-    const outC = { push: 'out-push', back: 'out-back', fade: 'out-fade', modal: 'out-stay', up: 'out-stay', down: 'out-down', none: '' }[a];
-    if (a === 'back' || a === 'down') { prev.layer.style.zIndex = 3; }
+  if (isOv) {
+    const base = cur.base;
+    if (prev.base) closeOverlay(prev, false); // un pop-up reemplaza a otro
+    base.layer.inert = true; base.layer.classList.add('under');
+  } else if (prev) {
+    const a = reduced() ? 'fade' : (underOv ? 'none' : anim);
+    const inC = { push: 'in-push', back: 'in-back', fade: 'in-fade', modal: 'in-modal', sheet: 'in-up', up: 'in-up', down: 'in-under', none: '' }[a];
+    const outC = { push: 'out-push', back: 'out-back', fade: 'out-stay', modal: 'out-stay', sheet: 'out-stay', up: 'out-under', down: 'out-down', none: '' }[a];
+    if (a === 'back' || a === 'down') prev.layer.style.zIndex = 3;
     inC && layer.classList.add(inC);
-    outC && prev.layer.classList.add(outC);
-    prev.def?.unmount?.();
-    SCREENS[prev.name]?.unmount?.(prev);
-    setTimeout(() => prev.layer.remove(), a === 'none' ? 0 : 420);
+    leaving.forEach(l => { l.layer.inert = true; SCREENS[l.name]?.unmount?.(l); });
+    if (prev.base) { closeOverlay(prev, false); setTimeout(() => prev.base.layer.remove(), underOv ? 0 : 420); if (!underOv && outC) prev.base.layer.classList.add(outC); }
+    else { outC && prev.layer.classList.add(outC); setTimeout(() => prev.layer.remove(), a === 'none' ? 0 : 420); }
   }
-  layer.addEventListener('animationend', () => layer.classList.remove('in-push', 'in-back', 'in-fade', 'in-modal', 'in-up'), { once: true });
+  layer.addEventListener('animationend', () => layer.classList.remove('in-push', 'in-back', 'in-fade', 'in-modal', 'in-up', 'in-under'), { once: true });
   history.replaceState(null, '', '#pantalla=' + name);
   emit();
 }
@@ -299,17 +364,23 @@ export function teodoroImg(level = S.bateria) { return A(TEODORO_IDS[level]); }
 
 // ---------- Avisos y huecos ----------
 let tT;
-export function toast(msg, sub = '') {
+export function toast(msg, sub = '', kind = '') {
   const t = document.getElementById('toast');
+  t.classList.remove('on');
   t.innerHTML = msg + (sub ? `<small>${sub}</small>` : '');
-  t.classList.add('on');
+  const L = document.querySelector('#viewport .layer:last-child');
+  t.className = (kind ? kind + ' ' : '') + (L?.querySelector('nav') ? '' : 'top');
+  t.setAttribute('role', 'status'); t.setAttribute('aria-live', 'polite');
+  void t.offsetWidth; t.classList.add('on');
   clearTimeout(tT); tT = setTimeout(() => t.classList.remove('on'), 2600);
 }
+/** Nota para el equipo (lo que en la app real ya existe o se simula). */
+export const nota = (msg, sub = '') => toast(msg, sub, 'nota');
 /** Algo que se tocó y no tiene diseño ni regla todavía: se avisa y se apunta en «Huecos». */
 export function hueco(label, el) {
   const where = cur?.name || '—';
   if (el) { el.classList.add('hueco-ring'); setTimeout(() => el.classList.remove('hueco-ring'), 1400); }
-  toast('Aún sin diseño', label);
+  nota('Aún sin diseño', label);
   const key = where + '|' + label;
   if (!S.huecos.some(h => h.key === key)) { S.huecos.unshift({ key, where, label, at: new Date().toISOString() }); save(); }
 }
@@ -332,7 +403,7 @@ export function confetti(layer, x = 195, y = 300, n = 36) {
     const ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 200;
     c.style.cssText = `left:${x}px;top:${y}px;background:${colors[i % colors.length]};--dx:${Math.cos(ang) * dist}px;--dy:${Math.sin(ang) * dist + 160}px;--rot:${Math.random() * 720 - 360}deg;animation-delay:${Math.random() * .12}s`;
     layer.appendChild(c);
-    setTimeout(() => c.remove(), 1700);
+    setTimeout(() => c.remove(), 1800);
   }
 }
 export function animate(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }

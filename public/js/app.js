@@ -1,6 +1,6 @@
 // Arranque del MVP y panel de control para el equipo.
 // El panel sigue el orden del lienzo (secciones 1 a 8) para que diseño y prueba hablen el mismo idioma.
-import { S, save, reset, boot, go, cur, onChange, toast, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, prefetch, logical, flowScreens, sections } from './core.js';
+import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, prefetch, logical, flowScreens, sections } from './core.js';
 import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf } from './data.js';
 import './flow.js';
 import './map.js';
@@ -102,7 +102,9 @@ const DECISIONES = [
 const PENDIENTES_LIENZO = [
   'Escenas de los días 1 y 2 (Arte 5 las marca como «FALTA»).',
   'Ícono del día 25 · Video (Íconos del camino: «Aún sin ícono»).',
-  'Tab Teodoro dice «Ces» y racha 1 (va dentro de la imagen); Hoy dice «Lucía» y racha 3. Unificar en el lienzo.',
+  'Tab Teodoro dice «Ces», racha 1 y 30 panes (van dentro de la imagen); Hoy dice «Lucía» y racha 3. Unificar en el lienzo y que los panes se vean sumar.',
+  'Reproductor del día 0 sin ilustración propia.',
+  'Prendas de la ruleta: falta el arte de Teodoro con cada prenda puesta en su cuarto.',
   'Fuera de Theo Quest a propósito: pestañas Explorar, Música y Favoritos; villancicos y oraciones generales; paywall «Ver Theo Premium».',
 ];
 
@@ -112,7 +114,7 @@ function advance(k) {
   S.hoy = Math.min(27, S.hoy + k);
   if (k >= RULES.regresoDias && S.inscrito && S.hoy >= 1) S.regreso = true;
   save();
-  toast(k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy >= 27 ? 'Ya es Navidad' : `Hoy es el día ${S.hoy}`);
+  nota(k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy >= 27 ? 'Ya es Navidad' : `Hoy es el día ${S.hoy}`);
   go('hoy', {}, 'fade');
 }
 
@@ -238,12 +240,12 @@ panel.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.tab) { tab = t.dataset.tab; if (t.dataset.filtro) filtro = t.dataset.filtro; try { localStorage.setItem('cab-tab2', tab); } catch { /* */ } render(); return; }
   if (t.dataset.filtro) { filtro = t.dataset.filtro; render(); return; }
-  if (t.dataset.plan) { S.plan = t.dataset.plan; save(); toast(S.plan === 'free' ? 'Ahora eres free' : 'Ahora eres premium'); return; }
+  if (t.dataset.plan) { S.plan = t.dataset.plan; save(); nota(S.plan === 'free' ? 'Ahora eres free' : 'Ahora eres premium'); return; }
   if (t.dataset.tema) { S.tema = t.dataset.tema; save(); go(cur?.name === 'estatica' ? 'hoy' : cur?.name || 'hoy', cur?.params || {}, 'fade'); return; }
   if (t.dataset.ins) { S.inscrito = t.dataset.ins === '1'; save(); go('hoy', {}, 'fade'); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none'); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
-  if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); toast(r.t, r.mira); closeMobile(); return; }
+  if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
   if (t.dataset.go) { go(t.dataset.go, {}, 'fade'); closeMobile(); return; }
   if (t.dataset.file) { go('estatica', { file: t.dataset.file, back: cur?.name !== 'estatica' ? cur?.name : 'hoy', backParams: cur?.params }, 'fade'); closeMobile(); return; }
   const a = t.dataset.act;
@@ -253,11 +255,11 @@ panel.addEventListener('click', e => {
   if (a === 'dayMinus') { S.hoy = Math.max(0, S.hoy - 1); save(); go('hoy', {}, 'fade'); }
   if (a === 'panMinus' || a === 'panPlus') { S.panes = Math.max(0, S.panes + (a === 'panPlus' ? 10 : -10)); save(); }
   if (a === 'reset') { reset({ hoy: 9 }); fill(8); save(); go('hoy', {}, 'fade'); }
-  if (a === 'share') { navigator.clipboard?.writeText(shareURL()).then(() => toast('Enlace copiado', 'Abre la app en este mismo estado')); }
+  if (a === 'share') { navigator.clipboard?.writeText(shareURL()).then(() => nota('Enlace copiado', 'Abre la app en este mismo estado')); }
   if (a === 'clearH') { S.huecos = []; save(); }
   if (a === 'copyNotes' || a === 'dlNotes') {
     const md = notesMarkdown();
-    if (a === 'copyNotes') navigator.clipboard?.writeText(md).then(() => toast('Notas copiadas', 'Pégalas en Slack o en el lienzo'));
+    if (a === 'copyNotes') navigator.clipboard?.writeText(md).then(() => nota('Notas copiadas', 'Pégalas en Slack o en el lienzo'));
     else { const b = new Blob([md], { type: 'text/markdown' }); const u = URL.createObjectURL(b); const l = document.createElement('a'); l.href = u; l.download = 'camino-a-belen-notas.md'; l.click(); URL.revokeObjectURL(u); }
   }
 });
@@ -298,7 +300,7 @@ let rT; onChange(() => { syncTheme(); clearTimeout(rT); rT = setTimeout(() => { 
   let fresh = true; try { fresh = !localStorage.getItem('cab-mvp-v1'); } catch { /* */ }
   if (fresh && !hp.get('estado')) { fill(8); save(); }
   const start = hp.get('pantalla');
-  const safe = ['hoy', 'mapa', 'teodoro', 'mundos', 'cerrado'].includes(start) ? start : 'hoy';
+  const safe = ['hoy', 'mapa', 'teodoro', 'mundos'].includes(start) ? start : 'hoy';
   if (hp.get('estado')) save();
   await go(safe, {}, 'none');
   render();

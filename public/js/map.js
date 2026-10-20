@@ -1,5 +1,5 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
-import { S, save, A, $, $$, on, frag, go, clearHistory, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, frag, go, back, clearHistory, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
 import { DAYS, TYPES, RULES, IMG, dateOf, iconOf, SORPRESA_NOMBRE } from './data.js';
 import { startDay, ctaLabel } from './flow.js';
@@ -132,12 +132,16 @@ register('mapa', {
       teo.style.width = '50px'; teo.style.height = '96px';
       teo.classList.add('a-bob');
       if (focus >= 1) place(S.pasoAnimado || focus); else teo.style.display = 'none';
+      // volvió tras días sin caminar: Teodoro despierta al verlos
+      if (params.despierta && !reduced()) { teo.classList.remove('a-bob'); setTimeout(() => { teo.src = teodoroImg(Math.max(S.bateria, 3)); animate(teo, 'a-hop'); }, 500); }
     }
     if (bubble) {
       const nx = (act ?? focus) + 1;
       if (nodes[nx]) {
-        bubble.style.left = (nodes[nx].p.x + 72) + 'px'; bubble.style.top = (nodes[nx].p.y + 14) + 'px';
-        replaceText(bubble, /¿Qué habrá.*\?/, nx > lastDay() ? '¿Qué habrá mañana?' : '¡Sigue el camino!');
+        bubble.style.top = (nodes[nx].p.y + 14) + 'px'; bubble.style.zIndex = '1';
+        replaceText(bubble, /¿Qué habrá.*\?/, S.hoy <= 0 ? '¡Nos vemos el 29!' : nx > lastDay() ? '¿Qué habrá mañana?' : '¡Sigue el camino!');
+        const w = bubble.offsetWidth || 162;
+        bubble.style.left = Math.min(390 - 12 - w, nodes[nx].p.x + 72) + 'px';
         bubble.classList.add('a-rise');
       } else bubble.remove();
     }
@@ -149,8 +153,10 @@ register('mapa', {
       const opened = !!S.ruletas[d];
       const nextUp = !opened && RULES.ruleta.find(x => !S.ruletas[x]) === d;
       a.innerHTML = (opened ? T.houseOpen : nextUp ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = opened ? 'Abierta' : d === lastDay() ? 'Hoy' : d < lastDay() ? 'Pendiente' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
+      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Abierta' : d === lastDay() ? 'Hoy' : d < lastDay() ? 'Pendiente' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
       replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
+      // el candado solo en lo que aún no llega
+      if (/^(Hoy|Pendiente)$/.test(label)) a.querySelectorAll('span svg').forEach(s => s.remove());
       if (nextUp || (d <= lastDay() && !opened)) a.querySelector('img').classList.add('a-sway');
       // lienzo: la casa ya no es un botón; solo la abierta deja ver su premio
       a.setAttribute('aria-label', opened ? `Ruleta sorpresa de la semana ${i + 1}: ya la abriste. Ver tu premio` : `Ruleta sorpresa de la semana ${i + 1}: aparece al iniciar el día ${d}`);
@@ -166,13 +172,14 @@ register('mapa', {
     });
 
     // 5) Cabecera fija
-    replaceText(layer, /^(\s*)9(\s*)$/, `$1${Math.max(focus, 0)}$2`);
     const chip = layer.querySelector('[aria-label^="Día 9 de 26"]');
+    if (chip) replaceText(chip, /^(\s*)9(\s*)$/, `$1${Math.max(focus, 0)}$2`);
     chip?.setAttribute('aria-label', `Día ${focus} de 26`);
     paintEnergy(layer);
     // el mapa recuerda desde dónde se entró al camino (Hoy, Teodoro, Mundos o la espera)
     if (params.from) mapOrigin = params.from;
-    on(layer, 'Volver a Mundos', leaveMap);
+    const volver = on(layer, 'Volver a Mundos', leaveMap);
+    volver?.setAttribute('aria-label', 'Atrás');
     const bat = layer.querySelector('[aria-label^="Energía de Teodoro"]');
     if (bat) on(layer, bat, () => showEnergy(layer));
     const backHoy = layer.querySelector('[aria-label="Volver a hoy"]');
@@ -213,6 +220,20 @@ register('mapa', {
         n.el.classList.add('a-pop');
       }
       const to = act ?? null;
+      if (to == null && nodes[from + 1] && teo && S.hoy < 26) {
+        await wait(300);
+        const a = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
+        place(from + 1);
+        const b = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
+        const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        teo.style.left = mid.x + 'px'; teo.style.top = mid.y + 'px';
+        teo.classList.remove('a-bob');
+        const dx = a.x - mid.x, dy = a.y - mid.y;
+        teo.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 900, easing: 'cubic-bezier(.65,0,.35,1)' });
+        await teo.animate([{ translate: '0 0' }, { translate: '0 -14px', offset: .25 }, { translate: '0 0', offset: .5 }, { translate: '0 -10px', offset: .75 }, { translate: '0 0' }], { duration: 900 }).finished;
+        teo.animate([{ scale: '1' }, { scale: '1.06 .94' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
+        teo.classList.add('a-bob');
+      }
       if (to && nodes[to] && teo) {
         await wait(350);
         const a = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
@@ -221,19 +242,15 @@ register('mapa', {
         teo.classList.remove('a-bob');
         scrollToNode(to, true);
         const dx = a.x - b.x, dy = a.y - b.y;
-        await teo.animate([
-          { transform: `translate(${dx}px,${dy}px)` },
-          { transform: `translate(${dx * .66}px,${dy * .66 - 18}px)`, offset: .33 },
-          { transform: `translate(${dx * .33}px,${dy * .33}px)`, offset: .5 },
-          { transform: `translate(${dx * .15}px,${dy * .15 - 14}px)`, offset: .75 },
-          { transform: 'translate(0,0)' },
-        ], { duration: 1300, easing: 'ease-in-out' }).finished;
+        teo.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 1100, easing: 'cubic-bezier(.65,0,.35,1)' });
+        await teo.animate([{ translate: '0 0' }, { translate: '0 -16px', offset: .25 }, { translate: '0 0', offset: .5 }, { translate: '0 -12px', offset: .75 }, { translate: '0 0' }], { duration: 1100 }).finished;
+        teo.animate([{ scale: '1' }, { scale: '1.06 .94' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
         teo.classList.add('a-bob');
         nodes[to].el.classList.add('a-pop');
       }
-      if (params.thenCerrado && activeDay() == null && S.hoy < 27) { await wait(900); go('cerrado', {}, 'up'); }
+      if (params.thenCerrado && activeDay() == null && S.hoy < 27) { await wait(600); if (layer.isConnected) go('cerrado', {}, 'sheet'); }
     } else if (params.thenCerrado && activeDay() == null && S.hoy < 27) {
-      await wait(700); go('cerrado', {}, 'up');
+      await wait(700); if (layer.isConnected) go('cerrado', {}, 'sheet');
     }
 
     // anillo que respira en el día de hoy
@@ -245,7 +262,7 @@ register('mapa', {
 function tapNode(n, el, layer) {
   const act = activeDay();
   const d = DAYS[n];
-  if (n === act) { if (layer.dataset.past) { go('mapa', {}, 'none'); return; } startDay(n); return; }
+  if (n === act) { startDay(n); return; }
   if (isDone(n)) { showPast(layer, n, el); return; }
   if (n <= lastDay()) { animate(el, 'a-shake'); toast(`Primero el día ${act}`, `El día ${n} te espera justo después`); return; }
   showBubble(layer, n, el);
@@ -287,8 +304,12 @@ function showEnergy(layer) {
   const imgs = sheet.querySelectorAll('img');
   if (imgs[0]) { imgs[0].src = teodoroImg(); imgs[0].classList.add('a-bob'); }
   paintEnergy(sheet);
+  [...sheet.querySelectorAll('div')].filter(x => x.childElementCount === 0 && /le dan energía|energía/.test(x.textContent) && x.textContent.length > 30)
+    .forEach(x => { x.textContent = 'Cada día que caminan juntos lo llena. Si pasan días sin caminar, se cansa.'; });
   const cta = [...sheet.querySelectorAll('a')].pop();
-  on(layer, cta, () => go('mapa', {}, 'none'));
+  const act = activeDay();
+  if (act != null && cta) { const lbl = ctaLabel(act); const tn = [...cta.querySelectorAll('*'), cta].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim()); if (tn) tn.nodeValue = lbl.text; on(layer, cta, lbl.go); }
+  else on(layer, cta, () => go('mapa', {}, 'none', { replace: true }));
   sheet.classList.add('in-up');
   seen('S-03e-Mapa-energia');
 }
@@ -339,6 +360,7 @@ function paintSheet(layer, T) {
   if (act === 26 && !contentDone(26) && T.sheet26) {
     const t = document.createElement('template'); t.innerHTML = T.sheet26;
     const s26 = t.content.firstElementChild; s26.dataset.sheet = '1'; sheet.replaceWith(s26); sheet = s26;
+    replaceText(sheet, /¡Llegamos a Belén!/, 'Hoy nace Jesús');
     const a = sheet.querySelector('a'); if (a) on(layer, a, () => startDay(26));
     sheet.classList.add('in-up');
     return;
@@ -406,4 +428,4 @@ function paintSheet(layer, T) {
   on(layer, cta, n === 0 && contentDone(0) ? leaveMap : label.go);
   sheet.classList.add('in-up');
 }
-function leaveMap() { clearHistory(); go(mapOrigin || 'hoy', {}, 'back', { fromBack: true }); }
+function leaveMap() { back(mapOrigin || 'hoy', 'back'); }

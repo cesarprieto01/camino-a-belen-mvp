@@ -1,5 +1,5 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
-import { S, save, A, $, $$, on, find, go, back, register, seen, toast, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf } from './data.js';
@@ -12,15 +12,15 @@ export const panesContenido = () => premium() ? RULES.panes.contenidoPremium : R
 /** Empieza (o retoma) el día n desde el mapa. */
 export function startDay(n) {
   const d = DAYS[n];
-  if (n === 26) { go('final', { day: 26 }, 'fade'); return; }
+  if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, nacimiento: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; }
   if (!contentDone(n)) {
     if (RULES.ruleta.includes(n) && !S.ruletas[n] && !S.ruletaPendiente[n]) { go('ruletaPop', { day: n }, 'modal'); return; }
     go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'up');
     return;
   }
-  if (!isDone(n)) { go('trivia', { day: n }, 'push'); return; }
+  if (!isDone(n)) { go('trivia', { day: n, ...(S.triviaProgreso?.[n] || {}) }, 'push'); return; }
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') { openSorpresa(n); return; }
-  go('cerrado', {}, 'up');
+  go('cerrado', {}, 'sheet');
 }
 export function openSorpresa(n) {
   const g = RULES.sorpresa[n];
@@ -32,13 +32,13 @@ export function ctaLabel(n) {
   const verbo = { domingo: 'Escuchar el Evangelio', meditacion: 'Ver historia', cuento: 'Ver historia', amigos: 'Ver historia', cancion: 'Escuchar canción', reto: 'Ver el reto', juego: 'Jugar con Teodoro', video: 'Ver video', intro: 'Ver historia', nochebuena: 'Comenzar' }[d.type];
   if (n === 26 && !contentDone(26)) return { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
-  if (n === 0) return { text: 'Te avisamos el 29 de noviembre', go: () => back('hoy') };
+  if (n === 0) return { text: 'Invitar a un amigo', go: () => go('invitacion', {}, 'push') };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Abrir la sorpresa', go: () => openSorpresa(n) };
   const a = activeDay();
   if (a != null) return { text: `Seguir al día ${a}`, go: () => startDay(a) };
   if (S.hoy >= 26) return { text: 'Ver el nacimiento', go: () => go('final', { day: 26 }, 'fade') };
-  return { text: 'Mañana seguimos', go: () => go('cerrado', {}, 'up') };
+  return { text: 'Mañana seguimos', go: () => go('cerrado', {}, 'sheet') };
 }
 /** Termina el contenido del día: suma batería y panes. */
 function finishContent(n) {
@@ -66,14 +66,14 @@ export function finishTrivia(n, aciertos, replay = false) {
 
 // Barra de pestañas de la app (igual en todas)
 function tabs(root) {
-  on(root, 'Hoy', () => go('hoy', {}, 'fade', { tab: true }));
-  on(root, 'Teodoro', () => go('teodoro', {}, 'fade', { tab: true }));
-  ['Explorar', 'Música', 'Favoritos'].forEach(t => on(root, t, () => toast(`Pestaña «${t}» de Theo`, 'Ya existe en la app; fuera del reto')));
-  on(root, 'Ajustes', () => toast('Ajustes de Theo', 'Ya existen en la app'));
+  on(root, 'Hoy', () => go('hoy', {}, 'none', { tab: true }));
+  on(root, 'Teodoro', () => go('teodoro', {}, 'none', { tab: true }));
+  ['Explorar', 'Música', 'Favoritos'].forEach(t => on(root, t, () => nota(`Pestaña «${t}» de Theo`, 'Ya existe en la app; fuera del reto')));
+  on(root, 'Ajustes', () => nota('Ajustes de Theo', 'Ya existen en la app'));
 }
 function appContent(root) {
   ['Villancicos', 'Oración de la noche', 'Evangelio del día', 'El cuento de hoy', 'La afirmación de hoy', 'PARA REZAR EN FAMILIA', 'Los peces en el río', 'Ven, Señor Jesús', 'Noche de paz', 'Ver todo']
-    .forEach(t => on(root, t, () => toast('Contenido de Theo', 'Ya existe en la app; aquí no cambia')));
+    .forEach(t => on(root, t, () => nota('Contenido de Theo', 'Ya existe en la app; aquí no cambia')));
 }
 /** Destellos decorativos del lienzo (estrellitas sueltas): titilan. Nunca íconos de botones. */
 export function sparkles(root) {
@@ -87,10 +87,23 @@ export function cardState() {
   if (!S.inscrito) return { key: 4, title: '¡Ya salimos! ¿Vienes?', sub: 'Aún llegas a Belén', cta: 'Unirme al camino' };
   if (S.hoy >= 27) {
     const faltan = 26 - doneCount();
-    return faltan ? { key: 6, title: `Te faltan ${faltan} días`, sub: 'Hasta el 6 de enero', cta: 'Seguir caminando' }
-      : { key: 5, title: '¡Llegaste a Belén!', sub: '26 de 26 días', cta: 'Ver mi camino' };
+    return faltan ? { key: 6, title: '¡Feliz Navidad!', sub: `Te faltan ${faltan} días · puedes seguir hasta Reyes`, cta: 'Seguir caminando' }
+      : { key: 5, title: '¡Feliz Navidad!', sub: '¡Llegaste a Belén! 26 de 26 días', cta: 'Ver el nacimiento' };
   }
+  const h = Math.min(S.hoy, 26);
+  if (act == null && RULES.sorpresa[h] && isDone(h) && S.sorpresas[h] !== 'hecha') return { key: 3, sorpresa: true };
   return { key: 3, done: act == null };
+}
+/** Unirse al camino cuando ya empezó (una sola puerta: Hoy, Teodoro y Mundos). */
+export function unirse(from) {
+  S.inscrito = true; save();
+  toast('¡Ya estás dentro!', 'Empieza por el día 1, a tu ritmo');
+  go('mapa', { from }, 'push');
+}
+/** Entrar al camino desde Hoy, Teodoro o Mundos. */
+export function entrar(from) {
+  if (!S.inscrito) return fase() === 'antes' ? go('teaser', {}, 'modal') : unirse(from);
+  go('mapa', { from }, 'push');
 }
 const dayLine = n => n === 0 ? 'Día 0 · ¿Qué es el Adviento?' : `Día ${n} · ${DAYS[n].title}`;
 
@@ -134,9 +147,11 @@ register('hoy', {
     if (S.hoy >= 27) f.label = 'VIERNES 25 DE DICIEMBRE';
     replaceText(root, /^(LUNES|MARTES|MIÉRCOLES|JUEVES|VIERNES|SÁBADO|DOMINGO) \d+ DE [A-ZÉ]+$/, f.label);
     replaceText(root, /Lucía/g, S.nombre);
+    const hr = new Date().getHours();
+    replaceText(root, /Buenas noches/, hr < 12 ? 'Buenos días' : hr < 19 ? 'Buenas tardes' : 'Buenas noches');
     paintEnergy(root);
-    on(root, 'Perfil', () => toast('Perfil de Theo', 'Ya existe en la app'));
-    on(root, 'Racha', () => toast('Racha de la app', 'Hacer Adviento suma a esta racha'));
+    on(root, 'Perfil', () => nota('Perfil de Theo', 'Ya existe en la app'));
+    on(root, 'Racha', () => nota('Racha de la app', 'Hacer Adviento suma a esta racha'));
 
     if (fase() === 'antes') {
       startCountdown(root);
@@ -144,7 +159,7 @@ register('hoy', {
       on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
       on(root, 'Ver Camino a Belén', () => go('espera', {}, 'up'));
       on(root, 'Invitar', () => go('invitacion', {}, 'push'));
-      on(root, 'Entrar', () => go('espera', {}, 'up'));
+      on(root, 'Entrar', () => entrar('hoy'));
       if (!S.inscrito && !S.teaserVisto) { S.teaserVisto = true; save(); await wait(900); if (layer.isConnected) go('teaser', {}, 'modal'); }
       return;
     }
@@ -173,16 +188,20 @@ register('hoy', {
       if (title) title.textContent = st.title;
       if (sub) sub.textContent = st.sub;
       if (btnText) btnText.nodeValue = st.cta;
+    } else if (st.sorpresa) {
+      if (sub) sub.textContent = `Día ${n} · Te espera una sorpresa`;
+      if (btnText) btnText.nodeValue = 'Abrir la sorpresa';
     } else if (st.done) {
       if (sub) sub.textContent = `Día ${n} · ¡Listo! Mañana seguimos`;
+      if (btnText) btnText.nodeValue = 'Ver el camino';
     }
     // pastillas «días que te esperan» (pantalla atrasado)
     const pills = $$(card, '[style*="border-radius: 50%"]').filter(el => /^\d+$/.test(el.textContent.trim()));
     pills.forEach((el, i) => { el.textContent = String(n + 1 + i); });
 
-    const toMap = () => S.inscrito ? go('mapa', { from: 'hoy' }, 'push') : go('confirmacion', { late: true }, 'fade');
+    const toMap = () => st.key === 5 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar('hoy');
     on(root, 'Ver el camino', toMap);
-    on(root, 'Continuar la Aventura', toMap);
+    if (btn) on(root, btn, toMap);
     on(root, 'Energía de Teodoro', () => toast(`Energía: ${S.bateria} de 5`, ['Dormido', 'Cabeceando', 'Agotado', 'Tranquilo', 'Travieso', 'Feliz'][S.bateria]));
 
     // Modal de regreso (una semana o más sin caminar)
@@ -193,12 +212,12 @@ register('hoy', {
       const pend = pendientes();
       nums.forEach((el, i) => { el.textContent = String(n + i); el.style.visibility = n + i <= lastDay() ? '' : 'hidden'; });
       boxes.forEach((el, i) => { const ic = iconOf(n + i, dark()); const im = el.querySelector('img'); if (ic && im) im.src = A(ic); el.style.visibility = n + i <= lastDay() ? '' : 'hidden'; el.style.animation = `pop .45s ${.3 + i * .15}s cubic-bezier(.2,.9,.3,1.3) both`; });
-      if (more) { if (pend > 3) more.textContent = `+${pend - 3}`; else more.style.visibility = 'hidden'; }
+      if (more) { if (pend > 3) { more.textContent = `+${pend - 3}`; more.setAttribute('aria-label', `y ${pend - 3} días más`); } else more.style.visibility = 'hidden'; }
       root.querySelector('[role=dialog]')?.setAttribute('aria-label', `Volviste. Te guardé el camino: te esperan ${pend} días`);
       const close = () => { S.regreso = false; save(); };
-      on(root, /Empezar por el día/.source ? 'Empezar por el día' : '', () => { close(); go('mapa', { from: 'hoy' }, 'push'); });
+      on(root, 'Empezar por el día', () => { close(); go('mapa', { from: 'hoy', despierta: true }, 'push'); });
       setText(root, /Empezar por el día \d+/, `Empezar por el día ${n}`);
-      on(root, 'Ver el mapa', () => { close(); go('mapa', { from: 'hoy' }, 'push'); });
+      on(root, 'Ver el mapa', () => { close(); go('mapa', { from: 'hoy', despierta: true }, 'push'); });
       on(root, 'Cerrar', () => { close(); go('hoy', {}, 'fade', { replace: true }); });
       const teo = $$(root, 'img').find(i => i.src.includes(IMG.tCelebra));
       teo?.classList.add('a-hop');
@@ -208,11 +227,12 @@ register('hoy', {
 
 // ---------- Antes del 29 ----------
 register('teaser', {
+  dismiss: () => back('hoy', 'fade'),
   files: F('V2-Teaser-claro', 'V2-Teaser'),
   mount(root, p = {}) {
     startCountdown(root);
     // desde la invitación: es la vista de tu amigo; tú ya estás inscrito
-    if (p.preview) on(root, 'Inscribirme', () => { toast('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
+    if (p.preview) on(root, 'Inscribirme', () => { nota('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
     else on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
     on(root, 'Ahora no', () => back('hoy', 'fade'));
     on(root, 'Cerrar', () => back('hoy', 'fade'));
@@ -235,7 +255,7 @@ register('confirmacion', {
     on(root, '¡Listo, te inscribiste!', () => next());
     let done = false;
     const next = () => { if (done) return; done = true; fase() === 'antes' ? go('espera', {}, 'fade', { replace: true }) : go('mapa', {}, 'fade', { replace: true }); };
-    await wait(2000); if (layer.isConnected) next();
+    setTimeout(() => { if (layer.isConnected) next(); }, 1600);
   },
 });
 register('espera', {
@@ -245,12 +265,12 @@ register('espera', {
     on(root, 'Ver tu camino a Belén', () => go('mapa', { from: 'espera' }, 'push'));
     on(root, 'Invitar a un amigo', () => go('invitacion', {}, 'push'));
     // vuelve a donde estaba (Hoy o Teodoro), sin pasar otra vez por el teaser
-    on(root, 'Ahora no', () => back('hoy', 'down', ['teaser', 'confirmacion']));
+    const ahoraNo = find(root, 'Ahora no'); if (ahoraNo) ahoraNo.style.display = 'none';
     on(root, 'Cerrar', () => back('hoy', 'down', ['teaser', 'confirmacion']));
     const fam = textEl(root, /2\.418 familias/);
     if (fam && !reduced()) {
       const fmt = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      let v = 1800; const iv = setInterval(() => { v = Math.min(2418, v + 37); fam.textContent = fam.textContent.replace(/[\d.]+ familias/, fmt(v) + ' familias'); if (v >= 2418) clearInterval(iv); }, 30);
+      let v = 1800; const iv = setInterval(() => { v = Math.min(2418, v + 37); fam.textContent = fam.textContent.replace(/[\d.]+ familias( ya caminan)?/, fmt(v) + ' familias ya se unieron'); if (v >= 2418) clearInterval(iv); }, 30);
     }
     $$(root, 'img').find(i => i.src.includes(IMG.t5))?.classList.add('a-bob');
   },
@@ -259,13 +279,12 @@ register('invitacion', {
   files: F('V2-Invitacion-claro', 'V2-Invitacion'),
   mount(root) {
     seen('Invitacion-imagen');
-    on(root, 'Vista previa del enlace', () => { toast('Así lo ve tu amigo al tocar el enlace'); go('teaser', { preview: true }, 'modal'); });
+    on(root, 'Vista previa del enlace', () => { nota('Así lo ve tu amigo al tocar el enlace'); go('teaser', { preview: true }, 'modal'); });
     const flecha = document.createElement('button');
     flecha.type = 'button'; flecha.setAttribute('aria-label', 'Volver');
     flecha.style.cssText = 'position:absolute;left:4px;top:52px;width:48px;height:48px;border:0;background:transparent;cursor:pointer;z-index:5';
     root.appendChild(flecha);
     on(root, flecha, () => back(fase() === 'antes' ? 'espera' : 'hoy'));
-    on(root, 'Mensaje', () => toast('Chat de ejemplo', 'Simula WhatsApp/iMessage'));
     $$(root, '[style*="border-radius"]').slice(-3).forEach((el, i) => { el.classList.add('a-rise'); el.style.animationDelay = (.25 + i * .25) + 's'; });
   },
 });
@@ -283,28 +302,33 @@ register('teodoro', {
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     replaceText(root, /^Día 9$/, `Día ${n}`);
     const st = cardState();
+    const cta = find(root, 'Entrar al camino'); // se toma antes de cambiarle el texto
     if (st.title && fase() !== 'antes') {
-      const card = find(root, 'Entrar al camino')?.parentElement;
+      const card = cta?.parentElement;
       if (card) {
         const t = textEl(card, 'Adviento'); if (t) t.textContent = st.title;
         const s = textEl(card, 'Sigue la estrella hasta Belén'); if (s) s.textContent = st.sub;
         const chip = textEl(card, /Día \d+ de 26/); if (chip) chip.textContent = st.key === 5 ? '26 de 26' : st.key === 6 ? `${doneCount()} de 26` : 'Día ' + S.hoy;
         setText(card, 'Entrar al camino', st.cta);
       }
+    } else if (st.sorpresa) {
+      const s = textEl(root, 'Sigue la estrella hasta Belén'); if (s) s.textContent = 'Te espera una sorpresa';
+      if (cta) setText(cta, 'Entrar al camino', 'Abrir la sorpresa');
     } else if (st.done) {
       const s = textEl(root, 'Sigue la estrella hasta Belén'); if (s) s.textContent = '¡Listo por hoy! Mañana seguimos';
     }
+    root.querySelector('[aria-label*="día 9 de 26"]')?.setAttribute('aria-label', `Adviento, día ${n} de 26`);
     paintEnergy(root);
     if (fase() === 'antes') startCountdown(root);
-    const toMap = () => S.inscrito || fase() !== 'antes' ? (S.inscrito ? go('mapa', { from: 'teodoro' }, 'push') : go('confirmacion', { late: true }, 'fade')) : go('teaser', {}, 'modal');
+    const toMap = () => st.key === 5 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar('teodoro');
     on(root, 'Adviento', toMap);
-    on(root, 'Entrar al camino', toMap);
+    if (cta) on(root, cta, toMap);
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
     on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
     on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
     on(root, 'Ver Camino a Belén', () => go('espera', {}, 'up'));
     on(root, 'Invitar', () => go('invitacion', {}, 'push'));
-    on(root, 'Entrar', () => go('espera', {}, 'up'));
+    on(root, 'Entrar', () => entrar('teodoro'));
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).slice(0, 1).forEach(i => i.classList.add('a-bob'));
     // prendas ganadas en la ruleta, visibles en el cuarto
     if (S.prendas.length > (S.prendasVistas || 0)) { S.prendasVistas = S.prendas.length; save(); toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`); }
@@ -316,10 +340,9 @@ register('mundos', {
     tabs(root);
     const n = activeDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
-    on(root, 'Adviento', () => go('mapa', { from: 'mundos' }, 'push'));
+    on(root, 'Adviento', () => entrar('mundos'));
     on(root, 'Volver al cuarto de Teodoro', () => back('teodoro'));
     on(root, 'Enero', () => toast('Enero', 'El próximo mundo: pronto'));
-    $$(root, 'img').forEach((i, k) => { if (k % 3 === 0) i.classList.add('a-bob'); });
   },
 });
 
@@ -362,7 +385,7 @@ register('reproductor', {
     let ended = false;
     const end = () => {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
-      if (p.nacimiento) { go('final', { day: 26 }, 'down', { replace: true }); return; }
+      if (p.nacimiento) { if (p.replay) back('hoy', 'down'); else go('final', { day: 26 }, 'fade', { replace: true }); return; }
       if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go('hub', { day: n }, 'down', { replace: true }); return; }
       if (p.replay) { setBateria(5); S.ultimoJugado = S.hoy; save(); toast('¡Otra vez con Teodoro!', 'Teodoro quedó al 100%'); go('mapa', {}, 'down', { replace: true }); return; }
       finishContent(n);
@@ -373,8 +396,15 @@ register('reproductor', {
     on(root, 'Retroceder 10 segundos', () => { t = Math.max(0, t - 1000); paint(); });
     on(root, 'Adelantar 10 segundos', () => { t = Math.min(DUR, t + 1000); paint(); });
     if (slider) on(root, slider, ev => { const r = slider.getBoundingClientRect(); t = DUR * Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)); paint(); });
-    ['Texto', 'Voz', 'Repetir'].forEach(k => on(root, k, (ev, el) => { const s = el.querySelector('span'); if (s) s.style.background = s.style.background.includes('255,255,255,.2') || s.style.background.includes('0.2') ? '#FFFFFF' : 'rgba(255,255,255,.2)'; toast(k, 'Control del reproductor de Theo (ya existe)'); }));
-    on(root, 'Bajar el reproductor', () => { cancelAnimationFrame(raf); go(p.nacimiento ? 'final' : p.extra === 'cancion' ? 'hub' : 'mapa', { day: n }, 'down', { replace: true }); });
+    ['Texto', 'Voz', 'Repetir'].forEach(k => on(root, k, (ev, el) => { const s = el.querySelector('span'); if (s) s.style.background = s.style.background.includes('255,255,255,.2') || s.style.background.includes('0.2') ? '#FFFFFF' : 'rgba(255,255,255,.2)'; nota(k, 'Control del reproductor de Theo (ya existe)'); }));
+    const cerrar = () => { cancelAnimationFrame(raf); if (p.nacimiento || p.extra === 'cancion') back('mapa', 'down'); else go('mapa', {}, 'down', { replace: true }); };
+    on(root, 'Bajar el reproductor', cerrar);
+    const x = document.createElement('button');
+    x.type = 'button'; x.setAttribute('aria-label', 'Cerrar');
+    x.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    x.style.cssText = 'position:absolute;left:14px;top:54px;width:44px;height:44px;border-radius:22px;border:0;background:rgba(0,8,43,.35);display:grid;place-items:center;cursor:pointer;z-index:6';
+    root.appendChild(x); on(root, x, cerrar);
+    if (slider) { slider.style.paddingBlock = '15px'; slider.style.marginTop = '-15px'; slider.style.backgroundClip = 'content-box'; }
   },
 });
 
@@ -390,9 +420,9 @@ register('hub', {
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-bob'));
     sparkles(root);
     on(root, 'Volver al mapa', () => go('mapa', {}, 'down', { replace: true }));
-    on(root, 'Escuchar a Teodoro', () => toast('Teodoro explica el reto', 'Audio por grabar'));
+    on(root, 'Escuchar a Teodoro', () => nota('Teodoro explica el reto', 'Audio por grabar'));
     on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true }, 'fade'));
-    on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); confetti(layer, 195, 540); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 700); });
+    on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); animate(el, 'a-pop'); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 260); });
     // los extras del reto son descargables: con free piden Premium
     on(root, 'Imprimible', () => premium() ? go('imprimible', { day: n }, 'push') : go('free', { back: 'hub', day: n }, 'up'));
     on(root, 'Canción', () => premium() ? go('reproductor', { day: n, extra: 'cancion' }, 'up') : go('free', { back: 'hub', day: n }, 'up'));
@@ -414,20 +444,38 @@ register('completado', {
     $$(root, 'img').find(i => i.src.includes(IMG.tPregunta))?.classList.add('a-bob');
     confetti(layer, 195, 260, 30);
     on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push', { replace: true }));
-    on(root, 'Califícanos', () => go('calificacion', { back: 'completado', day: n }, 'up'));
+    const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
+    if (chip) { chip.style.pointerEvents = 'none'; chip.removeAttribute('role'); }
     const out = () => go('mapa', {}, 'down', { replace: true });
-    on(root, 'Ahora no', out); on(root, 'Cerrar', out); on(root, chip, out);
+    on(root, 'Ahora no', out); on(root, 'Cerrar', out);
   },
 });
 
 register('calificacion', {
   files: F('V2-Calificacion-claro', 'V2-Calificacion'),
   mount(root, p) {
-    const faces = $$(root, '[role=radio], button, a').filter(el => /Poco|Más o menos|¡Mucho!/.test(el.textContent));
-    const opts = faces.length ? faces : ['Poco', 'Más o menos', '¡Mucho!'].map(t => textEl(root, t)?.parentElement).filter(Boolean);
-    opts.forEach(el => on(root, el, () => {
-      opts.forEach(o => { o.style.opacity = o === el ? '1' : '.55'; o.style.transform = o === el ? 'scale(1.06)' : 'scale(.94)'; o.style.transition = 'all .25s'; });
-      animate(el, 'a-pop'); S._voto = el.textContent.trim();
+    // las 3 caritas empiezan sin elegir; la elegida crece, se dora y lleva la palomita
+    const opts = $$(root, '[role=radio]');
+    const badge = $$(root, 'span').find(sp => sp.style.borderRadius === '50%' && sp.querySelector('svg path[d^="M5 12.5"]'));
+    const geo = opts.map(o => ({ cx: parseFloat(o.style.left) + parseFloat(o.style.width) / 2, cy: parseFloat(o.style.top) + parseFloat(o.style.height) / 2 }));
+    const paintFace = (o, k, on) => {
+      const s = on ? 124 : 96, g = geo[k];
+      Object.assign(o.style, { left: g.cx - s / 2 + 'px', top: g.cy - s / 2 + 'px', width: s + 'px', height: s + 'px', background: on ? '#FFF8DC' : '#FFFFFF',
+        boxShadow: on ? '0 0 0 5px #F5DB78, 0 0 0 12px rgba(245,219,120,.35), 0 14px 30px rgba(0,8,43,.35)' : '0 10px 24px rgba(0,8,43,.25)',
+        transition: 'all .26s cubic-bezier(.23,1,.32,1)', cursor: 'pointer' });
+      const im = o.querySelector('img'); if (im) Object.assign(im.style, { left: (on ? 11 : 8) + 'px', top: (on ? 11 : 8) + 'px', width: s - (on ? 22 : 16) + 'px', height: s - (on ? 22 : 16) + 'px', transition: 'all .26s cubic-bezier(.23,1,.32,1)' });
+      o.setAttribute('aria-checked', String(on));
+      if (on && badge) { badge.style.display = 'grid'; badge.style.left = g.cx + s / 2 - 30 + 'px'; badge.style.top = g.cy - s / 2 - 4 + 'px'; animate(badge, 'a-pop'); }
+    };
+    opts.forEach((o, k) => paintFace(o, k, false));
+    if (badge) badge.style.display = 'none';
+    S._voto = null;
+    const enviar = find(root, 'Enviar');
+    const lock = v => { if (enviar) { enviar.style.opacity = v ? '.45' : '1'; enviar.style.pointerEvents = v ? 'none' : ''; enviar.setAttribute('aria-disabled', String(v)); } };
+    lock(true);
+    opts.forEach((el, k) => on(root, el, () => {
+      opts.forEach((o, j) => paintFace(o, j, j === k));
+      S._voto = el.getAttribute('aria-label'); lock(false); navigator.vibrate?.(10);
     }));
     const box = $$(root, 'div').find(el => /Lo que más te gustó/.test(el.textContent) && el.childElementCount <= 3 && el.style.borderRadius);
     if (box) {
@@ -440,7 +488,7 @@ register('calificacion', {
       box.appendChild(ta);
     }
     const volver = () => back(p.back || 'mapa', 'down');
-    on(root, 'Enviar', () => { toast('¡Gracias!', S._voto ? `Votaste «${S._voto}»` : 'Calificación enviada'); volver(); });
+    on(root, 'Enviar', () => { if (!S._voto) return; toast('¡Gracias por contarnos!'); volver(); });
     on(root, 'Ahora no', volver); on(root, 'Cerrar', volver);
   },
 });
@@ -449,13 +497,14 @@ register('free', {
   files: F('V2-24-Dia-completo-claro', 'V2-24-Dia-completo'),
   mount(root, p) {
     const volver = () => back(p.back || 'mapa', 'down');
-    on(root, 'Ver Theo Premium', () => toast('Paywall de Theo Premium', 'Ya existe en la app'));
+    on(root, 'Ver Theo Premium', () => nota('Paywall de Theo Premium', 'Ya existe en la app'));
     on(root, 'Volver al mapa', volver); on(root, 'Cerrar', volver);
-    $$(root, 'img').slice(1, 2).forEach(i => i.classList.add('a-sway'));
+    setText(root, 'Volver al mapa', 'Ahora no');
   },
 });
 
 register('cerrado', {
+  dismiss: () => back('mapa', 'down'),
   files: F('V2-Cerrado', 'V2-Cerrado-oscuro'),
   mount(root, p, layer) {
     const n = Math.min(lastDay(), 26);
@@ -465,10 +514,7 @@ register('cerrado', {
     const cal = root.querySelector('[aria-label$="de diciembre"], [aria-label$="de noviembre"]');
     if (cal) { cal.setAttribute('aria-label', `${fd.dd} de ${fd.mes.toLowerCase()}`); setText(cal, 'DIC', fd.mes.slice(0, 3)); setText(cal, /^\d+$/, String(fd.dd)); cal.classList.add('a-pop'); }
     setText(root, /El día \d+ se abre a medianoche\./, next > 26 ? '¡Llegaste a Belén! Mañana es Navidad.' : `El día ${next} se abre a medianoche.`);
-    // nodos del fondo
-    replaceText(root, /^(\s*)9(\s*)$/, `$1${n}$2`);
-    $$(root, 'a[aria-label^="Día"]').forEach(a => { const m = a.getAttribute('aria-label').match(/Día (\d+)/); if (!m) return; const shift = n - 9; const span = [...a.querySelectorAll('span')].find(s => /^\d+$/.test(s.textContent.trim())); if (span) span.textContent = String(+m[1] + shift); });
-    paintEnergy(root);
+
     // cuenta regresiva real hasta medianoche
     const cdEl = textEl(root, /Faltan \d+ h \d+ min/);
     const cd = cdEl && [...cdEl.childNodes].find(c => c.nodeType === 3 && /Faltan/.test(c.nodeValue));
@@ -476,9 +522,16 @@ register('cerrado', {
     tick(); const iv = setInterval(() => layer.isConnected ? tick() : clearInterval(iv), 1000);
     $$(root, 'span').filter(s => s.textContent.trim() === 'z').forEach((z, i) => { z.style.display = 'inline-block'; z.style.animation = `zz 2.4s ${i * .8}s ease-out infinite`; });
     $$(root, 'img').find(i => /duerme/.test(i.alt || ''))?.classList.add('a-bob');
-    on(root, 'Entendido', () => go('hoy', {}, 'down', { tab: true }));
-    on(root, 'Volver a Mundos', () => go('mundos', {}, 'back'));
-    $$(root, 'a[aria-label^="Día"]').forEach(a => on(root, a, () => go('mapa', {}, 'down')));
+    const ok = find(root, 'Entendido');
+    if (ok) { setText(ok, 'Entendido', 'Hasta mañana'); on(root, ok, () => go('hoy', {}, 'down', { tab: true })); }
+    // calificar el día: aquí, al cerrar, y no en el momento del premio
+    const dlg = root.querySelector('[role=dialog]');
+    if (dlg && S.calificado !== lastDay()) {
+      const q = document.createElement('button');
+      q.type = 'button'; q.className = 'cal-link'; q.textContent = '¿Les gustó hoy?';
+      dlg.appendChild(q);
+      on(root, q, () => { S.calificado = lastDay(); save(); go('calificacion', { back: 'mapa' }, 'up', { replace: true }); });
+    }
   },
 });
 
@@ -488,25 +541,52 @@ register('ruletaPop', {
   files: F('S-05b-Ruleta-pop', 'S-05b-Ruleta-pop-oscuro'),
   mount(root, p, layer) {
     const n = p.day;
+    setText(root, /Antes del cuento…/, 'Antes de la historia…');
     const wheel = root.querySelector('[role=img][aria-label^="Ruleta"] > div');
     wheel?.parentElement.classList.add('a-pop');
     const pointer = $$(root, 'img').find(i => i.src.includes('3fdb655b'));
     let spun = false;
     on(root, '¡Girar!', async (ev, btn) => {
       if (spun) return; spun = true;
-      btn.style.opacity = '.6';
+      btn.style.opacity = '.6'; btn.style.pointerEvents = 'none';
+      const tarde = find(root, 'Más tarde'); if (tarde) tarde.style.visibility = 'hidden';
       // premio: el forzado en el panel o al azar (todas las casillas ganan)
       const forced = S.forzarPremio;
-      let idx = forced ? SEGMENTS.indexOf(forced) : Math.floor(Math.random() * SEGMENTS.length);
+      const weekId = PRENDAS[RULES.ruleta.indexOf(n)]?.id;
+      const pick = () => {
+        if (weekId && !S.prendas.includes(weekId) && Math.random() < .35) return SEGMENTS.indexOf('prenda');
+        let i = Math.floor(Math.random() * SEGMENTS.length);
+        if (SEGMENTS[i] === 'cuarto' && S.cuartoNuevo) i = SEGMENTS.indexOf('prenda');
+        return i;
+      };
+      let idx = forced ? SEGMENTS.indexOf(forced) : pick();
       if (idx < 0) idx = 0;
       const premio = SEGMENTS[idx];
       const target = 360 * 6 + (360 - idx * 36) + (Math.random() * 16 - 8);
       if (wheel) {
+        // anticipación: la rueda se echa un poquito atrás antes de salir
+        if (!reduced()) await wheel.animate([{ rotate: '0deg' }, { rotate: '-10deg' }], { duration: 180, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'forwards' }).finished;
         wheel.classList.add('wheel-spin');
         if (reduced()) wheel.style.transition = 'transform .3s';
+        wheel.getAnimations().forEach(a => a.cancel());
         wheel.style.transform = `rotate(${target}deg)`;
-        pointer?.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-14deg)' }, { transform: 'rotate(0)' }], { duration: 160, iterations: 22 });
+        // el puntero golpea cada vez que pasa una casilla (36°), al ritmo real de la rueda
+        if (pointer && !reduced()) {
+          let lastSeg = 0, lastT = performance.now(), turns = 0, prevA = 0;
+          const tickP = now => {
+            if (!layer.isConnected || !wheel.classList.contains('wheel-spin')) return;
+            const m = new DOMMatrix(getComputedStyle(wheel).transform);
+            let ang = Math.atan2(m.b, m.a) * 180 / Math.PI; if (ang < 0) ang += 360;
+            if (ang < prevA - 180) turns++; prevA = ang;
+            const seg = Math.floor((turns * 360 + ang) / 36);
+            if (seg !== lastSeg) { pointer.animate([{ rotate: '0deg' }, { rotate: '-16deg' }, { rotate: '0deg' }], { duration: Math.min(160, now - lastT), easing: 'cubic-bezier(.23,1,.32,1)' }); lastSeg = seg; lastT = now; }
+            requestAnimationFrame(tickP);
+          };
+          requestAnimationFrame(tickP);
+        }
         await wait(reduced() ? 400 : 4400);
+        wheel.classList.remove('wheel-spin'); wheel.style.transition = 'none';
+        if (!layer.isConnected) return;
       }
       const week = RULES.ruleta.indexOf(n);
       const prize = premio === 'prenda' ? PRENDAS[week].id : premio;
@@ -515,8 +595,8 @@ register('ruletaPop', {
       if (premio === 'prenda') S.prendas.push(PRENDAS[week].id);
       if (premio === 'cuarto') S.cuartoNuevo = true;
       save();
-      confetti(layer, 195, 410, 40);
-      await wait(500);
+      navigator.vibrate?.(30);
+      await wait(300);
       go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n, from: p.from }, 'modal', { replace: true });
     });
     on(root, 'Más tarde', () => {
@@ -538,13 +618,16 @@ register('ruletaPremio', {
     if (pic) { pic.src = A(info.img); pic.alt = info.t2; pic.style.animation = 'spinIn .7s cubic-bezier(.2,.9,.3,1.2) both, bob 2.4s .8s ease-in-out infinite'; }
     setText(root, '¡Ganaste', info.t1); setText(root, 'un gorro!', info.t2);
     const subEl = textEl(root, 'Ya está en el');
-    if (!info.sub && subEl) subEl.style.visibility = 'hidden';
+    if (!info.sub && subEl) subEl.textContent = 'Ya están en la canasta de Teodoro';
     else if (p.premio === 'manzana' && subEl) subEl.textContent = 'Teodoro la guardó para su merienda';
     if (p.premio !== 'cuarto') floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
     const cont = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
+    confetti(layer, 195, 300, 36);
     on(root, 'Empezar el cuento', cont);
-    if (p.from === 'mapa' || contentDone(n)) setText(root, 'Empezar el cuento', 'Volver al camino');
-    on(root, 'Ver a Teodoro', () => go('teodoro', {}, 'fade'));
+    setText(root, 'Empezar el cuento', p.from === 'mapa' || contentDone(n) ? 'Volver al camino' : ctaLabel(n).text);
+    const ver = find(root, 'Ver a Teodoro');
+    if (ver && !(p.from === 'mapa' || contentDone(n))) ver.style.display = 'none'; // primero la historia
+    else on(root, 'Ver a Teodoro', () => go('teodoro', {}, 'fade', { tab: true }));
   },
 });
 register('premioCuarto', {
@@ -556,13 +639,28 @@ register('premioCuarto', {
     room?.parentElement?.classList.add('a-pop');
     const nextW = RULES.ruleta.find(x => !S.ruletas[x]);
     setText(root, /La próxima ruleta.*/, nextW ? `La próxima ruleta, el día ${nextW}` : 'Ya abriste todas las ruletas');
-    on(root, 'Ver su cuarto nuevo', () => go('teodoro', {}, 'fade'));
     const out = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     on(root, 'Salir de la ruleta', out); on(root, 'Cerrar', out);
+    const sigue = !(p.from === 'mapa' || contentDone(n));
+    setText(root, 'Ver su cuarto nuevo', sigue ? ctaLabel(n).text : 'Volver al camino');
+    on(root, 'Ver su cuarto nuevo', out);
   },
 });
 
 // ---------- Nochebuena ----------
+/** Lluvia dorada: la llegada a Belén no es un festejo más. */
+function goldRain(layer) {
+  const box = document.createElement('div'); box.className = 'gold-rain'; box.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 34; i++) {
+    const s = document.createElement('i');
+    s.style.left = (Math.random() * 100) + '%';
+    s.style.background = ['#F5DB78', '#F5D46A', '#FFF6DD'][i % 3];
+    s.style.animationDelay = (Math.random() * .9) + 's';
+    s.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+    box.appendChild(s);
+  }
+  layer.appendChild(box); setTimeout(() => box.remove(), 3600);
+}
 register('final', {
   files: F('V2-Final-claro', 'V2-Final'),
   async mount(root, p, layer) {
@@ -571,9 +669,14 @@ register('final', {
     replaceText(root, /Lucía/g, S.nombre);
     const total = doneCount() + (isDone(26) ? 0 : 0);
     setText(root, /^26$/, String(Math.min(26, doneCount())));
-    const scene = $$(root, 'img')[0]; scene?.classList.add('a-pop');
+    const scene = $$(root, 'img')[0];
+    if (first && !reduced()) {
+      scene?.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 1200, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
+      $$(root, 'a').forEach(a => a.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 1800, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'backwards' }));
+      setTimeout(() => layer.isConnected && goldRain(layer), 600);
+      setTimeout(() => layer.isConnected && goldRain(layer), 1400);
+    }
     sparkles(root);
-    await wait(400); confetti(layer, 195, 220, 60);
     on(root, 'Ver el nacimiento', () => go('reproductor', { day: 26, nacimiento: true }, 'up'));
     on(root, 'Compartir con la familia', () => go('finalCompartir', {}, 'push'));
     on(root, 'Cerrar', () => go('mapa', {}, 'down', { replace: true }));
@@ -596,7 +699,7 @@ register('finalCompartir', {
     }
     sparkles(root);
     on(root, 'Compartir', async () => {
-      try { if (navigator.share) await navigator.share({ title: '¡Llegamos a Belén!', text: `${S.nombre} caminó ${dias} días con Teodoro hasta Belén y ganó ${estrellas} estrellas.` }); else toast('Compartir', 'En el celular se abre el menú para compartir'); } catch { /* cancelado */ }
+      try { if (navigator.share) await navigator.share({ title: '¡Llegamos a Belén!', text: `${S.nombre} caminó ${dias} días con Teodoro hasta Belén y ganó ${estrellas} estrellas.` }); else nota('Compartir', 'En el celular se abre el menú para compartir'); } catch { /* cancelado */ }
     });
     on(root, 'Ahora no', () => back('final'));
     on(root, 'Volver', () => back('final'));
@@ -609,7 +712,7 @@ register('imprimible', {
     const sheet = [...root.querySelectorAll('div, img')].find(x => x.style.transform && /rotate/.test(x.style.transform));
     sheet?.classList.add('a-pop');
     on(root, 'Volver', () => back('hub'));
-    ['Imprimir', 'Guardar'].forEach(t => on(root, t, () => toast(t, 'En el celular se abre el menú del teléfono')));
+    ['Imprimir', 'Guardar'].forEach(t => on(root, t, () => nota(t, 'En el celular se abre el menú del teléfono')));
   },
 });
 
@@ -624,6 +727,6 @@ register('estatica', {
     tag.dataset.bound = '1';
     tag.onclick = () => go(p.back || 'hoy', p.backParams || {}, 'fade');
     layer.appendChild(tag);
-    $$(root, 'a, button').forEach(el => { el.dataset.bound = '1'; el.addEventListener('click', e => { e.preventDefault(); toast('Vista estática', 'Para interactuar, usa el flujo'); }); });
+    $$(root, 'a, button').forEach(el => { el.dataset.bound = '1'; el.addEventListener('click', e => { e.preventDefault(); nota('Vista estática', 'Para interactuar, usa el flujo'); }); });
   },
 });
