@@ -151,8 +151,8 @@ const flows = {
     await tap('Invitar a un amigo'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Volver'); await expect('espera', 'volver de invitación');
     await tap('Cerrar'); await expect('teodoro', 'espera Cerrar vuelve a Teodoro'); await shot('teodoro-dentro');
-    await tap('Entrar'); await expect('mapa', 'Entrar abre el camino'); await shot('mapa-dia0');
-    await tap('Atrás'); await expect('teodoro', 'del camino a Teodoro');
+    await tap('Entrar'); await expect('espera', 'Entrar abre la espera antes del 29'); await shot('espera-entrar');
+    await tap('Cerrar'); await expect('teodoro', 'de la espera a Teodoro');
     await tap('Ver Camino a Belén'); await expect('espera', 'la ilustración abre la espera'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
     await tap('Invitar'); await expect('invitacion', 'invitar desde Teodoro'); await tap('Volver'); await expect('teodoro', 'volver a Teodoro');
     await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
@@ -183,8 +183,12 @@ const flows = {
     if (s0.hoy !== 0 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
     if (!(await waitScreen('teaser'))) errs.push('el teaser no sale solo al entrar: ' + await screen());
     await shot('teaser'); await tap('Unirme gratis'); await p.waitForTimeout(2400); await shot('espera');
-    await tap('Cerrar'); await shot('hoy-dentro'); await tap('Entrar'); await shot('mapa-dia0');
-    await tap('Ver historia'); await p.waitForTimeout(9800); await shot('dia0-hecho');
+    await tap('Cerrar'); await shot('hoy-dentro'); await tap('Entrar'); await p.waitForTimeout(800);
+    if ((await screen()) !== 'espera') errs.push('antes del 29, «Entrar» no abre la espera: ' + await screen());
+    await tap('Ver el camino'); await p.waitForTimeout(1200); await shot('mapa-antes');
+    const hoja = await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet]')?.textContent || '');
+    if (!/Salimos el 29 de noviembre/.test(hoja) || /Día 0|Qué es el Adviento/.test(hoja)) errs.push('el mapa antes del 29 todavía muestra un día 0: ' + hoja.slice(0, 120));
+    await tap('Volver al inicio'); await p.waitForTimeout(800);
     // pasa la medianoche del 28 al 29: empieza el camino
     if (!(await p.evaluate(() => !!document.querySelector('[data-act="dayPlus"]')))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); }
     await p.evaluate(() => document.querySelector('[data-act="dayPlus"]')?.click()); await p.waitForTimeout(1200); await shot('dia1');
@@ -220,8 +224,7 @@ const flows = {
     await p.waitForTimeout(800);
     if (!(await waitScreen('teaser'))) errs.push('no arranca con el teaser');
     await tap('Unirme gratis'); await p.waitForTimeout(2300); await shot('c-espera');
-    await tap('Cerrar'); await tap('Entrar'); await p.waitForTimeout(600); await sheetCta(); await p.waitForTimeout(700); await finishPlayer(); await p.waitForTimeout(1200);
-    await shot('c-dia0');
+    await tap('Cerrar'); await p.waitForTimeout(800); await shot('c-dentro');
     // 2) los 26 días
     const visto = new Set();
     for (let d = 1; d <= 26; d++) {
@@ -267,10 +270,10 @@ const flows = {
     }
     const st = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hechos: Object.values(c.S.completos).filter(x => x.trivia).length, contenidos: Object.values(c.S.completos).filter(x => x.contenido).length, panes: c.S.panes, prendas: c.S.prendas.length, ruletas: Object.keys(c.S.ruletas).length, sorpresas: Object.values(c.S.sorpresas).filter(x => x === 'hecha').length }; });
     console.log('recorrido completo:', JSON.stringify(st), 'pantallas:', [...visto].join(','));
-    if (st.contenidos < 27) errs.push('no se completaron todos los contenidos: ' + JSON.stringify(st));
+    if (st.contenidos < 26) errs.push('no se completaron todos los contenidos: ' + JSON.stringify(st));
     // 3) Navidad
     await nextDay(); await p.waitForTimeout(600); await shot('c-navidad');
-    const nav = await p.evaluate(() => document.querySelector('#viewport .layer:last-child').textContent.includes('¡Feliz Navidad!'));
+    const nav = await p.evaluate(() => document.querySelector('#viewport .layer:last-child').textContent.includes('Feliz Navidad'));
     if (!nav) errs.push('el 25 de diciembre no dice «¡Feliz Navidad!»');
   },
   // hoja del día: minimizar a barra compacta, su botón ▶, abrir, arrastrar, y el botón de trivias pendientes

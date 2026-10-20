@@ -119,6 +119,7 @@ export function unirse(from) {
 /** Entrar al camino desde Hoy, Teodoro o Mundos. */
 export function entrar(from) {
   if (!S.inscrito) return fase() === 'antes' ? go('teaser', {}, 'modal') : unirse(from);
+  if (fase() === 'antes') return go('espera', {}, 'page'); // antes del 29: la espera con la cuenta regresiva
   go('mapa', { from }, 'push');
 }
 const dayLine = n => n === 0 ? 'Día 0 · ¿Qué es el Adviento?' : `Día ${n} · ${DAYS[n].title}`;
@@ -338,13 +339,13 @@ register('espera', {
   mount(root, p, layer) {
     startCountdown(root);
     on(root, 'Ver tu camino a Belén', () => go('mapa', { from: 'espera' }, 'push'));
-    // lo único que se puede hacer antes del 29 es el día 0: va primero; invitar, debajo
+    // antes del 29 se puede mirar el camino (todo cerrado) e invitar
     const inv = find(root, 'Invitar a un amigo');
     const verDia0 = () => go('mapa', { from: 'espera' }, 'push');
     if (inv) {
       on(root, inv, verDia0);
       const ico = inv.querySelector('svg'); if (ico) ico.outerHTML = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5Z" fill="#0B748A"/></svg>';
-      setText(inv, 'Invitar a un amigo', isDone(0) ? 'Ver mi camino' : 'Ver el día 0');
+      setText(inv, 'Invitar a un amigo', 'Ver el camino');
     }
     // vuelve a donde estaba (Hoy o Teodoro), sin pasar otra vez por el teaser
     const ahoraNo = find(root, 'Ahora no');

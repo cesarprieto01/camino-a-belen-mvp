@@ -62,7 +62,7 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teas
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
   { sec: 1, t: 'Sin inscribirse', mira: 'Tarjeta en Hoy → teaser → inscripción → espera', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-claro', 'V2-Teaser-claro', 'V2-Confirmacion-claro', 'V2-Espera-claro'] },
-  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre el camino en el día 0 · la ilustración abre la espera · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre la espera con la cuenta regresiva · «Ver el camino» muestra el mapa cerrado hasta el 29 · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
   { sec: 2, t: 'Un día de cuento', mira: 'Día 10 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(10, 9), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Equivocarse en la trivia', mira: 'Toca una respuesta mala: pista sutil y reintento', run: day(10, 9), go: 'mapa', covers: ['V2-08-Pista-claro', 'V2-08b-Reintento-claro'] },
@@ -310,7 +310,7 @@ let rT; onChange(() => { syncTheme(); clearTimeout(rT); rT = setTimeout(() => { 
   syncSections();
   prefetch(['V2-01-Hoy-completo', 'V2-Mapa-completo-claro', 'V2-Mapa-dia0-claro', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-06c-Trivia-varias-claro', 'V2-07-Correcto-claro', 'V2-08-Pista-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado']);
   const hp = new URLSearchParams(location.hash.slice(1));
-  // la primera vez (o tras «Empezar de cero») todo arranca en el día 0: antes del 29 y sin inscribirse
+  // la primera vez (o tras «Empezar de cero») todo arranca antes del 29 y sin inscribirse
   const start = hp.get('pantalla');
   const safe = ['hoy', 'mapa', 'teodoro', 'mundos'].includes(start) ? start : 'hoy';
   if (hp.get('estado')) save();

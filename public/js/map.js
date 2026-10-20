@@ -123,6 +123,9 @@ register('mapa', {
       } else {
         restyle(el, n === 26 ? T.last : T.locked, p, n === 26 ? 88 : 64);
         el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon).replace(/>\d+</, `>${n}<`);
+        // candado abajo a la derecha (en lugar de la estrella del lienzo)
+        [...el.children].filter(c => c.tagName !== 'IMG' && /absolute/.test(c.style.position || '')).forEach(c => c.remove());
+        el.insertAdjacentHTML('beforeend', '<img class="node-lock" src="assets/candado.webp" alt="">');
         el.setAttribute('aria-label', `Día ${n}, ${d.title}, cerrado`);
       }
       on(root, el, () => tapNode(n, el, layer));
@@ -179,14 +182,19 @@ register('mapa', {
 
     // Casa del día 0
     const zeroBlock = [...root.children].find(el => /Día 0/.test(el.textContent || ''));
-    if (zeroBlock) on(root, zeroBlock, () => {
-      if (S.hoy === 0 && !isDone(0)) startDay(0);
-      else toast('Día 0 · ¿Qué es el Adviento?', 'El punto de partida del camino');
-    });
+    if (zeroBlock) {
+      replaceText(zeroBlock, /Día 0 · ¿Qué es el Adviento\?/, 'Aquí empieza el camino');
+      replaceText(zeroBlock, /No esperamos algo, esperamos a Alguien/, S.hoy <= 0 ? 'Salimos el 29 de noviembre' : 'Salimos el 29 de noviembre · ¡ya vamos en camino!');
+      on(root, zeroBlock, () => toast('Aquí empieza el camino', 'El 29 de noviembre salimos hacia Belén'));
+      // sin espacio vacío debajo: la casa del inicio queda justo encima de la hoja
+      const fin = zeroBlock.offsetTop + zeroBlock.offsetHeight + 110;
+      if (fin < root.offsetHeight) { root.style.height = fin + 'px'; root.style.minHeight = '0'; root.style.overflow = 'hidden'; }
+    }
 
     // 5) Cabecera fija
     const chip = layer.querySelector('[aria-label^="Día 9 de 26"]');
     if (chip) replaceText(chip, /^(\s*)9(\s*)$/, `$1${Math.max(focus, 0)}$2`);
+    if (chip && S.hoy <= 0) { chip.textContent = 'Sale el 29'; chip.style.fontWeight = '800'; chip.style.color = '#0B748A'; chip.setAttribute('aria-label', 'El camino sale el 29 de noviembre'); }
     chip?.setAttribute('aria-label', `Día ${focus} de 26`);
     paintEnergy(layer);
     // el mapa recuerda desde dónde se entró al camino (Hoy, Teodoro, Mundos o la espera)
@@ -433,6 +441,24 @@ function paintSheet(layer, T, dia) {
     head.children[1].style.fontWeight = '700';
   }
 
+  if (S.hoy <= 0) {
+    // antes del 29: no hay día 0; se ve lo que viene y se invita
+    if (head) { head.children[0].textContent = 'ANTES DE SALIR'; head.children[1].textContent = 'Salimos el 29 de noviembre'; }
+    const t = document.createElement('template'); t.innerHTML = T.rowOff;
+    const r = t.content.firstElementChild;
+    const im = r.querySelector('img'); const ic = iconOf(1, dark()); if (im && ic) im.src = A(ic);
+    const [tt, st] = r.querySelector(':scope > div').children; tt.textContent = `Día 1 · ${DAYS[1].title}`; st.textContent = 'Se abre el 29 de noviembre';
+    cta.before(r);
+    const txt = [...cta.childNodes].find(c => c.nodeType === 3 && c.nodeValue.trim()); if (txt) txt.nodeValue = 'Invitar a un amigo';
+    const icon = cta.querySelector('svg'); if (icon) icon.style.display = 'none';
+    on(layer, cta, () => go('invitacion', {}, 'push'));
+    const alt = document.createElement('button'); alt.type = 'button'; alt.className = 'sheet-alt';
+    alt.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1Z"/></svg><span>Volver al inicio</span><svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+    cta.after(alt); on(layer, alt, () => back(mapOrigin || 'hoy', 'back'));
+    sheet.style.height = 'auto'; sheet.dataset.day = '1';
+    sheet.classList.add('in-up');
+    return;
+  }
   const build = (on, title, sub, badge, icon) => {
     const t = document.createElement('template');
     t.innerHTML = on ? T.rowOn : T.rowOff;
@@ -504,7 +530,6 @@ function paintSheet(layer, T, dia) {
   const rulPend = RULES.ruleta.filter(r => r <= lastDay() && S.ruletaPendiente[r] && !S.ruletas[r]);
   if (n > 0 && rulPend.length) addAlt('Ruleta pendiente · ¡Girar!', 'regalo', () => go('ruletaPop', { day: rulPend[0], from: 'mapa' }, 'modal'), {}, `Día ${rulPend[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
-  if (n === 0 && contentDone(0)) addAlt('Volver al inicio', 'casa', () => back(mapOrigin || 'hoy', 'back'));
   sheet.style.height = 'auto';
   sheet.classList.add('in-up');
 }

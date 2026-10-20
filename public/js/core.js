@@ -51,7 +51,7 @@ export const contentDone = n => !!S.completos[n]?.contenido;
 export const lastDay = () => Math.min(S.hoy, 26);
 /** Día que toca jugar: el primero sin terminar hasta hoy. null si ya está todo hecho. */
 export function activeDay() {
-  if (S.hoy <= 0) return S.inscrito ? (isDone(0) ? null : 0) : null;
+  if (S.hoy <= 0) return null; // antes del 29 no hay día que hacer: el camino empieza en el día 1
   for (let n = 1; n <= lastDay(); n++) if (!isDone(n)) return n;
   return null;
 }
