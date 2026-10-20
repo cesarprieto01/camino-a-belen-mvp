@@ -66,3 +66,7 @@ for fname, b in boards.items():
 # fuentes del helmet (iguales en todas): se copian a app.css a mano
 total = sum(f.stat().st_size for f in ASSETS.iterdir())
 print(f'{len(manifest)} pantallas · assets {total/1e6:.1f} MB')
+
+# Mapa id -> archivo para el JS del MVP
+files = {f.stem: f.name for f in ASSETS.iterdir()}
+(ROOT / 'public' / 'js' / 'assets.js').write_text('export const FILES = ' + json.dumps(files, sort_keys=True) + ';\n')

@@ -1,0 +1,8 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap">
+<link rel="stylesheet" href="fonts.css">
+<style>body{margin:0;background:#666;display:flex;flex-wrap:wrap;gap:12px;padding:12px;font:12px sans-serif;color:#fff}.c{width:390px}.c>div{position:relative}</style></head><body>
+<script>
+const ids=new URLSearchParams(location.search).get('l').split(',');
+Promise.all(ids.map(id=>fetch('screens/'+id+'.html').then(r=>r.text()).then(h=>{const c=document.createElement('div');c.className='c';c.innerHTML='<b>'+id+'</b><div>'+h+'</div>';document.body.appendChild(c)}))).then(()=>document.body.dataset.ready=1);
+</script></body></html>

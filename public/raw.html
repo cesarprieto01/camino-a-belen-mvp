@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pantalla tal cual</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap">
+<link rel="stylesheet" href="fonts.css">
+<style>body{margin:0;background:#888}div,span,a,button,p,b,strong,em,label{text-wrap:pretty}</style>
+</head>
+<body>
+<div id="s"></div>
+<script>
+const id = new URLSearchParams(location.search).get('s');
+fetch('screens/' + id + '.html').then(r => r.text()).then(h => { document.getElementById('s').innerHTML = h; });
+</script>
+</body>
+</html>
