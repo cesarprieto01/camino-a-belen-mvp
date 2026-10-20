@@ -264,11 +264,13 @@ register('memorama', {
     const NAMES = { maria: 'María', jose: 'José', teodoro: 'Teodoro', oveja: 'Oveja', estrella: 'Estrella', gabriel: 'Gabriel' };
     grid.innerHTML = '';
     const counters = $$(root, 'div').filter(el => el.style.height === '36px');
-    const pairsEl = counters[0] && textEl(counters[0], /de 6/);
-    const movesEl = counters[1] && textEl(counters[1], /^\d+$/);
+    // solo el nodo de texto, para no borrar los íconos de los contadores
+    const textNode = (el, re) => { if (!el) return null; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let t; while ((t = w.nextNode())) if (re.test(t.nodeValue.trim())) return t; return null; };
+    const pairsEl = textNode(counters[0], /de 6/);
+    const movesEl = textNode(counters[1], /^\d+$/);
     const hintEl = textEl(root, /¿Dónde está/);
     let open = [], found = 0, moves = 0, lock = false;
-    const paint = () => { if (pairsEl) pairsEl.textContent = `${found} de 6`; if (movesEl) movesEl.textContent = String(moves); };
+    const paint = () => { if (pairsEl) pairsEl.nodeValue = `${found} de 6`; if (movesEl) movesEl.nodeValue = String(moves); };
     paint();
     deck.forEach((k, idx) => {
       const b = document.createElement('button');

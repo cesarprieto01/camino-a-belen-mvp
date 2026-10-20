@@ -119,10 +119,15 @@ export function flowScreens() {
 }
 export const manifest = () => MAN;
 export async function html(file) {
-  if (!cache.has(file)) cache.set(file, fetch('screens/' + file + '.html').then(r => r.text()));
+  if (!cache.has(file)) {
+    // si falla la red, no se queda guardado el error: el próximo intento vuelve a pedirla
+    const p = fetch('screens/' + file + '.html').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+    p.catch(() => cache.delete(file));
+    cache.set(file, p);
+  }
   return cache.get(file);
 }
-export function prefetch(files) { files.forEach(f => html(f)); }
+export function prefetch(files) { files.forEach(f => html(f).catch(() => { /* se reintenta al abrirla */ })); }
 
 /** Fragmento DOM de una pantalla (para sacarle piezas como plantilla). */
 export async function frag(file) {

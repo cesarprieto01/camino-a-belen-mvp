@@ -14,7 +14,7 @@ export const IMG = {
   bufanda: 'ed7f054b6f0d602d40b41b8d2706379a', bolso: '5395dc871861741f74c551c3a1031492',
   paja: '98a7495c73f5fff24bb7130fa01efe67', pan: '5bab1fe48e4c5009d62da468a9d7f69f',
   pesebre: '06d17746a01e5a05a453fdf6f0e24b1d', farol: '8f9cd03fb68bac90ed249fa5d45f0828',
-  dorso: '834fcca7dd481ce118a38c73d90f02cc',
+  dorso: '834fcca7dd481ce118a38c73d90f02cc', regalo: '40de1cf55d4441bd10615c06350dde30',
   // Teodoro por nivel de batería (Teodoro-Energia)
   t5: '1f0de9c14d2ad71b51f76947ec513fc6', t4: '64167d45da19875626c545019275e29c',
   t3: '7bfff4a8f40290f70de7fc8e49ee7d4d', t2: '52ba38f10b723e04ad04beea396aba0c',
@@ -27,23 +27,9 @@ export const IMG = {
   b4: '1026bcf94b07418de82a878d671104b2', b5: '4b563b5c264cac11814acc731db9db86',
 };
 
-// Ícono de cada tipo de día (Íconos del camino) · [claro, oscuro]
-const VELAS = ['17e0fc8eb9eeb07c2f73b41d96a0c4ef', '03d290f66f190f6fdfce7f3a66405c9d', '40de1cf55d4441bd10615c06350dde30', 'daef56d3b28590da72e7b3e8f4bec672'];
-const TYPE_ICON = {
-  meditacion: ['0e59b25dee307817e656b0cec35214e7', '73cca7aa92f067c05cf345a46f19ce08'],
-  cuento: ['f7099fe3d8b77bb2187d1fa3828c8d21', 'b49abdd6d504b88864781f6ac6190e29'],
-  amigos: ['6a1c6af45330c5d04911e94a184c1454', 'e48575034ecd499a3ebe4494f5d5f060'],
-  cancion: ['aea7792c9bd18835bc1f919ca1cdbb61', 'b85f9b79229a77969426c0a2d6e503da'],
-  reto: ['c75692c2770a124c81efef3b4c6f3ae9', '97879a4449b58b7743e234a05a36a876'],
-  juego: ['0e6c81df9801f8cf6adb52bfb5bddf26', '1977b473eeef718dad110ac5ae865e71'],
-  nochebuena: ['04b65469de83c633bcfd3d5b259c4699', '3fada372c4437f1127990caad6534612'],
-};
-export function iconOf(n, dark) {
-  const d = DAYS[n]; if (!d) return null;
-  if (d.type === 'domingo') return VELAS[(d.vela || 1) - 1];
-  const t = TYPE_ICON[d.type] || TYPE_ICON.cuento; // el video aún no tiene ícono
-  return t[dark ? 1 : 0];
-}
+// Ícono de cada día tal como está en el mapa del lienzo (Camino completo · día 0) · [claro, oscuro]
+const DAY_ICONS = {"0": [null, null], "1": ["17e0fc8eb9eeb07c2f73b41d96a0c4ef", "17e0fc8eb9eeb07c2f73b41d96a0c4ef"], "2": ["0e59b25dee307817e656b0cec35214e7", "73cca7aa92f067c05cf345a46f19ce08"], "3": ["f7099fe3d8b77bb2187d1fa3828c8d21", "b49abdd6d504b88864781f6ac6190e29"], "4": ["6a1c6af45330c5d04911e94a184c1454", "e48575034ecd499a3ebe4494f5d5f060"], "5": ["aea7792c9bd18835bc1f919ca1cdbb61", "b85f9b79229a77969426c0a2d6e503da"], "6": ["c75692c2770a124c81efef3b4c6f3ae9", "97879a4449b58b7743e234a05a36a876"], "7": ["0e6c81df9801f8cf6adb52bfb5bddf26", "1977b473eeef718dad110ac5ae865e71"], "8": ["03d290f66f190f6fdfce7f3a66405c9d", "03d290f66f190f6fdfce7f3a66405c9d"], "9": ["0e59b25dee307817e656b0cec35214e7", "73cca7aa92f067c05cf345a46f19ce08"], "10": ["f7099fe3d8b77bb2187d1fa3828c8d21", "b49abdd6d504b88864781f6ac6190e29"], "11": ["6a1c6af45330c5d04911e94a184c1454", "e48575034ecd499a3ebe4494f5d5f060"], "12": ["aea7792c9bd18835bc1f919ca1cdbb61", "b85f9b79229a77969426c0a2d6e503da"], "13": ["c75692c2770a124c81efef3b4c6f3ae9", "97879a4449b58b7743e234a05a36a876"], "14": ["0e6c81df9801f8cf6adb52bfb5bddf26", "1977b473eeef718dad110ac5ae865e71"], "15": ["40de1cf55d4441bd10615c06350dde30", "40de1cf55d4441bd10615c06350dde30"], "16": ["f7099fe3d8b77bb2187d1fa3828c8d21", "b49abdd6d504b88864781f6ac6190e29"], "17": ["0e59b25dee307817e656b0cec35214e7", "73cca7aa92f067c05cf345a46f19ce08"], "18": ["6a1c6af45330c5d04911e94a184c1454", "e48575034ecd499a3ebe4494f5d5f060"], "19": ["c75692c2770a124c81efef3b4c6f3ae9", "97879a4449b58b7743e234a05a36a876"], "20": ["aea7792c9bd18835bc1f919ca1cdbb61", "b85f9b79229a77969426c0a2d6e503da"], "21": ["0e6c81df9801f8cf6adb52bfb5bddf26", "1977b473eeef718dad110ac5ae865e71"], "22": ["daef56d3b28590da72e7b3e8f4bec672", "daef56d3b28590da72e7b3e8f4bec672"], "23": ["f7099fe3d8b77bb2187d1fa3828c8d21", "b49abdd6d504b88864781f6ac6190e29"], "24": ["6a1c6af45330c5d04911e94a184c1454", "e48575034ecd499a3ebe4494f5d5f060"], "25": ["6a1c6af45330c5d04911e94a184c1454", "e48575034ecd499a3ebe4494f5d5f060"], "26": ["04b65469de83c633bcfd3d5b259c4699", "3fada372c4437f1127990caad6534612"]};
+export function iconOf(n, dark) { return DAY_ICONS[n]?.[dark ? 1 : 0] || null; }
 
 export const BATTERY_IDS = [IMG.b0, IMG.b1, IMG.b2, IMG.b3, IMG.b4, IMG.b5];
 export const TEODORO_IDS = [IMG.t0, IMG.t1, IMG.t2, IMG.t3, IMG.t4, IMG.t5];

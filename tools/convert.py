@@ -54,9 +54,24 @@ for fname, b in boards.items():
     title = re.search(r'<title>([\s\S]*?)</title>', t)
     dark = bool(re.search(r'#00082B|#02254F', body[:600])) or '-oscuro' in fname
     stem = fname[:-len('.dc.html')]
+    h = b['h']
+    # Pantallas con varios bloques sueltos (Tab Teodoro antes del 29): el lienzo las trae «ya desplazadas».
+    # Se convierten en página con scroll real que empieza arriba.
+    first = re.match(r'<div style="([^"]*)"', body)
+    if first and re.search(r'top:\s*-(\d+)px', first.group(1)) and body.count('\n<div style="position: absolute; left: 0; right: 0; top: 0; height: 50px') + body.count('<nav') >= 1:
+        shift = int(re.search(r'top:\s*-(\d+)px', first.group(1)).group(1))
+        style = first.group(1).replace(f'top: -{shift}px', 'top: 0')
+        bottoms = [int(a) + int(c) for a, c in re.findall(r'top: (\d+)px; [^"]*?height: (\d+)px', body)]
+        declared = [int(x) for x in re.findall(r'height:\s*(\d+)px', style)]
+        inner_h = max([h + shift, max(bottoms) + 96] + declared)
+        style = re.sub(r'height:\s*\d+px', f'height: {inner_h}px', style)
+        body = body.replace(first.group(1), style, 1)
+        bg = re.search(r'background:\s*([^;]+)', style)
+        body = f'<div style="width: {b["w"]}px; height: {inner_h}px; position: relative; overflow: hidden; background: {bg.group(1) if bg else "transparent"}">' + body + '</div>'
+        h = inner_h
     (OUT / f'{stem}.html').write_text(body)
     manifest[stem] = {
-        'w': b['w'], 'h': b['h'],
+        'w': b['w'], 'h': h,
         'title': b.get('title') or (title.group(1).strip() if title else stem),
         'dark': dark,
         'x': b['x'], 'y': b['y'],

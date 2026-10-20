@@ -825,7 +825,7 @@
  },
  "V2-Pre-Teodoro-claro": {
   "w": 390,
-  "h": 844,
+  "h": 1565,
   "title": "Tab Teodoro · antes del 29 nov · sin inscribirse · ☀ claro",
   "dark": false,
   "x": 470,
@@ -833,7 +833,7 @@
  },
  "V2-Pre-Teodoro-dentro-claro": {
   "w": 390,
-  "h": 844,
+  "h": 1565,
   "title": "Tab Teodoro · antes del 29 nov · ya inscrito · ☀ claro",
   "dark": false,
   "x": 2820,
@@ -841,7 +841,7 @@
  },
  "V2-Pre-Teodoro-dentro": {
   "w": 390,
-  "h": 844,
+  "h": 1548,
   "title": "Tab Teodoro · antes del 29 nov · ya inscrito · ☾ oscuro",
   "dark": true,
   "x": 2820,
@@ -849,7 +849,7 @@
  },
  "V2-Pre-Teodoro": {
   "w": 390,
-  "h": 844,
+  "h": 1548,
   "title": "Tab Teodoro · antes del 29 nov · sin inscribirse · ☾ oscuro",
   "dark": true,
   "x": 470,

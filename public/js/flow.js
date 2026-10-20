@@ -69,6 +69,11 @@ function appContent(root) {
   ['Villancicos', 'Oración de la noche', 'Evangelio del día', 'El cuento de hoy', 'La afirmación de hoy', 'PARA REZAR EN FAMILIA', 'Los peces en el río', 'Ven, Señor Jesús', 'Noche de paz', 'Ver todo']
     .forEach(t => on(root, t, () => toast('Contenido de Theo', 'Ya existe en la app; aquí no cambia')));
 }
+/** Destellos decorativos del lienzo (estrellitas sueltas): titilan. Nunca íconos de botones. */
+export function sparkles(root) {
+  $$(root, 'svg').filter(s => s.style.position === 'absolute' && !s.closest('a, button, nav') && /#F5D|#F5C|#FFF3|#F7C/i.test(s.innerHTML))
+    .forEach((s, i) => { s.classList.add('a-twinkle'); s.style.animationDelay = (i * .35) + 's'; });
+}
 const dayLine = n => n === 0 ? 'Día 0 · ¿Qué es el Adviento?' : `Día ${n} · ${DAYS[n].title}`;
 
 // Cuenta regresiva real hasta el 29 de noviembre de 2026
@@ -202,7 +207,7 @@ register('confirmacion', {
     const circle = check?.closest('div');
     circle?.classList.add('a-pop');
     if (check) { check.style.strokeDasharray = 40; check.style.strokeDashoffset = 40; check.style.animation = 'drawCheck .5s .35s ease-out forwards'; }
-    $$(root, 'svg').forEach((s, i) => { if (s !== check?.ownerSVGElement) s.classList.add('a-twinkle'); s.style.animationDelay = (i * .2) + 's'; });
+    sparkles(root);
     confetti(layer, 195, 330, 28);
     on(root, '¡Listo, te inscribiste!', () => next());
     let done = false;
@@ -218,7 +223,10 @@ register('espera', {
     on(root, 'Ahora no', () => go('hoy', {}, 'down'));
     on(root, 'Cerrar', () => go('hoy', {}, 'down'));
     const fam = textEl(root, /2\.418 familias/);
-    if (fam && !reduced()) { let v = 1800; const iv = setInterval(() => { v += 37; fam.textContent = fam.textContent.replace(/[\d.]+ familias/, v.toLocaleString('es') + ' familias'); if (v >= 2418) clearInterval(iv); }, 30); }
+    if (fam && !reduced()) {
+      const fmt = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      let v = 1800; const iv = setInterval(() => { v = Math.min(2418, v + 37); fam.textContent = fam.textContent.replace(/[\d.]+ familias/, fmt(v) + ' familias'); if (v >= 2418) clearInterval(iv); }, 30);
+    }
     $$(root, 'img').find(i => i.src.includes(IMG.t5))?.classList.add('a-bob');
   },
 });
@@ -335,7 +343,7 @@ register('hub', {
     setText(root, /Al terminar ganas \d+ panes/, `Al terminar ganas ${panesContenido()} panes`);
     setText(root, 'Pesebre para colorear', d.retoSub || 'Para hacer en casa');
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-bob'));
-    $$(root, 'svg').filter(s => s.getAttribute('width') <= 22).forEach(s => s.classList.add('a-twinkle'));
+    sparkles(root);
     on(root, 'Volver al mapa', () => go('mapa', {}, 'down'));
     on(root, 'Escuchar a Teodoro', () => toast('Teodoro explica el reto', 'Audio por grabar'));
     on(root, 'Reto en familia', () => toast(d.reto || 'Reto en familia', '10 minutos juntos'));
@@ -417,8 +425,9 @@ register('cerrado', {
     $$(root, 'a[aria-label^="Día"]').forEach(a => { const m = a.getAttribute('aria-label').match(/Día (\d+)/); if (!m) return; const shift = n - 9; const span = [...a.querySelectorAll('span')].find(s => /^\d+$/.test(s.textContent.trim())); if (span) span.textContent = String(+m[1] + shift); });
     paintEnergy(root);
     // cuenta regresiva real hasta medianoche
-    const cd = textEl(root, /Faltan \d+ h \d+ min/);
-    const tick = () => { const now = new Date(); const mid = new Date(now); mid.setHours(24, 0, 0, 0); const ms = mid - now; if (cd) cd.textContent = `Faltan ${Math.floor(ms / 36e5)} h ${Math.floor(ms / 6e4) % 60} min`; };
+    const cdEl = textEl(root, /Faltan \d+ h \d+ min/);
+    const cd = cdEl && [...cdEl.childNodes].find(c => c.nodeType === 3 && /Faltan/.test(c.nodeValue));
+    const tick = () => { const now = new Date(); const mid = new Date(now); mid.setHours(24, 0, 0, 0); const ms = mid - now; if (cd) cd.nodeValue = `Faltan ${Math.floor(ms / 36e5)} h ${Math.floor(ms / 6e4) % 60} min`; };
     tick(); const iv = setInterval(() => layer.isConnected ? tick() : clearInterval(iv), 20000);
     $$(root, 'span').filter(s => s.textContent.trim() === 'z').forEach((z, i) => { z.style.display = 'inline-block'; z.style.animation = `zz 2.4s ${i * .8}s ease-out infinite`; });
     $$(root, 'img').find(i => /duerme/.test(i.alt || ''))?.classList.add('a-bob');
@@ -518,7 +527,7 @@ register('final', {
     const total = doneCount() + (isDone(26) ? 0 : 0);
     setText(root, /^26$/, String(Math.min(26, doneCount())));
     const scene = $$(root, 'img')[0]; scene?.classList.add('a-pop');
-    $$(root, 'svg').forEach((s, i) => { s.classList.add('a-twinkle'); s.style.animationDelay = (i * .3) + 's'; });
+    sparkles(root);
     await wait(400); confetti(layer, 195, 220, 60);
     on(root, 'Ver el nacimiento', el => hueco('Ver el nacimiento: ¿video o animación final?'));
     on(root, 'Compartir con la familia', async () => {

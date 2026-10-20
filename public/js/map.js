@@ -1,7 +1,7 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
 import { S, save, A, $, $$, on, frag, go, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
-import { DAYS, TYPES, RULES, dateOf } from './data.js';
+import { DAYS, TYPES, RULES, IMG, dateOf, iconOf } from './data.js';
 import { startDay, ctaLabel } from './flow.js';
 
 const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
@@ -13,6 +13,11 @@ async function templates() {
   if (tpl?.key === key) return tpl;
   const full = await frag(F[key]);
   const zero = await frag(F0[key]);
+  const triv = await frag(key === 'claro' ? 'S-03b-Mapa-trivia' : 'S-03b-Mapa-trivia-oscuro');
+  const d26 = await frag(key === 'claro' ? 'V2-Mapa-d24-claro' : 'V2-Mapa-oscuro');
+  const trivSheet = [...triv.children].find(el => el.style.bottom === '10px');
+  const trivRows = [...trivSheet.children].filter(el => el.style.height === '58px');
+  const sheet26 = [...d26.children].find(el => el.style.bottom === '10px' || /Llegamos a Belén/.test(el.textContent || '') && el.style.position === 'absolute' && parseFloat(el.style.left) <= 20);
   const node = n => full.querySelector(`a[aria-label^="Día ${n},"]`);
   const badge = n => { const s = node(n).querySelector(':scope > span[aria-hidden]'); return s ? s.outerHTML : ''; };
   const icons = {};
@@ -33,6 +38,9 @@ async function templates() {
     icons,
     houseOpen: houses[0], houseNext: houses[1], houseFuture: houses[2],
     rowOn: rows[0].outerHTML, rowOff: rows[1].outerHTML,
+    doneBadge: trivRows[0].lastElementChild.outerHTML,
+    trivIcon: rows[1].querySelector('img')?.getAttribute('src'),
+    sheet26: sheet26 ? sheet26.outerHTML : null,
   };
   return tpl;
 }
@@ -175,7 +183,7 @@ register('mapa', {
 
     const scrollToNode = (n, smooth) => {
       const t = nodes[n]; if (!t) { scroller.scrollTop = scroller.scrollHeight; return; }
-      const top = parseFloat(t.el.style.top) - 300;
+      const top = parseFloat(t.el.style.top) - (t.el.dataset.today ? 416 : 426);
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
     if (focus < 1) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(S.pasoAnimado || focus, false);
@@ -233,9 +241,16 @@ function tapNode(n, el, layer) {
 }
 
 function paintSheet(layer, T) {
-  const sheet = [...layer.children].find(el => el.style.bottom === '10px');
+  let sheet = [...layer.children].find(el => el.style.bottom === '10px');
   if (!sheet) return;
   const act = activeDay();
+  if (act === 26 && !contentDone(26) && T.sheet26) {
+    const t = document.createElement('template'); t.innerHTML = T.sheet26;
+    const s26 = t.content.firstElementChild; sheet.replaceWith(s26); sheet = s26;
+    const a = sheet.querySelector('a'); if (a) on(layer, a, () => startDay(26));
+    sheet.classList.add('in-up');
+    return;
+  }
   const n = act ?? Math.min(lastDay(), 26);
   const d = DAYS[n];
   const head = [...sheet.children].find(el => /HOY · DÍA/.test(el.textContent));
@@ -257,29 +272,34 @@ function paintSheet(layer, T) {
     t.innerHTML = on ? T.rowOn : T.rowOff;
     const r = t.content.firstElementChild;
     if (icon) { const im = r.querySelector('img'); if (im) im.src = icon; }
-    const texts = r.querySelectorAll('div > div');
-    texts[0].textContent = title; texts[1].textContent = sub;
+    const [tt, st] = r.querySelector(':scope > div').children;
+    tt.textContent = title; st.textContent = sub;
     const b = r.lastElementChild;
     if (badge === 'ok') {
-      r.style.opacity = '1';
-      b.outerHTML = `<span aria-label="Hecho" style="flex:none;width:30px;height:30px;border-radius:50%;background:#1E8DA5;display:grid;place-items:center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>`;
+      r.style.opacity = '1'; r.style.boxShadow = 'none';
+      b.outerHTML = T.doneBadge;
     } else if (badge === 'stars') {
-      r.style.opacity = '1';
+      r.style.opacity = '1'; r.style.boxShadow = 'none';
       const s = stars(n);
-      b.outerHTML = `<span aria-label="${s} de 3 estrellas" style="flex:none;font-size:18px;letter-spacing:1px;color:#F5C33B">${'★'.repeat(s)}<span style="color:#C9D6DF">${'★'.repeat(3 - s)}</span></span>`;
+      b.outerHTML = `<span aria-label="${s} de 3 estrellas" style="flex:none;display:flex;gap:1px;font-size:17px;line-height:1;color:#F5C33B">${'★'.repeat(s)}<span style="color:${dark() ? 'rgba(255,255,255,.25)' : '#C9D6DF'}">${'★'.repeat(3 - s)}</span></span>`;
     }
     return r;
   };
+  const CONT = {
+    meditacion: ['Historia', 'Ya la viste', 'la historia'], cuento: ['Historia', 'Ya la viste', 'la historia'], amigos: ['Historia', 'Ya la viste', 'la historia'],
+    intro: ['Historia', 'Ya la viste', 'la historia'], domingo: ['Evangelio', 'Ya lo escuchaste', 'el Evangelio'], cancion: ['Canción', 'Ya la cantaste', 'la canción'],
+    reto: ['Reto en familia', 'Ya lo hicieron', 'el reto'], juego: ['Juego con Teodoro', 'Ya jugaste', 'el juego'], video: ['Video', 'Ya lo viste', 'el video'],
+    nochebuena: ['Actividad final', 'Ya llegaste', 'la actividad'],
+  }[d.type];
   const ty = TYPES[d.type];
+  const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : null;
   const list = [];
-  if (n === 0 || n === 26) {
-    list.push(build(!contentDone(n), ty.content, `${ty.min} min`, contentDone(n) ? 'ok' : 'now', T.icons[n]));
-  } else {
-    list.push(build(!contentDone(n), ty.content, `${ty.min} min`, contentDone(n) ? 'ok' : 'now', T.icons[n]));
+  list.push(build(!contentDone(n), CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : 'now', rowIcon));
+  if (n !== 0 && n !== 26) {
     const trivOn = contentDone(n) && !isDone(n);
-    list.push(build(trivOn, 'Trivia', isDone(n) ? '5 preguntas' : contentDone(n) ? '5 preguntas · ¡ya puedes!' : 'Se abre al terminar la historia', isDone(n) ? 'stars' : trivOn ? 'now' : 'lock'));
+    list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Se abre al terminar ${CONT[2]}`, isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
     const sorp = RULES.sorpresa[n];
-    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay sorpresa!', 'Un juego extra que da panes', 'now'));
+    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay sorpresa!', 'Un juego extra que da panes', 'now', A(IMG.regalo)));
   }
   list.forEach(r => cta.before(r));
   if (list.length > 2) { sheet.style.height = 'auto'; }
