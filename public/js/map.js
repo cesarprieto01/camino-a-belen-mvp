@@ -39,7 +39,7 @@ async function templates() {
     key,
     done: node(1).getAttribute('style'),
     doneInner: [...node(1).childNodes].filter(c => !(c.tagName === 'SPAN' && c.getAttribute('aria-hidden'))).map(c => c.outerHTML || '').join(''),
-    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(1).replace(/(fill|stroke)="#(?!fff|FFF)[0-9A-Fa-f]{3,6}"/g, '$1="#C9D6DF"').replace(/(fill|stroke): ?#(?!fff|FFF)[0-9A-Fa-f]{3,6}/g, '$1: #C9D6DF') },
+    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(1).replace(/fill="#(?!fff|FFF)[0-9A-Fa-f]{3,6}"/g, 'fill="#FFFFFF" stroke="#9DB3BD" stroke-width="1.8" stroke-linejoin="round"').replace(/fill: ?#(?!fff|FFF)[0-9A-Fa-f]{3,6}/g, 'fill: #FFFFFF') },
     today: node(9).getAttribute('style'),
     todayInner: node(9).innerHTML,
     locked: node(10).getAttribute('style'),
@@ -92,6 +92,8 @@ register('mapa', {
     const extra = document.createElement('div'); extra.style.height = '230px';
     scroller.appendChild(extra);
 
+    // 1b) Camino más curvo: mismos puntos de paso (los días no se mueven), cada tramo como un arco que se abre a los lados
+    curvar(root);
     // 2) Nodos de cada día
     const nodes = {};
     for (let n = 1; n <= 26; n++) {
@@ -99,7 +101,7 @@ register('mapa', {
       if (!el) continue;
       const p = pos(el); nodes[n] = { el, p };
       const d = DAYS[n];
-      const icon = T.icons[n] ? `<img src="${T.icons[n]}" alt="" style="width: 30px; height: 24px; object-fit: contain; opacity: .55">` : '';
+      const icon = T.icons[n] ? `<img src="${T.icons[n]}" alt="" style="width: 40px; height: 34px; object-fit: contain; opacity: .55">` : '';
       if (isDone(n) && !(S.pasoAnimado === n && !reduced())) {
         restyle(el, T.done, p, 64);
         el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + (T.badges[stars(n)] || '');
@@ -149,7 +151,7 @@ register('mapa', {
     if (bubble) {
       const nx = (act ?? focus) + 1;
       if (nodes[nx]) {
-        bubble.style.top = (nodes[nx].p.y + 14) + 'px'; bubble.style.zIndex = '1';
+        bubble.style.top = Math.max(150, nodes[nx].p.y + 14) + 'px'; bubble.style.zIndex = '1';
         replaceText(bubble, /¿Qué habrá.*\?/, S.hoy <= 0 ? '¡Nos vemos el 29!' : nx > lastDay() ? '¿Qué habrá mañana?' : '¡Sigue el camino!');
         const w = bubble.offsetWidth || 162;
         bubble.style.left = Math.min(390 - 12 - w, nodes[nx].p.x + 72) + 'px';
@@ -164,7 +166,7 @@ register('mapa', {
       const opened = !!S.ruletas[d];
       const nextUp = !opened && RULES.ruleta.find(x => !S.ruletas[x]) === d;
       a.innerHTML = (opened ? T.houseOpen : nextUp ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Abierta' : d === lastDay() ? 'Hoy' : d < lastDay() ? 'Pendiente' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
+      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Girada' : d === lastDay() ? 'Hoy' : d < lastDay() ? 'Pendiente' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
       replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
       // el candado solo en lo que aún no llega
       if (/^(Hoy|Pendiente)$/.test(label)) a.querySelectorAll('span svg').forEach(s => s.remove());
@@ -413,13 +415,16 @@ function paintSheet(layer, T) {
   const cta = sheet.querySelector('a');
   rows.forEach(r => r.remove());
 
-  let kicker = `HOY · DÍA ${n}`;
-  if (act != null && act < lastDay()) kicker = `TE ESPERA · DÍA ${n}`;
+  sheet.dataset.day = String(n);
+  let kicker = 'HOY';
+  if (act != null && act < lastDay()) kicker = 'TE ESPERA';
   if (act == null) kicker = S.hoy >= 27 ? 'CAMINO TERMINADO' : `DÍA ${n} · LISTO`;
   if (n === 0) kicker = 'DÍA 0 · ANTES DE SALIR';
   if (head) {
+    head.classList.add('sheet-head');
     head.children[0].textContent = kicker;
     head.children[1].textContent = n === 0 ? '¿Qué es el Adviento?' : d.title;
+    head.children[1].style.fontWeight = '700';
   }
 
   const build = (on, title, sub, badge, icon) => {
@@ -443,7 +448,7 @@ function paintSheet(layer, T) {
   };
   const CONT = contOf(d.type);
   const ty = TYPES[d.type];
-  const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : null;
+  const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : n === 0 ? A(IMG.pergamino) : null;
   const list = [];
   list.push(build(!contentDone(n), CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : 'now', rowIcon));
   const ruletaHoy = RULES.ruleta.includes(n) && !S.ruletas[n] && !contentDone(n) && T.ruletaRow;
@@ -520,17 +525,17 @@ function sheetDrag(layer) {
     b.addEventListener('pointerdown', ev => ev.stopPropagation());
     b.addEventListener('click', ev => { ev.stopPropagation(); setMini(s, !s.classList.contains('mini')); });
     // barra compacta: ícono · día y título · acción principal
-    const head = [...s.children].find(el => /DÍA|ANTES DE SALIR|NOCHEBUENA/i.test(el.children[0]?.textContent || ''));
+    const head = s.querySelector('.sheet-head') || [...s.children].find(el => el.children.length === 2 && /HOY|TE ESPERA|DÍA|ANTES DE SALIR|NOCHEBUENA|YA LO HICISTE/i.test(el.children[0]?.textContent || ''));
     const cta = [...s.children].find(el => el.tagName === 'A');
     const rowImg = s.querySelector('[style*="height: 58px"] img, [style*="height:58px"] img');
     const pend = s.querySelector('.sheet-alt[data-pend]');
     const bar = document.createElement('div'); bar.className = 'mini-bar';
-    const eyebrow = (head?.children[0]?.textContent || '').replace(/^(HOY|TE ESPERA)\s*·\s*/i, '').trim();
+    const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.textContent.trim() || '';
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
     const corto = /^Hasta mañana/.test(verbo) ? 'Hasta mañana' : verbo.split(' ')[0];
-    bar.innerHTML = `<span class="mb-ico">${rowImg ? `<img src="${rowImg.getAttribute('src')}" alt="">` : ''}${pend ? `<i class="mb-dot" aria-hidden="true">${pend.dataset.pend}</i>` : ''}</span>
-      <span class="mb-txt"><small>${eyebrow}</small><b>${title}</b></span>
+    bar.innerHTML = `<span class="mb-ico">${rowImg ? `<img src="${rowImg.getAttribute('src')}" alt="">` : ''}</span>
+      <span class="mb-txt"><small>${eyebrow}${pend ? ` · <em class="mb-pend">${pend.dataset.pend} ${pend.dataset.pend === '1' ? 'trivia pendiente' : 'trivias pendientes'}</em>` : ''}</small><b>${title}</b></span>
       <button type="button" class="mb-cta" data-bound="1">${/Hasta/.test(corto) ? '' : '<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5Z" fill="currentColor"/></svg>'}${corto}</button>`;
     bar.setAttribute('aria-label', `${eyebrow}: ${title}${pend ? `. ${pend.dataset.pend} trivias pendientes` : ''}`);
     const grab = [...s.children].find(el => el.getAttribute('aria-hidden') === 'true' && el.offsetHeight <= 6);
@@ -566,5 +571,20 @@ function sheetDrag(layer) {
     else { sheet.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1)'; sheet.style.transform = ''; }
   };
   layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
+}
+function curvar(root) {
+  const roads = $$(root, 'svg path').filter(p => /^M\s*\d/.test(p.getAttribute('d') || '') && !p.dataset.side && (p.getAttribute('d').match(/C/g) || []).length > 6);
+  if (!roads.length) return;
+  const d0 = roads[0].getAttribute('d');
+  const nums = d0.replace(/[MC]/g, ' ').trim().split(/[\s,]+/).map(Number);
+  const pts = [[nums[0], nums[1]]];
+  for (let i = 2; i + 5 < nums.length + 0; i += 6) pts.push([nums[i + 4], nums[i + 5]]);
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    const dy = y1 - y0, sway = (i % 2 ? 1 : -1) * Math.min(70, Math.abs(dy) * .5);
+    d += ` C${(x0 + sway).toFixed(1)} ${(y0 + dy * .35).toFixed(1)} ${(x1 + sway).toFixed(1)} ${(y1 - dy * .35).toFixed(1)} ${x1} ${y1}`;
+  }
+  roads.filter(p => p.getAttribute('d') === d0 || p.getAttribute('d').startsWith(d0.slice(0, 18))).forEach(p => p.setAttribute('d', d));
 }
 function leaveMap() { back(mapOrigin || 'hoy', 'back'); }

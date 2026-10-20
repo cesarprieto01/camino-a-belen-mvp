@@ -328,3 +328,43 @@ export const DESAFIOS = [
   { t: 'Cuenten una historia de cuando nacieron', sub: 'Como en Belén, todo nacimiento es una fiesta', icon: 'nino' },
 ];
 export const SORPRESA_NOMBRE = { memorama: 'Memorama', adivinanza: 'Adivinanza en familia', desafio: 'Desafío en familia' };
+
+// Todas las preguntas de opción múltiple con 4 respuestas: a las de imagen (3) se les suma una alternativa
+// claramente incorrecta, elegida a mano para que no haya otra respuesta válida.
+const CUARTA = {
+  '1.2': ['Una oveja', 'oveja'],
+  '2.1': ['Un pastor', 'pastor'],
+  '2.4': ['Una oveja', 'oveja'],
+  '3.2': ['Una manzana', 'manzana'],
+  '4.4': ['Gabriel', 'gabriel'],
+  '5.3': ['Un farol', 'lampara'],
+  '6.2': ['José', 'jose'],
+  '6.4': ['Una oveja', 'oveja'],
+  '7.0': ['Los Reyes', 'reyes'],
+  '7.3': ['Una manzana', 'manzana'],
+  '8.2': ['Una oveja', 'oveja'],
+  '9.0': ['Los Reyes', 'reyes'],
+  '9.1': ['Un pastor', 'pastor'],
+  '11.2': ['Un farol', 'lampara'],
+  '12.3': ['Una oveja', 'oveja'],
+  '13.0': ['En una caja de regalo', 'regalo'],
+  '13.3': ['Una estrella', 'estrella'],
+  '14.1': ['Un pastor', 'pastor'],
+  '15.3': ['José', 'jose'],
+  '16.0': ['Un pastor', 'pastor'],
+  '17.1': ['Un pastor', 'pastor'],
+  '18.1': ['Cien', 'estrella'],
+  '18.3': ['Un pastor', 'pastor'],
+  '19.1': ['Apagada en un rincón', 'farol'],
+  '20.3': ['Un rey', 'reyes'],
+  '21.0': ['Gabriel', 'gabriel'],
+  '21.2': ['Un rey', 'reyes'],
+  '21.4': ['Un rey', 'reyes'],
+  '22.2': ['Un gorro', 'gorro'],
+  '23.0': ['Una oveja', 'oveja'],
+  '23.3': ['Una oveja', 'oveja'],
+  '24.0': ['Los Reyes', 'reyes'],
+  '24.4': ['José', 'jose'],
+  '25.1': ['Una bufanda', 'bufanda'],
+};
+Object.entries(CUARTA).forEach(([k, [t, img]]) => { const [d, i] = k.split('.').map(Number); const q = TRIVIA[d]?.[i]; if (q && q.o.length === 3) q.o.push(pic(t, img)); });

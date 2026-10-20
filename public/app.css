@@ -334,9 +334,23 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .mb-dot { position: absolute; right: -5px; top: -5px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; background: #E8A33D; color: #FFFFFF; font: 800 11px/20px Mulish, sans-serif; font-style: normal; text-align: center; box-shadow: 0 0 0 2px #FFFFFF; }
 .mb-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; color: #0B748A; }
 .mb-txt small { font: 700 11px/1.2 Mulish, sans-serif; letter-spacing: .1em; color: #5F5F5F; text-transform: uppercase; }
-.mb-txt b { font: 600 17px/1.2 'Neue Montreal', Mulish, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mb-cta { flex: none; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: #F5DB78; color: #0B748A; font: 800 14px Mulish, sans-serif; cursor: pointer; box-shadow: 0 4px 10px rgba(245,219,120,.45); }
+.mb-txt b { font: 700 16px/1.2 'Neue Montreal', Mulish, sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mb-pend { font-style: normal; color: #B5730F; }
+:root[data-theme="dark"] .mb-pend { color: #F5C77A; }
+.mb-cta { flex: none; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border: 0; border-radius: 20px; background: #F5DB78; color: #0B748A; font: 800 14px Mulish, sans-serif; cursor: pointer; box-shadow: 0 4px 10px rgba(245,219,120,.45); }
 [data-sheet].mini .sheet-min { top: 50%; margin-top: 4px; transform: translateY(-50%) rotate(180deg); }
 :root[data-theme="dark"] .mb-txt, :root[data-theme="dark"] .mb-txt b { color: #FFFFFF; }
 :root[data-theme="dark"] .mb-txt small { color: rgba(255,255,255,.7); }
 :root[data-theme="dark"] .mb-ico { background: rgba(255,255,255,.1); }
+
+/* la hoja se lee como algo encima del mapa */
+[data-sheet] { box-shadow: 0 -10px 24px rgba(0,8,43,.12), 0 14px 40px rgba(8,93,111,.2) !important; }
+/* noche: la batería con fondo para que no se mezcle con la ruleta */
+:root[data-theme="dark"] .layer[data-screen="mapa"] [aria-label^="Energía de Teodoro"] { background: rgba(0,8,43,.55); padding: 4px 6px; border-radius: 10px; }
+
+/* trivia con 4 imágenes: 2×2 compacto, todo a la vista */
+.pic4 { top: 424px !important; gap: 10px !important; }
+.pic4 > * { height: 158px !important; min-height: 0 !important; box-sizing: border-box; position: relative !important; left: auto !important; top: auto !important; width: auto !important; padding: 8px 6px 10px !important; }
+.pic4 > * img { width: 96px !important; height: 96px !important; object-fit: contain; }
+.pic4 > * span { font-size: 17px !important; }
+.trivia-pic4 > [style*="top: 700px"], .trivia-pic4 > [style*="top: 702px"] { top: 752px !important; }

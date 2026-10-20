@@ -106,6 +106,8 @@ const DECISIONES = [
   'Pantalla completa también: festejos grandes (cuarto nuevo, llegada a Belén) y la confirmación de inscripción (1,6 s y sigue sola).',
   'Calificar el día se pide al cerrarlo («¿Les gustó hoy?»), no en el momento del premio.',
   'Atrasado: tras ver la historia de un día puede seguir con la del siguiente; las trivias quedan pendientes y se pueden hacer después.',
+  'Ruleta sin mínimo de estrellas: sale el día que toca (4, 11, 18 y 24) y basta con girarla.',
+  'Trivia: todas las preguntas con 4 respuestas (a las de imagen se les sumó una alternativa claramente incorrecta).',
   'Racha = la que traía en Theo (3) + días seguidos del camino; si se salta un día, cuenta desde ahí.',
 ];
 const PENDIENTES_LIENZO = [

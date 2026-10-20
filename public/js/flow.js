@@ -196,7 +196,7 @@ register('hoy', {
       if (sub) sub.textContent = st.sub;
       if (btnText) btnText.nodeValue = st.cta;
     } else if (!st.done && btnText && /Continuar la Aventura/.test(btnText.nodeValue)) {
-      btnText.nodeValue = 'Seguir el camino';
+      btnText.nodeValue = 'Continuar la aventura';
     }
     if (st.sorpresa) {
       if (sub) sub.textContent = `Día ${n} · Te espera una sorpresa`;
@@ -208,11 +208,14 @@ register('hoy', {
     // Navidad: la tarjeta muestra el pesebre
     if (S.hoy >= 27) {
       const scn = $$(card, 'img').sort((a, b) => b.offsetWidth * b.offsetHeight - a.offsetWidth * a.offsetHeight)[0];
-      if (scn) { scn.src = A(IMG.nacimiento); scn.alt = 'El nacimiento de Jesús'; scn.style.objectFit = 'cover'; scn.style.objectPosition = '50% 45%'; }
+      if (scn) { scn.src = A(IMG.nacimiento); scn.alt = 'El nacimiento de Jesús'; Object.assign(scn.style, { left: '0', top: '0', width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 40%' }); }
+      $$(card, 'span').filter(sp => /50%/.test(sp.style.borderRadius) && sp.style.height === '16px').forEach(sp => { sp.style.display = 'none'; });
       if (walk) walk.style.display = 'none';
     }
     // ya salió el camino y no está inscrito: la invitación a unirse queda a la vista
     if (st.key === 4 && card !== root) setTimeout(() => { if (layer.isConnected) layer.scrollTo({ top: Math.max(0, card.offsetTop - 150), behavior: reduced() ? 'auto' : 'smooth' }); }, 350);
+    // tarjeta más simple: ilustración grande, título, una línea y el botón (sin vela ni barra de progreso)
+    simplifyCard(card);
     // pastillas «días que te esperan» (pantalla atrasado)
     const pills = $$(card, '[style*="border-radius: 50%"]').filter(el => /^\d+$/.test(el.textContent.trim()));
     pills.forEach((el, i) => { el.textContent = String(n + 1 + i); });
@@ -242,6 +245,29 @@ register('hoy', {
     }
   },
 });
+
+/** Tarjeta del camino en Hoy: menos información y más protagonismo visual. */
+function simplifyCard(card) {
+  if (!card || card.dataset.simple) return;
+  const hero = [...card.children].find(el => el.style.top === '0px' && el.style.height === '200px');
+  const body = [...card.children].find(el => el.style.top === '200px');
+  if (!hero || !body) return;
+  card.dataset.simple = '1';
+  const H = 252, dy = H - 200;
+  hero.style.height = H + 'px'; body.style.top = H + 'px';
+  const [land, shadow, teo] = [...hero.children];
+  // el paisaje crece en proporción y conserva el mismo encuadre (la imagen trae otro Teodoro fuera de cuadro)
+  if (land?.tagName === 'IMG' && !/nacimiento/i.test(land.alt || '') && S.hoy < 27) {
+    const k = (260 + dy) / 260, l0 = parseFloat(land.style.left) || -263;
+    land.style.width = (621 * k) + 'px'; land.style.height = (260 * k) + 'px'; land.style.left = (l0 * k) + 'px'; land.style.top = (-26 * k) + 'px';
+  }
+  [shadow, teo].forEach(el => { if (el) el.style.top = (parseFloat(el.style.top) + dy * .8) + 'px'; });
+  if (teo) { teo.style.transform = 'scale(1.12)'; teo.style.transformOrigin = '50% 100%'; }
+  const [headRow, progress] = [...body.children];
+  if (progress && progress.tagName !== 'A') progress.style.display = 'none';
+  const tile = headRow?.firstElementChild;
+  if (tile && tile.querySelector('img') && !/Camino a Belén/.test(tile.textContent)) tile.style.display = 'none';
+}
 
 // ---------- Antes del 29 ----------
 register('teaser', {
@@ -342,14 +368,20 @@ register('teodoro', {
       if (cta) setText(cta, 'Entrar al camino', 'Abrir la sorpresa');
     } else if (st.done) {
       const s = textEl(root, 'Sigue la estrella hasta Belén'); if (s) s.textContent = '¡Listo por hoy! Mañana seguimos';
-    } else if (cta && fase() !== 'antes') setText(cta, 'Entrar al camino', 'Seguir el camino');
+    } else if (cta && fase() !== 'antes') setText(cta, 'Entrar al camino', 'Continuar la aventura');
     replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
     paintEnergy(root);
     patchCuarto(root);
     if (fase() === 'antes') startCountdown(root);
     const toMap = () => st.key === 5 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar('teodoro');
     // la isla del cuarto lleva a los mundos de Teodoro; el botón de la tarjeta, al camino
-    if (isla) { isla.setAttribute('aria-label', 'Mundos de Teodoro: Adviento'); on(root, isla, () => go('mundos', {}, 'push')); }
+    if (isla) {
+      isla.setAttribute('aria-label', 'Mundos de Teodoro: Adviento'); on(root, isla, () => go('mundos', {}, 'push'));
+      // el mundo flota a la derecha de Teodoro, sin número de día
+      Object.assign(isla.style, { left: 'auto', right: '18px', top: '232px', height: '90px' });
+      isla.querySelectorAll('span').forEach(sp => { if (/Día/.test(sp.textContent)) sp.style.display = 'none'; });
+      isla.classList.add('a-bob');
+    }
     if (cta) on(root, cta, toMap);
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
     on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
@@ -608,6 +640,8 @@ register('ruletaPop', {
   mount(root, p, layer) {
     const n = p.day;
     setText(root, /Antes del cuento…/, 'Antes de la historia…');
+    // velo más firme: el mapa de atrás no compite con la ruleta
+    const sc = root.querySelector('.ov-scrim'); if (sc) { sc.style.background = 'rgba(0,20,50,.8)'; sc.style.backdropFilter = 'blur(6px)'; sc.style.webkitBackdropFilter = 'blur(6px)'; }
     const wheel = root.querySelector('[role=img][aria-label^="Ruleta"] > div');
     wheel?.parentElement.classList.add('a-pop');
     const pointer = $$(root, 'img').find(i => i.src.includes('3fdb655b'));

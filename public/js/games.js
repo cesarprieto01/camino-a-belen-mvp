@@ -96,6 +96,7 @@ register('trivia', {
     });
     // 3 opciones con imagen; 4 con texto en grilla 2×2
     if (!isPic(q)) group.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    else if (q.o.length === 4) { group.style.display = 'grid'; group.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))'; group.style.gap = '12px'; group.classList.add('pic4'); root.classList.add('trivia-pic4'); }
     opts.forEach((el, k) => { group.appendChild(el); el.style.animation = `rise .4s ${.08 * k}s cubic-bezier(.2,.8,.2,1) both`; });
 
     // pie: pista de interacción y «Comprobar»
