@@ -318,13 +318,13 @@ export const ADIVINANZA = [
 
 // Desafío en familia: mazo de cartas
 export const DESAFIOS = [
-  { t: 'Ayuda a alguien en casa hoy', sub: 'Como María, que fue de prisa a ayudar a Isabel' },
-  { t: 'Recen juntos un Avemaría', sub: 'Como el ángel Gabriel, que saludó a María' },
-  { t: 'Pidan perdón y abrácense', sub: 'Como José, que recibió a María con amor' },
-  { t: 'Den gracias por tres cosas de hoy', sub: 'Como María, que guardaba todo en su corazón' },
-  { t: 'Hagan algo bonito por un vecino', sub: 'Como los pastores, que fueron a ver al Niño' },
-  { t: 'Compartan algo suyo con alguien', sub: 'Como los Reyes, que llevaron regalos a Jesús' },
-  { t: 'Bendigan la mesa antes de comer', sub: 'Jesús daba gracias al Padre antes de partir el pan' },
-  { t: 'Cuenten una historia de cuando nacieron', sub: 'Como en Belén, todo nacimiento es una fiesta' },
+  { t: 'Ayuda a alguien en casa hoy', sub: 'Como María, que fue de prisa a ayudar a Isabel', icon: 'isabel' },
+  { t: 'Recen juntos un Avemaría', sub: 'Como el ángel Gabriel, que saludó a María', icon: 'gabriel' },
+  { t: 'Pidan perdón y abrácense', sub: 'Como José, que recibió a María con amor', icon: 'jose' },
+  { t: 'Den gracias por tres cosas de hoy', sub: 'Como María, que guardaba todo en su corazón', icon: 'maria' },
+  { t: 'Hagan algo bonito por un vecino', sub: 'Como los pastores, que fueron a ver al Niño', icon: 'pastor' },
+  { t: 'Compartan algo suyo con alguien', sub: 'Como los Reyes, que llevaron regalos a Jesús', icon: 'reyes' },
+  { t: 'Bendigan la mesa antes de comer', sub: 'Jesús daba gracias al Padre antes de partir el pan', icon: 'pan' },
+  { t: 'Cuenten una historia de cuando nacieron', sub: 'Como en Belén, todo nacimiento es una fiesta', icon: 'nino' },
 ];
 export const SORPRESA_NOMBRE = { memorama: 'Memorama', adivinanza: 'Adivinanza en familia', desafio: 'Desafío en familia' };

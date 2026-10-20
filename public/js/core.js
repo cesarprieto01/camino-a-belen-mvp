@@ -177,21 +177,24 @@ export const clearHistory = () => { stack.length = 0; };
 // «Atrás» del sistema (gesto en iPhone, botón en Android, flecha del navegador): hace lo mismo que «Volver».
 // Se mantiene siempre una entrada de más en el historial para atraparlo sin salir de la app.
 try { history.replaceState({ cab: 0 }, ''); history.pushState({ cab: 1 }, ''); } catch { /* */ }
-addEventListener('popstate', () => {
-  try { history.pushState({ cab: 1 }, ''); } catch { /* */ }
+addEventListener('popstate', () => { try { history.pushState({ cab: 1 }, ''); } catch { /* */ } sysBack(); });
+// Escape (teclado) hace lo mismo que el atrás del sistema
+addEventListener('keydown', ev => { if (ev.key === 'Escape' && !ev.target.closest?.('#panel')) sysBack(); });
+function sysBack() {
   const L = document.querySelector('#viewport .layer:last-child');
   // primero se cierra lo que esté abierto encima (hoja, globo, menú)
   const close = L && [...L.querySelectorAll('[data-dismiss]')].pop();
   if (close) { close.click(); return; }
   // en el mapa: hoja de un día pasado o de la energía → vuelve a la hoja de hoy
+  if (L?.classList.contains('ov-page')) { back('hoy', 'down'); return; }
   if (L?.classList.contains('overlay')) return; // pop-up que se cierra solo con sus botones
   if (L?.dataset.past != null) { go(cur.name, cur.params, 'none', { replace: true }); return; }
   if (!stack.length && TABS.includes(cur?.name)) return;
   back(TABS.includes(cur?.name) ? cur.name : 'hoy');
-});
+}
 // Pop-ups de verdad: con 'modal' u 'sheet', la pantalla de abajo sigue montada y quieta;
 // encima entran un velo y el diálogo (u hoja). Al cerrar se destapa sin volver a montarla.
-const OVERLAY = new Set(['modal', 'sheet']);
+const OVERLAY = new Set(['modal', 'sheet', 'page']);
 const snap = () => JSON.stringify([S.hoy, S.inscrito, S.completos, S.bateria, S.panes, S.prendas, S.plan, S.cuartoNuevo, S.tema, S.ruletas, S.regreso]);
 const sameParams = (a = {}, b = {}) => { const s = ({ thenCerrado, ...x }) => JSON.stringify(x); return s(a) === s(b); };
 let inFlight = null;
@@ -213,11 +216,23 @@ function asOverlay(layer, root, anim) {
   layer.classList.add('overlay', anim === 'sheet' ? 'ov-sheet' : 'ov-modal');
   return true;
 }
+function asPage(layer, root) {
+  [...root.children].filter(el => el.style.top === '0px' && /^\s*9:41/.test(el.textContent)).forEach(el => el.remove());
+  layer.classList.add('overlay', 'ov-page');
+  const grab = document.createElement('span'); grab.className = 'page-grab'; grab.setAttribute('aria-hidden', 'true'); layer.appendChild(grab);
+  // deslizar hacia abajo desde la parte de arriba la cierra (como «Volver»)
+  let y0 = null, dy = 0;
+  layer.addEventListener('pointerdown', ev => { const r = layer.getBoundingClientRect(); const k = r.height / layer.offsetHeight || 1; if ((ev.clientY - r.top) / k < 70) { y0 = ev.clientY; dy = 0; layer.setPointerCapture?.(ev.pointerId); } });
+  layer.addEventListener('pointermove', ev => { if (y0 == null) return; const k = layer.getBoundingClientRect().height / layer.offsetHeight || 1; dy = Math.max(0, (ev.clientY - y0) / k); layer.style.animation = 'none'; layer.style.transform = `translateY(${dy}px)`; });
+  const end = () => { if (y0 == null) return; y0 = null; layer.style.transition = 'transform .28s cubic-bezier(.32,.72,0,1)'; if (dy > 110) back('hoy', 'down'); else layer.style.transform = ''; setTimeout(() => { layer.style.transition = ''; }, 300); };
+  layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
+  return true;
+}
 function closeOverlay(ov, keepBase) {
   ov.layer.inert = true;
   ov.layer.classList.add('ov-out');
   setTimeout(() => ov.layer.remove(), 260);
-  if (keepBase) { ov.base.layer.inert = false; ov.base.layer.classList.remove('under'); }
+  if (keepBase) { ov.base.layer.inert = false; ov.base.layer.classList.remove('under', 'under-page'); }
 }
 async function _go(name, params, anim) {
   const def = SCREENS[name];
@@ -235,7 +250,8 @@ async function _go(name, params, anim) {
   layer.innerHTML = '<div class="root">' + markup + '</div>';
   const root = layer.firstElementChild.firstElementChild;
   let h = MAN[file]?.h || 844;
-  const isOv = OVERLAY.has(anim) && prev && asOverlay(layer, root, anim);
+  // 'page': hoja de página (como en iOS): la pantalla entera sube como tarjeta y la de abajo se queda detrás
+  const isOv = OVERLAY.has(anim) && prev && (anim === 'page' ? asPage(layer, root) : asOverlay(layer, root, anim));
   // la pantalla que se va: si era un pop-up, también se va lo que tenía debajo
   const leaving = prev ? (prev.base ? [prev, prev.base] : [prev]) : [];
   cur = { name, layer, params, file };
@@ -258,10 +274,12 @@ async function _go(name, params, anim) {
   }
   if (h > 844 && !def.noScroll && !isOv) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
   bindFallback(layer, layer);
+  // un título principal por pantalla para el lector de pantalla
+  if (def.h1) { const t = textEl(root, def.h1); if (t) { t.setAttribute('role', 'heading'); t.setAttribute('aria-level', '1'); } }
   if (isOv) {
     const base = cur.base;
     if (prev.base) closeOverlay(prev, false); // un pop-up reemplaza a otro
-    base.layer.inert = true; base.layer.classList.add('under');
+    base.layer.inert = true; base.layer.classList.add('under'); if (anim === 'page') base.layer.classList.add('under-page');
   } else if (prev) {
     const a = reduced() ? 'fade' : (underOv ? 'none' : anim);
     const inC = { push: 'in-push', back: 'in-back', fade: 'in-fade', modal: 'in-modal', sheet: 'in-up', up: 'in-up', down: 'in-under', none: '' }[a];
@@ -365,6 +383,17 @@ export const imgs = (root, id) => $$(root, `img[src*="${id}"]`);
 export function paintEnergy(root) {
   BATTERY_IDS.forEach(id => $$(root, `img[src*="${id}"]`).forEach(i => { i.src = A(BATTERY_IDS[S.bateria]); }));
   $$(root, '[aria-label^="Energía de Teodoro"]').forEach(el => el.setAttribute('aria-label', `Energía de Teodoro: ${S.bateria} de 5`));
+}
+/** Racha de la app: la que traía en Theo (3) + los días seguidos del camino; si se saltó días, cuenta desde el último hueco. */
+export function racha() {
+  if (S.hoy < 1) return 3;
+  let r = 0, roto = false;
+  for (let d = Math.min(S.hoy, 26); d >= 1; d--) {
+    if (S.completos[d]?.contenido) r++;
+    else if (d === S.hoy) continue; // hoy todavía puede caminar
+    else { roto = true; break; }
+  }
+  return roto ? r : 3 + r;
 }
 export function teodoroImg(level = S.bateria) { return A(TEODORO_IDS[level]); }
 

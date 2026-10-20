@@ -60,7 +60,8 @@ register('trivia', {
       const cur = dots[0].getAttribute('style'), pend = dots[1].getAttribute('style');
       dots.forEach((d, k) => {
         d.setAttribute('style', k === i ? cur : pend);
-        if (k < i) { d.style.background = dark() ? '#FFF6DD' : '#0B748A'; }
+        // hechas: color lleno si salió a la primera, ámbar si fue al reintento
+        if (k < i) { d.style.background = (p.h || '')[k] === '0' ? '#E8A33D' : (dark() ? '#FFF6DD' : '#0B748A'); }
         d.style.transition = 'width .3s, background .3s';
       });
     }
@@ -112,8 +113,8 @@ register('trivia', {
       if (i === 4) a.textContent = 'Ver resultado';
       root.appendChild(a); a.classList.add('a-rise');
       on(root, a, () => {
-        if (!p.replay && i < 4) { (S.triviaProgreso ||= {})[n] = { i: i + 1, ok: ok + (fallos === 0 ? 1 : 0) }; save(); }
-        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'push', { replace: true });
+        if (!p.replay && i < 4) { (S.triviaProgreso ||= {})[n] = { i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), h: (p.h || '') + (fallos === 0 ? '1' : '0') }; save(); }
+        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), h: (p.h || '') + (fallos === 0 ? '1' : '0'), replay: p.replay }, 'push', { replace: true });
         else go('triviaFin', { day: n, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'modal', { replace: true });
       });
     };
@@ -245,7 +246,9 @@ function paintFin(root, layer, n, first, bind = true) {
   if (box) $$(box, 'svg').forEach((sv, k) => sv.querySelectorAll('path').forEach(pt => pt.setAttribute('fill', k < s ? '#F7C948' : '#D3DDE5')));
   const bread = $$(root, 'img').find(i => i.src.includes(IMG.pan) && parseFloat(i.style.width) > 60);
   bread?.parentElement?.classList.add('a-pop');
-  if (first) floaty(layer, `+${RULES.panes.sorpresa}`, 230, 380); else setText(root, /Ganaste \d+ panes/, 'Ya ganaste estos panes');
+  // el «+15» sale del pan y no tapa el marcador
+  const br = bread?.parentElement;
+  if (first) floaty(layer, `+${RULES.panes.sorpresa}`, br ? br.offsetLeft + br.offsetWidth - 20 : 230, br ? br.offsetTop + 10 : 380); else setText(root, /Ganaste \d+ panes/, 'Ya ganaste estos panes');
   $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).forEach(i => i.classList.add('a-hop'));
   confetti(layer, 195, 260, 44);
   if (bind) { on(root, 'Volver al camino', toMapAfterGame); on(root, 'Cerrar', toMapAfterGame); }
@@ -278,7 +281,8 @@ register('memorama', {
     const movesEl = textNode(counters[1], /^\d+$/);
     const hintEl = textEl(root, /¿Dónde está/);
     let open = [], found = 0, moves = 0, lock = false;
-    const paint = () => { if (pairsEl) pairsEl.nodeValue = `${found} de 6`; if (movesEl) movesEl.nodeValue = String(moves); };
+    if (counters[1]) counters[1].style.display = 'none'; // los movimientos no le dicen nada a un niño: solo «N de 6»
+    const paint = () => { if (pairsEl) pairsEl.nodeValue = `${found} de 6`; };
     paint();
     deck.forEach((k, idx) => {
       const b = document.createElement('button');
@@ -294,14 +298,14 @@ register('memorama', {
         moves++; paint(); lock = true;
         const [a, c] = open; open = [];
         if (a.k === c.k) {
-          found++; paint(); a.b.classList.add('done'); c.b.classList.add('done');
+          found++; paint(); a.b.classList.add('done'); c.b.classList.add('done'); navigator.vibrate?.(20);
           if (hintEl) hintEl.textContent = found === 6 ? '¡Encontraste todas!' : `¡Pareja! ${NAMES[k]}`;
           lock = false;
           if (found === 6) { await wait(700); go('memoramaFin', { day: n, moves }, 'fade'); }
         } else {
           await wait(850);
           a.b.classList.remove('up'); c.b.classList.remove('up');
-          a.b.setAttribute('aria-label', 'Carta boca abajo'); c.b.setAttribute('aria-label', 'Carta boca abajo');
+          a.b.setAttribute('aria-label', 'Carta boca abajo'); c.b.setAttribute('aria-label', 'Carta boca abajo'); navigator.vibrate?.(8);
           if (hintEl) hintEl.textContent = 'Casi… ¡otra vez!';
           lock = false;
         }
@@ -316,7 +320,8 @@ register('memorama', {
 register('memoramaFin', {
   file: () => F('V2-Memorama-fin-claro', 'V2-Memorama-fin'),
   mount(root, p, layer) {
-    setText(root, /^\d+ movimientos$/, `${p.moves} movimientos`);
+    replaceText(root, /Lo lograste en/, 'Encontraste');
+    setText(root, /^\d+ movimientos$/, 'las 6 parejas');
     replaceText(root, /\b14\b/, String(p.moves));
     const first = sorpresaHecha(p.day, layer);
     paintFin(root, layer, p.day, first);
@@ -359,19 +364,29 @@ register('adivinanza', {
     // temporizador
     const timer = root.querySelector('[aria-label^="Quedan"]');
     const tFill = timer?.querySelector(':scope > div > div') || timer?.querySelector('div > div'), tTxt = timer && textEl(timer, /\d+s/);
-    let left = SECS, done = false;
-    const t0 = performance.now();
+    let left = SECS, done = false, t0 = null;
+    // «¿Listos?»: la palabra se tapa hasta que quien da las pistas toma el celular; ahí arranca el reloj
+    if (card && !reduced()) {
+      const gate = document.createElement('button');
+      gate.type = 'button'; gate.className = 'adv-gate';
+      gate.innerHTML = `<b>¿Listos?</b><span>${k ? 'Pásale el celular a quien da las pistas' : 'Que solo mire quien da las pistas'}</span><i>Toca para ver la palabra</i>`;
+      // medidas sin la animación de entrada de la carta
+      gate.style.cssText = `left:${card.offsetLeft}px;top:${card.offsetTop}px;width:${card.offsetWidth}px;height:${card.offsetHeight}px`;
+      if (tFill) tFill.style.width = '100%'; if (tTxt) tTxt.textContent = SECS + 's';
+      root.appendChild(gate);
+      on(root, gate, () => { gate.classList.add('off'); setTimeout(() => gate.remove(), 260); t0 = performance.now(); requestAnimationFrame(tick); });
+    } else t0 = performance.now();
     const tick = () => {
-      if (done || !layer.isConnected) return;
+      if (done || !layer.isConnected || t0 == null) return;
       left = Math.max(0, SECS - (performance.now() - t0) / 1000);
       if (tFill) { tFill.style.width = (left / SECS * 100) + '%'; tFill.style.background = left < 10 ? 'linear-gradient(90deg,#E0565B,#F5A35B)' : ''; }
       if (tTxt) tTxt.textContent = Math.ceil(left) + 's';
       if (left <= 0) { done = true; go('adivinanzaTiempo', { ...p, res: [...res, { w: w.w, ok: false }] }, 'modal'); return; }
       requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    if (t0 != null) requestAnimationFrame(tick);
     const next = (ok) => {
-      if (done) return; done = true;
+      if (done || t0 == null) return; done = true; // antes de «¿Listos?» no cuenta
       const r = [...res, { w: w.w, ok }];
       if (card) card.animate([{ transform: 'none', opacity: 1 }, { transform: `translateX(${ok ? 420 : -420}px) rotate(${ok ? 12 : -12}deg)`, opacity: 0 }], { duration: 320, easing: 'ease-in', fill: 'forwards' });
       seen(ok ? 'V2-Adivinanza-siguiente-claro' : 'V2-Adivinanza-pasar-claro');
@@ -440,7 +455,9 @@ register('desafio', {
     let c = p.c ?? (Math.floor(p.day / 3) * 2) % DESAFIOS.length;
     const scroll = [...root.children].find(el => el.style.top === '360px');
     const tx = $$(scroll, 'div, span').filter(el => el.childElementCount === 0 && el.textContent.trim());
-    const paint2 = () => { const d = DESAFIOS[c]; if (tx[0]) tx[0].textContent = d.t; if (tx[1]) tx[1].textContent = d.sub; };
+    // el ícono pequeño de la carta (no el pergamino de fondo)
+    const ico = $$(scroll, 'img').filter(i => (parseFloat(i.style.width) || i.offsetWidth) < 90).sort((a, b) => a.offsetWidth - b.offsetWidth)[0];
+    const paint2 = () => { const d = DESAFIOS[c]; if (tx[0]) tx[0].textContent = d.t; if (tx[1]) tx[1].textContent = d.sub; if (ico && d.icon && IMG[d.icon]) { ico.src = A(IMG[d.icon]); ico.style.objectFit = 'contain'; } };
     paint2();
     // el ícono del lienzo no carga: se usa el corazón del reto en familia
     $$(scroll, 'img').forEach(i => { if (!i.complete || i.naturalWidth === 0) i.onerror = () => { i.src = A(IMG.corona); }; });
@@ -460,6 +477,7 @@ register('desafioFin', {
   mount(root, p, layer) {
     const d = DESAFIOS[p.c ?? 0];
     setText(root, 'Ayuda a alguien en casa hoy', d.t);
+
     setText(root, /^Como María, que fue de prisa a ayudar a Isabel\.?$/, d.sub + '.');
     const stamp = $$(root, '*').find(el => /HECHO EN/.test(el.textContent) && el.childElementCount <= 3 && el.style.borderRadius === '50%');
     if (stamp) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';

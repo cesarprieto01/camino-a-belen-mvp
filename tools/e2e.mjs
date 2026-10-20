@@ -114,8 +114,8 @@ const flows = {
   async adivinanza() {
     await scenario('Adivinanza');
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.completos[7] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.go('adivinanzaIntro', { day: 7 }); });
-    await shot('intro'); await tap('¡A jugar!'); await shot('juego');
-    await tap('¡La adivinaron!'); await shot('w2'); await tap('Pasar a otra palabra'); await tap('¡La adivinaron!'); await tap('¡La adivinaron!'); await tap('¡La adivinaron!');
+    await shot('intro'); await tap('¡A jugar!'); await shot('listos'); await tap('¿Listos?'); await shot('juego');
+    await tap('¡La adivinaron!'); await shot('w2'); for (const a of ['Pasar a otra palabra', '¡La adivinaron!', '¡La adivinaron!', '¡La adivinaron!']) { await tap('¿Listos?'); await tap(a); }
     await shot('fin');
   },
   async desafio() {
@@ -188,6 +188,20 @@ const flows = {
     await p.evaluate(() => document.querySelector('[data-act="dayPlus"]')?.click()); await p.waitForTimeout(1200); await shot('dia1');
     const s1 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, bat: c.S.bateria }; });
     if (s1.hoy !== 1 || s1.bat !== 5) errs.push('día 1 mal: ' + JSON.stringify(s1));
+  },
+  // hojas de página: free sobre el reto, espera sobre Hoy, calificación sobre el mapa
+  async paginas() {
+    const layers = () => p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen + (l.classList.contains('ov-page') ? '(hoja)' : '')).join('>'));
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.plan = 'free'; c.S.hoy = 13; for (let d = 9; d < 13; d++) c.S.completos[d] = { contenido: true, trivia: true }; c.save(); c.go('hub', { day: 13 }, 'none'); });
+    await p.waitForTimeout(900); await tap('Imprimible'); await p.waitForTimeout(500); await shot('free');
+    if (await layers() !== 'hub>free(hoja)') errs.push('free no es hoja sobre el reto: ' + await layers());
+    await tap('Ahora no'); await p.waitForTimeout(500);
+    if (await layers() !== 'hub') errs.push('al cerrar free no queda el reto: ' + await layers());
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 0, inscrito: true, teaserVisto: true }); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
+    await p.waitForTimeout(900); await tap('Ver Camino a Belén'); await p.waitForTimeout(500); await shot('espera-hoja');
+    if (await layers() !== 'hoy>espera(hoja)') errs.push('espera no es hoja sobre Hoy: ' + await layers());
+    await p.goBack(); await p.waitForTimeout(600);
+    if (await layers() !== 'hoy') errs.push('atrás del sistema no cierra la hoja: ' + await layers());
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };

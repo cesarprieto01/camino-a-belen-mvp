@@ -103,9 +103,8 @@ const DECISIONES = [
 const PENDIENTES_LIENZO = [
   'Escenas de los días 1 y 2 (Arte 5 las marca como «FALTA»).',
   'Ícono del día 25 · Video (Íconos del camino: «Aún sin ícono»).',
-  'Tab Teodoro dice «Ces», racha 1 y 30 panes (van dentro de la imagen); Hoy dice «Lucía» y racha 3. Unificar en el lienzo y que los panes se vean sumar.',
-  'Reproductor del día 0 sin ilustración propia.',
-  'Prendas de la ruleta: falta el arte de Teodoro con cada prenda puesta en su cuarto.',
+  'Cuarto de Teodoro: nombre, racha y panes van pintados en la imagen; el MVP los tapa con los datos reales. Conviene exportar el cuarto sin esos datos.',
+  'Cuarto clásico: Teodoro va dentro de la imagen y no cambia de pose; en el de Nazaret sí. Conviene exportarlo suelto.',
   'Fuera de Theo Quest a propósito: pestañas Explorar, Música y Favoritos; villancicos y oraciones generales; paywall «Ver Theo Premium».',
 ];
 

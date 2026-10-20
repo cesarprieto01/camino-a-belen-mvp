@@ -360,7 +360,8 @@ function showPast(layer, n, el) {
   const st = stars(n);
   r2.querySelectorAll('[role=img] svg path').forEach((p, i) => p.setAttribute('fill', i < st ? '#F7C948' : (dark() ? 'rgba(255,255,255,.28)' : '#D3DDE5')));
   r2.querySelector('[role=img]')?.setAttribute('aria-label', `${st} de 3 estrellas`);
-  const s2 = r2.querySelector(':scope > div').children[1]; if (st === 3) s2.textContent = '¡Ya tienes las 3 estrellas!';
+  const s2 = r2.querySelector(':scope > div').children[1]; s2.textContent = st === 3 ? '¡Ya tienes las 3 estrellas!' : `+${RULES.panes.trivia} panes si mejoras tus estrellas`;
+  if (t1.textContent.trim() === head.children[1].textContent.trim()) t1.textContent = C[0] === d.title ? 'Actividad' : C[0];
   const cta = [...sheet.children].find(x => x.tagName === 'A');
   on(layer, cta, () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push'));
   sheet.classList.add('in-up');
