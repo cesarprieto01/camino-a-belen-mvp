@@ -125,11 +125,13 @@ register('mapa', {
       const t = nodes[n]; if (!t || !teo) return;
       const size = t.el.dataset.today ? 84 : 64;
       const cx = parseFloat(t.el.style.left) + size / 2, cy = parseFloat(t.el.style.top);
-      teo.style.left = (cx - 25) + 'px'; teo.style.top = (cy - 24) + 'px';
+      // Teodoro protagonista: grande, centrado y parado sobre su día
+      teo.style.left = (cx - 46) + 'px'; teo.style.top = (cy + size * .82 - 118) + 'px';
     };
     if (teo) {
       teo.src = teodoroImg();
-      teo.style.width = '50px'; teo.style.height = '96px';
+      teo.style.width = '92px'; teo.style.height = '118px'; teo.style.objectFit = 'contain'; teo.style.objectPosition = '50% 100%'; teo.style.zIndex = '2'; teo.style.pointerEvents = 'none';
+      teo.style.filter = 'drop-shadow(0 6px 8px rgba(8,93,111,.25))';
       teo.classList.add('a-bob');
       if (focus >= 1) place(S.pasoAnimado || focus); else teo.style.display = 'none';
       // volvió tras días sin caminar: Teodoro despierta al verlos
@@ -184,18 +186,30 @@ register('mapa', {
     if (bat) on(layer, bat, () => showEnergy(layer));
     const backHoy = layer.querySelector('[aria-label="Volver a hoy"]');
     if (backHoy) {
-      replaceText(backHoy, /Hoy · día \d+/, `Hoy · día ${focus}`);
-      backHoy.style.display = 'none';
+      // píldora flotante encima de la hoja: aparece cuando tu día sale de la vista
+      replaceText(backHoy, /Hoy · día \d+/, `Tu día ${focus}`);
+      layer.appendChild(backHoy);
+      backHoy.classList.add('back-hoy');
+      backHoy.querySelectorAll('svg').forEach(s => s.remove());
+      const arrow = document.createElement('span'); arrow.className = 'bh-arrow'; arrow.setAttribute('aria-hidden', 'true'); backHoy.prepend(arrow);
       on(layer, backHoy, () => scrollToNode(focus, true));
-      scroller.addEventListener('scroll', () => {
+      const sync = () => {
         const t = nodes[focus]; if (!t) return;
         const y = parseFloat(t.el.style.top) - scroller.scrollTop;
-        backHoy.style.display = (y < 40 || y > 520) ? 'flex' : 'none';
-      }, { passive: true });
+        const sh = layer.querySelector('[data-sheet]');
+        const limit = sh ? sh.getBoundingClientRect().top - layer.getBoundingClientRect().top : 700;
+        const out = y < 60 || y + 40 > limit;
+        backHoy.classList.toggle('on', out);
+        arrow.textContent = y < 60 ? '↑' : '↓';
+        backHoy.style.top = Math.max(110, limit - 58) + 'px';
+      };
+      scroller.addEventListener('scroll', sync, { passive: true });
+      layer._syncBackHoy = sync;
     }
 
     // 6) Hoja inferior según el estado del día
     paintSheet(layer, T);
+    sheetDrag(layer);
     seen('S-03-Mapa');
     if (act != null && contentDone(act) && !isDone(act)) seen('S-03b-Mapa-trivia');
     if (focus === 0) seen('V2-Mapa-dia0-claro');
@@ -203,7 +217,10 @@ register('mapa', {
 
     const scrollToNode = (n, smooth) => {
       const t = nodes[n]; if (!t) { scroller.scrollTop = scroller.scrollHeight; return; }
-      const top = parseFloat(t.el.style.top) - (t.el.dataset.today ? 416 : 426);
+      // el día queda a la vista, por encima de la hoja (mida lo que mida)
+      const sh = layer.querySelector('[data-sheet]');
+      const sheetTop = sh ? 844 - 10 - sh.offsetHeight : 600; // sin contar la animación de entrada de la hoja
+      const top = parseFloat(t.el.style.top) - Math.max(170, sheetTop - 150);
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
     if (focus < 1) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(S.pasoAnimado || focus, false);
@@ -264,7 +281,13 @@ function tapNode(n, el, layer) {
   const d = DAYS[n];
   if (n === act) { startDay(n); return; }
   if (isDone(n)) { showPast(layer, n, el); return; }
-  if (n <= lastDay()) { animate(el, 'a-shake'); toast(`Primero el día ${act}`, `El día ${n} te espera justo después`); return; }
+  if (n <= lastDay()) {
+    // si ya vio las historias de los días anteriores, puede seguir con esta (la trivia queda pendiente)
+    const libre = Array.from({ length: n - 1 }, (_, i) => i + 1).every(contentDone);
+    if (libre) { startDay(n); return; }
+    const falta = Array.from({ length: n - 1 }, (_, i) => i + 1).find(d => !contentDone(d));
+    animate(el, 'a-shake'); toast(`Primero la historia del día ${falta}`, `El día ${n} te espera justo después`); return;
+  }
   showBubble(layer, n, el);
 }
 
@@ -424,8 +447,47 @@ function paintSheet(layer, T) {
   if (txt) txt.nodeValue = label.text;
   const icon = cta.querySelector('svg');
   if (icon && !label.play) icon.style.display = 'none';
-  // día 0 listo: el botón vuelve a donde se entró al camino (Hoy, Teodoro o la espera)
-  on(layer, cta, n === 0 && contentDone(0) ? leaveMap : label.go);
+  on(layer, cta, label.go);
+  // va atrasado y ya vio la historia: puede seguir con la historia del día siguiente y dejar la trivia para después
+  const sig = n + 1;
+  if (n > 0 && contentDone(n) && !isDone(n) && sig <= Math.min(lastDay(), 25) && !contentDone(sig)) {
+    const alt = document.createElement('button');
+    alt.type = 'button'; alt.className = 'sheet-alt';
+    alt.textContent = `O sigue con la historia del día ${sig}`;
+    cta.after(alt); sheet.style.height = 'auto';
+    on(layer, alt, () => startDay(sig));
+  }
   sheet.classList.add('in-up');
+}
+/** La rayita de la hoja funciona: arrastra hacia abajo para ver el mapa, hacia arriba (o toca) para abrirla. */
+function sheetDrag(layer) {
+  layer.querySelectorAll('[data-sheet]').forEach(s => { s.style.zIndex = '30'; });
+  let y0 = null, dy = 0, sheet = null, collapsed = false, max = 0;
+  const peek = 118;
+  const set = (v, anim) => { sheet.style.transition = anim ? 'transform .34s cubic-bezier(.32,.72,0,1)' : 'none'; sheet.style.transform = v ? `translateY(${v}px)` : ''; };
+  const after = () => setTimeout(() => layer._syncBackHoy?.(), 360);
+  layer.addEventListener('pointerdown', ev => {
+    sheet = ev.target.closest('[data-sheet]'); if (!sheet) return;
+    const top = sheet.getBoundingClientRect().top;
+    const scale = sheet.getBoundingClientRect().height / sheet.offsetHeight || 1;
+    if ((ev.clientY - top) / scale > 56 && !collapsed) { sheet = null; return; } // solo desde la parte de arriba
+    y0 = ev.clientY; dy = 0; max = sheet.offsetHeight - peek; sheet.setPointerCapture?.(ev.pointerId);
+  });
+  layer.addEventListener('pointermove', ev => {
+    if (y0 == null || !sheet) return;
+    const scale = sheet.getBoundingClientRect().height / sheet.offsetHeight || 1;
+    dy = (ev.clientY - y0) / scale;
+    const base = collapsed ? max : 0;
+    set(Math.min(max, Math.max(0, base + dy)), false);
+  });
+  const end = () => {
+    if (y0 == null || !sheet) return;
+    y0 = null;
+    if (Math.abs(dy) < 6) { if (collapsed) { collapsed = false; set(0, true); after(); } return; } // un toque en la hoja recogida la abre
+    collapsed = collapsed ? dy < -40 ? false : true : dy > 60;
+    set(collapsed ? max : 0, true); after();
+    sheet.setAttribute('aria-expanded', String(!collapsed));
+  };
+  layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
 }
 function leaveMap() { back(mapOrigin || 'hoy', 'back'); }

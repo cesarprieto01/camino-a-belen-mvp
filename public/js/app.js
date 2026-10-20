@@ -56,12 +56,13 @@ function fill(upto, opts = {}) {
   S.panes = 60 + upto * 22;
   Object.assign(S, opts);
 }
-const day = (hoy, done, extra = {}) => () => { reset({ hoy, ...extra }); fill(done); Object.assign(S, extra); };
+// escenarios del camino: familia ya inscrita (el estado inicial de la app es «sin inscribirse»)
+const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teaserVisto: true, ...extra }); fill(done); Object.assign(S, extra); };
 
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
   { sec: 1, t: 'Sin inscribirse', mira: 'Tarjeta en Hoy → teaser → inscripción → espera', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-claro', 'V2-Teaser-claro', 'V2-Confirmacion-claro', 'V2-Espera-claro'] },
-  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre la espera · su imagen lleva al mapa del día 0 · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre el camino en el día 0 · la ilustración abre la espera · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
   { sec: 2, t: 'Un día de cuento', mira: 'Día 10 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(10, 9), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Equivocarse en la trivia', mira: 'Toca una respuesta mala: pista sutil y reintento', run: day(10, 9), go: 'mapa', covers: ['V2-08-Pista-claro', 'V2-08b-Reintento-claro'] },
@@ -109,12 +110,15 @@ const PENDIENTES_LIENZO = [
 ];
 
 function advance(k) {
-  const jugo = S.ultimoJugado === S.hoy;
-  S.bateria = Math.max(0, S.bateria - (jugo ? 0 : 1) - (k - 1));
+  // Teodoro solo se cansa por días del camino (1–26) en que no caminaron; antes del 29 no cuenta
+  let baja = 0;
+  for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= 26 && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
+  S.bateria = Math.max(0, S.bateria - baja);
+  const antes = S.hoy;
   S.hoy = Math.min(27, S.hoy + k);
   if (k >= RULES.regresoDias && S.inscrito && S.hoy >= 1) S.regreso = true;
   save();
-  nota(k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy >= 27 ? 'Ya es Navidad' : `Hoy es el día ${S.hoy}`);
+  nota(antes === 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy >= 27 ? 'Ya es Navidad' : `Hoy es el día ${S.hoy}`);
   go('hoy', {}, 'fade');
 }
 
@@ -254,7 +258,7 @@ panel.addEventListener('click', e => {
   if (a === 'dayPlus') advance(1);
   if (a === 'dayMinus') { S.hoy = Math.max(0, S.hoy - 1); save(); go('hoy', {}, 'fade'); }
   if (a === 'panMinus' || a === 'panPlus') { S.panes = Math.max(0, S.panes + (a === 'panPlus' ? 10 : -10)); save(); }
-  if (a === 'reset') { reset({ hoy: 9 }); fill(8); save(); go('hoy', {}, 'fade'); }
+  if (a === 'reset') { reset({}); go('hoy', {}, 'fade', { tab: true }); }
   if (a === 'share') { navigator.clipboard?.writeText(shareURL()).then(() => nota('Enlace copiado', 'Abre la app en este mismo estado')); }
   if (a === 'clearH') { S.huecos = []; save(); }
   if (a === 'copyNotes' || a === 'dlNotes') {
@@ -266,7 +270,7 @@ panel.addEventListener('click', e => {
 panel.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'dSel') { S.hoy = +t.value; save(); go('hoy', {}, 'fade'); }
-  if (t.id === 'pSel') { const n = +t.value; fill(n); if (S.hoy < n) S.hoy = n; save(); go(cur?.name === 'mapa' ? 'mapa' : 'hoy', {}, 'fade'); }
+  if (t.id === 'pSel') { const n = +t.value; fill(n); if (n > 0) { S.inscrito = true; S.teaserVisto = true; } if (S.hoy < n) S.hoy = n; save(); go(cur?.name === 'mapa' ? 'mapa' : 'hoy', {}, 'fade'); }
   if (t.id === 'nPan') { S.panes = Math.max(0, +t.value || 0); save(); }
 });
 panel.addEventListener('input', e => { if (e.target.id === 'note') { S.notas[cur?.name || 'hoy'] = e.target.value; try { localStorage.setItem('cab-mvp-v1', JSON.stringify(S)); } catch { /* */ } } });
@@ -297,8 +301,7 @@ let rT; onChange(() => { syncTheme(); clearTimeout(rT); rT = setTimeout(() => { 
   syncSections();
   prefetch(['V2-01-Hoy-completo', 'V2-Mapa-completo-claro', 'V2-Mapa-dia0-claro', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-06c-Trivia-varias-claro', 'V2-07-Correcto-claro', 'V2-08-Pista-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado']);
   const hp = new URLSearchParams(location.hash.slice(1));
-  let fresh = true; try { fresh = !localStorage.getItem('cab-mvp-v1'); } catch { /* */ }
-  if (fresh && !hp.get('estado')) { fill(8); save(); }
+  // la primera vez (o tras «Empezar de cero») todo arranca en el día 0: antes del 29 y sin inscribirse
   const start = hp.get('pantalla');
   const safe = ['hoy', 'mapa', 'teodoro', 'mundos'].includes(start) ? start : 'hoy';
   if (hp.get('estado')) save();

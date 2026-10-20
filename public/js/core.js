@@ -10,13 +10,13 @@ export const wait = ms => new Promise(r => setTimeout(r, ms));
 export const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ---------- Estado ----------
-const KEY = 'cab-mvp-v1';
+const KEY = 'cab-mvp-v2'; // v2: todos empiezan desde cero (antes del 29, sin inscribirse)
 export const DEFAULT = () => ({
   tema: 'claro', plan: 'premium', nombre: 'Lucía',
-  hoy: 9,              // día del calendario: 0 = antes del 29 nov · 1..26 · 27 = 25 dic–6 ene
-  inscrito: true,
+  hoy: 0,              // día del calendario: 0 = antes del 29 nov · 1..26 · 27 = 25 dic–6 ene
+  inscrito: false,
   completos: {},       // día -> { contenido: true, estrellas: 0..3, trivia: true }
-  bateria: 5, panes: 120,
+  bateria: 5, panes: 0,
   ruletas: {},         // día -> premio id
   ruletaPendiente: {}, // día -> true si dijo «Más tarde»
   sorpresas: {},       // día -> 'hecha' | 'luego'
@@ -234,7 +234,7 @@ async function _go(name, params, anim) {
   layer.dataset.screen = name;
   layer.innerHTML = '<div class="root">' + markup + '</div>';
   const root = layer.firstElementChild.firstElementChild;
-  const h = MAN[file]?.h || 844;
+  let h = MAN[file]?.h || 844;
   const isOv = OVERLAY.has(anim) && prev && asOverlay(layer, root, anim);
   // la pantalla que se va: si era un pop-up, también se va lo que tenía debajo
   const leaving = prev ? (prev.base ? [prev, prev.base] : [prev]) : [];
@@ -250,6 +250,12 @@ async function _go(name, params, anim) {
     const m = def.mount?.(root, params, layer);
     if (m?.then) await Promise.race([m.catch(e => { console.error(e); nota('Error en ' + name, e.message); }), new Promise(r => setTimeout(r, 120))]);
   } catch (e) { console.error(e); nota('Error en ' + name, e.message); }
+  // algunas mesas del lienzo miden menos que su contenido: la altura real sale del contenido
+  if (!isOv && (h > 844 || def.scrollAuto)) {
+    const bottom = Math.max(...[...root.children].filter(el => !el.matches('nav, [data-home]') && getComputedStyle(el).position === 'absolute')
+      .map(el => (parseFloat(el.style.top) || 0) + el.offsetHeight));
+    if (bottom + 110 > h) { h = bottom + 110; root.style.height = h + 'px'; root.style.minHeight = h + 'px'; }
+  }
   if (h > 844 && !def.noScroll && !isOv) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
   bindFallback(layer, layer);
   if (isOv) {

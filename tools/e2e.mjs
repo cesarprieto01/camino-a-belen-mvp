@@ -12,8 +12,27 @@ p.on('console', m => { if (m.type() === 'error' && !/Failed to fetch|Failed to l
 await p.goto('http://localhost:5190/app.html');
 await p.evaluate(() => localStorage.clear());
 await p.reload(); await p.waitForTimeout(1200);
+// la app arranca desde cero; los recorridos (salvo «inicio») parten del día 9 con 8 días hechos
+if (!scen.startsWith('inicio')) {
+  await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 9, inscrito: true, teaserVisto: true, panes: 120 }); for (let d = 0; d <= 8; d++) c.S.completos[d] = { contenido: true, trivia: d > 0, estrellas: d ? 2 : 0 }; [3, 6].forEach(d => c.S.sorpresas[d] = 'hecha'); c.S.ruletas[4] = 'gorro'; c.S.prendas = ['gorro']; c.S.prendasVistas = 1; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
+  await p.waitForTimeout(900);
+}
 let k = 0;
-const shot = async (name) => { await p.waitForTimeout(700); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
+// detector de textos rotos: frases repetidas seguidas («ya se unieron ya se unieron…»), «undefined», «NaN»
+const textCheck = async (name) => {
+  const bad = await p.evaluate(() => {
+    const out = [];
+    document.querySelectorAll('#viewport .layer *').forEach(el => {
+      if (el.children.length > 2 || getComputedStyle(el).display === 'none') return;
+      const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (/(\b[\wáéíóúñ]+(?: [\wáéíóúñ]+){1,3} )\1{2,}/i.test(t + ' ')) out.push('repetido: ' + t.slice(0, 80));
+      if (/\bundefined\b|\bNaN\b|\[object Object\]/.test(t)) out.push('valor roto: ' + t.slice(0, 80));
+    });
+    return [...new Set(out)];
+  });
+  bad.forEach(b => errs.push(`TEXTO en ${name}: ${b}`));
+};
+const shot = async (name) => { await p.waitForTimeout(700); await textCheck(name); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
 const screen = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.dataset.screen);
 // clic por texto o aria-label dentro de la capa visible
 const tap = async (q) => {
@@ -140,10 +159,10 @@ const flows = {
     // ya empezó y no está inscrito: «Unirme al camino» entra directo
     await scenario('Hoy, tab Teodoro y Mundos'); await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.inscrito = false; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(900);
     await tap('Unirme al camino'); await expect('mapa', 'unirse tarde'); await tap('Atrás'); await expect('hoy', 'unirse vuelve a Hoy');
-    await tap('Teodoro'); await tap('Ver mis mundos'); await tap('Adviento'); await expect('mapa', 'mapa desde mundos');
+    await tap('Teodoro'); await tap('Mundos de Teodoro'); await expect('mundos', 'la isla abre los mundos'); await tap('Adviento'); await expect('mapa', 'mapa desde mundos');
     await tap('Atrás'); await expect('mundos', 'volver del mapa'); await tap('Volver'); await expect('teodoro', 'mundos vuelve a Teodoro');
     // atrás del sistema
-    await tap('Adviento'); await expect('mapa', 'mapa otra vez'); await p.goBack(); await expect('teodoro', 'atrás del sistema en el mapa'); await tap('Ver mis mundos'); await p.goBack(); await expect('teodoro', 'atrás del sistema en mundos'); await p.goBack(); await expect('teodoro', 'atrás en una pestaña no sale');
+    await tap('Entrar al camino'); await expect('mapa', 'mapa otra vez'); await p.goBack(); await expect('teodoro', 'atrás del sistema en el mapa'); await tap('Ver mis mundos'); await p.goBack(); await expect('teodoro', 'atrás del sistema en mundos'); await p.goBack(); await expect('teodoro', 'atrás en una pestaña no sale');
   },
   // un día sin sorpresa: el mapa avanza y sale «Mañana seguimos» como hoja sobre el mapa
   async cerrado() {
@@ -154,6 +173,21 @@ const flows = {
     await tap('¿Les gustó hoy?'); await shot('calificar'); await tap('¡Mucho!'); await shot('calificar-elegido'); await tap('Enviar'); await p.waitForTimeout(800);
     if (await screen() !== 'mapa') errs.push('tras calificar: esperaba mapa, quedó ' + await screen());
     await tap('Atrás'); await shot('hoy-fin');
+  },
+  // entrar por primera vez: desde cero hasta el día 1
+  async inicio() {
+    await p.waitForTimeout(800);
+    const s0 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, inscrito: c.S.inscrito }; });
+    if (s0.hoy !== 0 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
+    if (await screen() !== 'teaser') errs.push('el teaser no sale solo al entrar: ' + await screen());
+    await shot('teaser'); await tap('Inscribirme'); await p.waitForTimeout(2400); await shot('espera');
+    await tap('Cerrar'); await shot('hoy-dentro'); await tap('Entrar'); await shot('mapa-dia0');
+    await tap('Ver historia'); await p.waitForTimeout(9800); await shot('dia0-hecho');
+    // pasa la medianoche del 28 al 29: empieza el camino
+    if (!(await p.evaluate(() => !!document.querySelector('[data-act="dayPlus"]')))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); }
+    await p.evaluate(() => document.querySelector('[data-act="dayPlus"]')?.click()); await p.waitForTimeout(1200); await shot('dia1');
+    const s1 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, bat: c.S.bateria }; });
+    if (s1.hoy !== 1 || s1.bat !== 5) errs.push('día 1 mal: ' + JSON.stringify(s1));
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };

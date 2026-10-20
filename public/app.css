@@ -281,3 +281,13 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .gold-rain { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 40; }
 .gold-rain i { position: absolute; top: -12px; width: 7px; height: 11px; border-radius: 2px; animation: goldFall 2.4s cubic-bezier(.45,0,.55,1) both; }
 @keyframes goldFall { to { transform: translate(var(--dx), 880px) rotate(540deg); opacity: .2; } }
+
+/* acceso secundario en la hoja del mapa (va atrasado) */
+.sheet-alt { display: block; width: 100%; min-height: 44px; margin-top: 6px; border: 0; background: transparent; color: #0B748A; font: 800 15px Mulish, sans-serif; cursor: pointer; }
+:root[data-theme="dark"] .sheet-alt { color: #9FE0EE; }
+
+/* «Tu día»: píldora flotante encima de la hoja del mapa */
+.back-hoy { position: absolute !important; left: 50% !important; right: auto !important; bottom: auto !important; transform: translate(-50%, 8px); z-index: 60; opacity: 0; pointer-events: none; display: flex !important; align-items: center; gap: 6px; transition: opacity .2s cubic-bezier(.23,1,.32,1), transform .2s cubic-bezier(.23,1,.32,1); }
+.back-hoy.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.bh-arrow { font: 900 16px/1 Mulish, sans-serif; }
+[data-sheet] { touch-action: none; }

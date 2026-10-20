@@ -177,8 +177,9 @@ register('hoy', {
       bar.style.width = '0%'; if (head?.style.left) head.style.transition = 'left 1s cubic-bezier(.2,.8,.2,1)';
       requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct; if (head?.style.left?.includes('calc')) head.style.left = `calc(${pct} - 14px)`; }));
     }
-    const walk = $$(card, 'img').find(i => /Teodoro camina/.test(i.alt));
-    walk?.classList.add('a-bob');
+    // Teodoro de la tarjeta: su pose sale de la batería (igual que en el mapa)
+    const walk = $$(card, 'img').find(i => /^Teodoro (camina|feliz|tranquilo|travieso|cansad|agotad|dormid|cabecea)/i.test(i.alt || ''));
+    if (walk) { walk.src = teodoroImg(); walk.alt = `Teodoro ${['dormido', 'cabeceando', 'agotado', 'tranquilo', 'travieso', 'feliz'][S.bateria]}`; walk.classList.add('a-bob'); }
     // tarjeta del camino según el estado (lienzo: «Estados de la tarjeta del reto»)
     const btn = find(card, 'Continuar la Aventura');
     const btnText = btn && [...btn.querySelectorAll('*'), btn].map(e => [...e.childNodes]).flat().find(c => c.nodeType === 3 && c.nodeValue.trim());
@@ -260,17 +261,22 @@ register('confirmacion', {
 });
 register('espera', {
   files: F('V2-Espera-claro', 'V2-Espera'),
-  mount(root) {
+  mount(root, p, layer) {
     startCountdown(root);
     on(root, 'Ver tu camino a Belén', () => go('mapa', { from: 'espera' }, 'push'));
     on(root, 'Invitar a un amigo', () => go('invitacion', {}, 'push'));
     // vuelve a donde estaba (Hoy o Teodoro), sin pasar otra vez por el teaser
     const ahoraNo = find(root, 'Ahora no'); if (ahoraNo) ahoraNo.style.display = 'none';
     on(root, 'Cerrar', () => back('hoy', 'down', ['teaser', 'confirmacion']));
+    // «2.418 familias ya se unieron»: el número cuenta hasta su valor; la frase se cambia una sola vez
     const fam = textEl(root, /2\.418 familias/);
-    if (fam && !reduced()) {
+    if (fam) {
+      const tail = [...(fam.parentElement?.childNodes || [])].find(c => c.nodeType === 3 && /ya caminan/.test(c.nodeValue));
+      if (tail) tail.nodeValue = ' ya se unieron';
       const fmt = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      let v = 1800; const iv = setInterval(() => { v = Math.min(2418, v + 37); fam.textContent = fam.textContent.replace(/[\d.]+ familias( ya caminan)?/, fmt(v) + ' familias ya se unieron'); if (v >= 2418) clearInterval(iv); }, 30);
+      const put = v => { fam.textContent = fmt(v) + ' familias'; };
+      if (reduced()) put(2418);
+      else { let v = 1800; put(v); const iv = setInterval(() => { v = Math.min(2418, v + 37); put(v); if (v >= 2418 || !layer.isConnected) clearInterval(iv); }, 30); }
     }
     $$(root, 'img').find(i => i.src.includes(IMG.t5))?.classList.add('a-bob');
   },
@@ -301,6 +307,7 @@ register('teodoro', {
     const n = activeDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     replaceText(root, /^Día 9$/, `Día ${n}`);
+    const isla = root.querySelector('a[aria-label^="Adviento:"]'); // se toma antes de tocar etiquetas
     const st = cardState();
     const cta = find(root, 'Entrar al camino'); // se toma antes de cambiarle el texto
     if (st.title && fase() !== 'antes') {
@@ -317,11 +324,11 @@ register('teodoro', {
     } else if (st.done) {
       const s = textEl(root, 'Sigue la estrella hasta Belén'); if (s) s.textContent = '¡Listo por hoy! Mañana seguimos';
     }
-    root.querySelector('[aria-label*="día 9 de 26"]')?.setAttribute('aria-label', `Adviento, día ${n} de 26`);
     paintEnergy(root);
     if (fase() === 'antes') startCountdown(root);
     const toMap = () => st.key === 5 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar('teodoro');
-    on(root, 'Adviento', toMap);
+    // la isla del cuarto lleva a los mundos de Teodoro; el botón de la tarjeta, al camino
+    if (isla) { isla.setAttribute('aria-label', 'Mundos de Teodoro: Adviento'); on(root, isla, () => go('mundos', {}, 'push')); }
     if (cta) on(root, cta, toMap);
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
     on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
@@ -340,6 +347,7 @@ register('mundos', {
     tabs(root);
     const n = activeDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
+    root.querySelector('a[aria-label^="Adviento:"]')?.setAttribute('aria-label', `Adviento: Camino a Belén, día ${n} de 26. Entrar al camino`);
     on(root, 'Adviento', () => entrar('mundos'));
     on(root, 'Volver al cuarto de Teodoro', () => back('teodoro'));
     on(root, 'Enero', () => toast('Enero', 'El próximo mundo: pronto'));
@@ -356,6 +364,7 @@ register('reproductor', {
     if (scene) {
       if (p.nacimiento) { scene.src = A(IMG.nacimiento); scene.alt = 'El nacimiento de Jesús'; }
       else if (d.scene) { scene.src = A(d.scene); scene.alt = d.title; }
+      else if (n === 0) { scene.src = A('67947142d31d9fb5442ef113320694e6'); scene.alt = 'Teodoro camina hacia Belén bajo la estrella'; }
       else { scene.style.opacity = '.25'; const ph = document.createElement('div'); ph.textContent = 'Falta ilustración del día ' + n; ph.style.cssText = 'position:absolute;left:40px;right:40px;top:290px;text-align:center;color:#fff;font:700 18px Mulish;padding:14px;border:2px dashed rgba(255,255,255,.7);border-radius:18px'; root.appendChild(ph); }
       scene.style.transition = 'transform 9s linear'; requestAnimationFrame(() => { scene.style.transform = 'scale(1.06)'; });
     }
