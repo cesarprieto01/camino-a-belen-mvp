@@ -124,7 +124,7 @@ const flows = {
   },
   async antes() {
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500); await shot('teaser');
-    await tap('Inscribirme'); await shot('confirm'); await p.waitForTimeout(2300); await shot('espera');
+    await tap('Unirme gratis'); await shot('confirm'); await p.waitForTimeout(2300); await shot('espera');
     await tap('Invitar a un amigo'); await shot('invitacion');
   },
   async reto() {
@@ -145,7 +145,7 @@ const flows = {
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500);
     await expect('teaser', 'teaser automático'); await tap('Ahora no'); await expect('hoy', 'teaser Ahora no');
     await tap('Teodoro'); await expect('teodoro', 'tab Teodoro'); await shot('teodoro-sin');
-    await tap('Inscribirme'); await p.waitForTimeout(2400); await expect('espera', 'inscribirme desde Teodoro'); await shot('espera');
+    await tap('Unirme gratis'); await p.waitForTimeout(2400); await expect('espera', 'inscribirme desde Teodoro'); await shot('espera');
     await tap('Invitar a un amigo'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Volver'); await expect('espera', 'volver de invitación');
     await tap('Cerrar'); await expect('teodoro', 'espera Cerrar vuelve a Teodoro'); await shot('teodoro-dentro');
@@ -154,11 +154,11 @@ const flows = {
     await tap('Ver Camino a Belén'); await expect('espera', 'la ilustración abre la espera'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
     await tap('Invitar'); await expect('invitacion', 'invitar desde Teodoro'); await tap('Volver'); await expect('teodoro', 'volver a Teodoro');
     await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
-    await tap('Invitar'); await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Inscribirme'); await expect('invitacion', 'vista previa vuelve');
+    await tap('Invitar'); await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Unirme gratis'); await expect('invitacion', 'vista previa vuelve');
     await tap('Volver'); await expect('hoy', 'invitación vuelve a Hoy');
     // ya empezó y no está inscrito: «Unirme al camino» entra directo
     await scenario('Hoy, tab Teodoro y Mundos'); await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.inscrito = false; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(900);
-    await tap('Unirme al camino'); await expect('mapa', 'unirse tarde'); await tap('Atrás'); await expect('hoy', 'unirse vuelve a Hoy');
+    await tap('Unirme gratis'); await expect('mapa', 'unirse tarde'); await tap('Atrás'); await expect('hoy', 'unirse vuelve a Hoy');
     await tap('Teodoro'); await tap('Mundos de Teodoro'); await expect('mundos', 'la isla abre los mundos'); await tap('Adviento'); await expect('mapa', 'mapa desde mundos');
     await tap('Atrás'); await expect('mundos', 'volver del mapa'); await tap('Volver'); await expect('teodoro', 'mundos vuelve a Teodoro');
     // atrás del sistema
@@ -180,7 +180,7 @@ const flows = {
     const s0 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, inscrito: c.S.inscrito }; });
     if (s0.hoy !== 0 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
     if (await screen() !== 'teaser') errs.push('el teaser no sale solo al entrar: ' + await screen());
-    await shot('teaser'); await tap('Inscribirme'); await p.waitForTimeout(2400); await shot('espera');
+    await shot('teaser'); await tap('Unirme gratis'); await p.waitForTimeout(2400); await shot('espera');
     await tap('Cerrar'); await shot('hoy-dentro'); await tap('Entrar'); await shot('mapa-dia0');
     await tap('Ver historia'); await p.waitForTimeout(9800); await shot('dia0-hecho');
     // pasa la medianoche del 28 al 29: empieza el camino
@@ -217,7 +217,7 @@ const flows = {
     // 1) antes del 29
     await p.waitForTimeout(800);
     if (await screen() !== 'teaser') errs.push('no arranca con el teaser');
-    await tap('Inscribirme'); await p.waitForTimeout(2300); await shot('c-espera');
+    await tap('Unirme gratis'); await p.waitForTimeout(2300); await shot('c-espera');
     await tap('Cerrar'); await tap('Entrar'); await p.waitForTimeout(600); await sheetCta(); await p.waitForTimeout(700); await finishPlayer(); await p.waitForTimeout(1200);
     await shot('c-dia0');
     // 2) los 26 días

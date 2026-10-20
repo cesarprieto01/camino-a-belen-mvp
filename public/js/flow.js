@@ -86,7 +86,7 @@ export function sparkles(root) {
 export function cardState() {
   const act = activeDay();
   if (fase() === 'antes') return S.inscrito ? { key: 2 } : { key: 1 };
-  if (!S.inscrito) return { key: 4, title: '¡Ya salimos! ¿Vienes?', sub: 'Aún llegas a Belén', cta: 'Unirme al camino' };
+  if (!S.inscrito) return { key: 4, title: '¡Ya salimos! ¿Vienes?', sub: 'Aún llegas a Belén', cta: 'Unirme gratis' };
   if (S.hoy >= 27) {
     const faltan = 26 - doneCount();
     return faltan ? { key: 6, title: '¡Feliz Navidad!', sub: `Te faltan ${faltan} días · puedes seguir hasta Reyes`, cta: 'Seguir caminando' }

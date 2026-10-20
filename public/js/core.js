@@ -281,6 +281,11 @@ async function _go(name, params, anim) {
   }
   if (h > 844 && !def.noScroll && !isOv) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
   bindFallback(layer, layer);
+  // el botón de registro dice lo mismo en toda la app (después de conectar los botones)
+  root.querySelectorAll('a, button').forEach(el => {
+    const tn = [...el.querySelectorAll('*'), el].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim() === 'Inscribirme');
+    if (tn) { tn.nodeValue = tn.nodeValue.replace('Inscribirme', 'Unirme gratis'); if (el.getAttribute('aria-label') === 'Inscribirme') el.setAttribute('aria-label', 'Unirme gratis'); }
+  });
   // un título principal por pantalla para el lector de pantalla
   if (def.h1) { const t = textEl(root, def.h1); if (t) { t.setAttribute('role', 'heading'); t.setAttribute('aria-level', '1'); } }
   if (isOv) {
