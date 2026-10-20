@@ -1,0 +1,13 @@
+{
+  "name": "camino-a-belen-mvp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "convert": "python3 tools/convert.py",
+    "dev": "npx --yes serve public -l 5190",
+    "shots": "node tools/shots.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56"
+  }
+}
