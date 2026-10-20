@@ -39,7 +39,7 @@ async function templates() {
     key,
     done: node(1).getAttribute('style'),
     doneInner: [...node(1).childNodes].filter(c => !(c.tagName === 'SPAN' && c.getAttribute('aria-hidden'))).map(c => c.outerHTML || '').join(''),
-    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(4).replace(/#F[5-7][C-D][0-9A-F]{3}/gi, '#D3DDE5') },
+    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(1).replace(/(fill|stroke)="#(?!fff|FFF)[0-9A-Fa-f]{3,6}"/g, '$1="#C9D6DF"').replace(/(fill|stroke): ?#(?!fff|FFF)[0-9A-Fa-f]{3,6}/g, '$1: #C9D6DF') },
     today: node(9).getAttribute('style'),
     todayInner: node(9).innerHTML,
     locked: node(10).getAttribute('style'),
@@ -106,9 +106,8 @@ register('mapa', {
         el.setAttribute('aria-label', `Día ${n}, ${d.title}, completado${stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
       } else if (contentDone(n) && n !== act && !(S.pasoAnimado === n && !reduced())) {
         // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
-        restyle(el, T.locked, p, 64);
-        el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon.replace('opacity: .55', 'opacity: 1')).replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
-        el.style.outline = '3px dashed #F5DB78'; el.style.outlineOffset = '3px';
+        restyle(el, T.done, p, 64);
+        el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
         el.setAttribute('aria-label', `Día ${n}, ${d.title}: historia vista, trivia pendiente, 0 estrellas`);
       } else if (n === act || (S.pasoAnimado && n === S.pasoAnimado)) {
         restyle(el, T.today, p, 84);
@@ -248,11 +247,10 @@ register('mapa', {
         n.el.classList.add('a-pop');
       } else if (n) {
         // solo vio la historia: queda con la trivia pendiente y 0 estrellas
-        restyle(n.el, T.locked, n.p, 64);
-        const ic = T.icons[from] ? `<img src="${T.icons[from]}" alt="" style="width: 30px; height: 24px; object-fit: contain">` : '';
-        n.el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, ic).replace(/>\d+</, `>${from}<`) + (T.badges[0] || '');
-        n.el.style.outline = '3px dashed #F5DB78'; n.el.style.outlineOffset = '3px';
+        restyle(n.el, T.done, n.p, 64);
+        n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${from}<`) + (T.badges[0] || '');
         delete n.el.dataset.today;
+        n.el.classList.add('a-pop');
         n.el.classList.add('a-pop');
       }
       const to = act ?? null;
@@ -432,6 +430,7 @@ function paintSheet(layer, T) {
     const [tt, st] = r.querySelector(':scope > div').children;
     tt.textContent = title; st.textContent = sub;
     const b = r.lastElementChild;
+    if (badge === 'lock') r.dataset.lock = '1';
     if (badge === 'ok') {
       r.style.opacity = '1'; r.style.boxShadow = 'none';
       b.outerHTML = T.doneBadge;
@@ -459,6 +458,11 @@ function paintSheet(layer, T) {
     if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));
   }
   list.forEach(r => cta.before(r));
+  list.filter(r => r.dataset.lock).forEach(r => {
+    r.style.cursor = 'pointer'; r.setAttribute('role', 'button');
+    on(layer, r, () => S.plan === 'free' ? go('free', { back: 'mapa' }, 'page')
+      : (animate(r, 'a-shake'), toast(`Primero ${CONT[2]}`, 'La trivia se abre al terminarla')));
+  });
   if (list.length > 2) { sheet.style.height = 'auto'; }
 
   // Botón principal
