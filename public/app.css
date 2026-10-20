@@ -367,3 +367,6 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .sheet-min:focus:not(:focus-visible), .mb-cta:focus:not(:focus-visible) { outline: none; }
 .mb-txt { flex: 0 0 auto; }
 .mb-cta { min-width: 0; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* X para cerrar pop-ups que no tienen la suya */
+.pop-x { position: absolute; right: 16px; top: 56px; width: 44px; height: 44px; border-radius: 22px; border: 0; background: rgba(255,255,255,.18); color: #FFFFFF; display: grid; place-items: center; cursor: pointer; z-index: 5; }

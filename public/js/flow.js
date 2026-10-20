@@ -148,7 +148,7 @@ function startCountdown(layer) {
 
 // ---------- Hoy ----------
 register('hoy', {
-  h1: /^(Buenos días|Buenas tardes|Buenas noches),/,
+  h1: /^(Buenos días|Buenas tardes|Buenas noches|¡Feliz Navidad),/,
   file() {
     const t = dark() ? 1 : 0;
     if (fase() === 'antes') return (S.inscrito ? F('V2-Pre-Hoy-dentro-claro', 'V2-Pre-Hoy-dentro') : F('V2-Pre-Hoy-claro', 'V2-Pre-Hoy'))[t];
@@ -166,7 +166,8 @@ register('hoy', {
     replaceText(root, /Lucía/g, S.nombre);
     replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
     const hr = new Date().getHours();
-    replaceText(root, /Buenas noches/, hr < 12 ? 'Buenos días' : hr < 19 ? 'Buenas tardes' : 'Buenas noches');
+    replaceText(root, /Buenas noches/, S.hoy >= 27 ? '¡Feliz Navidad' : hr < 12 ? 'Buenos días' : hr < 19 ? 'Buenas tardes' : 'Buenas noches');
+    if (S.hoy >= 27) replaceText(root, /^¡Feliz Navidad, (.+)$/, '¡Feliz Navidad, $1!');
     paintEnergy(root);
     const rp = root.querySelector('[aria-label^="Racha"]');
     if (rp) { const tn = [...rp.childNodes].find(c => c.nodeType === 3 && /\d/.test(c.nodeValue)); if (tn) tn.nodeValue = String(racha()); rp.setAttribute('aria-label', `Racha: ${racha()} días seguidos`); }
@@ -667,7 +668,7 @@ register('ruletaPop', {
     on(root, '¡Girar!', async (ev, btn) => {
       if (spun) return; spun = true;
       btn.style.opacity = '.6'; btn.style.pointerEvents = 'none';
-      const tarde = find(root, 'Más tarde'); if (tarde) tarde.style.visibility = 'hidden';
+      const tarde = find(root, 'Más tarde'); if (tarde) tarde.style.visibility = 'hidden'; layer.querySelector('.pop-x')?.remove();
       // premio: el forzado en el panel o al azar (todas las casillas ganan)
       const forced = S.forzarPremio;
       const weekId = PRENDAS[RULES.ruleta.indexOf(n)]?.id;
@@ -719,8 +720,14 @@ register('ruletaPop', {
       go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n, from: p.from }, 'modal', { replace: true });
     });
     const tarde0 = find(root, 'Más tarde'); if (tarde0) tarde0.dataset.back = '1';
+    // una X para cerrar (igual que «Más tarde»: la ruleta queda pendiente y se puede girar después)
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'pop-x'; x.setAttribute('aria-label', 'Cerrar');
+    x.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+    (root.querySelector('.ov-body') || root).appendChild(x);
+    x.addEventListener('click', () => tarde0?.click());
     on(root, 'Más tarde', () => {
       S.ruletaPendiente[n] = true; save();
+      toast('La ruleta te espera', 'Gírala cuando quieras desde el mapa');
       if (p.from === 'mapa') go('mapa', {}, 'down', { replace: true }); else go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     });
   },

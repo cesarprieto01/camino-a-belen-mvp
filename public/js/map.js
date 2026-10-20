@@ -208,8 +208,9 @@ register('mapa', {
         const t = nodes[focus]; if (!t) return;
         const y = parseFloat(t.el.style.top) - scroller.scrollTop;
         const sh = layer.querySelector('[data-sheet]');
-        const limit = sh ? sh.getBoundingClientRect().top - layer.getBoundingClientRect().top : 700;
-        const out = y < 60 || y + 40 > limit;
+        const k = layer.getBoundingClientRect().height / layer.offsetHeight || 1;
+        const limit = sh ? Math.min(sh.offsetTop, (sh.getBoundingClientRect().top - layer.getBoundingClientRect().top) / k) : 700; // sin contar la animación de entrada
+        const out = (y < 60 || y + 40 > limit) && layer.dataset.dia == null; // con un día elegido ya está «Volver a tu día»
         backHoy.classList.toggle('on', out);
         arrow.textContent = y < 60 ? '↑' : '↓';
         backHoy.style.top = Math.max(110, limit - 58) + 'px';
@@ -219,7 +220,9 @@ register('mapa', {
     }
 
     // 6) Hoja inferior según el estado del día
-    paintSheet(layer, T);
+    // la hoja muestra el día que se tocó (si se tocó uno); si no, el día de Teodoro
+    if (params.dia != null) layer.dataset.dia = String(params.dia);
+    paintSheet(layer, T, params.dia);
     sheetDrag(layer);
     seen('S-03-Mapa');
     if (act != null && contentDone(act) && !isDone(act)) seen('S-03b-Mapa-trivia');
@@ -234,7 +237,8 @@ register('mapa', {
       const top = parseFloat(t.el.style.top) - Math.max(170, sheetTop - 150);
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
-    if (focus < 1) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(S.pasoAnimado || focus, false);
+    if (params.dia != null && nodes[params.dia]) { const el = nodes[params.dia].el; el.style.boxShadow = (T.selShadow || '0 0 0 6px rgba(245,219,120,.8)'); scrollToNode(params.dia, false); }
+    else if (focus < 1) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(S.pasoAnimado || focus, false);
 
     // 7) Animación: Teodoro avanza al siguiente día
     if (S.pasoAnimado && !reduced()) {
@@ -297,15 +301,11 @@ register('mapa', {
 function tapNode(n, el, layer) {
   const act = activeDay();
   const d = DAYS[n];
-  if (n === act || n === walkDay()) { startDay(n); return; }
+  const enHoja = layer.dataset.dia != null ? +layer.dataset.dia : walkDay();
+  if (n === enHoja) { startDay(n); return; } // el día que ya muestra la hoja: empezar
   if (isDone(n)) { showPast(layer, n, el); return; }
-  if (n <= lastDay()) {
-    // si ya vio las historias de los días anteriores, puede seguir con esta (la trivia queda pendiente)
-    const libre = Array.from({ length: n - 1 }, (_, i) => i + 1).every(contentDone);
-    if (libre) { startDay(n); return; }
-    const falta = Array.from({ length: n - 1 }, (_, i) => i + 1).find(d => !contentDone(d));
-    animate(el, 'a-shake'); toast(`Primero la historia del día ${falta}`, `El día ${n} te espera justo después`); return;
-  }
+  // cualquier día ya desbloqueado (atrasado o con la trivia pendiente): su hoja, sin saltar directo
+  if (n <= lastDay()) { animate(el, 'a-pop'); go('mapa', { dia: n }, 'none', { replace: true }); return; }
   showBubble(layer, n, el);
 }
 
@@ -400,11 +400,11 @@ export function contOf(type) {
   }[type];
 }
 
-function paintSheet(layer, T) {
+function paintSheet(layer, T, dia) {
   let sheet = [...layer.children].find(el => el.style.bottom === '10px');
   if (!sheet) return;
   sheet.dataset.sheet = '1';
-  const act = walkDay();
+  const act = dia ?? walkDay();
   if (act === 26 && !contentDone(26) && T.sheet26) {
     const t = document.createElement('template'); t.innerHTML = T.sheet26;
     const s26 = t.content.firstElementChild; s26.dataset.sheet = '1'; sheet.replaceWith(s26); sheet = s26;
@@ -425,6 +425,7 @@ function paintSheet(layer, T) {
   if (act != null && act < lastDay()) kicker = 'TE ESPERA';
   if (act == null) kicker = S.hoy >= 27 ? 'CAMINO TERMINADO' : `DÍA ${n} · LISTO`;
   if (n === 0) kicker = 'DÍA 0 · ANTES DE SALIR';
+  if (dia != null && dia !== walkDay() && n > 0) kicker = contentDone(n) && !isDone(n) ? `DÍA ${n} · TRIVIA PENDIENTE` : `DÍA ${n}`;
   if (head) {
     head.classList.add('sheet-head');
     head.children[0].textContent = kicker;
@@ -499,6 +500,9 @@ function paintSheet(layer, T) {
   if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
   const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');
   if (n > 0 && sorpPend.length) addAlt(`Sorpresa pendiente · ${SORPRESA_NOMBRE[RULES.sorpresa[sorpPend[0]]]}`, 'regalo', () => openSorpresa(sorpPend[0]), {}, `Día ${sorpPend[0]}`);
+  if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver a tu día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
+  const rulPend = RULES.ruleta.filter(r => r <= lastDay() && S.ruletaPendiente[r] && !S.ruletas[r]);
+  if (n > 0 && rulPend.length) addAlt('Ruleta pendiente · ¡Girar!', 'regalo', () => go('ruletaPop', { day: rulPend[0], from: 'mapa' }, 'modal'), {}, `Día ${rulPend[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
   if (n === 0 && contentDone(0)) addAlt('Volver al inicio', 'casa', () => back(mapOrigin || 'hoy', 'back'));
   sheet.style.height = 'auto';

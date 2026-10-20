@@ -262,6 +262,7 @@ const flows = {
         }
       }
       if (!done) errs.push(`día ${d}: no se pudo terminar (atascado en ${(await cur()).s})`);
+      console.log(`día ${d} listo · ${steps} pasos · ${new Date().toLocaleTimeString()}`);
       if ([3, 4, 9, 13, 24].includes(d)) await shot('c-dia' + d);
     }
     const st = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hechos: Object.values(c.S.completos).filter(x => x.trivia).length, contenidos: Object.values(c.S.completos).filter(x => x.contenido).length, panes: c.S.panes, prendas: c.S.prendas.length, ruletas: Object.keys(c.S.ruletas).length, sorpresas: Object.values(c.S.sorpresas).filter(x => x === 'hecha').length }; });
@@ -345,6 +346,27 @@ const flows = {
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
     await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await tap('Ahora no'); await p.waitForTimeout(1000);
     await backs('reto', 4);
+  },
+  // días libres: tocar un día desbloqueado o con trivia pendiente abre su hoja; la ruleta aplazada vuelve
+  async libre() {
+    const st = () => p.evaluate(async () => { const c = await import('/js/core.js'); const L = document.querySelector('#viewport .layer:last-child'); return { s: c.cur.name, dia: c.cur.params.dia, titulo: L.querySelector('.sheet-head')?.children[1]?.textContent, cta: L.querySelector('[data-sheet] a')?.textContent.trim() }; });
+    const tapNodo = n => p.evaluate(n => document.querySelector(`#viewport .layer:last-child a[aria-label^="Día ${n},"]`)?.click(), n);
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 10, inscrito: true, teaserVisto: true }); c.S.completos[0] = { contenido: true }; for (const d of [1, 2, 3]) c.S.completos[d] = { contenido: true }; c.save(); c.clearHistory(); c.go('mapa', {}, 'none'); });
+    await p.waitForTimeout(1500);
+    // día 10 desbloqueado (va en el 4): su hoja, no un bloqueo
+    await tapNodo(10); await p.waitForTimeout(1200); let s = await st(); await shot('dia10');
+    if (s.dia !== 10 || !/Ver|Escuchar|Jugar|Comenzar/.test(s.cta || '')) errs.push('tocar el día 10 no abre su hoja: ' + JSON.stringify(s));
+    await tap('Volver a tu día'); await p.waitForTimeout(1000); s = await st();
+    if (s.dia != null) errs.push('«Volver a tu día» no vuelve: ' + JSON.stringify(s));
+    // día 2 (historia vista, trivia pendiente): hoja con «Jugar la trivia», sin saltar directo
+    await tapNodo(2); await p.waitForTimeout(1200); s = await st(); await shot('dia2');
+    if (s.s !== 'mapa' || s.dia !== 2 || !/Jugar la trivia/.test(s.cta || '')) errs.push('tocar el día 2 no muestra su hoja con la trivia: ' + JSON.stringify(s));
+    // ruleta del día 4: X cierra y queda pendiente; luego se puede girar desde la hoja
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('ruletaPop', { day: 4, from: 'mapa' }, 'modal'); }); await p.waitForTimeout(900); await shot('ruleta-x');
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child .pop-x')?.click()); await p.waitForTimeout(1200);
+    s = await st(); if (s.s !== 'mapa') errs.push('la X de la ruleta no cierra: ' + s.s);
+    await tap('Ruleta pendiente'); await p.waitForTimeout(900);
+    if ((await screen()) !== 'ruletaPop') errs.push('la ruleta aplazada no se puede girar después: ' + await screen());
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };
