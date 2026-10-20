@@ -475,52 +475,95 @@ function paintSheet(layer, T) {
   // trivias que quedaron pendientes al seguir con las historias: a un toque
   const trivAct = activeDay();
   const pendTriv = Array.from({ length: Math.min(lastDay(), 26) }, (_, i) => i + 1).filter(d => contentDone(d) && !isDone(d) && d !== n);
-  const addAlt = (txt, fn) => { const alt = document.createElement('button'); alt.type = 'button'; alt.className = 'sheet-alt'; alt.textContent = txt; cta.after(alt); on(layer, alt, fn); };
-  if (n > 0 && pendTriv.length) addAlt(pendTriv.length === 1 ? `Jugar la trivia del día ${pendTriv[0]}` : `Tienes ${pendTriv.length} trivias pendientes · empezar por el día ${pendTriv[0]}`, () => startDay(pendTriv[0]));
+  const ICO = {
+    trivia: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
+    casa: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1Z"/></svg>',
+  };
+  const addAlt = (txt, ico, fn, extra = {}, chip = '') => {
+    const alt = document.createElement('button'); alt.type = 'button'; alt.className = 'sheet-alt';
+    alt.innerHTML = `${ICO[ico]}<span>${txt}</span>${chip ? `<em class="sa-chip">${chip}</em>` : ''}<svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
+    Object.assign(alt.dataset, extra); cta.after(alt); on(layer, alt, fn);
+  };
+  if (n > 0 && pendTriv.length) addAlt(pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`, 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
-  if (n === 0 && contentDone(0)) addAlt('Volver al inicio', () => back(mapOrigin || 'hoy', 'back'));
+  if (n === 0 && contentDone(0)) addAlt('Volver al inicio', 'casa', () => back(mapOrigin || 'hoy', 'back'));
   sheet.style.height = 'auto';
   sheet.classList.add('in-up');
 }
 /** La rayita de la hoja funciona: arrastra hacia abajo para ver el mapa, hacia arriba (o toca) para abrirla. */
+/** Hoja del día: se minimiza a una barra compacta (como el mini reproductor de iOS) con el botón principal a mano.
+ *  Se cambia con el botón, tocando la rayita o arrastrando. */
 function sheetDrag(layer) {
-  layer.querySelectorAll('[data-sheet]').forEach(s => { s.style.zIndex = '30'; });
-  let y0 = null, dy = 0, sheet = null, collapsed = false, max = 0;
-  const peek = 118;
-  const set = (v, anim) => { sheet.classList.remove('in-up'); sheet.style.animation = 'none'; sheet.style.transition = anim ? 'transform .34s cubic-bezier(.32,.72,0,1)' : 'none'; sheet.style.transform = v ? `translateY(${v}px)` : ''; sheet.querySelector('.sheet-min')?.setAttribute('aria-expanded', String(!v)); };
-  // botón para minimizar / abrir (además de arrastrar la rayita)
-  const addMin = s => {
+  let y0 = null, dy = 0, sheet = null, mini = false;
+  const after = () => setTimeout(() => layer._syncBackHoy?.(), 380);
+  const scaleOf = s => s.getBoundingClientRect().height / s.offsetHeight || 1;
+  // FLIP: la hoja se encoge o crece desde donde está, sin saltos
+  const setMini = (s, on, fromDy = 0) => {
+    const k = scaleOf(s), top0 = s.getBoundingClientRect().top;
+    s.style.transition = 'none'; s.style.transform = '';
+    s.classList.remove('in-up'); s.style.animation = 'none';
+    s.classList.toggle('mini', on); mini = on;
+    const top1 = s.getBoundingClientRect().top;
+    const d = (top0 - top1) / k;
+    if (!reduced()) s.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.32,.72,0,1)' });
+    const b = s.querySelector('.sheet-min'); b?.setAttribute('aria-expanded', String(!on)); b?.setAttribute('aria-label', on ? 'Abrir el día' : 'Minimizar');
+    s.setAttribute('aria-expanded', String(!on));
+    after();
+  };
+  const build = s => {
     if (!s || s.querySelector('.sheet-min')) return;
+    s.style.zIndex = '30';
+    // botón minimizar / abrir
     const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-min'; b.dataset.bound = '1'; b.setAttribute('aria-label', 'Minimizar'); b.setAttribute('aria-expanded', 'true');
     b.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     s.appendChild(b);
-    b.addEventListener('click', ev => { ev.stopPropagation(); sheet = s; max = s.offsetHeight - peek; collapsed = !collapsed; set(collapsed ? max : 0, true); b.setAttribute('aria-label', collapsed ? 'Abrir' : 'Minimizar'); after(); });
     b.addEventListener('pointerdown', ev => ev.stopPropagation());
+    b.addEventListener('click', ev => { ev.stopPropagation(); setMini(s, !s.classList.contains('mini')); });
+    // barra compacta: ícono · día y título · acción principal
+    const head = [...s.children].find(el => /DÍA|ANTES DE SALIR|NOCHEBUENA/i.test(el.children[0]?.textContent || ''));
+    const cta = [...s.children].find(el => el.tagName === 'A');
+    const rowImg = s.querySelector('[style*="height: 58px"] img, [style*="height:58px"] img');
+    const pend = s.querySelector('.sheet-alt[data-pend]');
+    const bar = document.createElement('div'); bar.className = 'mini-bar';
+    const eyebrow = (head?.children[0]?.textContent || '').replace(/^(HOY|TE ESPERA)\s*·\s*/i, '').trim();
+    const title = head?.children[1]?.textContent.trim() || '';
+    const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
+    const corto = /^Hasta mañana/.test(verbo) ? 'Hasta mañana' : verbo.split(' ')[0];
+    bar.innerHTML = `<span class="mb-ico">${rowImg ? `<img src="${rowImg.getAttribute('src')}" alt="">` : ''}${pend ? `<i class="mb-dot" aria-hidden="true">${pend.dataset.pend}</i>` : ''}</span>
+      <span class="mb-txt"><small>${eyebrow}</small><b>${title}</b></span>
+      <button type="button" class="mb-cta" data-bound="1">${/Hasta/.test(corto) ? '' : '<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5Z" fill="currentColor"/></svg>'}${corto}</button>`;
+    bar.setAttribute('aria-label', `${eyebrow}: ${title}${pend ? `. ${pend.dataset.pend} trivias pendientes` : ''}`);
+    const grab = [...s.children].find(el => el.getAttribute('aria-hidden') === 'true' && el.offsetHeight <= 6);
+    if (grab) { grab.classList.add('sheet-grab'); grab.after(bar); } else s.prepend(bar);
+    const mcta = bar.querySelector('.mb-cta');
+    mcta.setAttribute('aria-label', verbo);
+    mcta.addEventListener('pointerdown', ev => ev.stopPropagation());
+    mcta.addEventListener('click', ev => { ev.stopPropagation(); cta?.click(); });
+    bar.addEventListener('click', ev => { if (!ev.target.closest('.mb-cta')) setMini(s, false); });
   };
-  addMin(layer.querySelector('[data-sheet]'));
-  new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s) { s.style.zIndex = '30'; addMin(s); collapsed = false; } }).observe(layer, { childList: true });
-  const after = () => setTimeout(() => layer._syncBackHoy?.(), 360);
+  build(layer.querySelector('[data-sheet]'));
+  new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s && !s.querySelector('.sheet-min')) { mini = false; build(s); } }).observe(layer, { childList: true });
+  // arrastrar desde la parte de arriba (o desde la barra compacta)
   layer.addEventListener('pointerdown', ev => {
     sheet = ev.target.closest('[data-sheet]'); if (!sheet) return;
-    const top = sheet.getBoundingClientRect().top;
-    const scale = sheet.getBoundingClientRect().height / sheet.offsetHeight || 1;
-    if ((ev.clientY - top) / scale > 56 && !collapsed) { sheet = null; return; } // solo desde la parte de arriba
-    y0 = ev.clientY; dy = 0; max = sheet.offsetHeight - peek; sheet.setPointerCapture?.(ev.pointerId);
+    if ((ev.clientY - sheet.getBoundingClientRect().top) / scaleOf(sheet) > 56 && !sheet.classList.contains('mini')) { sheet = null; return; }
+    y0 = ev.clientY; dy = 0; sheet.setPointerCapture?.(ev.pointerId);
   });
   layer.addEventListener('pointermove', ev => {
     if (y0 == null || !sheet) return;
-    const scale = sheet.getBoundingClientRect().height / sheet.offsetHeight || 1;
-    dy = (ev.clientY - y0) / scale;
-    const base = collapsed ? max : 0;
-    set(Math.min(max, Math.max(0, base + dy)), false);
+    dy = (ev.clientY - y0) / scaleOf(sheet);
+    const isMini = sheet.classList.contains('mini');
+    const v = isMini ? Math.min(0, Math.max(-60, dy)) * .4 : Math.max(0, dy);
+    sheet.style.animation = 'none'; sheet.classList.remove('in-up'); sheet.style.transition = 'none'; sheet.style.transform = v ? `translateY(${v}px)` : '';
   });
   const end = () => {
     if (y0 == null || !sheet) return;
     y0 = null;
-    if (Math.abs(dy) < 6) { if (collapsed) { collapsed = false; set(0, true); after(); } return; } // un toque en la hoja recogida la abre
-    collapsed = collapsed ? dy < -40 ? false : true : dy > 60;
-    set(collapsed ? max : 0, true); after();
-    sheet.setAttribute('aria-expanded', String(!collapsed));
+    const isMini = sheet.classList.contains('mini');
+    if (Math.abs(dy) < 6) { if (!isMini) { sheet.style.transform = ''; setMini(sheet, true); } return; } // un toque en la rayita alterna
+    if (!isMini && dy > 60) setMini(sheet, true);
+    else if (isMini && dy < -30) setMini(sheet, false);
+    else { sheet.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1)'; sheet.style.transform = ''; }
   };
   layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
 }
