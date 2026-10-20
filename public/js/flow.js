@@ -74,7 +74,11 @@ function tabs(root) {
   on(root, 'Ajustes', () => nota('Ajustes de Theo', 'Ya existen en la app'));
 }
 function appContent(root) {
-  ['Villancicos', 'Oración de la noche', 'Evangelio del día', 'El cuento de hoy', 'La afirmación de hoy', 'PARA REZAR EN FAMILIA', 'Los peces en el río', 'Ven, Señor Jesús', 'Noche de paz', 'Ver todo']
+  // domingo con el camino: el «Evangelio del día» es el del camino (lleva allá, no se hace dos veces)
+  const hd = Math.min(Math.max(S.hoy, 0), 26);
+  const evCamino = fase() !== 'antes' && S.inscrito && DAYS[hd]?.type === 'domingo';
+  if (evCamino) on(root, 'Evangelio del día', () => entrar('hoy'));
+  [...(evCamino ? [] : ['Evangelio del día']), 'Villancicos', 'Oración de la noche', 'El cuento de hoy', 'La afirmación de hoy', 'PARA REZAR EN FAMILIA', 'Los peces en el río', 'Ven, Señor Jesús', 'Noche de paz', 'Ver todo']
     .forEach(t => on(root, t, () => nota('Contenido de Theo', 'Ya existe en la app; aquí no cambia')));
 }
 /** Destellos decorativos del lienzo (estrellitas sueltas): titilan. Nunca íconos de botones. */
@@ -147,6 +151,12 @@ function startCountdown(layer) {
   const iv = setInterval(() => { if (!layer.isConnected) clearInterval(iv); else tick(); }, 1000);
 }
 
+/** Antes del 29: «¡Ya casi salimos!» solo en la última semana; antes, «¡Prepárate para salir!». */
+function ánimo(root) {
+  const dias = Math.ceil((new Date(2026, 10, 29) - new Date()) / 864e5);
+  if (dias > 7) replaceText(root, /¡Ya casi salimos!/, '¡Prepárate para salir!');
+}
+
 // ---------- Hoy ----------
 register('hoy', {
   h1: /^(Buenos días|Buenas tardes|Buenas noches|¡Feliz Navidad),/,
@@ -172,11 +182,22 @@ register('hoy', {
     paintEnergy(root);
     const rp = root.querySelector('[aria-label^="Racha"]');
     if (rp) { const tn = [...rp.childNodes].find(c => c.nodeType === 3 && /\d/.test(c.nodeValue)); if (tn) tn.nodeValue = String(racha()); rp.setAttribute('aria-label', `Racha: ${racha()} días seguidos`); }
+    // domingo: el «Evangelio del día» de Theo es el mismo del camino → una sola vez
+    const hd = Math.min(Math.max(S.hoy, 0), 26);
+    if (fase() !== 'antes' && S.inscrito && DAYS[hd]?.type === 'domingo') {
+      const ev = find(root, 'Evangelio del día');
+      if (ev) {
+        const sub = textEl(ev, /Escuchar/); if (sub) sub.textContent = contentDone(hd) ? 'Hecho en tu Camino a Belén' : 'Lo escuchas en tu Camino a Belén';
+        if (contentDone(hd)) { ev.style.opacity = '.7'; const pts = textEl(ev, /^\+\d+$/); if (pts) pts.textContent = '✓'; }
+        ev.dataset.camino = '1';
+      }
+    }
     on(root, 'Perfil', () => nota('Perfil de Theo', 'Ya existe en la app'));
     on(root, 'Racha', () => nota('Racha de la app', 'Hacer Adviento suma a esta racha'));
 
     if (fase() === 'antes') {
       startCountdown(root);
+      ánimo(root);
       on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
       on(root, 'Inscribirme', (ev, el) => inscribir(el)); on(root, 'Unirme gratis', (ev, el) => inscribir(el));
       on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
@@ -396,7 +417,7 @@ register('teodoro', {
     replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
     paintEnergy(root);
     patchCuarto(root);
-    if (fase() === 'antes') startCountdown(root);
+    if (fase() === 'antes') { startCountdown(root); ánimo(root); }
     // la isla del cuarto lleva a los mundos de Teodoro; el botón de la tarjeta, al camino
     if (isla) {
       isla.setAttribute('aria-label', 'Mundos de Teodoro: Adviento'); on(root, isla, () => go('mundos', {}, 'push'));
@@ -594,16 +615,11 @@ register('calificacion', {
       opts.forEach((o, j) => paintFace(o, j, j === k));
       S._voto = el.getAttribute('aria-label'); lock(false); navigator.vibrate?.(10);
     }));
-    const box = $$(root, 'div').find(el => /Lo que más te gustó/.test(el.textContent) && el.childElementCount <= 3 && el.style.borderRadius);
-    if (box) {
-      const ta = document.createElement('textarea');
-      ta.placeholder = 'Lo que más te gustó…';
-      ta.setAttribute('aria-label', 'Comentario opcional');
-      ta.style.cssText = 'position:absolute;inset:0;border:0;background:transparent;resize:none;padding:16px 16px 16px 44px;font:500 16px Mulish,sans-serif;color:inherit;outline:none';
-      box.style.position = box.style.position || 'relative';
-      [...box.childNodes].forEach(c => { if (c.nodeType === 3 || (c.tagName !== 'svg' && !c.querySelector?.('svg'))) c.remove?.(); });
-      box.appendChild(ta);
-    }
+    // solo las caritas: un niño no tiene que escribir
+    const lq = textEl(root, /Lo que más te gustó/);
+    const box = lq?.closest('[style*="border-radius"]');
+    if (box && box !== root) box.style.display = 'none';
+    const pide = textEl(root, /Quieres contarnos algo/); if (pide && pide !== root) pide.style.display = 'none';
     const volver = () => back(p.back || 'mapa', 'down');
     on(root, 'Enviar', () => { if (!S._voto) return; toast('¡Gracias por contarnos!'); volver(); });
     on(root, 'Ahora no', volver); on(root, 'Cerrar', volver);

@@ -150,13 +150,18 @@ register('mapa', {
       // volvió tras días sin caminar: Teodoro despierta al verlos
       if (params.despierta && !reduced()) { teo.classList.remove('a-bob'); setTimeout(() => { teo.src = teodoroImg(Math.max(S.bateria, 3)); animate(teo, 'a-hop'); }, 500); }
     }
-    if (bubble) {
+    // el globo de curiosidad tapaba nodos, candados o la ruleta: los candados ya dicen qué viene
+    bubble?.remove();
+    if (false) {
       const nx = (act ?? focus) + 1;
       if (nodes[nx]) {
         bubble.style.top = Math.max(150, nodes[nx].p.y + 14) + 'px'; bubble.style.zIndex = '1';
         replaceText(bubble, /¿Qué habrá.*\?/, S.hoy <= 0 ? '¡Nos vemos el 29!' : nx > lastDay() ? '¿Qué habrá mañana?' : '¡Sigue el camino!');
-        const w = bubble.offsetWidth || 162;
-        bubble.style.left = Math.min(390 - 12 - w, nodes[nx].p.x + 72) + 'px';
+        // al lado del nodo, sin tapar su candado: a la derecha si cabe; si no, a la izquierda
+        const w = bubble.offsetWidth || 162, nw = nodes[nx].el.offsetWidth || 76;
+        const der = nodes[nx].p.x + nw + 22;
+        bubble.style.left = (der + w <= 380 ? der : Math.max(10, nodes[nx].p.x - w - 14)) + 'px';
+        bubble.style.top = Math.max(150, nodes[nx].p.y + nw / 2 - 17) + 'px';
         bubble.classList.add('a-rise');
       } else bubble.remove();
     }
@@ -168,10 +173,10 @@ register('mapa', {
       const opened = !!S.ruletas[d];
       const nextUp = !opened && RULES.ruleta.find(x => !S.ruletas[x]) === d;
       a.innerHTML = (opened ? T.houseOpen : nextUp ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Girada' : d === lastDay() ? 'Hoy' : d < lastDay() ? 'Pendiente' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
+      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Girada' : d === lastDay() ? 'Sorpresa de hoy' : d < lastDay() ? 'Te espera' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
       replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
       // el candado solo en lo que aún no llega
-      if (/^(Hoy|Pendiente)$/.test(label)) a.querySelectorAll('span svg').forEach(s => s.remove());
+      if (/^(Sorpresa de hoy|Te espera)$/.test(label)) a.querySelectorAll('span svg').forEach(s => s.remove());
       if (nextUp || (d <= lastDay() && !opened)) a.querySelector('img').classList.add('a-sway');
       // lienzo: la casa ya no es un botón; solo la abierta deja ver su premio
       a.setAttribute('aria-label', opened ? `Ruleta sorpresa de la semana ${i + 1}: ya la abriste. Ver tu premio` : `Ruleta sorpresa de la semana ${i + 1}: aparece al iniciar el día ${d}`);
@@ -190,6 +195,15 @@ register('mapa', {
       const fin = zeroBlock.offsetTop + zeroBlock.offsetHeight + 110;
       if (fin < root.offsetHeight) { root.style.height = fin + 'px'; root.style.minHeight = '0'; root.style.overflow = 'hidden'; }
     }
+
+    // Letreros del camino: al tocarlos dicen qué significa su palabra
+    const LETREROS = { Maranatha: ['Maranatha', '«Ven, Señor Jesús». La oración del Adviento'], Shemá: ['Shemá', '«Escucha». Así empieza la gran oración de Israel'],
+      Jaire: ['Jaire', '«Alégrate». El saludo del ángel a María'], Acogida: ['Acogida', 'Abrir la puerta y el corazón a Jesús'] };
+    $$(root, 'div, span, text').filter(el => LETREROS[el.textContent.trim()] && el.children.length === 0).forEach(el => {
+      const [t, s] = LETREROS[el.textContent.trim()]; const box = el.closest('svg')?.parentElement === root ? el.closest('svg') : (el.parentElement || el);
+      box.style.cursor = 'pointer'; box.setAttribute('role', 'button'); box.setAttribute('aria-label', `${t}: ${s}`);
+      on(root, box, () => { animate(box, 'a-pop'); toast(t, s); });
+    });
 
     // 5) Cabecera fija
     const chip = layer.querySelector('[aria-label^="Día 9 de 26"]');
@@ -353,8 +367,8 @@ function showEnergy(layer) {
   const imgs = sheet.querySelectorAll('img');
   if (imgs[0]) { imgs[0].src = teodoroImg(); imgs[0].classList.add('a-bob'); }
   paintEnergy(sheet);
-  [...sheet.querySelectorAll('div')].filter(x => x.childElementCount === 0 && /le dan energía|energía/.test(x.textContent) && x.textContent.length > 30)
-    .forEach(x => { x.textContent = 'Cada día que caminan juntos lo llena. Si pasan días sin caminar, se cansa.'; });
+  [...sheet.querySelectorAll('div')].filter(x => /le dan energía/.test(x.textContent) && ![...x.children].some(c => /le dan energía/.test(c.textContent)))
+    .forEach(x => { x.textContent = 'Cada día que caminan juntos lo llena. Si pasan días sin caminar, se cansa un poquito.'; });
   const cta = [...sheet.querySelectorAll('a')].pop();
   const act = walkDay();
   if (act != null && cta) { const lbl = ctaLabel(act); const tn = [...cta.querySelectorAll('*'), cta].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim()); if (tn) tn.nodeValue = lbl.text; on(layer, cta, lbl.go); }

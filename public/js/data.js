@@ -368,3 +368,9 @@ const CUARTA = {
   '25.1': ['Una bufanda', 'bufanda'],
 };
 Object.entries(CUARTA).forEach(([k, [t, img]]) => { const [d, i] = k.split('.').map(Number); const q = TRIVIA[d]?.[i]; if (q && q.o.length === 3) q.o.push(pic(t, img)); });
+
+// Domingos: una pregunta sobre el Evangelio que escucharon (Adviento 2026 · ciclo B)
+TRIVIA[1][3] = P('¿Qué nos pide Jesús en el Evangelio de hoy?', ['Dormir mucho', 'Estar despiertos y atentos', 'Correr rápido', 'Esconder la lámpara'], 1, 'como el portero que espera a su señor', 'Jesús nos pide velar: estar atentos porque Él viene (Mc 13,33-37).');
+TRIVIA[8][0] = P('¿Quién gritaba en el desierto «Preparen el camino del Señor»?', ['Un rey', 'Juan el Bautista', 'Un pastor', 'Un soldado'], 1, 'vivía en el desierto y comía miel silvestre', 'Juan el Bautista preparó el camino para Jesús (Mc 1,1-8).');
+TRIVIA[15][2] = P('Juan dijo: «Yo soy la voz que grita en el…»', ['mar', 'castillo', 'desierto', 'mercado'], 2, 'un lugar seco y lleno de arena', 'Juan era la voz que anunciaba que Jesús llegaba (Jn 1,23).');
+TRIVIA[22][4] = P('¿Qué le dijo el ángel Gabriel a María?', ['Vete a dormir', 'Cuidado con el lobo', 'Alégrate, llena de gracia', 'Prepara la cena'], 2, 'una palabra de alegría', 'El ángel le anunció que sería la mamá de Jesús (Lc 1,26-38).');

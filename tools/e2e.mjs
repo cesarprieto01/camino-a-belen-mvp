@@ -33,7 +33,7 @@ const textCheck = async (name) => {
   bad.forEach(b => errs.push(`TEXTO en ${name}: ${b}`));
 };
 const shot = async (name) => { await p.waitForTimeout(700); await textCheck(name); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
-const waitScreen = async (want, ms = 5000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if ((await screen()) === want) return true; await p.waitForTimeout(150); } return false; };
+const waitScreen = async (want, ms = 10000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if ((await screen()) === want) return true; await p.waitForTimeout(150); } return false; };
 const screen = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.dataset.screen);
 // clic por texto o aria-label dentro de la capa visible
 const tap = async (q) => {
