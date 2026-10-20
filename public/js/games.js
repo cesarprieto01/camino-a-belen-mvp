@@ -205,7 +205,7 @@ register('triviaFin', {
     const n = p.day;
     const { est, first, gana, mejoro } = finishTrivia(n, p.ok, p.replay);
     setText(root, /^\d de 5$/, `${p.ok} de 5`);
-    setText(root, 'respuestas correctas', 'a la primera');
+    replaceText(root, /respuestas correctas/, 'a la primera');
     if (S.triviaProgreso) delete S.triviaProgreso[n];
     setText(root, '¡Gran trivia!', est === 3 ? '¡Trivia perfecta!' : est === 2 ? '¡Gran trivia!' : '¡Buen intento!');
     const starsBox = root.querySelector('[role=img][aria-label^="Ganaste"]');
@@ -228,6 +228,7 @@ register('triviaFin', {
     $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).slice(-1).forEach(i => i.classList.add('a-hop'));
     if (est >= 2) confetti(layer, 195, 300, est === 3 ? 60 : 30);
     on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame(n));
+    const vc = find(root, 'Volver al camino'); if (vc) vc.dataset.back = '1';
     on(root, 'Jugar otra vez', () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'fade'));
     on(root, 'Abrir la sorpresa', () => openSorpresa(n));
     on(root, 'Ahora no', () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(n); });
@@ -408,6 +409,7 @@ register('adivinanzaTiempo', {
     const img = $$(root, 'img').find(i => i.src.includes(IMG.estrella)); if (img) img.src = A(IMG[w.img]);
     const dlg = [...root.children].reverse().find(el => el.style.background === 'rgb(255, 255, 255)' || el.getAttribute('role') === 'dialog');
     dlg?.classList.add('a-rise');
+    const sg = find(root, 'Siguiente'); if (sg) sg.dataset.back = '1';
     on(root, 'Siguiente', () => p.k < 4 ? go('adivinanza', { ...p, k: p.k + 1 }, 'fade') : go('adivinanzaFin', { day: p.day, res: p.res }, 'fade'));
   },
 });

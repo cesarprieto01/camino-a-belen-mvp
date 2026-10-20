@@ -96,6 +96,20 @@ export function cardState() {
   if (act == null && RULES.sorpresa[h] && isDone(h) && S.sorpresas[h] !== 'hecha') return { key: 3, sorpresa: true };
   return { key: 3, done: act == null };
 }
+/** Inscribirse antes del 29: el botón se vuelve ✓ «¡Listo!» y se abre la espera (hoja). Sin pantalla intermedia. */
+export function inscribir(btn) {
+  if (S.inscrito) return go('espera', {}, 'page');
+  S.inscrito = true; save();
+  seen('V2-Confirmacion-claro');
+  navigator.vibrate?.(20);
+  if (btn) {
+    btn.style.transition = 'background .2s, transform .2s cubic-bezier(.23,1,.32,1)';
+    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" style="stroke-dasharray:40;stroke-dashoffset:40;animation:drawCheck .35s ease-out forwards"/></svg>¡Listo!';
+    btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center'; btn.style.gap = '8px';
+    btn.style.pointerEvents = 'none'; animate(btn, 'a-pop');
+  }
+  setTimeout(() => go('espera', { nueva: true }, 'page'), 750);
+}
 /** Unirse al camino cuando ya empezó (una sola puerta: Hoy, Teodoro y Mundos). */
 export function unirse(from) {
   S.inscrito = true; save();
@@ -162,7 +176,7 @@ register('hoy', {
     if (fase() === 'antes') {
       startCountdown(root);
       on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
-      on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
+      on(root, 'Inscribirme', (ev, el) => inscribir(el));
       on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
       on(root, 'Invitar', () => go('invitacion', {}, 'push'));
       on(root, 'Entrar', () => entrar('hoy'));
@@ -216,6 +230,12 @@ register('hoy', {
     if (st.key === 4 && card !== root) setTimeout(() => { if (layer.isConnected) layer.scrollTo({ top: Math.max(0, card.offsetTop - 150), behavior: reduced() ? 'auto' : 'smooth' }); }, 350);
     // tarjeta más simple: ilustración grande, título, una línea y el botón (sin vela ni barra de progreso)
     simplifyCard(card);
+    // durante el camino la tarjeta va arriba, a la vista; «Tu día con Dios» pasa debajo
+    if (card !== root && card.style.top === '468px') {
+      const kids = [...card.parentElement.children];
+      const tit = kids.find(el => el.style.top === '176px'), list = kids.find(el => el.style.top === '212px');
+      if (tit && list) { card.style.top = '176px'; tit.style.top = (176 + card.offsetHeight + 22) + 'px'; list.style.top = (176 + card.offsetHeight + 58) + 'px'; }
+    }
     // pastillas «días que te esperan» (pantalla atrasado)
     const pills = $$(card, '[style*="border-radius: 50%"]').filter(el => /^\d+$/.test(el.textContent.trim()));
     pills.forEach((el, i) => { el.textContent = String(n + 1 + i); });
@@ -278,7 +298,7 @@ register('teaser', {
     startCountdown(root);
     // desde la invitación: es la vista de tu amigo; tú ya estás inscrito
     if (p.preview) on(root, 'Inscribirme', () => { nota('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
-    else on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
+    else on(root, 'Inscribirme', (ev, el) => inscribir(el));
     on(root, 'Ahora no', () => back('hoy', 'fade'));
     on(root, 'Cerrar', () => back('hoy', 'fade'));
     tabs(root); appContent(root);
@@ -309,9 +329,17 @@ register('espera', {
   mount(root, p, layer) {
     startCountdown(root);
     on(root, 'Ver tu camino a Belén', () => go('mapa', { from: 'espera' }, 'push'));
-    on(root, 'Invitar a un amigo', () => go('invitacion', {}, 'push'));
+    // lo único que se puede hacer antes del 29 es el día 0: va primero; invitar, debajo
+    const inv = find(root, 'Invitar a un amigo');
+    const verDia0 = () => go('mapa', { from: 'espera' }, 'push');
+    if (inv) {
+      on(root, inv, verDia0);
+      const ico = inv.querySelector('svg'); if (ico) ico.outerHTML = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5Z" fill="#0B748A"/></svg>';
+      setText(inv, 'Invitar a un amigo', isDone(0) ? 'Ver mi camino' : 'Ver el día 0');
+    }
     // vuelve a donde estaba (Hoy o Teodoro), sin pasar otra vez por el teaser
-    const ahoraNo = find(root, 'Ahora no'); if (ahoraNo) ahoraNo.style.display = 'none';
+    const ahoraNo = find(root, 'Ahora no');
+    if (ahoraNo) { setText(ahoraNo, 'Ahora no', 'Invitar a un amigo'); on(root, ahoraNo, () => go('invitacion', {}, 'push')); }
     on(root, 'Cerrar', () => back('hoy', 'down', ['teaser', 'confirmacion']));
     // «2.418 familias ya se unieron»: el número cuenta hasta su valor; la frase se cambia una sola vez
     const fam = textEl(root, /2\.418 familias/);
@@ -385,7 +413,7 @@ register('teodoro', {
     if (cta) on(root, cta, toMap);
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
     on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
-    on(root, 'Inscribirme', () => go('confirmacion', {}, 'fade'));
+    on(root, 'Inscribirme', (ev, el) => inscribir(el));
     on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
     on(root, 'Invitar', () => go('invitacion', {}, 'push'));
     on(root, 'Entrar', () => entrar('teodoro'));
@@ -700,6 +728,7 @@ register('ruletaPop', {
       await wait(300);
       go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n, from: p.from }, 'modal', { replace: true });
     });
+    const tarde0 = find(root, 'Más tarde'); if (tarde0) tarde0.dataset.back = '1';
     on(root, 'Más tarde', () => {
       S.ruletaPendiente[n] = true; save();
       if (p.from === 'mapa') go('mapa', {}, 'down', { replace: true }); else go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
@@ -724,7 +753,7 @@ register('ruletaPremio', {
     if (p.premio !== 'cuarto') floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
     const cont = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     confetti(layer, 195, 300, 36);
-    on(root, 'Empezar el cuento', cont);
+    const seguir = on(root, 'Empezar el cuento', cont); if (seguir) seguir.dataset.back = '1';
     setText(root, 'Empezar el cuento', p.from === 'mapa' || contentDone(n) ? 'Volver al camino' : ctaLabel(n).text);
     const ver = find(root, 'Ver a Teodoro');
     if (ver && !(p.from === 'mapa' || contentDone(n))) ver.style.display = 'none'; // primero la historia
@@ -744,7 +773,7 @@ register('premioCuarto', {
     on(root, 'Salir de la ruleta', out); on(root, 'Cerrar', out);
     const sigue = !(p.from === 'mapa' || contentDone(n));
     const btn = find(root, 'Ver su cuarto nuevo'); // se toma antes de cambiarle el texto
-    if (btn) { on(root, btn, out); setText(btn, 'Ver su cuarto nuevo', sigue ? ctaLabel(n).text : 'Volver al camino'); }
+    if (btn) { on(root, btn, out); btn.dataset.back = '1'; setText(btn, 'Ver su cuarto nuevo', sigue ? ctaLabel(n).text : 'Volver al camino'); }
   },
 });
 

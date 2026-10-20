@@ -60,7 +60,9 @@ export function walkDay() {
   const a = activeDay();
   if (a == null || a < 1) return a;
   for (let n = a; n <= Math.min(lastDay(), 26); n++) if (!S.completos[n]?.contenido) return n;
-  return a; // ya vio todas las historias hasta hoy: toca la trivia pendiente más antigua
+  // ya vio todas las historias hasta hoy: se queda en hoy (la trivia de hoy); las demás quedan como pendientes
+  const h = Math.min(lastDay(), 26);
+  return S.completos[h]?.trivia ? a : h;
 }
 export const doneCount = () => Object.keys(S.completos).filter(n => +n >= 1 && isDone(+n)).length;
 export const pendientes = () => { const a = activeDay(); return a == null || a < 1 ? 0 : lastDay() - a + 1; };
@@ -160,9 +162,14 @@ let busy = Promise.resolve();
 const stack = []; export const _stack = stack;
 const TABS = ['hoy', 'teodoro', 'mundos'];
 /** Ir a una pantalla. opts.replace: no deja la actual en el historial (pasos automáticos). */
+// Pantallas de paso: celebraciones, pasos automáticos y juegos en curso. «Volver» nunca regresa a ellas.
+export const DE_PASO = new Set(['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto',
+  'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin',
+  'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'estatica']);
+const dePaso = name => DE_PASO.has(name) || (name === 'teaser' && S.inscrito);
 export function go(name, params = {}, anim = 'push', opts = {}) {
   if (inFlight === name) return busy; // doble toque
-  if (cur && !opts.fromBack && !opts.replace && cur.name !== 'estatica') {
+  if (cur && !opts.fromBack && !opts.replace && !dePaso(cur.name)) {
     const { thenCerrado, ...keep } = cur.params || {}; // lo de un solo uso no vuelve al regresar
     stack.push({ name: cur.name, params: keep });
     if (stack.length > 60) stack.shift();
@@ -176,7 +183,7 @@ export function go(name, params = {}, anim = 'push', opts = {}) {
 /** Volver a la pantalla anterior (o a fallback si no hay historial). Salta las que se indiquen. */
 export function back(fallback = 'hoy', anim = 'back', skip = []) {
   let prev = stack.pop();
-  while (prev && (skip.includes(prev.name) || prev.name === cur?.name)) prev = stack.pop();
+  while (prev && (skip.includes(prev.name) || prev.name === cur?.name || dePaso(prev.name))) prev = stack.pop();
   if (prev) return go(prev.name, prev.params, anim, { fromBack: true });
   return go(fallback, {}, anim, { fromBack: true });
 }
@@ -194,7 +201,8 @@ function sysBack() {
   if (close) { close.click(); return; }
   // en el mapa: hoja de un día pasado o de la energía → vuelve a la hoja de hoy
   if (L?.classList.contains('ov-page')) { back('hoy', 'down'); return; }
-  if (L?.classList.contains('overlay')) return; // pop-up que se cierra solo con sus botones
+  // pop-up sin cerrar (premio, final de trivia…): «atrás» hace lo mismo que su botón de seguir
+  if (L?.classList.contains('overlay')) { L.querySelector('[data-back]')?.click(); return; }
   if (L?.dataset.past != null) { go(cur.name, cur.params, 'none', { replace: true }); return; }
   if (!stack.length && TABS.includes(cur?.name)) return;
   back(TABS.includes(cur?.name) ? cur.name : 'hoy');
@@ -246,7 +254,8 @@ async function _go(name, params, anim) {
   if (!def) { hueco(`Pantalla «${name}» sin definir`); return; }
   const prev = cur;
   // cerrar un pop-up y volver a la pantalla de abajo tal cual estaba
-  if (prev?.base && prev.base.name === name && sameParams(prev.base.params, params) && prev.snap === snap()) {
+  // se destapa tal cual solo si nada cambió desde que se dibujó la pantalla de abajo
+  if (prev?.base && prev.base.name === name && sameParams(prev.base.params, params) && prev.base.rsnap === snap()) {
     closeOverlay(prev, true); cur = prev.base; history.replaceState(null, '', '#pantalla=' + name); emit(); return;
   }
   const file = typeof def.file === 'function' ? def.file(params) : def.files[dark() ? 1 : 0];
@@ -281,6 +290,7 @@ async function _go(name, params, anim) {
   }
   if (h > 844 && !def.noScroll && !isOv) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
   bindFallback(layer, layer);
+  cur.rsnap = snap(); // estado con el que se dibujó
   // el botón de registro dice lo mismo en toda la app (después de conectar los botones)
   root.querySelectorAll('a, button').forEach(el => {
     const tn = [...el.querySelectorAll('*'), el].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim() === 'Inscribirme');

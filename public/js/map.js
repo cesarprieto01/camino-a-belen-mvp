@@ -2,7 +2,7 @@
 import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
 import { DAYS, TYPES, RULES, IMG, dateOf, iconOf, SORPRESA_NOMBRE } from './data.js';
-import { startDay, ctaLabel } from './flow.js';
+import { startDay, ctaLabel, openSorpresa } from './flow.js';
 
 const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
 const F0 = { claro: 'V2-Mapa-dia0-claro', oscuro: 'V2-Mapa-dia0' };
@@ -383,6 +383,12 @@ function showPast(layer, n, el) {
   if (t1.textContent.trim() === head.children[1].textContent.trim()) t1.textContent = C[0] === d.title ? 'Actividad' : C[0];
   const cta = [...sheet.children].find(x => x.tagName === 'A');
   on(layer, cta, () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push'));
+  // la sorpresa que dejó para después sigue aquí
+  if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-alt';
+    b.innerHTML = `<img src="${A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain"><span>Abrir la sorpresa · ${SORPRESA_NOMBRE[RULES.sorpresa[n]]}</span><svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
+    cta.after(b); sheet.style.height = 'auto'; on(layer, b, () => openSorpresa(n));
+  }
   sheet.classList.add('in-up');
   seen('S-03c-Mapa-dia-pasado');
 }
@@ -482,6 +488,7 @@ function paintSheet(layer, T) {
   const pendTriv = Array.from({ length: Math.min(lastDay(), 26) }, (_, i) => i + 1).filter(d => contentDone(d) && !isDone(d) && d !== n);
   const ICO = {
     trivia: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
+    regalo: `<img src="${A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain">`,
     casa: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1Z"/></svg>',
   };
   const addAlt = (txt, ico, fn, extra = {}, chip = '') => {
@@ -489,7 +496,10 @@ function paintSheet(layer, T) {
     alt.innerHTML = `${ICO[ico]}<span>${txt}</span>${chip ? `<em class="sa-chip">${chip}</em>` : ''}<svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
     Object.assign(alt.dataset, extra); cta.after(alt); on(layer, alt, fn);
   };
-  if (n > 0 && pendTriv.length) addAlt(pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`, 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
+  const mas = /trivia/i.test(label.text);
+  if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
+  const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');
+  if (n > 0 && sorpPend.length) addAlt(`Sorpresa pendiente · ${SORPRESA_NOMBRE[RULES.sorpresa[sorpPend[0]]]}`, 'regalo', () => openSorpresa(sorpPend[0]), {}, `Día ${sorpPend[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
   if (n === 0 && contentDone(0)) addAlt('Volver al inicio', 'casa', () => back(mapOrigin || 'hoy', 'back'));
   sheet.style.height = 'auto';
@@ -533,11 +543,13 @@ function sheetDrag(layer) {
     const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.textContent.trim() || '';
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
-    const corto = /^Hasta mañana/.test(verbo) ? 'Hasta mañana' : verbo.split(' ')[0];
+    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Abrir la sorpresa': 'Sorpresa', 'Invitar a un amigo': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar' };
+    const corto = CORTOS[verbo] || (verbo.length > 16 ? verbo.split(' ')[0] : verbo);
+    const play = !!cta?.querySelector('svg') && cta.querySelector('svg').style.display !== 'none';
     bar.innerHTML = `<span class="mb-ico">${rowImg ? `<img src="${rowImg.getAttribute('src')}" alt="">` : ''}</span>
       <span class="mb-txt"><small>${eyebrow}${pend ? ` · <em class="mb-pend">${pend.dataset.pend} ${pend.dataset.pend === '1' ? 'trivia pendiente' : 'trivias pendientes'}</em>` : ''}</small><b>${title}</b></span>
-      <button type="button" class="mb-cta" data-bound="1">${/Hasta/.test(corto) ? '' : '<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5Z" fill="currentColor"/></svg>'}${corto}</button>`;
-    bar.setAttribute('aria-label', `${eyebrow}: ${title}${pend ? `. ${pend.dataset.pend} trivias pendientes` : ''}`);
+      <button type="button" class="mb-cta" data-bound="1">${!play ? '' : '<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5Z" fill="currentColor"/></svg>'}${corto}</button>`;
+    bar.setAttribute('aria-label', `${eyebrow}: ${title}${pend ? `. ${pend.dataset.pend} ${pend.dataset.pend === '1' ? 'trivia pendiente' : 'trivias pendientes'}` : ''}`);
     const grab = [...s.children].find(el => el.getAttribute('aria-hidden') === 'true' && el.offsetHeight <= 6);
     if (grab) { grab.classList.add('sheet-grab'); grab.after(bar); } else s.prepend(bar);
     const mcta = bar.querySelector('.mb-cta');

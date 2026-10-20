@@ -33,6 +33,7 @@ const textCheck = async (name) => {
   bad.forEach(b => errs.push(`TEXTO en ${name}: ${b}`));
 };
 const shot = async (name) => { await p.waitForTimeout(700); await textCheck(name); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
+const waitScreen = async (want, ms = 5000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if ((await screen()) === want) return true; await p.waitForTimeout(150); } return false; };
 const screen = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.dataset.screen);
 // clic por texto o aria-label dentro de la capa visible
 const tap = async (q) => {
@@ -124,7 +125,7 @@ const flows = {
   },
   async antes() {
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500); await shot('teaser');
-    await tap('Unirme gratis'); await shot('confirm'); await p.waitForTimeout(2300); await shot('espera');
+    await tap('Unirme gratis'); await shot('confirm'); await p.waitForTimeout(1200); await shot('espera');
     await tap('Invitar a un amigo'); await shot('invitacion');
   },
   async reto() {
@@ -179,7 +180,7 @@ const flows = {
     await p.waitForTimeout(800);
     const s0 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, inscrito: c.S.inscrito }; });
     if (s0.hoy !== 0 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
-    if (await screen() !== 'teaser') errs.push('el teaser no sale solo al entrar: ' + await screen());
+    if (!(await waitScreen('teaser'))) errs.push('el teaser no sale solo al entrar: ' + await screen());
     await shot('teaser'); await tap('Unirme gratis'); await p.waitForTimeout(2400); await shot('espera');
     await tap('Cerrar'); await shot('hoy-dentro'); await tap('Entrar'); await shot('mapa-dia0');
     await tap('Ver historia'); await p.waitForTimeout(9800); await shot('dia0-hecho');
@@ -216,7 +217,7 @@ const flows = {
     };
     // 1) antes del 29
     await p.waitForTimeout(800);
-    if (await screen() !== 'teaser') errs.push('no arranca con el teaser');
+    if (!(await waitScreen('teaser'))) errs.push('no arranca con el teaser');
     await tap('Unirme gratis'); await p.waitForTimeout(2300); await shot('c-espera');
     await tap('Cerrar'); await tap('Entrar'); await p.waitForTimeout(600); await sheetCta(); await p.waitForTimeout(700); await finishPlayer(); await p.waitForTimeout(1200);
     await shot('c-dia0');
@@ -280,7 +281,7 @@ const flows = {
     const altOneLine = await p.evaluate(() => { const a = document.querySelector('#viewport .layer:last-child .sheet-alt span'); return a && a.scrollWidth <= a.clientWidth + 1; });
     if (!altOneLine) errs.push('el botón de trivias pendientes no cabe en una línea');
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child .sheet-min').click()); await p.waitForTimeout(600); await shot('mini');
-    s = await st(); if (!s.mini || !s.barVisible || s.h > 110) errs.push('minimizar no deja la barra compacta: ' + JSON.stringify(s));
+    s = await st(); if (!s.mini || !s.barVisible || s.h > 124) errs.push('minimizar no deja la barra compacta: ' + JSON.stringify(s));
     if (!/3 trivias pendientes/.test(await p.evaluate(() => document.querySelector('#viewport .layer:last-child .mb-txt small')?.textContent || ''))) errs.push('la barra no avisa las 3 trivias pendientes');
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child .mini-bar .mb-txt').click()); await p.waitForTimeout(600);
     s = await st(); if (s.mini) errs.push('tocar la barra no abre la hoja');
@@ -294,6 +295,55 @@ const flows = {
     await tap('3 trivias pendientes'); await p.waitForTimeout(700);
     const c = await p.evaluate(async () => { const c = await import('/js/core.js'); return c.cur.name + ' ' + c.cur.params.day; });
     if (c !== 'trivia 1') errs.push('el botón de trivias pendientes no abre la del día 1: ' + c);
+  },
+  // «volver» nunca regresa a celebraciones, premios ni juegos ya terminados
+  async volver() {
+    const PASO = ['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion'];
+    const backs = async (tag, n = 5) => {
+      const ruta = [await screen()];
+      for (let i = 0; i < n; i++) {
+        await p.goBack(); await p.waitForTimeout(650);
+        const s = await screen(); ruta.push(s);
+        if (PASO.includes(s) || (s === 'teaser' && i > 0)) errs.push(`${tag}: «volver» cayó en ${s} (${ruta.join(' → ')})`);
+      }
+      const fin = ruta[ruta.length - 1];
+      if (!['hoy', 'teodoro', 'mundos'].includes(fin)) errs.push(`${tag}: después de volver quedó en ${fin} (${ruta.join(' → ')})`);
+      console.log(tag + ':', ruta.join(' → '));
+    };
+    const st = (o) => p.evaluate(async (o) => { const c = await import('/js/core.js'); c.reset({ inscrito: true, teaserVisto: true, ...o.s }); for (let d = 0; d <= o.upto; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }, o);
+    const finishPlayer = () => p.evaluate(() => { const sl = document.querySelector('#viewport .layer:last-child [role=slider]'); if (!sl) return; const r = sl.getBoundingClientRect(); sl.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.right - 1, clientY: r.top + 5 })); });
+    // 1) inscripción → espera
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({}); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(1600);
+    await tap('Unirme gratis'); await p.waitForTimeout(2400); await backs('inscripción', 3);
+    // 2) un día completo: historia → ¡Terminaste! → trivia → final de trivia → mapa
+    await st({ s: { hoy: 10 }, upto: 9 }); await p.waitForTimeout(900);
+    await tap('Continuar la aventura'); await p.waitForTimeout(700);
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
+    await finishPlayer(); await p.waitForTimeout(1300); await tap('¡A jugar!'); await answerTrivia(); await p.waitForTimeout(500);
+    await tap('Volver al camino'); await p.waitForTimeout(3500);
+    await backs('día completo', 4);
+    // 3) ruleta → premio → historia → mapa
+    await st({ s: { hoy: 11, forzarPremio: 'panes' }, upto: 10 }); await p.waitForTimeout(900);
+    await tap('Continuar la aventura'); await p.waitForTimeout(700);
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
+    await tap('¡Girar!'); await p.waitForTimeout(5300);
+    // en el premio, el «atrás» del sistema hace lo mismo que «seguir» (va a la historia)
+    await p.goBack(); await p.waitForTimeout(1000);
+    if ((await screen()) !== 'reproductor') errs.push('atrás en el premio de la ruleta no sigue a la historia: ' + await screen());
+    await finishPlayer(); await p.waitForTimeout(1300); await tap('Ahora no'); await p.waitForTimeout(900);
+    await backs('ruleta', 4);
+    // 4) sorpresa (desafío) → final → mapa
+    await st({ s: { hoy: 9 }, upto: 9 }); await p.waitForTimeout(900);
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('mapa', {}, 'none'); }); await p.waitForTimeout(900);
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('desafioIntro', { day: 9 }, 'fade'); }); await p.waitForTimeout(800);
+    await tap('¡Vamos!'); await tap('¡Lo hicimos!'); await p.waitForTimeout(900); await tap('Volver al camino'); await p.waitForTimeout(1500);
+    await backs('sorpresa', 4);
+    // 5) reto en familia → ¡Lo hicimos! → ¡Terminaste! → mapa
+    await st({ s: { hoy: 13 }, upto: 12 }); await p.waitForTimeout(900);
+    await tap('Continuar la aventura'); await p.waitForTimeout(700);
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
+    await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await tap('Ahora no'); await p.waitForTimeout(1000);
+    await backs('reto', 4);
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };

@@ -96,7 +96,7 @@ export const DAYS = [
   D(23, 'cuento', 'Un burro de Navidad'),
   D(24, 'amigos', 'Especial de Navidad'),
   D(25, 'video', 'Navidad de Canela'),
-  D(26, 'nochebuena', 'El Tamborilero'),
+  D(26, 'nochebuena', 'Nochebuena'),
 ];
 
 // Reglas acordadas con César (20-oct-2026)
