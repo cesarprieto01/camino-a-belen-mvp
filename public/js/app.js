@@ -119,6 +119,7 @@ function advance(k) {
 const panel = document.getElementById('panel');
 const btn = document.getElementById('panelBtn');
 let tab = 'rec';
+let moreOpen = false;
 let filtro = 'todas';
 try { tab = localStorage.getItem('cab-tab2') || 'rec'; } catch { /* sin storage */ }
 btn.onclick = () => { const o = panel.classList.toggle('open'); btn.setAttribute('aria-expanded', o); document.body.classList.toggle('panel-open', o); if (o) render(); };
@@ -140,19 +141,28 @@ function render() {
   const cov = coverage();
   const hoyTxt = fase() === 'antes' ? 'Antes del 29 de noviembre' : fase() === 'despues' ? 'Del 25 de diciembre al 6 de enero' : `Hoy: día ${S.hoy} de 26`;
   const progTxt = act == null ? (fase() === 'antes' ? (S.inscrito ? 'Inscrito' : 'Sin inscribirse') : 'Al día') : act < lastDay() ? `Va en el día ${act}` : `Toca el día ${act}`;
-  const head = `<div class="p-head">
-    <div class="p-title"><h1>Camino a Belén</h1><span class="p-tag">MVP</span></div>
-    <div class="p-where"><span class="p-sec-badge">${sec[0]}</span><div><b>${esc(name)}</b><small>Sección ${sec[0]} del lienzo · ${sec[1]}</small></div></div>
-    <div class="p-stats">
-      <span class="chip-stat">${hoyTxt}</span>
-      <span class="chip-stat">${progTxt}</span>
-      <span class="chip-stat"><img src="${A(TEODORO_IDS[S.bateria])}" alt="">${S.bateria}/5</span>
-      <span class="chip-stat"><img src="${A(IMG.pan)}" alt="">${S.panes}</span>
-      <span class="chip-stat">${doneCount()}/26 días</span>
-      <span class="chip-stat">${S.plan === 'free' ? 'Free' : 'Premium'} · ${S.tema === 'oscuro' ? 'Oscuro' : 'Claro'}</span>
+  const dayTitle = S.hoy <= 0 ? 'Antes del 29 de noviembre' : S.hoy >= 27 ? 'Después de Nochebuena' : `Día ${S.hoy} de 26`;
+  const daySub = S.hoy <= 0 ? 'El camino aún no empieza' : S.hoy >= 27 ? 'Del 25 de diciembre al 6 de enero' : (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })();
+  const simple = `<section class="p-simple">
+    <div class="p-day">
+      <button class="p-arrow" data-act="dayMinus" aria-label="Día anterior" ${S.hoy <= 0 ? 'disabled' : ''}>‹</button>
+      <div><b>${dayTitle}</b><small>${daySub} · ${progTxt}</small></div>
+      <button class="p-arrow" data-act="dayPlus" aria-label="Día siguiente" ${S.hoy >= 27 ? 'disabled' : ''}>›</button>
     </div>
-  </div>
-  <div class="p-tabs" role="tablist">${[['rec', 'Recorridos'], ['aj', 'Ajustes'], ['pant', `Pantallas · ${cov.seenN}/${cov.total}`], ['notas', `Notas${S.huecos.length ? ' · ' + S.huecos.length : ''}`]].map(([k, l]) => `<button class="p-tab" role="tab" aria-selected="${tab === k}" data-tab="${k}">${l}</button>`).join('')}</div>`;
+    <div class="seg p-wide">${[['claro', 'Día'], ['oscuro', 'Noche']].map(([v, l]) => `<button data-tema="${v}" aria-pressed="${S.tema === v}">${l}</button>`).join('')}</div>
+    <div class="p-teo">
+      <img src="${A(TEODORO_IDS[S.bateria])}" alt="Teodoro ${ENERGY_NAMES[S.bateria].toLowerCase()}">
+      <div>
+        <b>Teodoro · ${ENERGY_NAMES[S.bateria]}</b>
+        <span class="p-bat" role="img" aria-label="Energía ${S.bateria} de 5">${[0, 1, 2, 3, 4].map(i => `<i class="${i < S.bateria ? 'on' : ''}"></i>`).join('')}</span>
+        <small>Un cuento lo llena. Cada día sin caminar baja una rayita.</small>
+      </div>
+    </div>
+    <div class="p-row p-panes"><label for="nPan"><img src="${A(IMG.pan)}" alt="">Panes</label><span class="p-step"><button data-act="panMinus" aria-label="Quitar 10 panes">−</button><input id="nPan" type="number" min="0" step="5" value="${S.panes}"><button data-act="panPlus" aria-label="Sumar 10 panes">+</button></span></div>
+    <button class="p-link p-reset" data-act="reset">Empezar de cero</button>
+  </section>`;
+  const head = `<div class="p-head"><div class="p-title"><h1>Camino a Belén</h1><span class="p-tag">MVP</span></div><small class="p-now-screen">Estás en: <b>${esc(name)}</b></small></div>`;
+  const tabsHtml = `<div class="p-tabs" role="tablist">${[['rec', 'Recorridos'], ['aj', 'Avanzado'], ['pant', `Pantallas · ${cov.seenN}/${cov.total}`], ['notas', `Notas${S.huecos.length ? ' · ' + S.huecos.length : ''}`]].map(([k, l]) => `<button class="p-tab" role="tab" aria-selected="${tab === k}" data-tab="${k}">${l}</button>`).join('')}</div>`;
 
   let body = '';
   if (tab === 'rec') {
@@ -170,18 +180,12 @@ function render() {
   } else if (tab === 'aj') {
     const maxDone = Math.max(0, ...Object.keys(S.completos).filter(k => isDone(+k)).map(Number));
     body = `<section class="p-group"><h2>Tiempo</h2>
-      <div class="p-row"><label>Calendario</label><span class="p-step"><button data-act="dayMinus" aria-label="Día anterior">−</button><select id="dSel" aria-label="Día del calendario">${Array.from({ length: 28 }, (_, n) => `<option value="${n}" ${n === S.hoy ? 'selected' : ''}>${dayLabel(n)}</option>`).join('')}</select><button data-act="dayPlus" aria-label="Día siguiente">+</button></span></div>
       <div class="p-row"><label for="pSel">Completó hasta</label><select id="pSel">${Array.from({ length: 27 }, (_, n) => `<option value="${n}" ${n === maxDone ? 'selected' : ''}>${n ? 'Día ' + n : 'Ninguno'}</option>`).join('')}</select></div>
-      <div class="p-btns"><button class="p-btn main" data-act="mid">Avanzar a medianoche</button><button class="p-btn" data-act="week">7 días sin abrir</button></div>
+      <div class="p-btns"><button class="p-btn" data-act="week">7 días sin abrir (regreso)</button></div>
     </section>
     <section class="p-group"><h2>Familia</h2>
       <div class="p-row"><label>Plan</label><span class="seg">${[['premium', 'Premium'], ['free', 'Free']].map(([v, l]) => `<button data-plan="${v}" aria-pressed="${S.plan === v}">${l}</button>`).join('')}</span></div>
       <div class="p-row"><label>Inscrito</label><span class="seg">${[['1', 'Sí'], ['0', 'No']].map(([v, l]) => `<button data-ins="${v}" aria-pressed="${S.inscrito === (v === '1')}">${l}</button>`).join('')}</span></div>
-      <div class="p-row"><label>Tema</label><span class="seg">${[['claro', 'Claro'], ['oscuro', 'Oscuro']].map(([v, l]) => `<button data-tema="${v}" aria-pressed="${S.tema === v}">${l}</button>`).join('')}</span></div>
-    </section>
-    <section class="p-group"><h2>Teodoro</h2>
-      <div class="p-faces" role="radiogroup" aria-label="Batería">${[0, 1, 2, 3, 4, 5].map(v => `<button role="radio" aria-checked="${S.bateria === v}" data-bat="${v}"><img src="${A(TEODORO_IDS[v])}" alt=""><b>${v}</b><small>${ENERGY_NAMES[v]}</small></button>`).join('')}</div>
-      <div class="p-row"><label for="nPan">Panes</label><span class="p-step"><button data-act="panMinus" aria-label="Quitar 10 panes">−</button><input id="nPan" type="number" min="0" step="5" value="${S.panes}"><button data-act="panPlus" aria-label="Sumar 10 panes">+</button></span></div>
     </section>
     <section class="p-group"><h2>Ruleta</h2>
       <div class="p-chips">${[['', 'Al azar'], ['prenda', 'Prenda de la semana'], ['panes', '20 panes'], ['manzana', 'Manzana'], ['cuarto', 'Cuarto nuevo']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${S.forzarPremio === v}">${l}</button>`).join('')}</div>
@@ -192,7 +196,7 @@ function render() {
     </section>
     <details class="p-group p-rules"><summary>Reglas que usa el MVP</summary><ul class="p-list">
       <li><b>Panes</b><small>Contenido +${RULES.panes.contenidoPremium} premium / +${RULES.panes.contenidoFree} free · trivia +${RULES.panes.trivia} · sorpresa +${RULES.panes.sorpresa} · ruleta ${RULES.panes.ruleta}</small></li>
-      <li><b>Batería</b><small>Contenido +2 · la trivia la llena · cada día sin Adviento −1 · nunca bloquea</small></li>
+      <li><b>Batería</b><small>Terminar un cuento la llena · cada día sin caminar baja una rayita · nunca bloquea</small></li>
       <li><b>Ruleta</b><small>Días ${RULES.ruleta.join(', ')} · al iniciar el día, antes del contenido</small></li>
       <li><b>Sorpresa</b><small>${Object.entries(RULES.sorpresa).map(([d, g]) => `día ${d} ${g}`).join(' · ')} · nunca el mismo día que la ruleta</small></li>
       <li><b>Atrasado y regreso</b><small>Puede hacer varios días seguidos hasta alcanzar hoy · regreso tras ${RULES.regresoDias}+ días sin abrir</small></li>
@@ -223,11 +227,12 @@ function render() {
   }
   const scroll = panel.querySelector('.p-body')?.scrollTop || 0;
   const sameTab = panel.dataset.tab === tab;
-  panel.innerHTML = head + `<div class="p-body">${body}</div>`;
+  panel.innerHTML = head + `<div class="p-body">${simple}<details class="p-more" ${moreOpen ? 'open' : ''}><summary>Más herramientas para el equipo</summary>${tabsHtml}<div class="p-more-body">${body}</div></details></div>`;
   panel.dataset.tab = tab;
   if (sameTab) panel.querySelector('.p-body').scrollTop = scroll;
 }
 
+panel.addEventListener('toggle', e => { if (e.target.matches('.p-more')) moreOpen = e.target.open; }, true);
 panel.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.tab) { tab = t.dataset.tab; if (t.dataset.filtro) filtro = t.dataset.filtro; try { localStorage.setItem('cab-tab2', tab); } catch { /* */ } render(); return; }
@@ -243,7 +248,8 @@ panel.addEventListener('click', e => {
   const a = t.dataset.act;
   if (a === 'mid') advance(1);
   if (a === 'week') advance(7);
-  if (a === 'dayMinus' || a === 'dayPlus') { S.hoy = Math.max(0, Math.min(27, S.hoy + (a === 'dayPlus' ? 1 : -1))); save(); go('hoy', {}, 'fade'); }
+  if (a === 'dayPlus') advance(1);
+  if (a === 'dayMinus') { S.hoy = Math.max(0, S.hoy - 1); save(); go('hoy', {}, 'fade'); }
   if (a === 'panMinus' || a === 'panPlus') { S.panes = Math.max(0, S.panes + (a === 'panPlus' ? 10 : -10)); save(); }
   if (a === 'reset') { reset({ hoy: 9 }); fill(8); save(); go('hoy', {}, 'fade'); }
   if (a === 'share') { navigator.clipboard?.writeText(shareURL()).then(() => toast('Enlace copiado', 'Abre la app en este mismo estado')); }

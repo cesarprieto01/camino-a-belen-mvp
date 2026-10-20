@@ -209,3 +209,31 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ---------- Panel simple: día, día/noche, Teodoro y panes ---------- */
+.p-now-screen { display: block; font: 600 13px Mulish, sans-serif; color: var(--muted); }
+.p-now-screen b { color: var(--ink); }
+.p-simple { display: grid; gap: 14px; }
+.p-day { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 20px; background: var(--chip); color: var(--chip-ink); }
+.p-day > div { flex: 1; min-width: 0; text-align: center; }
+.p-day b { display: block; font: 700 20px/1.15 'Neue Montreal', Mulish, sans-serif; }
+.p-day small { display: block; font: 600 13px/1.3 Mulish, sans-serif; opacity: .85; margin-top: 2px; }
+.p-arrow { flex: none; width: 48px; height: 48px; border-radius: 16px; border: 0; background: var(--honey); color: #0B748A; font: 700 28px/1 Mulish, sans-serif; cursor: pointer; }
+.p-arrow:disabled { opacity: .35; cursor: default; }
+.p-wide { display: grid; grid-template-columns: 1fr 1fr; }
+.p-wide button { height: 42px; font-size: 15px; }
+.p-teo { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 20px; border: 1.5px solid var(--line); }
+.p-teo img { width: 64px; height: 84px; object-fit: contain; flex: none; }
+.p-teo b { display: block; font: 700 16px 'Neue Montreal', Mulish, sans-serif; }
+.p-teo small { display: block; font: 500 12px/1.35 Mulish, sans-serif; color: var(--muted); margin-top: 6px; }
+.p-bat { display: inline-flex; gap: 4px; margin-top: 6px; padding: 3px; border-radius: 7px; box-shadow: inset 0 0 0 2px var(--line); }
+.p-bat i { width: 16px; height: 12px; border-radius: 3px; background: var(--line); }
+.p-bat i.on { background: #4FD1C5; }
+.p-panes label { display: inline-flex; align-items: center; gap: 8px; }
+.p-panes label img { width: 26px; height: 26px; object-fit: contain; }
+.p-reset { justify-self: center; color: var(--muted); }
+.p-more { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 10px; }
+.p-more > summary { cursor: pointer; font: 700 14px Mulish, sans-serif; color: var(--muted); padding: 8px 0; list-style: none; }
+.p-more > summary::before { content: '›'; display: inline-block; margin-right: 8px; transition: transform .2s; }
+.p-more[open] > summary::before { transform: rotate(90deg); }
+.p-more .p-tabs { padding: 4px 0 8px; border-bottom: 0; }

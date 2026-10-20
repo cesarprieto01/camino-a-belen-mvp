@@ -105,7 +105,8 @@ export const RULES = {
   // cada 3 días, en orden fijo (lienzo, sección 4): 3 Memorama, 6 Adivinanza, 9 Desafío y así sigue
   sorpresa: { 3: 'memorama', 6: 'adivinanza', 9: 'desafio', 12: 'memorama', 15: 'adivinanza', 18: 'desafio', 21: 'memorama', 24: 'adivinanza' },
   panes: { contenidoPremium: 15, contenidoFree: 7, trivia: 10, sorpresa: 15, ruleta: 20 },
-  bateria: { contenido: 2, diaSinAdviento: -1 },
+  // terminar un cuento la llena (5/5); cada día completo sin hacer nada baja una rayita
+  bateria: { contenido: 5, diaSinAdviento: -1 },
   regresoDias: 7,
 };
 

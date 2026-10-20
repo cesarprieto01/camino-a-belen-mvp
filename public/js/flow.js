@@ -44,7 +44,9 @@ export function ctaLabel(n) {
 function finishContent(n) {
   const first = !contentDone(n);
   S.completos[n] = { ...(S.completos[n] || {}), contenido: true };
-  if (first && n > 0) { setBateria(S.bateria + RULES.bateria.contenido); addPanes(panesContenido()); }
+  // terminar un cuento (o cualquier contenido del día) deja a Teodoro al 100%
+  if (n > 0) setBateria(5);
+  if (first && n > 0) addPanes(panesContenido());
   S.ultimoJugado = S.hoy;
   save();
   return first;
@@ -328,7 +330,7 @@ register('reproductor', {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
       if (p.nacimiento) { go('final', { day: 26 }, 'down'); return; }
       if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go('hub', { day: n }, 'down'); return; }
-      if (p.replay) { toast('¡Otra vez con Teodoro!', 'Repetir no cambia tus panes'); go('mapa', {}, 'down'); return; }
+      if (p.replay) { setBateria(5); S.ultimoJugado = S.hoy; save(); toast('¡Otra vez con Teodoro!', 'Teodoro quedó al 100%'); go('mapa', {}, 'down'); return; }
       finishContent(n);
       if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', { from: 'hoy' }, 'down'); return; }
       go('completado', { day: n }, 'fade');

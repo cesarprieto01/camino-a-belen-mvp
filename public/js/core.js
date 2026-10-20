@@ -21,7 +21,7 @@ export const DEFAULT = () => ({
   ruletaPendiente: {}, // día -> true si dijo «Más tarde»
   sorpresas: {},       // día -> 'hecha' | 'luego'
   prendas: [], cuartoNuevo: false,
-  regreso: false, teaserVisto: false, ultimoJugado: 9,
+  regreso: false, teaserVisto: false, ultimoJugado: null, // día del calendario en que terminó un contenido
   pasoAnimado: null,   // día recién completado (animación en el mapa)
   forzarPremio: '',    // panel: forzar casilla de la ruleta
   notas: {}, huecos: [], vistas: {},
