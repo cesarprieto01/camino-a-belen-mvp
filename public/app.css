@@ -40,7 +40,7 @@ div, span, a, button, p, b, strong, em, label { text-wrap: pretty; }
 }
 
 /* ---------- Capas de pantalla ---------- */
-.layer { position: absolute; inset: 0; overflow: hidden; background: transparent; }
+.layer { position: absolute; inset: 0; overflow: hidden; background: transparent; isolation: isolate; } /* lo de una pantalla nunca se cuela sobre otra */
 .layer.scroll { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: none; }
 .layer.scroll::-webkit-scrollbar { display: none; }
 .layer > .root { position: relative; }
@@ -310,3 +310,10 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .adv-gate i { font: 800 14px Mulish, sans-serif; font-style: normal; margin-top: 10px; padding: 9px 16px; border-radius: 18px; background: #F5DB78; color: #0B748A; }
 .adv-gate.off { opacity: 0; transform: scale(.96); }
 .pill-premium { position: absolute; right: 10px; top: 10px; padding: 3px 9px; border-radius: 10px; background: #F5DB78; color: #0B748A; font: 800 11px Mulish, sans-serif; letter-spacing: .04em; pointer-events: none; }
+
+/* minimizar / abrir la hoja del día */
+.sheet-min { position: absolute; right: 12px; top: 10px; width: 40px; height: 40px; border-radius: 20px; border: 0; background: rgba(11,116,138,.08); color: #0B748A; display: grid; place-items: center; cursor: pointer; z-index: 2; transition: transform .3s cubic-bezier(.32,.72,0,1); }
+.sheet-min[aria-expanded="false"] { transform: rotate(180deg); }
+:root[data-theme="dark"] .sheet-min { background: rgba(255,255,255,.1); color: #FFFFFF; }
+/* con un pop-up encima, la hoja del día y la píldora se apartan (no se mezclan textos) */
+.layer.under [data-sheet], .layer.under .back-hoy { opacity: 0; transition: opacity .2s ease-out; }

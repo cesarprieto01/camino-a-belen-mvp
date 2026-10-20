@@ -1,5 +1,5 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
-import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag, racha } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf } from './data.js';
@@ -33,12 +33,13 @@ export function ctaLabel(n) {
   if (n === 26 && !contentDone(26)) return { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
   if (n === 0) return { text: 'Invitar a un amigo', go: () => go('invitacion', {}, 'push') };
+  if (RULES.ruleta.includes(n) && S.ruletaPendiente[n] && !S.ruletas[n]) return { text: 'Girar la ruleta', go: () => go('ruletaPop', { day: n, from: 'mapa' }, 'modal') };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Abrir la sorpresa', go: () => openSorpresa(n) };
   const a = activeDay();
   if (a != null) return { text: `Seguir al día ${a}`, go: () => startDay(a) };
   if (S.hoy >= 26) return { text: 'Ver el nacimiento', go: () => go('final', { day: 26 }, 'fade') };
-  return { text: 'Mañana seguimos', go: () => go('cerrado', {}, 'sheet') };
+  return { text: 'Hasta mañana', go: () => go('hoy', {}, 'down', { tab: true }) };
 }
 /** Termina el contenido del día: suma batería y panes. */
 function finishContent(n) {
@@ -47,6 +48,7 @@ function finishContent(n) {
   // terminar un cuento (o cualquier contenido del día) deja a Teodoro al 100%
   if (n > 0) setBateria(5);
   if (first && n > 0) addPanes(panesContenido());
+  if (first && n > 0) S.pasoAnimado = n; // Teodoro avanza en el mapa al ver la historia
   S.ultimoJugado = S.hoy;
   save();
   return first;
@@ -148,6 +150,7 @@ register('hoy', {
     if (S.hoy >= 27) f.label = 'VIERNES 25 DE DICIEMBRE';
     replaceText(root, /^(LUNES|MARTES|MIÉRCOLES|JUEVES|VIERNES|SÁBADO|DOMINGO) \d+ DE [A-ZÉ]+$/, f.label);
     replaceText(root, /Lucía/g, S.nombre);
+    replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
     const hr = new Date().getHours();
     replaceText(root, /Buenas noches/, hr < 12 ? 'Buenos días' : hr < 19 ? 'Buenas tardes' : 'Buenas noches');
     paintEnergy(root);
@@ -168,7 +171,7 @@ register('hoy', {
     }
 
     const act = activeDay();
-    const n = act ?? Math.min(lastDay(), 26);
+    const n = walkDay() ?? Math.min(lastDay(), 26); // donde va Teodoro
     const card = root.querySelector('[role=group][aria-label^="Camino a Belén"]') || root;
     const sub = textEl(card, /Día \d+ · /);
     if (sub) sub.textContent = dayLine(n);
@@ -192,12 +195,21 @@ register('hoy', {
       if (title) title.textContent = st.title;
       if (sub) sub.textContent = st.sub;
       if (btnText) btnText.nodeValue = st.cta;
-    } else if (st.sorpresa) {
+    } else if (!st.done && btnText && /Continuar la Aventura/.test(btnText.nodeValue)) {
+      btnText.nodeValue = 'Seguir el camino';
+    }
+    if (st.sorpresa) {
       if (sub) sub.textContent = `Día ${n} · Te espera una sorpresa`;
       if (btnText) btnText.nodeValue = 'Abrir la sorpresa';
     } else if (st.done) {
       if (sub) sub.textContent = `Día ${n} · ¡Listo! Mañana seguimos`;
       if (btnText) btnText.nodeValue = 'Ver el camino';
+    }
+    // Navidad: la tarjeta muestra el pesebre
+    if (S.hoy >= 27) {
+      const scn = $$(card, 'img').sort((a, b) => b.offsetWidth * b.offsetHeight - a.offsetWidth * a.offsetHeight)[0];
+      if (scn) { scn.src = A(IMG.nacimiento); scn.alt = 'El nacimiento de Jesús'; scn.style.objectFit = 'cover'; scn.style.objectPosition = '50% 45%'; }
+      if (walk) walk.style.display = 'none';
     }
     // ya salió el camino y no está inscrito: la invitación a unirse queda a la vista
     if (st.key === 4 && card !== root) setTimeout(() => { if (layer.isConnected) layer.scrollTo({ top: Math.max(0, card.offsetTop - 150), behavior: reduced() ? 'auto' : 'smooth' }); }, 350);
@@ -311,7 +323,7 @@ register('teodoro', {
   },
   mount(root) {
     tabs(root);
-    const n = activeDay() ?? Math.min(lastDay(), 26);
+    const n = walkDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     replaceText(root, /^Día 9$/, `Día ${n}`);
     const isla = root.querySelector('a[aria-label^="Adviento:"]'); // se toma antes de tocar etiquetas
@@ -330,7 +342,8 @@ register('teodoro', {
       if (cta) setText(cta, 'Entrar al camino', 'Abrir la sorpresa');
     } else if (st.done) {
       const s = textEl(root, 'Sigue la estrella hasta Belén'); if (s) s.textContent = '¡Listo por hoy! Mañana seguimos';
-    }
+    } else if (cta && fase() !== 'antes') setText(cta, 'Entrar al camino', 'Seguir el camino');
+    replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
     paintEnergy(root);
     patchCuarto(root);
     if (fase() === 'antes') startCountdown(root);
@@ -386,7 +399,7 @@ register('mundos', {
   files: F('V2-02-Mundos-claro', 'V2-02-Mundos'),
   mount(root) {
     tabs(root);
-    const n = activeDay() ?? Math.min(lastDay(), 26);
+    const n = walkDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     root.querySelector('a[aria-label^="Adviento:"]')?.setAttribute('aria-label', `Adviento: Camino a Belén, día ${n} de 26. Entrar al camino`);
     on(root, 'Adviento', () => entrar('mundos'));
@@ -696,8 +709,8 @@ register('premioCuarto', {
     const out = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     on(root, 'Salir de la ruleta', out); on(root, 'Cerrar', out);
     const sigue = !(p.from === 'mapa' || contentDone(n));
-    setText(root, 'Ver su cuarto nuevo', sigue ? ctaLabel(n).text : 'Volver al camino');
-    on(root, 'Ver su cuarto nuevo', out);
+    const btn = find(root, 'Ver su cuarto nuevo'); // se toma antes de cambiarle el texto
+    if (btn) { on(root, btn, out); setText(btn, 'Ver su cuarto nuevo', sigue ? ctaLabel(n).text : 'Volver al camino'); }
   },
 });
 

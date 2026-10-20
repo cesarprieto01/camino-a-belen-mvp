@@ -99,6 +99,14 @@ const DECISIONES = [
   'Estrellas: 5 de 5 = 3 estrellas · 3 o 4 = 2 · menos = 1. Solo cuenta el primer intento de cada pregunta.',
   'Ruleta: 10 casillas (7 panes, manzana, prenda de la semana, cuarto). Prendas: gorro, bufanda, bolso y cama de paja.',
   'La historia del reproductor dura 9 segundos para poder probar rápido.',
+  'Ruleta: la manzana le da +1 de energía a Teodoro; la prenda de la semana sale más seguido si aún no la tiene; el cuarto no se repite.',
+  'Pop-ups sobre la pantalla real: teaser, final de trivia, ruleta y premios, «Se acabó el tiempo» y «Mañana seguimos».',
+  'Hojas de página (se cierran deslizando): free sobre el reto, calificación sobre el mapa, espera sobre Hoy.',
+  'Pantalla completa a propósito: el reto en familia (es un destino con contenido, extras y un juego dentro: en hoja quedaría apretado y se perdería al deslizar) y la invitación (simula salir a WhatsApp/iMessage; en la app real es la hoja de compartir del sistema).',
+  'Pantalla completa también: festejos grandes (cuarto nuevo, llegada a Belén) y la confirmación de inscripción (1,6 s y sigue sola).',
+  'Calificar el día se pide al cerrarlo («¿Les gustó hoy?»), no en el momento del premio.',
+  'Atrasado: tras ver la historia de un día puede seguir con la del siguiente; las trivias quedan pendientes y se pueden hacer después.',
+  'Racha = la que traía en Theo (3) + días seguidos del camino; si se salta un día, cuenta desde ahí.',
 ];
 const PENDIENTES_LIENZO = [
   'Escenas de los días 1 y 2 (Arte 5 las marca como «FALTA»).',

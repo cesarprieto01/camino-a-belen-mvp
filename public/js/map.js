@@ -1,5 +1,5 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
-import { S, save, A, $, $$, on, frag, go, back, clearHistory, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
 import { DAYS, TYPES, RULES, IMG, dateOf, iconOf, SORPRESA_NOMBRE } from './data.js';
 import { startDay, ctaLabel } from './flow.js';
@@ -39,7 +39,7 @@ async function templates() {
     key,
     done: node(1).getAttribute('style'),
     doneInner: [...node(1).childNodes].filter(c => !(c.tagName === 'SPAN' && c.getAttribute('aria-hidden'))).map(c => c.outerHTML || '').join(''),
-    badges: { 3: badge(1), 2: badge(2), 1: badge(4) },
+    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(4).replace(/#F[5-7][C-D][0-9A-F]{3}/gi, '#D3DDE5') },
     today: node(9).getAttribute('style'),
     todayInner: node(9).innerHTML,
     locked: node(10).getAttribute('style'),
@@ -70,7 +70,8 @@ register('mapa', {
   noScroll: true,
   async mount(root, params, layer) {
     const T = await templates();
-    const act = activeDay();
+    const trivAct = activeDay();          // primera trivia pendiente
+    const act = walkDay();                // donde va Teodoro (primera historia sin ver)
     const focus = act ?? Math.min(lastDay(), 26);
 
     // 1) La vista: el mapa largo va en un scroller; cabecera y hoja quedan fijas
@@ -85,7 +86,10 @@ register('mapa', {
     scroller.append(root);
     root.style.marginBottom = '0';
     fixed.forEach(el => layer.appendChild(el));
-    const extra = document.createElement('div'); extra.style.height = '230px'; extra.style.background = root.style.background ? 'transparent' : '';
+    // el final del mapa sigue el color del mapa (nunca se ve el fondo negro al hacer scroll)
+    const mapBg = getComputedStyle(root).backgroundColor;
+    scroller.style.background = mapBg && mapBg !== 'rgba(0, 0, 0, 0)' ? mapBg : (dark() ? '#0A2340' : '#F3EEE3');
+    const extra = document.createElement('div'); extra.style.height = '230px';
     scroller.appendChild(extra);
 
     // 2) Nodos de cada día
@@ -100,6 +104,12 @@ register('mapa', {
         restyle(el, T.done, p, 64);
         el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + (T.badges[stars(n)] || '');
         el.setAttribute('aria-label', `Día ${n}, ${d.title}, completado${stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
+      } else if (contentDone(n) && n !== act && !(S.pasoAnimado === n && !reduced())) {
+        // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
+        restyle(el, T.locked, p, 64);
+        el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon.replace('opacity: .55', 'opacity: 1')).replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
+        el.style.outline = '3px dashed #F5DB78'; el.style.outlineOffset = '3px';
+        el.setAttribute('aria-label', `Día ${n}, ${d.title}: historia vista, trivia pendiente, 0 estrellas`);
       } else if (n === act || (S.pasoAnimado && n === S.pasoAnimado)) {
         restyle(el, T.today, p, 84);
         el.innerHTML = T.todayInner.replace(/>\d+</, `>${n}<`);
@@ -163,6 +173,7 @@ register('mapa', {
       // lienzo: la casa ya no es un botón; solo la abierta deja ver su premio
       a.setAttribute('aria-label', opened ? `Ruleta sorpresa de la semana ${i + 1}: ya la abriste. Ver tu premio` : `Ruleta sorpresa de la semana ${i + 1}: aparece al iniciar el día ${d}`);
       if (opened) on(root, a, () => go(S.ruletas[d] === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: S.ruletas[d], day: d, from: 'mapa' }, 'modal'));
+      else if (d <= lastDay() && S.ruletaPendiente[d] && S.hoy > 0) { a.setAttribute('aria-label', `Ruleta de la semana ${i + 1}: la dejaste para después. Girar`); on(root, a, () => go('ruletaPop', { day: d, from: 'mapa' }, 'modal')); }
       else { a.removeAttribute('href'); a.dataset.bound = '1'; a.setAttribute('role', 'img'); a.style.cursor = 'default'; }
     });
 
@@ -230,9 +241,17 @@ register('mapa', {
       const from = S.pasoAnimado; S.pasoAnimado = null; save();
       await wait(450);
       const n = nodes[from];
-      if (n) {
+      if (n && isDone(from)) {
         restyle(n.el, T.done, n.p, 64);
         n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${from}<`) + (T.badges[stars(from)] || '');
+        delete n.el.dataset.today;
+        n.el.classList.add('a-pop');
+      } else if (n) {
+        // solo vio la historia: queda con la trivia pendiente y 0 estrellas
+        restyle(n.el, T.locked, n.p, 64);
+        const ic = T.icons[from] ? `<img src="${T.icons[from]}" alt="" style="width: 30px; height: 24px; object-fit: contain">` : '';
+        n.el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, ic).replace(/>\d+</, `>${from}<`) + (T.badges[0] || '');
+        n.el.style.outline = '3px dashed #F5DB78'; n.el.style.outlineOffset = '3px';
         delete n.el.dataset.today;
         n.el.classList.add('a-pop');
       }
@@ -279,7 +298,7 @@ register('mapa', {
 function tapNode(n, el, layer) {
   const act = activeDay();
   const d = DAYS[n];
-  if (n === act) { startDay(n); return; }
+  if (n === act || n === walkDay()) { startDay(n); return; }
   if (isDone(n)) { showPast(layer, n, el); return; }
   if (n <= lastDay()) {
     // si ya vio las historias de los días anteriores, puede seguir con esta (la trivia queda pendiente)
@@ -330,7 +349,7 @@ function showEnergy(layer) {
   [...sheet.querySelectorAll('div')].filter(x => x.childElementCount === 0 && /le dan energía|energía/.test(x.textContent) && x.textContent.length > 30)
     .forEach(x => { x.textContent = 'Cada día que caminan juntos lo llena. Si pasan días sin caminar, se cansa.'; });
   const cta = [...sheet.querySelectorAll('a')].pop();
-  const act = activeDay();
+  const act = walkDay();
   if (act != null && cta) { const lbl = ctaLabel(act); const tn = [...cta.querySelectorAll('*'), cta].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim()); if (tn) tn.nodeValue = lbl.text; on(layer, cta, lbl.go); }
   else on(layer, cta, () => go('mapa', {}, 'none', { replace: true }));
   sheet.classList.add('in-up');
@@ -380,7 +399,7 @@ function paintSheet(layer, T) {
   let sheet = [...layer.children].find(el => el.style.bottom === '10px');
   if (!sheet) return;
   sheet.dataset.sheet = '1';
-  const act = activeDay();
+  const act = walkDay();
   if (act === 26 && !contentDone(26) && T.sheet26) {
     const t = document.createElement('template'); t.innerHTML = T.sheet26;
     const s26 = t.content.firstElementChild; s26.dataset.sheet = '1'; sheet.replaceWith(s26); sheet = s26;
@@ -449,15 +468,14 @@ function paintSheet(layer, T) {
   const icon = cta.querySelector('svg');
   if (icon && !label.play) icon.style.display = 'none';
   on(layer, cta, label.go);
-  // va atrasado y ya vio la historia: puede seguir con la historia del día siguiente y dejar la trivia para después
-  const sig = n + 1;
-  if (n > 0 && contentDone(n) && !isDone(n) && sig <= Math.min(lastDay(), 25) && !contentDone(sig)) {
-    const alt = document.createElement('button');
-    alt.type = 'button'; alt.className = 'sheet-alt';
-    alt.textContent = `O sigue con la historia del día ${sig}`;
-    cta.after(alt); sheet.style.height = 'auto';
-    on(layer, alt, () => startDay(sig));
-  }
+  // trivias que quedaron pendientes al seguir con las historias: a un toque
+  const trivAct = activeDay();
+  const pendTriv = Array.from({ length: Math.min(lastDay(), 26) }, (_, i) => i + 1).filter(d => contentDone(d) && !isDone(d) && d !== n);
+  const addAlt = (txt, fn) => { const alt = document.createElement('button'); alt.type = 'button'; alt.className = 'sheet-alt'; alt.textContent = txt; cta.after(alt); on(layer, alt, fn); };
+  if (n > 0 && pendTriv.length) addAlt(pendTriv.length === 1 ? `Jugar la trivia del día ${pendTriv[0]}` : `Tienes ${pendTriv.length} trivias pendientes · empezar por el día ${pendTriv[0]}`, () => startDay(pendTriv[0]));
+  // día 0 visto: volver al inicio sin buscar la flecha
+  if (n === 0 && contentDone(0)) addAlt('Volver al inicio', () => back(mapOrigin || 'hoy', 'back'));
+  sheet.style.height = 'auto';
   sheet.classList.add('in-up');
 }
 /** La rayita de la hoja funciona: arrastra hacia abajo para ver el mapa, hacia arriba (o toca) para abrirla. */
@@ -465,7 +483,18 @@ function sheetDrag(layer) {
   layer.querySelectorAll('[data-sheet]').forEach(s => { s.style.zIndex = '30'; });
   let y0 = null, dy = 0, sheet = null, collapsed = false, max = 0;
   const peek = 118;
-  const set = (v, anim) => { sheet.style.transition = anim ? 'transform .34s cubic-bezier(.32,.72,0,1)' : 'none'; sheet.style.transform = v ? `translateY(${v}px)` : ''; };
+  const set = (v, anim) => { sheet.classList.remove('in-up'); sheet.style.animation = 'none'; sheet.style.transition = anim ? 'transform .34s cubic-bezier(.32,.72,0,1)' : 'none'; sheet.style.transform = v ? `translateY(${v}px)` : ''; sheet.querySelector('.sheet-min')?.setAttribute('aria-expanded', String(!v)); };
+  // botón para minimizar / abrir (además de arrastrar la rayita)
+  const addMin = s => {
+    if (!s || s.querySelector('.sheet-min')) return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-min'; b.dataset.bound = '1'; b.setAttribute('aria-label', 'Minimizar'); b.setAttribute('aria-expanded', 'true');
+    b.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    s.appendChild(b);
+    b.addEventListener('click', ev => { ev.stopPropagation(); sheet = s; max = s.offsetHeight - peek; collapsed = !collapsed; set(collapsed ? max : 0, true); b.setAttribute('aria-label', collapsed ? 'Abrir' : 'Minimizar'); after(); });
+    b.addEventListener('pointerdown', ev => ev.stopPropagation());
+  };
+  addMin(layer.querySelector('[data-sheet]'));
+  new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s) { s.style.zIndex = '30'; addMin(s); collapsed = false; } }).observe(layer, { childList: true });
   const after = () => setTimeout(() => layer._syncBackHoy?.(), 360);
   layer.addEventListener('pointerdown', ev => {
     sheet = ev.target.closest('[data-sheet]'); if (!sheet) return;

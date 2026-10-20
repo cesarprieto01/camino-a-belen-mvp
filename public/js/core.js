@@ -55,6 +55,13 @@ export function activeDay() {
   for (let n = 1; n <= lastDay(); n++) if (!isDone(n)) return n;
   return null;
 }
+/** Día donde va Teodoro: el primero cuya historia aún no vieron (las trivias pueden quedar pendientes). */
+export function walkDay() {
+  const a = activeDay();
+  if (a == null || a < 1) return a;
+  for (let n = a; n <= Math.min(lastDay(), 26); n++) if (!S.completos[n]?.contenido) return n;
+  return a; // ya vio todas las historias hasta hoy: toca la trivia pendiente más antigua
+}
 export const doneCount = () => Object.keys(S.completos).filter(n => +n >= 1 && isDone(+n)).length;
 export const pendientes = () => { const a = activeDay(); return a == null || a < 1 ? 0 : lastDay() - a + 1; };
 export const fase = () => S.hoy <= 0 ? 'antes' : S.hoy >= 27 ? 'despues' : 'camino';
