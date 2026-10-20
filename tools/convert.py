@@ -51,6 +51,19 @@ for fname, b in boards.items():
     body = t[t.find('<x-dc>') + 6:t.rfind('</x-dc>')]
     body = re.sub(r'<helmet>[\s\S]*?</helmet>', '', body).strip()
     body = re.sub(r'/_blob/([0-9a-f]{32})', blob, body)
+    # trazos del lienzo que terminan con una curva incompleta (el navegador los rechaza): se recorta el último tramo
+    def fix_d(m):
+        need = {'M': 2, 'L': 2, 'C': 6, 'S': 4, 'Q': 4, 'T': 2, 'A': 7, 'H': 1, 'V': 1, 'Z': 0}
+        out = []
+        for cmd, args in re.findall(r'([A-Za-z])([^A-Za-z]*)', m.group(1)):
+            nums = re.findall(r'-?\d*\.?\d+(?:e-?\d+)?', args)
+            k = need.get(cmd.upper(), 0)
+            if k:
+                nums = nums[:len(nums) - len(nums) % k]
+                if not nums: continue
+            out.append(cmd + ' '.join(nums))
+        return 'd="' + ' '.join(out) + '"'
+    body = re.sub(r'd="([^"]*\d[^"]*)"', lambda m: fix_d(m) if re.search(r'[CSQ]', m.group(1)) and len(m.group(1)) > 400 else m.group(0), body)
     title = re.search(r'<title>([\s\S]*?)</title>', t)
     dark = bool(re.search(r'#00082B|#02254F', body[:600])) or '-oscuro' in fname
     stem = fname[:-len('.dc.html')]

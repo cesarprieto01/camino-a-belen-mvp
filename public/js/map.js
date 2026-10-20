@@ -93,7 +93,6 @@ register('mapa', {
     scroller.appendChild(extra);
 
     // 1b) Camino más curvo: mismos puntos de paso (los días no se mueven), cada tramo como un arco que se abre a los lados
-    curvar(root);
     // 2) Nodos de cada día
     const nodes = {};
     for (let n = 1; n <= 26; n++) {
@@ -543,11 +542,12 @@ function sheetDrag(layer) {
     const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.textContent.trim() || '';
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
-    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Abrir la sorpresa': 'Sorpresa', 'Invitar a un amigo': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar' };
-    const corto = CORTOS[verbo] || (verbo.length > 16 ? verbo.split(' ')[0] : verbo);
+    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Abrir la sorpresa': 'Sorpresa', 'Invitar a un amigo': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
+    const corto = CORTOS[verbo] || (verbo.length > 15 ? verbo.split(' ')[0] : verbo);
     const play = !!cta?.querySelector('svg') && cta.querySelector('svg').style.display !== 'none';
-    bar.innerHTML = `<span class="mb-ico">${rowImg ? `<img src="${rowImg.getAttribute('src')}" alt="">` : ''}</span>
-      <span class="mb-txt"><small>${eyebrow}${pend ? ` · <em class="mb-pend">${pend.dataset.pend} ${pend.dataset.pend === '1' ? 'trivia pendiente' : 'trivias pendientes'}</em>` : ''}</small><b>${title}</b></span>
+    // imagen, un texto corto y el botón; lo pendiente es un punto, no una frase
+    bar.innerHTML = `<span class="mb-ico">${rowImg ? `<img src="${rowImg.getAttribute('src')}" alt="">` : ''}${pend ? '<i class="mb-dot" aria-hidden="true"></i>' : ''}</span>
+      <span class="mb-txt"><b>${eyebrow}</b></span>
       <button type="button" class="mb-cta" data-bound="1">${!play ? '' : '<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5Z" fill="currentColor"/></svg>'}${corto}</button>`;
     bar.setAttribute('aria-label', `${eyebrow}: ${title}${pend ? `. ${pend.dataset.pend} ${pend.dataset.pend === '1' ? 'trivia pendiente' : 'trivias pendientes'}` : ''}`);
     const grab = [...s.children].find(el => el.getAttribute('aria-hidden') === 'true' && el.offsetHeight <= 6);

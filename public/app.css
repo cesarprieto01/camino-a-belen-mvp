@@ -354,3 +354,16 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .pic4 > * img { width: 96px !important; height: 96px !important; object-fit: contain; }
 .pic4 > * span { font-size: 17px !important; }
 .trivia-pic4 > [style*="top: 700px"], .trivia-pic4 > [style*="top: 702px"] { top: 752px !important; }
+
+/* barra compacta: imagen protagonista, texto mínimo, botón claro */
+[data-sheet].mini .mini-bar { gap: 14px; padding-right: 56px; }
+.mb-ico { width: 58px; height: 58px; border-radius: 18px; }
+.mb-ico img { width: 46px; height: 46px; }
+.mb-dot { min-width: 0; width: 14px; height: 14px; padding: 0; right: -3px; top: -3px; border-radius: 50%; background: #E8A33D; box-shadow: 0 0 0 3px #FFFFFF; }
+:root[data-theme="dark"] .mb-dot { box-shadow: 0 0 0 3px #12305A; }
+.mb-txt b { font: 800 17px/1.2 'Neue Montreal', Mulish, sans-serif; -webkit-line-clamp: 1; }
+.mb-txt small { display: none; }
+.mb-cta { margin-left: auto; font-size: 15px; }
+.sheet-min:focus:not(:focus-visible), .mb-cta:focus:not(:focus-visible) { outline: none; }
+.mb-txt { flex: 0 0 auto; }
+.mb-cta { min-width: 0; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

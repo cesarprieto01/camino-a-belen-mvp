@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Flujo v2 · Hoy, Mundos y Camino</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&amp;display=swap">
+<style>
+@font-face{font-family:"Neue Montreal";src:url("/_blob/3419e3c4ca7d11a9b7d64e2c8dac84ba") format("opentype");font-weight:700;font-style:normal}
+body{margin:0}
+a{color:#09677B}a:hover{color:#02254F}
+</style>
+</helmet>
+<div style="width: 1600px; height: 2200px; position: relative; overflow: hidden; background: #FCFBF7; font-family: Mulish, system-ui, sans-serif; color: #02254F">
+
+<div style="position: absolute; left: 60px; top: 50px; right: 60px">
+<div style="font-size: 14px; font-weight: 900; letter-spacing: .14em; color: #17819A">UX 1B · FLUJO V2</div>
+<div style="font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 48px; line-height: 1.05; margin-top: 8px">Dos puertas, una casa: el mapa</div>
+<div style="font-size: 20px; font-weight: 600; color: #4A5B73; margin-top: 10px">Desde Hoy o desde el tab Teodoro, el niño siempre llega al mismo lugar: su camino, en el día de hoy.</div>
+</div>
+
+<div style="position: absolute; left: 60px; top: 220px; font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 26px">Lo que estaba mal</div>
+<div style="position: absolute; left: 60px; right: 60px; top: 268px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+
+<div style="height: 132px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07)">
+<div style="font-size: 15px; font-weight: 700; color: #A8323F">Antes: «Continuar» en Hoy abría Mundos. El niño pedía seguir y le preguntábamos otra vez a dónde.</div>
+<div style="font-size: 16px; font-weight: 800; color: #09677B; margin-top: 10px">Ahora: «Ir al camino» abre el mapa en el día de hoy.</div>
+</div>
+<div style="height: 132px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07)">
+<div style="font-size: 15px; font-weight: 700; color: #A8323F">Antes: Mundos era una lista de tarjetas. No se sentía como un mundo.</div>
+<div style="font-size: 16px; font-weight: 800; color: #09677B; margin-top: 10px">Ahora: islas flotantes en el cielo, como el arte del CEO. Adviento abierto, Enero cerrado.</div>
+</div>
+<div style="height: 132px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07)">
+<div style="font-size: 15px; font-weight: 700; color: #A8323F">Antes: Mundos saltaba directo al hub. Se perdía el mapa y la sensación de avanzar.</div>
+<div style="font-size: 16px; font-weight: 800; color: #09677B; margin-top: 10px">Ahora: siempre se pasa por el mapa. Es la casa de la campaña.</div>
+</div>
+<div style="height: 132px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07)">
+<div style="font-size: 15px; font-weight: 700; color: #A8323F">Antes: la flecha atrás del mapa no decía a dónde volvía.</div>
+<div style="font-size: 16px; font-weight: 800; color: #09677B; margin-top: 10px">Ahora: botón «Mundos» con ícono de isla, y el día al centro (7/24).</div>
+</div>
+<div style="height: 132px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07)">
+<div style="font-size: 15px; font-weight: 700; color: #A8323F">Antes: «Esta noche» en Hoy repetía la historia del día y no llevaba a ningún lado.</div>
+<div style="font-size: 16px; font-weight: 800; color: #09677B; margin-top: 10px">Ahora: «Para esta noche» es contenido normal de Theo (Música, Explorar).</div>
+</div>
+<div style="height: 132px; box-sizing: border-box; padding: 20px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07)">
+<div style="font-size: 15px; font-weight: 700; color: #A8323F">Antes: la tarjeta de Hoy era una barra de 24 rayitas. No se entendía que era un camino.</div>
+<div style="font-size: 16px; font-weight: 800; color: #09677B; margin-top: 10px">Ahora: la tarjeta muestra un pedazo del mapa real: 6 hecho, 7 hoy, 8 cerrado.</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 60px; top: 570px; font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 26px">El recorrido</div>
+
+<svg aria-hidden="true" style="position: absolute; left: 0; top: 0" width="1600" height="1400" viewBox="0 0 1600 1400">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#17819A"></path></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#D9A93A"></path></marker></defs>
+<path d="M216 800 C300 800 300 900 372 920" stroke="#D9A93A" stroke-width="4" fill="none" marker-end="url(#ag)"></path>
+<path d="M216 1160 C300 1160 300 1060 372 1040" stroke="#17819A" stroke-width="4" fill="none" marker-end="url(#ah)"></path>
+<path d="M536 980 L632 980" stroke="#17819A" stroke-width="4" fill="none" marker-end="url(#ah)"></path>
+<path d="M796 980 L868 980" stroke="#17819A" stroke-width="4" fill="none" marker-end="url(#ah)"></path>
+<path d="M1206 980 L1252 980" stroke="#17819A" stroke-width="4" fill="none" marker-end="url(#ah)"></path>
+<path d="M1335 1150 L1335 1214 Q1335 1230 1319 1230 L471 1230 Q455 1230 455 1214 L455 1156" stroke="#17819A" stroke-width="4" fill="none" stroke-dasharray="10 8" marker-end="url(#ah)"></path>
+</svg>
+
+<div style="position: absolute; left: 60px; top: 616px; font-size: 13px; font-weight: 900; letter-spacing: .1em; color: #4A5B73">TAB HOY</div>
+<a href="V2-01-Hoy.dc.html" style="position: absolute; left: 60px; top: 640px; width: 150px; height: 325px; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px rgba(2,37,79,.08), 0 12px 26px rgba(2,37,79,.14)"><img src="/_blob/3baaf861ab3bca95e3faf076bcf6754c" alt="Pantalla Hoy" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div style="position: absolute; left: 60px; top: 976px; font-size: 13px; font-weight: 900; letter-spacing: .1em; color: #4A5B73">TAB TEODORO · RAÍZ</div>
+<a href="V2-02-Mundos.dc.html" style="position: absolute; left: 60px; top: 1000px; width: 150px; height: 325px; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px rgba(2,37,79,.08), 0 12px 26px rgba(2,37,79,.14)"><img src="/_blob/246883b1add429adca6b6ced5dc4677c" alt="Pantalla Mundos" style="width: 100%; height: 100%; object-fit: cover"></a>
+
+<div style="position: absolute; left: 232px; top: 690px; width: 150px; font-size: 14px; font-weight: 900; line-height: 1.25; color: #9A6E14">«Ir al camino»<br><span style="font-weight: 700; color: #4A5B73">atajo, cambia al tab Teodoro</span></div>
+<div style="position: absolute; left: 236px; top: 1170px; width: 150px; font-size: 14px; font-weight: 900; line-height: 1.25; color: #09677B">Toca la isla<br><span style="font-weight: 700; color: #4A5B73">o «Entrar al camino»</span></div>
+
+<div style="position: absolute; left: 380px; top: 790px; font-size: 13px; font-weight: 900; letter-spacing: .1em; color: #17819A">MAPA · LA CASA</div>
+<a href="V2-Mapa-claro.dc.html" style="position: absolute; left: 380px; top: 818px; width: 150px; height: 325px; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 4px #F3C059, 0 14px 30px rgba(2,37,79,.18)"><img src="/_blob/08d0ed115ea220989ee4cd2eed243e3b" alt="Mapa" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div style="position: absolute; left: 540px; top: 940px; width: 90px; font-size: 13px; font-weight: 800; line-height: 1.2; color: #4A5B73; text-align: center">nodo de hoy</div>
+
+<div style="position: absolute; left: 640px; top: 790px; font-size: 13px; font-weight: 900; letter-spacing: .1em; color: #4A5B73">HUB DEL DÍA</div>
+<a href="V2-03-Hub.dc.html" style="position: absolute; left: 640px; top: 818px; width: 150px; height: 325px; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px rgba(2,37,79,.08), 0 12px 26px rgba(2,37,79,.14)"><img src="/_blob/baeceeaa3fe335c39da7f1f5dde7703a" alt="Hub del día" style="width: 100%; height: 100%; object-fit: cover"></a>
+
+<div style="position: absolute; left: 876px; top: 790px; font-size: 13px; font-weight: 900; letter-spacing: .1em; color: #4A5B73">CONTENIDO DEL DÍA</div>
+<a href="V2-04-Historia.dc.html" style="position: absolute; left: 876px; top: 872px; width: 100px; height: 216px; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px rgba(2,37,79,.08), 0 10px 20px rgba(2,37,79,.12)"><img src="/_blob/462e67656213648bcd5292629105dd8c" alt="Historia" style="width: 100%; height: 100%; object-fit: cover"></a>
+<a href="V2-06-Trivia.dc.html" style="position: absolute; left: 990px; top: 872px; width: 100px; height: 216px; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px rgba(2,37,79,.08), 0 10px 20px rgba(2,37,79,.12)"><img src="/_blob/1e1297d28a44fe1a9627866efcc730bf" alt="Trivia" style="width: 100%; height: 100%; object-fit: cover"></a>
+<a href="V2-Memorama.dc.html" style="position: absolute; left: 1104px; top: 872px; width: 100px; height: 216px; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px rgba(2,37,79,.08), 0 10px 20px rgba(2,37,79,.12)"><img src="/_blob/bbd4ce1ac834ab1ad592d2a81c43c899" alt="Minijuego" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div style="position: absolute; left: 876px; top: 1098px; width: 330px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; font-size: 13px; font-weight: 800; color: #4A5B73; text-align: center"><span>Historia</span><span>Trivia</span><span>Minijuego</span></div>
+
+<div style="position: absolute; left: 1260px; top: 790px; font-size: 13px; font-weight: 900; letter-spacing: .1em; color: #4A5B73">DÍA COMPLETADO</div>
+<a href="V2-05-Completado.dc.html" style="position: absolute; left: 1260px; top: 818px; width: 150px; height: 325px; border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px rgba(2,37,79,.08), 0 12px 26px rgba(2,37,79,.14)"><img src="/_blob/2197c1fdf1813e74674b99ad9bf1051b" alt="Día completado" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div style="position: absolute; left: 1424px; top: 860px; width: 120px; font-size: 14px; font-weight: 700; line-height: 1.3; color: #4A5B73">Estrella ganada. Sigue con la trivia o vuelve al mapa.</div>
+
+<div style="position: absolute; left: 560px; top: 1244px; height: 40px; padding: 0 18px; border-radius: 20px; background: #EAF7FA; display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: #09677B">Vuelve al mapa: el nodo 7 se pinta teal y Teodoro camina al 8</div>
+
+<div style="position: absolute; left: 60px; top: 1360px; font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 26px">La misma puerta abre otra pantalla según el día</div>
+<div style="position: absolute; left: 60px; right: 60px; top: 1410px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+<div style="height: 290px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07); display: flex; gap: 14px">
+<a href="V2-Teaser.dc.html" style="flex: none; width: 118px; height: 256px; border-radius: 16px; overflow: hidden"><img src="/_blob/a985248ae9a16f80866f3b67dada861b" alt="Teaser" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div><div style="font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 19px; line-height: 1.15">Antes del 1 dic</div><div style="font-size: 14px; font-weight: 600; color: #4A5B73; margin-top: 8px; line-height: 1.35">La isla de Adviento abre el teaser con cuenta regresiva, no el mapa.</div></div>
+</div>
+<div style="height: 290px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07); display: flex; gap: 14px">
+<a href="V2-10-Regreso.dc.html" style="flex: none; width: 118px; height: 256px; border-radius: 16px; overflow: hidden"><img src="/_blob/ac179713fae7d58f0ae0cc185a71a9c3" alt="Regreso" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div><div style="font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 19px; line-height: 1.15">Faltó días</div><div style="font-size: 14px; font-weight: 600; color: #4A5B73; margin-top: 8px; line-height: 1.35">Antes del mapa aparece «Te guardé el camino». Sin culpa, sin rojo.</div></div>
+</div>
+<div style="height: 290px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07); display: flex; gap: 14px">
+<a href="V2-Sorpresa.dc.html" style="flex: none; width: 118px; height: 256px; border-radius: 16px; overflow: hidden"><img src="/_blob/307b8e300cabe1dcfe0444b333fb3aeb" alt="Sorpresa" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div><div style="font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 19px; line-height: 1.15">Fin de tramo</div><div style="font-size: 14px; font-weight: 600; color: #4A5B73; margin-top: 8px; line-height: 1.35">Días 6, 12, 18: tras «Día completado» sale el sobre sorpresa.</div></div>
+</div>
+<div style="height: 290px; box-sizing: border-box; padding: 16px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 6px 18px rgba(2,37,79,.07); display: flex; gap: 14px">
+<a href="V2-Final.dc.html" style="flex: none; width: 118px; height: 256px; border-radius: 16px; overflow: hidden"><img src="/_blob/166495bc1037629a2401df0aa70bbcab" alt="Final" style="width: 100%; height: 100%; object-fit: cover"></a>
+<div><div style="font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 19px; line-height: 1.15">Día 24</div><div style="font-size: 14px; font-weight: 600; color: #4A5B73; margin-top: 8px; line-height: 1.35">El mapa se vuelve de noche y termina en el pesebre: «¡Llegamos a Belén!».</div></div>
+</div>
+</div>
+
+<div style="position: absolute; left: 60px; top: 1750px; width: 700px">
+<div style="font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 26px">Reglas</div>
+<div style="margin-top: 14px; display: flex; flex-direction: column; gap: 12px; font-size: 17px; font-weight: 700; line-height: 1.35">
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 28px; height: 28px; border-radius: 50%; background: #F3C059; display: grid; place-items: center; font-weight: 900; font-size: 14px">1</span><span>Un solo botón dorado por pantalla. Lo demás es secundario.</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 28px; height: 28px; border-radius: 50%; background: #F3C059; display: grid; place-items: center; font-weight: 900; font-size: 14px">2</span><span>El botón atrás dice a dónde vuelve: «Mundos», nunca solo una flecha.</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 28px; height: 28px; border-radius: 50%; background: #F3C059; display: grid; place-items: center; font-weight: 900; font-size: 14px">3</span><span>Del 1 al 24 de dic, el tab Teodoro abre directo el mapa. Mundos queda un paso atrás.</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 28px; height: 28px; border-radius: 50%; background: #F3C059; display: grid; place-items: center; font-weight: 900; font-size: 14px">4</span><span>Hoy → historia del día en 3 toques: Ir al camino, nodo de hoy, Historia.</span></div>
+<div style="display: flex; gap: 12px"><span style="flex: none; width: 28px; height: 28px; border-radius: 50%; background: #F3C059; display: grid; place-items: center; font-weight: 900; font-size: 14px">5</span><span>Cerrar un contenido vuelve al hub. Cerrar el hub vuelve al mapa.</span></div>
+</div>
+</div>
+
+<div style="position: absolute; left: 820px; top: 1750px; width: 720px">
+<div style="font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700; font-size: 26px">En SwiftUI</div>
+<pre style="margin: 14px 0 0; padding: 22px 24px; border-radius: 20px; background: #02254F; color: #DDF0F6; font: 600 15px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap"><span style="color: #8FD0A3">// Un NavigationStack por tab</span>
+TabView(selection: $tab) { … }
+NavigationStack(path: $teodoroPath) { MundosView() }
+
+<span style="color: #8FD0A3">// Tarjeta de Hoy → atajo al mapa</span>
+tab = .teodoro
+teodoroPath = [.mundo(.adviento)]
+
+<span style="color: #8FD0A3">// Hub y contenidos encima del mapa</span>
+.fullScreenCover(item: $diaAbierto) { HubView(dia: $0) }
+<span style="color: #8FD0A3">// Recordar el último mundo</span>
+@SceneStorage("ultimoMundo") var ultimoMundo</pre>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":2200}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

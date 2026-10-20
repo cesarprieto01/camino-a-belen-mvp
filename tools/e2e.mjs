@@ -41,7 +41,8 @@ const tap = async (q) => {
     const L = document.querySelector('#viewport .layer:last-child');
     const norm = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
     const els = [...L.querySelectorAll('a,button,[role=button],[role=checkbox],[aria-label],[data-bound]')];
-    const el = els.find(e => norm(e.getAttribute('aria-label')).startsWith(norm(q))) || els.find(e => norm(e.textContent) === norm(q)) || els.find(e => norm(e.textContent).startsWith(norm(q)));
+    const btns = els.filter(e => e.matches('a,button,[role=button],[role=checkbox]'));
+    const el = els.find(e => norm(e.getAttribute('aria-label')).startsWith(norm(q))) || btns.find(e => norm(e.textContent) === norm(q)) || els.find(e => norm(e.textContent) === norm(q)) || btns.find(e => norm(e.textContent).startsWith(norm(q))) || els.find(e => norm(e.textContent).startsWith(norm(q)));
     if (!el) return false;
     el.scrollIntoView({ block: 'center' });
     el.click(); return true;
@@ -282,7 +283,7 @@ const flows = {
     if (!altOneLine) errs.push('el botón de trivias pendientes no cabe en una línea');
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child .sheet-min').click()); await p.waitForTimeout(600); await shot('mini');
     s = await st(); if (!s.mini || !s.barVisible || s.h > 124) errs.push('minimizar no deja la barra compacta: ' + JSON.stringify(s));
-    if (!/3 trivias pendientes/.test(await p.evaluate(() => document.querySelector('#viewport .layer:last-child .mb-txt small')?.textContent || ''))) errs.push('la barra no avisa las 3 trivias pendientes');
+    if (!/3 trivias pendientes/.test(await p.evaluate(() => document.querySelector('#viewport .layer:last-child .mini-bar')?.getAttribute('aria-label') || ''))) errs.push('la barra no avisa las 3 trivias pendientes');
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child .mini-bar .mb-txt').click()); await p.waitForTimeout(600);
     s = await st(); if (s.mini) errs.push('tocar la barra no abre la hoja');
     // arrastrar hacia abajo desde la rayita
