@@ -77,7 +77,7 @@ const DESCARGA = { t: 'Imprimible del día', s: 'Para colorear en familia' };
 const ACCION = { t: 'Reto del día', s: 'Los pasos para hacerlo juntos', accion: true };
 export const DAYS = [
   D(0, 'intro', '¿Qué es el Adviento?', { sub: 'No esperamos algo, esperamos a Alguien' }),
-  D(1, 'domingo', 'Domingo de la Esperanza', { cita: 'Mc 13,33-37 · 1.ª velita', vela: 1, sub: 'Esperamos a Jesús con el corazón despierto', descarga: { t: 'Corona de Adviento', s: 'Ármenla en familia' } }),
+  D(1, 'domingo', 'Domingo de la Esperanza', { cita: 'Mc 13,33-37 · 1.ª velita', vela: 1, sub: 'Esperamos a Jesús con el corazón despierto', descarga: { t: 'Corona de Adviento', s: 'Ármenla en familia' }, imprimible: IMG.corona }),
   D(2, 'meditacion', 'Estamos esperando a alguien', { sub: 'Jesús vino, viene y vendrá' }),
   D(3, 'cuento', 'Maranatha en mi corazón', { sub: 'Ser pesebre para que Jesús llegue' }),
   D(4, 'amigos', 'Parábola de los talentos', { sub: 'Cuidar lo que Dios nos confía' }),

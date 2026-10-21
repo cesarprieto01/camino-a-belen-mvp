@@ -88,7 +88,7 @@ const REC = [
 ];
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
-  'La barra de pestañas es la del tab Teodoro en todas las pantallas (en el lienzo, Hoy y Mundos usan otra barra clara e ilustrada, también en modo oscuro).',
+  'La barra de pestañas es siempre la del design system de Theo (tabbar.js): clara, ilustrada y la misma en todas las pantallas, también en modo oscuro.',
   'Los días 18 y 24 tienen ruleta (en el mapa) y juego sorpresa (al final de la trivia): la regla «cada 3 días, y así sigue» cae en días de ruleta.',
   'Títulos de la hoja de energía por nivel (dormido, durmiéndose, cansadito, tranquilo, travieso, feliz): el lienzo solo trae el de 5 de 5.',
   'Extras del reto (imprimible y canción) piden Premium a usuarios free, como dice «El camino es para todos».',

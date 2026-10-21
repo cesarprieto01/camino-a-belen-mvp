@@ -460,6 +460,22 @@ const flows = {
         for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) if (cruza(all[i], all[j])) errs.push(`hoja día ${n}: se montan dos filas («${h.txt}»)`);
         if (h.cortado.length) errs.push(`hoja día ${n}: texto cortado sin «…»: ${h.cortado.join(' | ')}`);
       }
+      // «¡Terminaste!» (con la fila de calificar) e imprimible del día
+      await p.evaluate(async (n) => { const c = await import('/js/core.js'); c.S.completos[n] = { contenido: true }; c.save(); c.go('completado', { day: n }, 'none'); }, n); await p.waitForTimeout(700);
+      const k = await p.evaluate(() => {
+        const L = document.querySelector('#viewport .layer:last-child'); const vis = el => el && el.offsetParent && getComputedStyle(el).display !== 'none';
+        const R = el => vis(el) ? el.getBoundingClientRect().toJSON() : null; const kids = [...L.querySelector('.root').firstElementChild.children];
+        const tit = kids.find(el => /¿Jugamos|Hoy toca|Un paso más/.test(el.textContent) && el.tagName === 'DIV');
+        const btn = kids.find(el => el.tagName === 'A' && /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(el.textContent.trim()));
+        const sub = kids.find(el => el.tagName === 'DIV' && /sobre el (video|reto)|juego sorpresa/.test(el.textContent));
+        return { tit: R(tit), rate: R(L.querySelector('.rate-row')), sub: R(sub), btn: R(btn), teo: R([...L.querySelectorAll('img')].find(i => /Teodoro/.test(i.alt || ''))) };
+      });
+      const kk = [['título', k.tit], ['calificar', k.rate], ['subtítulo', k.sub], ['botón', k.btn]].filter(x => x[1]);
+      for (let i = 0; i < kk.length; i++) for (let j = i + 1; j < kk.length; j++) if (cruza(kk[i][1], kk[j][1])) errs.push(`¡Terminaste! día ${n}: se montan ${kk[i][0]} y ${kk[j][0]}`);
+      if (cruza(k.rate, k.teo) && k.teo.bottom > k.rate.top + 24) errs.push(`¡Terminaste! día ${n}: la fila de calificar tapa a Teodoro`);
+      await p.evaluate(async (n) => { const c = await import('/js/core.js'); c.go('imprimible', { day: n }, 'none'); }, n); await p.waitForTimeout(500);
+      const im = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); const h = [...L.querySelectorAll('div')].find(d => d.childElementCount === 0 && /^(Para colorear en familia|Ármenla en familia|Para tenerlo en casa)$/.test(d.textContent.trim()))?.parentElement; const sheet = [...L.querySelectorAll('img')].find(i => /Vista previa/.test(i.alt || '')); const R = el => el?.getBoundingClientRect().toJSON(); return { h: R(h), s: R(sheet) }; });
+      if ([6, 19].includes(n)) { /* retos de acción: su descargable son los pasos del hub */ } else if (!im.h) errs.push(`imprimible día ${n}: sin título`); else if (cruza(im.h, im.s)) errs.push(`imprimible día ${n}: el título se monta sobre la hoja`);
       // hub (retos y juego en familia)
       if ([6, 13, 14, 19].includes(n)) {
         await p.evaluate(async (n) => { const c = await import('/js/core.js'); c.go('hub', { day: n }, 'none'); }, n); await p.waitForTimeout(600);

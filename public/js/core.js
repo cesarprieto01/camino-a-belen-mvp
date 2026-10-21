@@ -2,6 +2,7 @@
 // navegación con transiciones y utilidades para «vestir» las pantallas.
 import { FILES } from './assets.js';
 import { DAYS, RULES, BATTERY_IDS, TEODORO_IDS, IMG, hasTrivia } from './data.js';
+import { tabBar } from './tabbar.js';
 
 export const A = id => 'assets/' + (FILES[id] || id);
 export const $ = (r, s) => r.querySelector(s);
@@ -87,38 +88,20 @@ const cache = new Map();
 export async function boot() {
   MAN = await (await fetch('screens/manifest.json')).json();
   try { SECS = await (await fetch('screens/sections.json')).json(); } catch { SECS = []; }
-  // Barra de pestañas: la del tab Teodoro (la más reciente del lienzo) para toda la app
-  for (const [k, f] of [['c', 'V3-Teodoro'], ['o', 'V3-Teodoro-oscuro']]) NAV[k] = (await frag(f)).querySelector('nav').outerHTML;
 }
-const NAV = {};
-const TAB_OF = { teodoro: 'Teodoro', mundos: 'Teodoro' };
+const TAB_OF = { teodoro: 'teodoro', mundos: 'teodoro' };
 /** Cambia cualquier barra de pestañas por la estándar, con la pestaña activa correcta. */
 function unifyNav(root, name) {
   const old = root.querySelector('nav');
-  if (!old || !NAV.c) return;
-  const dk = dark();
-  const t = document.createElement('template');
-  t.innerHTML = NAV[dk ? 'o' : 'c'];
-  const nav = t.content.firstElementChild;
-  nav.style.top = ''; nav.style.bottom = '0'; nav.style.zIndex = '20';
-  nav.setAttribute('aria-label', 'Pestañas de Theo');
-  const active = TAB_OF[name] || 'Hoy';
-  nav.querySelectorAll('a').forEach(a => {
-    const label = a.textContent.trim();
-    const on = label === active;
-    a.removeAttribute('href');
-    a.setAttribute('aria-label', label);
-    on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current');
-    a.style.color = on ? (dk ? '#FFFFFF' : '#1E8DA5') : (dk ? '#C3CCDA' : '#5F5F5F');
-    a.style.fontWeight = on ? '900' : '700';
+  if (!old) return;
+  // la barra de Theo (tabbar.js): igual en todas las pantallas y en los dos temas
+  const nav = tabBar(TAB_OF[name] || 'hoy', k => {
+    if (k === 'hoy' || k === 'teodoro') go(k, {}, 'none', { tab: true });
+    else nota('Fuera de Theo Quest', `«${{ explorar: 'Explorar', musica: 'Música', favoritos: 'Favoritos' }[k]}» ya existe en Theo`);
   });
   old.replaceWith(nav);
-  // indicador de inicio del iPhone, en el color del tema
+  // el indicador de inicio del lienzo sobra: la barra trae el suyo
   [...root.children].filter(el => el.style.width === '134px' && el.style.height === '5px').forEach(e => e.remove());
-  const hi = document.createElement('div');
-  hi.setAttribute('aria-hidden', 'true'); hi.dataset.home = '1';
-  hi.style.cssText = `position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:${dk ? '#FFFFFF' : '#111111'};z-index:21`;
-  root.appendChild(hi);
 }
 
 // ---------- Cobertura: qué pantallas del lienzo ya se vieron en el flujo ----------

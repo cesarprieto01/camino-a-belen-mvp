@@ -68,9 +68,7 @@ export function finishTrivia(n, aciertos, replay = false) {
 
 // Barra de pestañas de la app (igual en todas)
 function tabs(root) {
-  on(root, 'Hoy', () => go('hoy', {}, 'none', { tab: true }));
-  on(root, 'Teodoro', () => go('teodoro', {}, 'none', { tab: true }));
-  ['Explorar', 'Música', 'Favoritos'].forEach(t => on(root, t, () => nota(`Pestaña «${t}» de Theo`, 'Ya existe en la app; fuera del reto')));
+  // la barra de pestañas la pone y la conecta core.js (tabbar.js) en todas las pantallas
   on(root, 'Ajustes', () => nota('Ajustes de Theo', 'Ya existen en la app'));
 }
 function appContent(root) {
@@ -1005,8 +1003,10 @@ register('imprimible', {
   mount(root, p) {
     const d = DAYS[p.day];
     if (d) {
-      setText(root, 'Pesebre para colorear', d.title);
-      const sub = textEl(root, /Imprímelo y coloréalo/); if (sub) sub.textContent = 'Para colorear en familia';
+      // el descargable del día: con nombre propio (corona, pesebre) o «Imprimible del día» con el título del día
+      const propio = d.descarga.t !== 'Imprimible del día';
+      setText(root, 'Pesebre para colorear', propio ? d.descarga.t : d.title);
+      const sub = textEl(root, /Imprímelo y coloréalo/); if (sub) sub.textContent = propio ? d.descarga.s : 'Para colorear en familia';
       const im = $$(root, 'img').find(i => /para colorear/.test(i.alt || ''));
       if (im) { if (d.imprimible) im.src = A(d.imprimible); im.alt = `Vista previa para colorear: ${d.title}`; }
     }
