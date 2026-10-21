@@ -35,7 +35,7 @@ export function ctaLabel(n) {
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
   if (n === 0) return { text: 'Invitar a un amigo', go: () => go('invitacion', {}, 'push') };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
-  if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Abrir la sorpresa', go: () => openSorpresa(n) };
+  if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Ir al juego sorpresa', go: () => openSorpresa(n) };
   const a = activeDay();
   if (a != null) return { text: `Seguir al día ${a}`, go: () => startDay(a) };
   if (S.hoy >= 26) return { text: 'Ver el nacimiento', go: () => go('final', { day: 26 }, 'fade') };
@@ -159,6 +159,9 @@ function ánimo(root) {
 function juntarAvatares(root) {
   $$(root, 'span').filter(sp => /^-\d+px$/.test(sp.style.marginLeft) && sp.style.borderRadius === '50%' && /^[A-ZÁÉÍÓÚÑ]$/.test(sp.textContent.trim()))
     .forEach(sp => { sp.style.marginLeft = '-4px'; });
+  // y un poco de aire entre los avatares y el número, para que el último no lo tape
+  $$(root, 'span').filter(sp => sp.style.display === 'flex' && [...sp.children].length >= 2 && [...sp.children].every(c => c.style.borderRadius === '50%'))
+    .forEach(sp => { sp.style.marginRight = '6px'; });
 }
 
 // ---------- Hoy ----------
@@ -287,7 +290,7 @@ export function paintCaminoCard(card, from) {
   // el botón dice lo que hará
   const btn = [...card.querySelectorAll('a')].find(a => /Continuar la Aventura/i.test(a.textContent));
   const primerDia = !doneCount() && !contentDone(1); // aún no ha visto la primera historia
-  const label = st.key === 4 ? 'Unirme gratis' : st.key === 5 ? 'Ver el nacimiento' : st.sorpresa ? 'Abrir la sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
+  const label = st.key === 4 ? 'Unirme gratis' : st.key === 5 ? 'Ver el nacimiento' : st.sorpresa ? 'Ir al juego sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
   const span = btn?.querySelector('span'); if (span) span.textContent = label; else if (btn) setText(btn, /Continuar la Aventura/i, label);
   // Navidad: el pesebre en la tarjeta
   if (S.hoy >= 27 && scene) {
@@ -676,7 +679,7 @@ register('completado', {
     if (sub) { if (sorpresa) sub.textContent = 'Un juego sorpresa para hoy'; else sub.style.display = 'none'; }
     if (!sorpresa) { if (q) q.style.display = 'none'; $$(root, '[style*="rotate(-12deg)"], [style*="rotate(12deg)"]').forEach(c => { c.style.display = 'none'; }); }
     const btn = find(root, '¡A jugar!');
-    if (btn) { setText(btn, '¡A jugar!', sorpresa ? 'Abrir la sorpresa' : 'Volver al camino'); on(root, btn, () => sorpresa ? openSorpresa(n) : go('mapa', { thenCerrado: true }, 'down', { replace: true })); }
+    if (btn) { setText(btn, '¡A jugar!', sorpresa ? 'Ir al juego sorpresa' : 'Volver al camino'); on(root, btn, () => sorpresa ? openSorpresa(n) : go('mapa', { thenCerrado: true }, 'down', { replace: true })); }
     if (!sorpresa) {
       const no = find(root, 'Ahora no'); if (no) no.style.display = 'none';
       // sin subtítulo ni segunda fila: Teodoro baja un poco y el botón sube, para que no quede un hueco
@@ -1013,7 +1016,11 @@ register('imprimible', {
     const sheet = [...root.querySelectorAll('div, img')].find(x => x.style.transform && /rotate/.test(x.style.transform));
     sheet?.classList.add('a-pop');
     on(root, 'Volver', () => back(p.back || 'mapa'));
-    ['Imprimir', 'Guardar'].forEach(t => on(root, t, () => nota(t, 'En el celular se abre el menú del teléfono')));
+    // un solo botón: «Descargar» (en la app abre el PDF del día con el menú del teléfono)
+    find(root, 'Guardar')?.remove();
+    textEl(root, /^Abre las opciones del teléfono/)?.remove();
+    const desc = find(root, 'Imprimir');
+    if (desc) { desc.innerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;vertical-align:-3px"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Descargar'; desc.setAttribute('aria-label', 'Descargar'); on(root, desc, () => nota('Descargar', 'En la app se descarga el PDF del día')); }
   },
 });
 

@@ -36,6 +36,13 @@ const tap = (q) => p.evaluate((q) => {
 const js = (f, a) => p.evaluate(f, a);
 
 const SHOTS = {
+  'completado-9': async () => { await setup({ hoy: 9, upto: 8, completos: { 9: { contenido: true } }, scr: 'completado', params: { day: 9 } }); },
+  'ruleta-mapa': async () => { await setup({ hoy: 11, upto: 10, scr: 'mapa' }); await p.waitForTimeout(900); await js(() => document.querySelector('#viewport .layer:last-child .sheet-min')?.click()); },
+  'trivia-varias': async () => { await setup({ hoy: 1, upto: 0, completos: { 1: { contenido: true } } }); const i = await js(async () => { const { TRIVIA } = await import('/js/data.js'); return TRIVIA[1].findIndex(q => Array.isArray(q.a)); }); await js(async (i) => { const c = await import('/js/core.js'); c.go('trivia', { day: 1, i: Math.max(i, 0), ok: 0 }, 'none'); }, i); },
+  'trivia-fin': async () => { await setup({ hoy: 9, upto: 8, completos: { 9: { contenido: true } } }); await js(async () => { const c = await import('/js/core.js'); c.S.completos[9] = { contenido: true, trivia: true, estrellas: 3 }; c.save(); c.go('triviaFin', { day: 9, ok: 5 }, 'none'); }); },
+  'memorama': async () => { await setup({ hoy: 3, upto: 2, completos: { 3: { contenido: true, trivia: true, estrellas: 2 } } }); await js(async () => { const c = await import('/js/core.js'); c.go('memorama', { day: 3 }, 'none'); }); },
+  'desafio': async () => { await setup({ hoy: 9, upto: 8, completos: { 9: { contenido: true, trivia: true, estrellas: 2 } } }); await js(async () => { const c = await import('/js/core.js'); c.go('desafio', { day: 9 }, 'none'); }); },
+  'manana': async () => { await setup({ hoy: 10, upto: 10, scr: 'mapa', params: { thenCerrado: true } }); await p.waitForTimeout(2600); },
   'pre-hoy': async () => { await setup({ hoy: 0, inscrito: false, teaserVisto: true }); },
   'teaser': async () => { await setup({ hoy: 0, inscrito: false, teaserVisto: true }); await js(async () => { const c = await import('/js/core.js'); c.go('teaser', {}, 'modal'); }); },
   'listo': async () => { await setup({ hoy: 0, inscrito: false, teaserVisto: true }); await tap('Unirme gratis'); await p.waitForTimeout(400); await tap('Unirme gratis'); },
@@ -59,7 +66,6 @@ const SHOTS = {
   'trivia-texto': async () => { await setup({ hoy: 9, upto: 8, completos: { 9: { contenido: true } } }); const i = await js(async () => { const { TRIVIA } = await import('/js/data.js'); return TRIVIA[9].findIndex(q => !q.o.some(o => o.img)); }); await js(async (i) => { const c = await import('/js/core.js'); c.go('trivia', { day: 9, i: Math.max(i, 0), ok: 0 }, 'none'); }, i); },
   'adivinanza-listos': async () => { await setup({ hoy: 7, upto: 6 }); await js(async () => { const c = await import('/js/core.js'); c.go('adivinanzaIntro', { day: 6 }, 'none'); }); await p.waitForTimeout(600); await tap('¡A jugar!'); },
   'desafio-cartas': async () => { await setup({ hoy: 10, upto: 9 }); await js(async () => { const c = await import('/js/core.js'); c.go('desafioIntro', { day: 9 }, 'none'); }); },
-  'calificacion': async () => { await setup({ hoy: 10, upto: 9, scr: 'mapa' }); await p.waitForTimeout(600); await js(async () => { const c = await import('/js/core.js'); c.go('calificacion', { day: 9 }, 'page'); }); await p.waitForTimeout(500); },
   'free': async () => { await setup({ hoy: 13, upto: 12, extra: { plan: 'free' } }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 13 }, 'none'); }); await p.waitForTimeout(600); await tap('Pesebre para colorear'); },
   'teodoro': async () => { await setup({ hoy: 9, upto: 8, scr: 'teodoro' }); },
   'hoy-dia1': async () => { await setup({ hoy: 1 }); },

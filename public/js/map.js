@@ -452,7 +452,7 @@ function showPast(layer, n, el) {
   // la sorpresa que dejó para después sigue aquí
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-alt';
-    b.innerHTML = `<img src="${A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain"><span>Abrir la sorpresa · ${SORPRESA_NOMBRE[RULES.sorpresa[n]]}</span><svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
+    b.innerHTML = `<img src="${A(IMG.dorso)}" alt="" style="width:22px;height:22px;object-fit:contain"><span>Juego sorpresa · ${SORPRESA_NOMBRE[RULES.sorpresa[n]]}</span><svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
     cta.after(b); sheet.style.height = 'auto'; on(layer, b, () => openSorpresa(n));
   }
   sheet.classList.add('in-up');
@@ -559,7 +559,7 @@ function paintSheet(layer, T, dia) {
       list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Se abre al terminar ${CONT[2]}`, isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
     }
     const sorp = RULES.sorpresa[n];
-    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));
+    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay juego sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));
   }
   // imprimible del día (lienzo): una fila tocable
   if (n >= 1 && T.printRow) {
@@ -593,6 +593,7 @@ function paintSheet(layer, T, dia) {
   const ICO = {
     trivia: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     regalo: `<img src="${A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain">`,
+    dorso: `<img src="${A(IMG.dorso)}" alt="" style="width:22px;height:22px;object-fit:contain">`,
     casa: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1Z"/></svg>',
   };
   let altHecho = false; // máximo una acción secundaria por hoja
@@ -607,7 +608,7 @@ function paintSheet(layer, T, dia) {
   const mas = /trivia/i.test(label.text);
   if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
   const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');
-  if (n > 0 && sorpPend.length) addAlt(`Sorpresa pendiente · ${SORPRESA_NOMBRE[RULES.sorpresa[sorpPend[0]]]}`, 'regalo', () => openSorpresa(sorpPend[0]), {}, `Día ${sorpPend[0]}`);
+  if (n > 0 && sorpPend.length) addAlt(`Juego sorpresa · ${SORPRESA_NOMBRE[RULES.sorpresa[sorpPend[0]]]}`, 'dorso', () => openSorpresa(sorpPend[0]), {}, `Día ${sorpPend[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
   sheet.style.height = 'auto';
   sheet.classList.add('in-up');
@@ -650,7 +651,7 @@ function sheetDrag(layer) {
     const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.firstChild?.textContent.trim() || ''; // sin la cita
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
-    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Abrir la sorpresa': 'Sorpresa', 'Invitar a un amigo': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
+    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar a un amigo': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
     const corto = CORTOS[verbo] || (verbo.length > 15 ? verbo.split(' ')[0] : verbo);
     const play = !!cta?.querySelector('svg') && cta.querySelector('svg').style.display !== 'none';
     // imagen, un texto corto y el botón; lo pendiente es un punto, no una frase

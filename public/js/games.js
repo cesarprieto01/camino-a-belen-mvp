@@ -305,7 +305,10 @@ register('triviaFin', {
     on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame(n));
     const vc = find(root, 'Volver al camino'); if (vc) vc.dataset.back = '1';
     on(root, 'Jugar otra vez', () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'fade'));
-    on(root, 'Abrir la sorpresa', () => openSorpresa(n));
+    on(root, 'Ir al juego sorpresa', () => openSorpresa(n));
+    // el aviso de la sorpresa muestra cartas de juego, no un regalo (no es un premio)
+    const aviso = textEl(root, '¡Hoy hay juego sorpresa!')?.closest('div[style*="border-radius"]');
+    aviso?.querySelectorAll('img').forEach(i => { i.src = A(IMG.dorso); i.style.objectFit = 'contain'; });
     on(root, 'Ahora no', () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(n); });
   },
 });
@@ -628,7 +631,7 @@ export function rateRow(root, n, extra) {
   const back = { ...(cur?.params || { day: n }) };
   on(root, row.querySelector('.rr-share'), () => go('compartir', { day: n, extra, back }, 'page'));
   // sitio: encima del subtítulo (si se ve) o del botón principal; Teodoro se achica/sube lo justo para no montarse
-  const btn = [...root.children].find(el => el.tagName === 'A' && /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(el.textContent.trim()));
+  const btn = [...root.children].find(el => el.tagName === 'A' && /^(¡A jugar!|Ir al juego sorpresa|Volver al camino)$/.test(el.textContent.trim()));
   const sub = [...root.children].find(el => el.tagName === 'DIV' && /sobre el (video|reto|cuento) de hoy|juego sorpresa/.test(el.textContent) && el.style.display !== 'none');
   // sin subtítulo, el botón vuelve a su sitio de siempre (la fila llena el hueco que antes se cerraba subiéndolo)
   if (btn && !sub && btn.offsetTop < 676) btn.style.top = '676px';

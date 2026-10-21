@@ -120,7 +120,7 @@ const flows = {
     const info = await p.evaluate(async () => { const { TRIVIA } = await import('/js/data.js'); const q = TRIVIA[3][4]; return { a: q.a, o: q.o.map(o => o.t || o) }; });
     if (Array.isArray(info.a)) { for (const i of info.a) await tap(info.o[i]); await tap('Comprobar'); } else await tap(info.o[info.a]);
     await tap('Ver resultado'); await shot('fin-sorpresa');
-    await tap('Abrir la sorpresa'); await shot('memorama-reglas');
+    await tap('Ir al juego sorpresa'); await shot('memorama-reglas');
     await tap('¡A jugar!'); await shot('memorama');
     // resolver: voltear por parejas
     const n = await p.evaluate(() => document.querySelectorAll('.mm-card').length);
@@ -281,9 +281,9 @@ const flows = {
           case 'ruletaPremio': case 'premioCuarto': if (!(await clickYellow())) errs.push(`día ${d}: premio sin botón`); break;
           case 'reproductor': await finishPlayer(); await p.waitForTimeout(900); break;
           case 'hub': await tap('¡Lo hicimos!'); await p.waitForTimeout(600); break;
-          case 'completado': { if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rate-row'))) await rate(`día ${d}`); const t = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].map(a => a.textContent.trim()).find(x => /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(x))); await tap(t || '¡A jugar!'); break; }
+          case 'completado': { if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rate-row'))) await rate(`día ${d}`); const t = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].map(a => a.textContent.trim()).find(x => /^(¡A jugar!|Ir al juego sorpresa|Volver al camino)$/.test(x))); await tap(t || '¡A jugar!'); break; }
           case 'trivia': await answerTrivia(); break;
-          case 'triviaFin': if (!(await tap('Abrir la sorpresa'))) { errs.pop(); await tap('Volver al camino'); } break;
+          case 'triviaFin': if (!(await tap('Ir al juego sorpresa'))) { errs.pop(); await tap('Volver al camino'); } break;
           case 'memoramaReglas': await clickYellow(); break;
           case 'memorama': await playMemorama(); await p.waitForTimeout(1200); break;
           case 'adivinanzaIntro': await clickYellow(); break;
@@ -422,7 +422,7 @@ const flows = {
     await shot('mapa-sin-trivia');
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 12, inscrito: true, teaserVisto: true }); for (let d = 0; d <= 11; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('completado', { day: 12 }, 'none'); c.S.completos[12] = { contenido: true }; c.save(); });
     await p.waitForTimeout(1200); await shot('completado-sorpresa');
-    await tap('Abrir la sorpresa'); await p.waitForTimeout(900);
+    await tap('Ir al juego sorpresa'); await p.waitForTimeout(900);
     if (await screen() !== 'memoramaReglas') errs.push('día 12 sin trivia no abre la sorpresa: ' + await screen());
   },
   // títulos y subtítulos de los 26 días: nada encima de otra cosa ni cortado (reproductor, hoja del mapa, hub)
@@ -466,7 +466,7 @@ const flows = {
         const L = document.querySelector('#viewport .layer:last-child'); const vis = el => el && el.offsetParent && getComputedStyle(el).display !== 'none';
         const R = el => vis(el) ? el.getBoundingClientRect().toJSON() : null; const kids = [...L.querySelector('.root').firstElementChild.children];
         const tit = kids.find(el => /¿Jugamos|Hoy toca|Un paso más/.test(el.textContent) && el.tagName === 'DIV');
-        const btn = kids.find(el => el.tagName === 'A' && /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(el.textContent.trim()));
+        const btn = kids.find(el => el.tagName === 'A' && /^(¡A jugar!|Ir al juego sorpresa|Volver al camino)$/.test(el.textContent.trim()));
         const sub = kids.find(el => el.tagName === 'DIV' && /sobre el (video|reto)|juego sorpresa/.test(el.textContent));
         return { tit: R(tit), rate: R(L.querySelector('.rate-row')), sub: R(sub), btn: R(btn), teo: R([...L.querySelectorAll('img')].find(i => /Teodoro/.test(i.alt || ''))) };
       });

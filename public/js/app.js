@@ -119,6 +119,7 @@ const DECISIONES = [
   'Racha = la que traía en Theo (3) + días seguidos del camino; si se salta un día, cuenta desde ahí.',
 ];
 const PENDIENTES_LIENZO = [
+  'PREGUNTA ABIERTA · Días 7 y 21 «Juego con Teodoro»: el cronograma no dice qué juego es. Hoy abren un video con «Jugar». Falta definir el juego (o si es un juego que ya existe: Memorama, Adivinanza, Desafío).',
   'Escenas de los días 1 y 2 (Arte 5 las marca como «FALTA»).',
   'Ícono del día 25 · Video (Íconos del camino: «Aún sin ícono»).',
   'Cuarto de Teodoro: nombre, racha y panes van pintados en la imagen; el MVP los tapa con los datos reales. Conviene exportar el cuarto sin esos datos.',
