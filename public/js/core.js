@@ -170,7 +170,7 @@ const TABS = ['hoy', 'teodoro', 'mundos'];
 // Pantallas de paso: celebraciones, pasos automáticos y juegos en curso. «Volver» nunca regresa a ellas.
 export const DE_PASO = new Set(['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto',
   'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin',
-  'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'estatica']);
+  'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'estatica', 'compartir']);
 const dePaso = name => DE_PASO.has(name) || (name === 'teaser' && S.inscrito);
 export function go(name, params = {}, anim = 'push', opts = {}) {
   if (inFlight === name) return busy; // doble toque

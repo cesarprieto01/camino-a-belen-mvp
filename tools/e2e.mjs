@@ -53,6 +53,8 @@ const tap = async (q) => {
   if (process.env.DEBUG) console.log('tap', q, '→', await p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen).join('>')));
   return ok;
 };
+// al terminar cada video o canción: calificar con 4 estrellas en «¡Terminaste!» (el siguiente paso lo toca quien llama)
+const rate = async (tag = '') => { if ((await screen()) !== 'completado' || !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rate-row')))) { errs.push(`${tag}: «¡Terminaste!» sin la fila de calificar (${await screen()})`); return; } await tap('4 de 5 estrellas'); const k = await p.evaluate(async () => (await import('/js/core.js')).S.calificaciones); if (!k || !Object.values(k).includes(4)) errs.push(`${tag}: no se guardó la calificación`); };
 const scenario = async (i) => { if (!(await p.evaluate(() => document.querySelectorAll('[data-tab]').length))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
 const answerTrivia = async () => {
   for (let q = 0; q < 5; q++) {
@@ -80,8 +82,8 @@ const flows = {
   async dia() {
     await shot('hoy');
     await tap('Continuar la aventura'); await shot('mapa');
-    await tap('Ver historia'); await shot('reproductor');
-    await p.waitForTimeout(9500); await shot('completado');
+    await tap('Ver video'); await shot('reproductor');
+    await p.waitForTimeout(9500); await shot('completado'); await rate('dia'); await shot('calificado');
     await tap('¡A jugar!'); await shot('trivia');
     await answerTrivia(); await shot('trivia-fin');
     await tap('Ahora no'); await p.waitForTimeout(1500); await shot('mapa-avanza');
@@ -148,17 +150,18 @@ const flows = {
   },
   async reto() {
     await scenario('Reto en familia'); await tap('Ver el reto'); await shot('hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await shot('completado');
-    // desde el hub, el «¡Lo hicimos!» del desafío cierra el reto (una sola confirmación)
-    await scenario('Reto en familia'); await tap('Ver el reto'); await tap('Reto en familia'); await tap('¡Vamos!'); await shot('desafio-hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200);
-    if (await screen() !== 'completado') errs.push('desafío desde el hub no va a completado: ' + await screen());
-    await shot('desafio-hub-completado');
+    // los retos y el juego en familia muestran sus pasos (del cronograma) y el descargable del día
+    const hubDe = async (n) => { await p.evaluate(async (n) => { const c = await import('/js/core.js'); c.go('hub', { day: n }, 'none'); }, n); await p.waitForTimeout(900); return p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { pasos: [...L.querySelectorAll('.hub-pasos li')].map(li => li.textContent), txt: L.textContent }; }); };
+    for (const [n, re] of [[6, /perdonar/], [13, /colores/], [19, /linterna/], [14, /oído/]]) { const h = await hubDe(n); if (h.pasos.length < 2 || !re.test(h.pasos.join(' '))) errs.push(`hub del día ${n} sin sus pasos: ` + JSON.stringify(h.pasos)); }
+    const h13 = await hubDe(13); if (!/Pesebre para colorear/.test(h13.txt)) errs.push('el hub del día 13 no ofrece el pesebre para colorear');
+    await shot('hub-pasos');
   },
   async regreso() { await scenario('Regreso tras una semana'); await shot('regreso'); await tap('Empezar por el día'); await shot('mapa'); },
   async atrasado() { await scenario('Va atrasado'); await shot('hoy-atrasado'); await tap('Continuar la aventura'); await shot('mapa'); },
   async nochebuena() { await scenario('Nochebuena'); await shot('mapa'); await tap('Comenzar'); await p.waitForTimeout(800); await shot('final'); },
   async oscuro() {
     await p.evaluate(() => document.querySelector('[data-tema="oscuro"]')?.click()); await p.waitForTimeout(900); await shot('hoy');
-    await tap('Continuar la aventura'); await shot('mapa'); await tap('Ver historia'); await shot('repro');
+    await tap('Continuar la aventura'); await shot('mapa'); await tap('Ver video'); await shot('repro');
     await p.waitForTimeout(9500); await tap('¡A jugar!'); await shot('trivia'); await answerTrivia(); await shot('fin');
   },
   async post() { await scenario('Terminó incompleto'); await shot('hoy-incompleto'); await scenario('Terminó completo'); await shot('hoy-completo'); },
@@ -194,9 +197,9 @@ const flows = {
     await p.waitForTimeout(3200); await shot('cerrado');
     const ov = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen).join('>'));
     if (ov !== 'mapa>cerrado') errs.push('cerrado no es hoja sobre el mapa: ' + ov);
-    await tap('¿Les gustó hoy?'); await shot('calificar'); await tap('¡Mucho!'); await shot('calificar-elegido'); await p.waitForTimeout(800);
-    if (await screen() !== 'mapa') errs.push('tras calificar: esperaba mapa, quedó ' + await screen());
-    await tap('Atrás'); await shot('hoy-fin');
+    // ya no se califica el día al cerrarlo (se califica cada video al terminarlo)
+    if (await p.evaluate(() => /¿Les gustó hoy\?/.test(document.querySelector('#viewport .layer:last-child').textContent))) errs.push('el cierre del día todavía pide «¿Les gustó hoy?»');
+    await tap('Hasta mañana'); await p.waitForTimeout(900); await shot('hoy-fin');
   },
   // entrar por primera vez: desde cero hasta el día 1
   async inicio() {
@@ -226,7 +229,7 @@ const flows = {
   async paginas() {
     const layers = () => p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen + (l.classList.contains('ov-page') ? '(hoja)' : '')).join('>'));
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.plan = 'free'; c.S.hoy = 13; for (let d = 9; d < 13; d++) c.S.completos[d] = { contenido: true, trivia: true }; c.save(); c.go('hub', { day: 13 }, 'none'); });
-    await p.waitForTimeout(900); await tap('Imprimible'); await p.waitForTimeout(500); await shot('free');
+    await p.waitForTimeout(900); await tap('Pesebre para colorear'); await p.waitForTimeout(500); await shot('free');
     if (await layers() !== 'hub>free(hoja)') errs.push('free no es hoja sobre el reto: ' + await layers());
     await tap('Ahora no'); await p.waitForTimeout(500);
     if (await layers() !== 'hub') errs.push('al cerrar free no queda el reto: ' + await layers());
@@ -278,7 +281,7 @@ const flows = {
           case 'ruletaPremio': case 'premioCuarto': if (!(await clickYellow())) errs.push(`día ${d}: premio sin botón`); break;
           case 'reproductor': await finishPlayer(); await p.waitForTimeout(900); break;
           case 'hub': await tap('¡Lo hicimos!'); await p.waitForTimeout(600); break;
-          case 'completado': { const t = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].map(a => a.textContent.trim()).find(x => /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(x))); await tap(t || '¡A jugar!'); break; }
+          case 'completado': { if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rate-row'))) await rate(`día ${d}`); const t = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].map(a => a.textContent.trim()).find(x => /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(x))); await tap(t || '¡A jugar!'); break; }
           case 'trivia': await answerTrivia(); break;
           case 'triviaFin': if (!(await tap('Abrir la sorpresa'))) { errs.pop(); await tap('Volver al camino'); } break;
           case 'memoramaReglas': await clickYellow(); break;
@@ -333,7 +336,7 @@ const flows = {
   },
   // «volver» nunca regresa a celebraciones, premios ni juegos ya terminados
   async volver() {
-    const PASO = ['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion'];
+    const PASO = ['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'compartir'];
     const backs = async (tag, n = 5) => {
       const ruta = [await screen()];
       for (let i = 0; i < n; i++) {
@@ -354,7 +357,7 @@ const flows = {
     await st({ s: { hoy: 17 }, upto: 16 }); await p.waitForTimeout(900);
     await tap('Continuar la aventura'); await p.waitForTimeout(700);
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
-    await finishPlayer(); await p.waitForTimeout(1300); await tap('¡A jugar!'); await answerTrivia(); await p.waitForTimeout(500);
+    await finishPlayer(); await p.waitForTimeout(1300); await rate('volver'); await tap('¡A jugar!'); await answerTrivia(); await p.waitForTimeout(500);
     await tap('Volver al camino'); await p.waitForTimeout(3500);
     await backs('día completo', 4);
     // 3) ruleta (se toca en el mapa) → premio → mapa; la historia se abre sin ruleta
@@ -366,8 +369,8 @@ const flows = {
     await p.goBack(); await p.waitForTimeout(1000);
     if ((await screen()) !== 'mapa') errs.push('atrás en el premio de la ruleta no vuelve al mapa: ' + await screen());
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
-    if ((await screen()) !== 'reproductor') errs.push('«Ver historia» en día de ruleta no abre la historia: ' + await screen());
-    await finishPlayer(); await p.waitForTimeout(1300); await tap('Ahora no'); await p.waitForTimeout(900);
+    if ((await screen()) !== 'reproductor') errs.push('«Ver video» en día de ruleta no abre el video: ' + await screen());
+    await finishPlayer(); await p.waitForTimeout(1300); await rate('volver'); await tap('Ahora no'); await p.waitForTimeout(900);
     await backs('ruleta', 4);
     // 4) sorpresa (desafío) → final → mapa
     await st({ s: { hoy: 9 }, upto: 9 }); await p.waitForTimeout(900);
@@ -409,7 +412,7 @@ const flows = {
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 10, inscrito: true, teaserVisto: true }); for (let d = 0; d <= 9; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('reproductor', { day: 10 }, 'none'); });
     await p.waitForTimeout(800);
     await p.evaluate(() => { const sl = document.querySelector('#viewport .layer:last-child [role=slider]'); const r = sl.getBoundingClientRect(); sl.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.right - 1, clientY: r.top + 5 })); });
-    await p.waitForTimeout(1400); await shot('completado-sin-trivia');
+    await p.waitForTimeout(1400); await rate('sintrivia'); await shot('completado-sin-trivia');
     const txt = await p.evaluate(() => document.querySelector('#viewport .layer:last-child').textContent);
     if (/¡A jugar!|trivia/i.test(txt)) errs.push('día sin trivia todavía ofrece la trivia');
     const st = await p.evaluate(async () => { const c = await import('/js/core.js'); return { done: c.isDone(10), st: c.stars(10), act: c.activeDay() }; });
@@ -421,6 +424,50 @@ const flows = {
     await p.waitForTimeout(1200); await shot('completado-sorpresa');
     await tap('Abrir la sorpresa'); await p.waitForTimeout(900);
     if (await screen() !== 'memoramaReglas') errs.push('día 12 sin trivia no abre la sorpresa: ' + await screen());
+  },
+  // títulos y subtítulos de los 26 días: nada encima de otra cosa ni cortado (reproductor, hoja del mapa, hub)
+  async titulos() {
+    const cruza = (a, b) => a && b && a.bottom > b.top + 1 && a.top < b.bottom - 1 && a.right > b.left + 1 && a.left < b.right - 1;
+    for (let n = 1; n <= 26; n++) {
+      // reproductor
+      await p.evaluate(async (n) => { const c = await import('/js/core.js'); c.reset({ hoy: n, inscrito: true, teaserVisto: true }); for (let d = 0; d < n; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('reproductor', { day: n }, 'none'); }, n);
+      await p.waitForTimeout(500);
+      const r = await p.evaluate(() => {
+        const L = document.querySelector('#viewport .layer:last-child'); const sl = L.querySelector('[role=slider]');
+        const t = L.querySelector('.rep-sub')?.parentElement; const R = el => el && el.getBoundingClientRect().toJSON();
+        const x = L.querySelector('[aria-label="Cerrar"]');
+        return { scr: L.dataset.screen, t: R(t), sl: R(sl), x: R(x), corta: t ? t.scrollWidth > t.clientWidth + 1 : false, txt: t?.textContent };
+      });
+      if (process.env.DEBUG) console.log(n, JSON.stringify({ t: r.t && [r.t.top|0, r.t.bottom|0], sl: r.sl && r.sl.top|0, txt: r.txt }));
+      if (r.scr === 'reproductor') {
+        if (!r.t) errs.push(`reproductor día ${n}: sin la línea bajo el título`);
+        else if (r.t.bottom > r.sl.top - 4) errs.push(`reproductor día ${n}: el título se monta sobre la barra («${r.txt}»)`);
+        if (cruza(r.t, r.x)) errs.push(`reproductor día ${n}: el título choca con la X`);
+        if (r.corta) errs.push(`reproductor día ${n}: título cortado («${r.txt}»)`);
+      }
+      // hoja del mapa
+      await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('mapa', {}, 'none', { replace: true }); });
+      await p.waitForTimeout(1300);
+      const h = await p.evaluate(() => {
+        const L = document.querySelector('#viewport .layer:last-child'); const sh = L.querySelector('[data-sheet]'); if (!sh) return null;
+        const head = sh.querySelector('.sheet-head'); const rows = [...sh.querySelectorAll('.sheet-row, :scope > a')].filter(e => e.offsetParent);
+        const R = el => el.getBoundingClientRect().toJSON();
+        const cortado = [head, ...rows].filter(Boolean).flatMap(e => [...e.querySelectorAll('div, span')]).filter(e => e.childElementCount === 0 && e.textContent.trim() && e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).textOverflow !== 'ellipsis').map(e => e.textContent.trim());
+        return { head: head && R(head), rows: rows.map(R), cortado, txt: head?.textContent };
+      });
+      if (h) {
+        const all = [h.head, ...h.rows].filter(Boolean);
+        for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) if (cruza(all[i], all[j])) errs.push(`hoja día ${n}: se montan dos filas («${h.txt}»)`);
+        if (h.cortado.length) errs.push(`hoja día ${n}: texto cortado sin «…»: ${h.cortado.join(' | ')}`);
+      }
+      // hub (retos y juego en familia)
+      if ([6, 13, 14, 19].includes(n)) {
+        await p.evaluate(async (n) => { const c = await import('/js/core.js'); c.go('hub', { day: n }, 'none'); }, n); await p.waitForTimeout(600);
+        const u = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); const tit = [...L.querySelectorAll('div')].find(d => d.style.fontSize === '24px'); const card = L.querySelector('.hub-pasos'); const R = el => el && el.getBoundingClientRect().toJSON(); return { tit: R(tit?.parentElement), card: R(card), over: card ? card.scrollHeight > card.clientHeight + 1 : false }; });
+        if (cruza(u.tit, u.card)) errs.push(`hub día ${n}: el título se monta sobre los pasos`);
+        if (u.over) errs.push(`hub día ${n}: los pasos no caben en la tarjeta`);
+      }
+    }
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };

@@ -47,17 +47,19 @@ const SCENES = {
   24: '47459af67a4b5599e33f6147ecedf0f3', 25: 'ff5ba60d05369d61e404403a80c98628', 26: '455d2635515c50327d1e7cc360590069',
 };
 
+// Formato de cada tipo (cronograma de contenido): fila de la hoja, botón y lo que se celebra al terminar.
+// Video: cuento, meditación, Evangelio del domingo (lo lee un influencer), Amigos de la Biblia y Navidad de Canela.
 export const TYPES = {
-  intro: { label: 'Teodoro te lo cuenta', content: 'Historia', min: 3 },
-  domingo: { label: 'Domingo', content: 'Evangelio', min: 4 },
-  meditacion: { label: 'Meditación', content: 'Meditación', min: 4 },
-  cuento: { label: 'Cuento con Teodoro', content: 'Cuento', min: 5 },
-  amigos: { label: 'Amigos de la Biblia', content: 'Historia', min: 5 },
-  cancion: { label: 'Canción', content: 'Canción', min: 3 },
-  reto: { label: 'Reto en familia', content: 'Reto en familia', min: 10 },
-  juego: { label: 'Juego con Teodoro', content: 'Juego', min: 5 },
-  video: { label: 'Video', content: 'Video', min: 6 },
-  nochebuena: { label: 'Nochebuena', content: 'Actividad final', min: 6 },
+  intro: { label: 'Teodoro te lo cuenta', content: 'Video', min: 3, verbo: 'Ver video', fin: '¡Terminaste el video!' },
+  domingo: { label: 'Domingo', content: 'Video', min: 4, verbo: 'Ver video', fin: '¡Escucharon el Evangelio!' },
+  meditacion: { label: 'Meditación', content: 'Video', min: 4, verbo: 'Ver video', fin: '¡Terminaste el video!' },
+  cuento: { label: 'Cuento con Teodoro', content: 'Video', min: 5, verbo: 'Ver video', fin: '¡Terminaste el video!' },
+  amigos: { label: 'Amigos de la Biblia', content: 'Video', min: 5, verbo: 'Ver video', fin: '¡Terminaste el video!' },
+  cancion: { label: 'Canción', content: 'Canción', min: 3, verbo: 'Escuchar canción', fin: '¡Terminaste la canción!' },
+  reto: { label: 'Reto en familia', content: 'Reto en familia', min: 10, verbo: 'Ver el reto', fin: '¡Hicieron el reto!' },
+  juego: { label: 'Juego', content: 'Juego', min: 5, verbo: 'Jugar', fin: '¡Jugaron con Teodoro!' },
+  video: { label: 'Video', content: 'Video', min: 6, verbo: 'Ver video', fin: '¡Terminaste el video!' },
+  nochebuena: { label: 'Actividad final', content: 'Actividad final', min: 6, verbo: 'Comenzar', fin: '¡Llegamos a Belén!' },
 };
 
 const MESES = ['NOVIEMBRE', 'DICIEMBRE'];
@@ -69,35 +71,46 @@ export function dateOf(day) {
 }
 
 const D = (n, type, title, extra = {}) => ({ n, type, title, scene: SCENES[n] || null, ...extra });
+// sub: una línea (≤60) sacada de la descripción del cronograma · cita: la lectura y la velita (domingos), en segunda línea · reto/pasos: lo que se hace en el hub ·
+// descarga: la fila «descargable» de la hoja (en los retos de acción lleva a los pasos del reto)
+const DESCARGA = { t: 'Imprimible del día', s: 'Para colorear en familia' };
+const ACCION = { t: 'Reto del día', s: 'Los pasos para hacerlo juntos', accion: true };
 export const DAYS = [
   D(0, 'intro', '¿Qué es el Adviento?', { sub: 'No esperamos algo, esperamos a Alguien' }),
-  D(1, 'domingo', 'Domingo de la Esperanza', { vela: 1 }),
-  D(2, 'meditacion', 'Estamos esperando a alguien'),
-  D(3, 'cuento', 'Maranatha en mi corazón'),
-  D(4, 'amigos', 'Parábola de los talentos'),
-  D(5, 'cancion', 'Maranatha'),
-  D(6, 'reto', 'Es hora de preparar el corazón', { reto: 'Escribe una carta a Jesús', retoSub: 'Cuéntale cómo quieres preparar tu corazón' }),
-  D(7, 'juego', 'Juego con Teodoro'),
-  D(8, 'domingo', 'Domingo de la Fe', { vela: 2 }),
-  D(9, 'meditacion', 'Meditación de la Escucha'),
-  D(10, 'cuento', 'Orejas de Shemá'),
-  D(11, 'amigos', 'La casa sobre la roca'),
-  D(12, 'cancion', 'Shemá'),
-  D(13, 'reto', 'Pesebre', { reto: 'Coloréalo con tu familia', retoSub: 'Pesebre para colorear' }),
-  D(14, 'juego', 'Teléfono roto con la Biblia'),
-  D(15, 'domingo', 'Domingo de la Alegría', { vela: 3 }),
-  D(16, 'cuento', 'Esperanza en 4 patas'),
-  D(17, 'meditacion', 'Jaire, la alegría que viene de Dios'),
-  D(18, 'amigos', 'La oveja perdida'),
-  D(19, 'reto', 'Prende tu luz', { reto: 'Haz algo bueno sin que nadie lo sepa', retoSub: 'Como una luz escondida que alumbra' }),
-  D(20, 'cancion', 'Talita'),
-  D(21, 'juego', 'Juego con Teodoro'),
-  D(22, 'domingo', 'Domingo del Amor', { vela: 4 }),
-  D(23, 'cuento', 'Un burro de Navidad'),
-  D(24, 'amigos', 'Especial de Navidad'),
-  D(25, 'video', 'Navidad de Canela'),
-  D(26, 'nochebuena', 'Nochebuena'),
+  D(1, 'domingo', 'Domingo de la Esperanza', { cita: 'Mc 13,33-37 · 1.ª velita', vela: 1, sub: 'Esperamos a Jesús con el corazón despierto', descarga: { t: 'Corona de Adviento', s: 'Ármenla en familia' } }),
+  D(2, 'meditacion', 'Estamos esperando a alguien', { sub: 'Jesús vino, viene y vendrá' }),
+  D(3, 'cuento', 'Maranatha en mi corazón', { sub: 'Ser pesebre para que Jesús llegue' }),
+  D(4, 'amigos', 'Parábola de los talentos', { sub: 'Cuidar lo que Dios nos confía' }),
+  D(5, 'cancion', 'Maranatha', { sub: 'Ven, Señor Jesús' }),
+  D(6, 'reto', 'Es hora de preparar el corazón', { sub: '«Les daré un corazón nuevo» (Ez 36,26)', reto: 'Ordenen algo por fuera y algo por dentro', descarga: ACCION,
+    pasos: ['Ordenen juntos el cuarto: cada cosa en su lugar.', 'Piensen en alguien a quien perdonar y díganselo con cariño.', 'Recen juntos: «Jesús, dame un corazón nuevo».'] }),
+  D(7, 'juego', 'Juego con Teodoro', { sub: 'Un rato para jugar juntos con Teodoro' }),
+  D(8, 'domingo', 'Domingo de la Fe', { cita: 'Mc 1,1-8 · 2.ª velita', vela: 2, sub: '«Preparen el camino del Señor»' }),
+  D(9, 'meditacion', 'Meditación de la Escucha', { sub: 'Dios nos pide escuchar: Shemá' }),
+  D(10, 'cuento', 'Orejas de Shemá', { sub: 'Isaías escucha y responde: «Aquí estoy»' }),
+  D(11, 'amigos', 'La casa sobre la roca', { sub: 'Escuchar a Jesús y ponerlo en práctica' }),
+  D(12, 'cancion', 'Shemá', { sub: 'Una canción para escuchar a Dios' }),
+  D(13, 'reto', 'Pesebre', { sub: 'Un rincón que recuerda que Dios está con ustedes', reto: 'Coloréalo con tu familia', descarga: { t: 'Pesebre para colorear', s: 'Para tenerlo en casa' },
+    pasos: ['Imprime el pesebre y busquen sus colores.', 'Mientras pintan, hablen de María, José, los pastores y Jesús.', 'Pónganlo en un rincón especial de la casa.'] }),
+  D(14, 'juego', 'Teléfono roto con la Biblia', { sub: 'Una frase de la Biblia que pasa de oído en oído', 
+    pasos: ['Siéntense en ronda. Papá o mamá elige una frase, como «Preparen el camino del Señor».', 'Se la dicen al oído al de al lado, y así hasta el último.', 'El último la dice en voz alta: ¿llegó igual? Léanla juntos.'] }),
+  D(15, 'domingo', 'Domingo de la Alegría', { cita: 'Jn 1,6-8.19-28 · 3.ª velita (rosa)', vela: 3, sub: 'Nos alegramos: la Luz ya está cerca' }),
+  D(16, 'cuento', 'Esperanza en 4 patas', { sub: 'Un fuego que enciende el mundo' }),
+  D(17, 'meditacion', 'Jaire, la alegría que viene de Dios', { sub: 'La alegría es saber que Dios está conmigo' }),
+  D(18, 'amigos', 'La oveja perdida', { sub: 'Hay alegría en el cielo por cada uno' }),
+  D(19, 'reto', 'Prende tu luz', { sub: '«Tú eres la luz del mundo»', reto: '«Tú eres la luz del mundo»', descarga: ACCION,
+    pasos: ['Con papá o mamá, apaguen las luces y prendan una velita o una linterna.', 'Miren cómo la oscuridad desaparece.', 'Pregúntense: ¿a quién puedo iluminar hoy? ¿Cómo puedo ser luz?'] }),
+  D(20, 'cancion', 'Talita', { sub: 'Hay alegría en el cielo' }),
+  D(21, 'juego', 'Juego con Teodoro', { sub: 'Un rato para jugar juntos con Teodoro' }),
+  D(22, 'domingo', 'Domingo del Amor', { cita: 'Lc 1,26-38 · 4.ª velita', vela: 4, sub: 'María le dice sí a Jesús' }),
+  D(23, 'cuento', 'Un burro de Navidad', { sub: 'Un cuento de Navidad con Teodoro' }),
+  D(24, 'amigos', 'Especial de Navidad', { sub: 'Los Amigos de la Biblia esperan la Navidad' }),
+  D(25, 'video', 'Navidad de Canela', { sub: 'Un cuento de Navidad' }),
+  D(26, 'nochebuena', 'El Tamborilero', { cita: 'Actividad final', sub: 'Llegamos a Belén: hoy nace Jesús' }),
 ];
+DAYS.forEach(d => { d.descarga ||= DESCARGA; });
+/** El día se hace en el hub (pasos + «¡Lo hicimos!») y no en el reproductor: retos y juegos en familia. */
+export const usaHub = n => DAYS[n]?.type === 'reto' || !!DAYS[n]?.pasos;
 
 // Reglas acordadas con César (20-oct-2026)
 export const RULES = {
@@ -406,5 +419,4 @@ TRIVIA[22][4] = P('¿Qué le dijo el ángel Gabriel a María?', ['Vete a dormir'
   fix('18.4', { ok: '¡Llamó a sus amigos para celebrar! Así se alegra el cielo (Lc 15,6-7)' });
   fix('20.2', { q: 'Jesús usa su poder para…' });
   fix('21.2', { q: '¿Quién cuidó a Jesús como papá aquí en la tierra?', pista: 'era carpintero', ok: '¡San José!' });
-  if (DAYS[19]) DAYS[19].retoSub = 'Tu Padre del cielo lo ve';
 }

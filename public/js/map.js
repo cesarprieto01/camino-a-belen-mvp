@@ -1,7 +1,7 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
 import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
-import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia } from './data.js';
+import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, usaHub } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
 
@@ -420,20 +420,21 @@ function showPast(layer, n, el) {
   old.replaceWith(sheet);
   const head = [...sheet.children].find(x => /YA LO HICISTE/.test(x.textContent));
   head.children[0].textContent = `YA LO HICISTE · DÍA ${n}`;
-  head.children[1].textContent = d.type === 'domingo' ? `Domingo · ${d.vela}.ª velita` : d.title;
+  head.children[1].textContent = d.title;
+  if (d.cita) { const c = document.createElement('span'); c.className = 'sheet-cita'; c.textContent = d.cita; head.children[1].appendChild(c); }
   const [r1, r2] = [...sheet.children].filter(x => isRow(x));
   const C = contOf(d.type);
   const ic = iconOf(n, dark()); if (ic) r1.querySelector('img').src = A(ic);
   const [t1, s1] = r1.querySelector(':scope > div').children; t1.textContent = C[0]; s1.textContent = C[1];
-  on(layer, r1.querySelector('a'), () => go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
+  on(layer, r1.querySelector('a'), () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
   const st = stars(n);
   const cta = [...sheet.children].find(x => x.tagName === 'A' && !isRow(x));
   if (!hasTrivia(n)) {
     // sin trivia: solo el contenido; el botón vuelve a verlo
     r2.remove();
     const tn = [...cta.querySelectorAll('*'), cta].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim());
-    if (tn) tn.nodeValue = { domingo: 'Escuchar otra vez', cancion: 'Escuchar otra vez', reto: 'Ver el reto' }[d.type] || 'Ver otra vez';
-    on(layer, cta, () => go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
+    if (tn) tn.nodeValue = { cancion: 'Escuchar otra vez', reto: 'Ver el reto', juego: 'Jugar otra vez' }[d.type] || 'Ver otra vez';
+    on(layer, cta, () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
   } else {
   r2.querySelectorAll('[role=img] svg path').forEach((p, i) => p.setAttribute('fill', i < st ? '#F7C948' : (dark() ? 'rgba(255,255,255,.28)' : '#D3DDE5')));
   r2.querySelector('[role=img]')?.setAttribute('aria-label', `${st} de 3 estrellas`);
@@ -445,7 +446,7 @@ function showPast(layer, n, el) {
   if (pr) {
     const r = document.createElement('div'); r.innerHTML = pr.innerHTML; r.setAttribute('style', pr.getAttribute('style'));
     r.className = 'sheet-row'; r.dataset.print = '1'; r.setAttribute('role', 'button'); r.tabIndex = 0; r.style.cursor = 'pointer';
-    r.setAttribute('aria-label', pr.getAttribute('aria-label') || 'Imprimible del día. Abrir');
+    filaDescarga(r, d);
     pr.replaceWith(r); on(layer, r, () => abrirDescargable(n, 'mapa'));
   }
   // la sorpresa que dejó para después sigue aquí
@@ -457,11 +458,19 @@ function showPast(layer, n, el) {
   sheet.classList.add('in-up');
   seen('S-03c-Mapa-dia-pasado');
 }
+/** Fila del descargable con el título del día (en los retos de acción lleva a los pasos del reto). */
+function filaDescarga(r, d) {
+  const { t, s, accion } = d.descarga;
+  const [pt, ps] = r.querySelector(':scope > div')?.children || [];
+  if (pt) pt.textContent = t; if (ps) ps.textContent = s;
+  r.setAttribute('aria-label', `${t}: ${s}. Abrir`);
+  if (accion) r.querySelector('svg path')?.setAttribute('d', 'M9 6l6 6-6 6');
+}
 export function contOf(type) {
   return {
-    meditacion: ['Historia', 'Ya la viste', 'la historia'], cuento: ['Historia', 'Ya la viste', 'la historia'], amigos: ['Historia', 'Ya la viste', 'la historia'],
-    intro: ['Historia', 'Ya la viste', 'la historia'], domingo: ['Evangelio', 'Ya lo escuchaste', 'el Evangelio'], cancion: ['Canción', 'Ya la cantaste', 'la canción'],
-    reto: ['Reto en familia', 'Ya lo hicieron', 'el reto'], juego: ['Juego con Teodoro', 'Ya jugaste', 'el juego'], video: ['Video', 'Ya lo viste', 'el video'],
+    meditacion: ['Video', 'Ya lo viste', 'el video'], cuento: ['Video', 'Ya lo viste', 'el video'], amigos: ['Video', 'Ya lo viste', 'el video'],
+    intro: ['Video', 'Ya lo viste', 'el video'], domingo: ['Video', 'Ya lo vieron', 'el video'], cancion: ['Canción', 'Ya la escuchaste', 'la canción'],
+    reto: ['Reto en familia', 'Ya lo hicieron', 'el reto'], juego: ['Juego', 'Ya jugaron', 'el juego'], video: ['Video', 'Ya lo viste', 'el video'],
     nochebuena: ['Actividad final', 'Ya llegaste', 'la actividad'],
   }[type];
 }
@@ -497,6 +506,7 @@ function paintSheet(layer, T, dia) {
     head.children[0].textContent = kicker;
     head.children[1].textContent = n === 0 ? '¿Qué es el Adviento?' : d.title;
     head.children[1].style.fontWeight = '700';
+    if (n > 0 && d.cita) { const c = document.createElement('span'); c.className = 'sheet-cita'; c.textContent = d.cita; head.children[1].appendChild(c); }
   }
 
   if (S.hoy <= 0) {
@@ -558,7 +568,7 @@ function paintSheet(layer, T, dia) {
     // un botón, no un enlace: el enlace de la hoja es solo el botón principal
     const r = document.createElement('div'); r.innerHTML = a.innerHTML; r.setAttribute('style', a.getAttribute('style'));
     r.className = 'sheet-row'; r.dataset.print = '1'; r.setAttribute('role', 'button'); r.tabIndex = 0; r.style.cursor = 'pointer';
-    r.setAttribute('aria-label', a.getAttribute('aria-label') || 'Imprimible del día. Abrir');
+    filaDescarga(r, d);
     on(layer, r, () => abrirDescargable(n, 'mapa'));
     list.push(r);
   }
@@ -638,7 +648,7 @@ function sheetDrag(layer) {
     const pend = s.querySelector('.sheet-alt[data-pend]');
     const bar = document.createElement('div'); bar.className = 'mini-bar';
     const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
-    const title = head?.children[1]?.textContent.trim() || '';
+    const title = head?.children[1]?.firstChild?.textContent.trim() || ''; // sin la cita
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
     const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Abrir la sorpresa': 'Sorpresa', 'Invitar a un amigo': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
     const corto = CORTOS[verbo] || (verbo.length > 15 ? verbo.split(' ')[0] : verbo);

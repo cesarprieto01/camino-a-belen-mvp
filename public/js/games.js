@@ -1,19 +1,41 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
 import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
-  floaty, confetti, addPanes, dark, stars, _stack } from './core.js';
-import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, hasTrivia } from './data.js';
+  floaty, confetti, addPanes, dark, stars, _stack, cur } from './core.js';
+import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, hasTrivia, TYPES } from './data.js';
 import { finishTrivia, finishContent, openSorpresa } from './flow.js';
 import { bindMute } from './musica.js';
 // botón de música de la cabecera (trivia y su resultado)
 const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
 
 const F = (c, o) => dark() ? o : c;
-const speak = text => {
+const speak = (text, onEnd) => {
   try {
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text); u.lang = 'es-MX'; u.rate = .95; speechSynthesis.speak(u);
-  } catch { nota('Escuchar', 'Este navegador no lee en voz alta'); }
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'es-MX'; u.rate = .95;
+    if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
+    speechSynthesis.speak(u); return true;
+  } catch { nota('Escuchar', 'Este navegador no lee en voz alta'); return false; }
 };
+const callar = () => { try { speechSynthesis.cancel(); } catch { /* sin voz */ } };
+// botón «Escuchar» que, mientras lee, pasa a «Parar» para cortar la lectura
+const ICO_ESCUCHAR = '<path d="M4 9v6h4l5 4V5L8 9z"></path><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path>';
+const ICO_PARAR = '<rect x="6.5" y="6.5" width="11" height="11" rx="2.2" fill="currentColor" stroke="none"></rect>';
+function listenButton(root, layer, text) {
+  const btn = find(root, 'Escuchar'); if (!btn) return;
+  const svg = btn.querySelector('svg'), label = [...btn.childNodes].find(c => c.nodeType === 3 && c.nodeValue.trim());
+  let leyendo = false;
+  const pintar = v => {
+    leyendo = v;
+    if (svg) { svg.innerHTML = v ? ICO_PARAR : ICO_ESCUCHAR; svg.style.color = svg.getAttribute('stroke'); }
+    if (label) label.nodeValue = v ? 'Parar' : 'Escuchar';
+    btn.setAttribute('aria-label', v ? 'Parar la lectura' : 'Escuchar la pregunta');
+    btn.setAttribute('aria-pressed', String(v));
+  };
+  on(root, btn, () => { if (leyendo) { callar(); pintar(false); return; } if (speak(text, () => layer.isConnected && pintar(false))) pintar(true); });
+  // al salir de la pantalla, deja de leer
+  const mo = new MutationObserver(() => { if (!layer.isConnected) { if (leyendo) callar(); mo.disconnect(); } });
+  mo.observe(document.getElementById('viewport') || document.body, { childList: true });
+}
 const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 // al mapa; «Mañana seguimos» solo si ya no queda nada del día (ni la sorpresa)
 const toMapAfterGame = (n) => go('mapa', { thenCerrado: !(n != null && RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') }, 'down', { replace: true });
@@ -93,7 +115,7 @@ register('trivia', {
     const qEl = card?.querySelector('div');
     if (qEl) qEl.textContent = q.q;
     card?.classList.add('a-rise');
-    on(root, 'Escuchar', () => speak(q.q + '. ' + q.o.map(o => o.t || o).join(', ')));
+    listenButton(root, layer, q.q + '. ' + q.o.map(o => o.t || o).join(', '));
     const teo = $$(root, 'img').find(im => im.src.includes(IMG.tPregunta));
     const setTeo = (id, cls) => { if (!teo) return; teo.src = A(id); teo.classList.remove('a-hop', 'a-bob', 'a-shake'); void teo.offsetWidth; cls && teo.classList.add(cls); };
     setTeo(IMG.tPregunta, 'a-bob');
@@ -563,5 +585,82 @@ register('desafioFin', {
     const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
     const first = sorpresaHecha(p.day, layer);
     paintFin(root, layer, p.day, first);
+  },
+});
+
+// ================= CALIFICAR Y COMPARTIR (al terminar cada video o canción) =================
+const TIPO = { intro: 'Video', domingo: 'Evangelio del día', meditacion: 'Meditación', cuento: 'Cuento', amigos: 'Amigos de la Biblia', cancion: 'Canción', video: 'Video', juego: 'Juego', reto: 'Reto en familia', nochebuena: 'Nochebuena' };
+// miniatura, tipo y título del día (la misma escena del reproductor)
+function paintCard(root, n, extra) {
+  const d = DAYS[n];
+  const img = root.querySelector('[data-thumb]');
+  if (img && d.scene) { img.src = A(d.scene); img.alt = d.title; }
+  const tipo = root.querySelector('[data-tipo]'); if (tipo) tipo.textContent = extra === 'cancion' ? 'Canción' : TIPO[d.type] || 'Video';
+  const tit = root.querySelector('[data-titulo]'); if (tit) tit.textContent = extra === 'cancion' ? 'Canción para cantar en familia' : d.title;
+  root.querySelector('[data-card]')?.classList.add('a-rise');
+}
+// Calificar dentro de «¡Terminaste!»: fila discreta entre Teodoro y el botón (pregunta + 5 estrellas + Compartir).
+// Se llama al final del mount de 'completado' (flow.js), cuando el layout ya está puesto.
+const QUE = { cancion: '¿Te gustó la canción?' };
+const STAR = '<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9Z"/></svg>';
+const SHARE = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v7A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16"/></svg>';
+export function rateRow(root, n, extra) {
+  const d = DAYS[n]; if (!d) return;
+  // la misma palabra que el antetítulo («¡Terminaste el video!» → «¿Te gustó el video?»)
+  const fin = extra === 'cancion' ? 'canción' : (TYPES[d.type]?.fin || '');
+  const pregunta = /canci[oó]n/i.test(fin) ? QUE.cancion : /Evangelio/.test(fin) ? '¿Te gustó el Evangelio?' : /Jugaron/.test(fin) ? '¿Te gustó el juego?' : '¿Te gustó el video?';
+  const row = document.createElement('div');
+  row.className = 'rate-row';
+  row.innerHTML = `<div class="rr-q" aria-live="polite">${pregunta}</div>
+    <div class="rr-line"><div class="rr-stars" role="radiogroup" aria-label="${pregunta.replace(/[¿?]/g, '')}">${[1, 2, 3, 4, 5].map(k => `<button type="button" role="radio" aria-checked="false" aria-label="${k} de 5 estrellas">${STAR}</button>`).join('')}</div>
+    <button type="button" class="rr-share" aria-label="Compartir">${SHARE}</button></div>`;
+  root.appendChild(row);
+  const q = row.querySelector('.rr-q'), stars = $$(row, '[role=radio]');
+  const paint = k => stars.forEach((b, i) => { b.setAttribute('aria-checked', String(i + 1 === k)); b.classList.toggle('on', i < k); });
+  const prev = (S.calificaciones || {})[n] || 0;
+  paint(prev); if (prev) q.textContent = '¡Gracias!';
+  stars.forEach((b, i) => on(root, b, () => {
+    (S.calificaciones ||= {})[n] = i + 1; save();
+    paint(i + 1); navigator.vibrate?.(12);
+    if (q.textContent !== '¡Gracias!') { q.textContent = '¡Gracias!'; animate(q, 'a-pop'); }
+    stars.slice(0, i + 1).forEach((s, j) => { s.style.animation = 'none'; void s.offsetWidth; s.style.animation = `pop .35s ${j * .04}s cubic-bezier(.2,.9,.3,1.4) both`; });
+  }));
+  const back = { ...(cur?.params || { day: n }) };
+  on(root, row.querySelector('.rr-share'), () => go('compartir', { day: n, extra, back }, 'page'));
+  // sitio: encima del subtítulo (si se ve) o del botón principal; Teodoro se achica/sube lo justo para no montarse
+  const btn = [...root.children].find(el => el.tagName === 'A' && /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(el.textContent.trim()));
+  const sub = [...root.children].find(el => el.tagName === 'DIV' && /sobre el (video|reto|cuento) de hoy|juego sorpresa/.test(el.textContent) && el.style.display !== 'none');
+  // sin subtítulo, el botón vuelve a su sitio de siempre (la fila llena el hueco que antes se cerraba subiéndolo)
+  if (btn && !sub && btn.offsetTop < 676) btn.style.top = '676px';
+  const bt = btn ? btn.offsetTop : 676;
+  // el subtítulo queda pegado al botón y la fila justo encima
+  if (sub) sub.style.top = (bt - 14 - sub.offsetHeight) + 'px';
+  const top = (sub ? sub.offsetTop - 8 : bt - 16) - row.offsetHeight;
+  row.style.top = top + 'px';
+  const teo = $$(root, 'img').find(i => i.src.includes(IMG.tPregunta));
+  if (teo && teo.offsetTop + teo.offsetHeight > top - 6) {
+    const h0 = teo.offsetHeight, w0 = teo.offsetWidth;
+    const h = Math.max(220, Math.min(h0 * .92, top - 6 - 204));
+    const w = w0 * h / h0;
+    teo.style.height = h + 'px'; teo.style.width = w + 'px';
+    teo.style.left = (195 - w / 2) + 'px'; teo.style.top = (top - 6 - h) + 'px';
+  }
+  row.classList.add('a-rise');
+}
+register('compartir', {
+  file: () => F('Compartir-claro', 'Compartir'),
+  mount(root, p) {
+    paintCard(root, p.day, p.extra);
+    // vuelve a la pantalla de abajo tal cual (cierra la hoja)
+    const volver = () => go(p.back ? 'completado' : 'mapa', p.back || {}, 'down', { replace: true });
+    on(root, 'Cerrar', volver);
+    const LINK = 'https://camino-a-belen-mvp.vercel.app';
+    on(root, 'Copiar link', () => { navigator.clipboard?.writeText(LINK).catch(() => {}); toast('Link copiado'); });
+    on(root, 'Más', async () => {
+      const d = DAYS[p.day];
+      if (navigator.share) { try { await navigator.share({ title: d.title, text: `${d.title} · Camino a Belén con Teodoro`, url: LINK }); } catch { /* lo cerraron */ } }
+      else nota('Compartir', 'Este navegador no tiene el menú de compartir');
+    });
+    ['Mensajes', 'Instagram', 'WhatsApp', 'Facebook'].forEach(k => on(root, k, () => nota('Prototipo', `Abriría ${k}`)));
   },
 });

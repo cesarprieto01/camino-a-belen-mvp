@@ -4,7 +4,8 @@ import fs from 'fs';
 const [dir = 'tmp/lienzo', only] = process.argv.slice(2);
 fs.mkdirSync(dir, { recursive: true });
 const b = await chromium.launch({ executablePath: '/Users/ces/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' });
-const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const [VW, VH] = (process.env.VP || '390x844').split('x').map(Number); // VP=375x667 para el celular chico
+const ctx = await b.newContext({ viewport: { width: VW, height: VH }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const p = await ctx.newPage();
 const errs = [];
 p.on('pageerror', e => errs.push('PAGEERROR ' + e.message));
@@ -59,9 +60,24 @@ const SHOTS = {
   'adivinanza-listos': async () => { await setup({ hoy: 7, upto: 6 }); await js(async () => { const c = await import('/js/core.js'); c.go('adivinanzaIntro', { day: 6 }, 'none'); }); await p.waitForTimeout(600); await tap('¡A jugar!'); },
   'desafio-cartas': async () => { await setup({ hoy: 10, upto: 9 }); await js(async () => { const c = await import('/js/core.js'); c.go('desafioIntro', { day: 9 }, 'none'); }); },
   'calificacion': async () => { await setup({ hoy: 10, upto: 9, scr: 'mapa' }); await p.waitForTimeout(600); await js(async () => { const c = await import('/js/core.js'); c.go('calificacion', { day: 9 }, 'page'); }); await p.waitForTimeout(500); },
-  'free': async () => { await setup({ hoy: 13, upto: 12, extra: { plan: 'free' } }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 13 }, 'none'); }); await p.waitForTimeout(600); await tap('Imprimible'); },
+  'free': async () => { await setup({ hoy: 13, upto: 12, extra: { plan: 'free' } }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 13 }, 'none'); }); await p.waitForTimeout(600); await tap('Pesebre para colorear'); },
   'teodoro': async () => { await setup({ hoy: 9, upto: 8, scr: 'teodoro' }); },
   'hoy-dia1': async () => { await setup({ hoy: 1 }); },
+  'rep-1': async () => { await setup({ hoy: 1, upto: 0, scr: 'reproductor', params: { day: 1 } }); },
+  'rep-15': async () => { await setup({ hoy: 15, upto: 14, scr: 'reproductor', params: { day: 15 } }); },
+  'rep-26': async () => { await setup({ hoy: 26, upto: 25, scr: 'reproductor', params: { day: 26 } }); },
+  'hoja-1': async () => { await setup({ hoy: 1, upto: 0, scr: 'mapa' }); },
+  'hoja-22': async () => { await setup({ hoy: 22, upto: 21, scr: 'mapa' }); },
+  'hoja-video': async () => { await setup({ hoy: 10, upto: 9, scr: 'mapa' }); },
+  'hoja-cancion': async () => { await setup({ hoy: 12, upto: 11, scr: 'mapa' }); },
+  'hoja-reto-accion': async () => { await setup({ hoy: 6, upto: 5, scr: 'mapa' }); },
+  'hoja-reto-imprimible': async () => { await setup({ hoy: 13, upto: 12, scr: 'mapa' }); },
+  'hoja-juego': async () => { await setup({ hoy: 14, upto: 13, scr: 'mapa' }); },
+  'hoja-domingo': async () => { await setup({ hoy: 15, upto: 14, scr: 'mapa' }); },
+  'hub-6': async () => { await setup({ hoy: 6, upto: 5 }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 6 }, 'none'); }); },
+  'hub-13': async () => { await setup({ hoy: 13, upto: 12 }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 13 }, 'none'); }); },
+  'hub-14': async () => { await setup({ hoy: 14, upto: 13 }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 14 }, 'none'); }); },
+  'hub-19': async () => { await setup({ hoy: 19, upto: 18 }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 19 }, 'none'); }); },
   'completado-sin-trivia': async () => { await setup({ hoy: 10, upto: 9, completos: { 10: { contenido: true } }, scr: 'completado', params: { day: 10 } }); },
   'completado-sorpresa': async () => { await setup({ hoy: 12, upto: 11, completos: { 12: { contenido: true } }, scr: 'completado', params: { day: 12 } }); },
   'imprimible-dia': async () => { await setup({ hoy: 10, upto: 9, scr: 'mapa' }); await p.waitForTimeout(600); await js(async () => { const f = await import('/js/flow.js'); f.abrirDescargable(10); }); },

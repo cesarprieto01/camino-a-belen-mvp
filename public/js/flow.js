@@ -2,8 +2,9 @@
 import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag, racha } from './core.js';
-import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia } from './data.js';
+import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub } from './data.js';
 import './musica.js'; // música de fondo del mapa y la trivia
+import { rateRow } from './games.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = () => S.plan === 'premium';
@@ -15,7 +16,7 @@ export function startDay(n) {
   const d = DAYS[n];
   if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, nacimiento: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; }
   if (!contentDone(n)) {
-    go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'up');
+    go(usaHub(n) ? 'hub' : 'reproductor', { day: n }, 'up');
     return;
   }
   if (!isDone(n)) { go('trivia', { day: n, ...(S.triviaProgreso?.[n] || {}) }, 'push'); return; }
@@ -29,7 +30,7 @@ export function openSorpresa(n) {
 /** Texto y acción del botón principal de la hoja del mapa. */
 export function ctaLabel(n) {
   const d = DAYS[n];
-  const verbo = { domingo: 'Escuchar el Evangelio', meditacion: 'Ver historia', cuento: 'Ver historia', amigos: 'Ver historia', cancion: 'Escuchar canción', reto: 'Ver el reto', juego: 'Jugar con Teodoro', video: 'Ver video', intro: 'Ver historia', nochebuena: 'Comenzar' }[d.type];
+  const verbo = TYPES[d.type].verbo;
   if (n === 26 && !contentDone(26)) return { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
   if (n === 0) return { text: 'Invitar a un amigo', go: () => go('invitacion', {}, 'push') };
@@ -517,8 +518,14 @@ register('mundos', {
   mount(root) {
     tabs(root);
     const adv = root.querySelector('a[aria-label^="Adviento:"]');
+    // Adviento más grande y centrado; Enero se sigue viendo detrás, con su etiqueta encima (estilos en el bloque «mapa» de app.css)
+    root.classList.add('mundos-v'); if (fase() === 'antes') root.classList.add('mundos-pre');
     if (fase() === 'antes') {
       startCountdown(root);
+      // debajo del contador: volver al inicio (como en la espera)
+      const vuelta = document.createElement('button'); vuelta.type = 'button'; vuelta.className = 'mundos-volver';
+      vuelta.innerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg><span>Volver al inicio</span>';
+      root.appendChild(vuelta); on(root, vuelta, () => go('hoy', {}, 'down', { tab: true }));
       const ms = Math.max(0, new Date(2026, 10, 29) - new Date());
       adv?.setAttribute('aria-label', `Adviento: empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
       // sin unirse abre la invitación; ya dentro, solo recuerda cuándo se sale
@@ -541,6 +548,14 @@ register('reproductor', {
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
     setText(root, /Meditación de la Escucha/, p.nacimiento ? 'El nacimiento de Jesús' : p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
+    // una línea bajo el título: de qué trata el día (del cronograma)
+    const tituloRep = textEl(root, p.nacimiento ? 'El nacimiento de Jesús' : p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
+    if (tituloRep && (d.cita || d.sub) && !p.nacimiento && !p.extra) { const sb = document.createElement('span'); sb.className = 'rep-sub'; sb.textContent = d.cita || d.sub; tituloRep.appendChild(sb); } // la cita (domingos) o de qué trata el día
+    // el bloque del título crece hacia arriba: siempre 12px sobre la barra de avance, tenga 1 o 2 líneas y subtítulo
+    const barraRep = root.querySelector('[role=slider]');
+    const bloqueTit = barraRep?.previousElementSibling;
+    // se mide después de pintar: el alto real de la pantalla puede no ser 844
+    if (bloqueTit && barraRep) requestAnimationFrame(() => { bloqueTit.style.top = 'auto'; bloqueTit.style.bottom = bloqueTit.offsetParent.clientHeight - barraRep.offsetTop + 12 + 'px'; });
     const scene = $$(root, 'img').find(i => i.alt && i.alt.length > 10);
     if (scene) {
       if (p.nacimiento) { scene.src = A(IMG.nacimiento); scene.alt = 'El nacimiento de Jesús'; }
@@ -603,19 +618,34 @@ register('hub', {
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
     replaceText(root, /^DÍA 13$/, `DÍA ${n}`);
-    setText(root, 'Pesebre', d.title);
-    setText(root, 'Coloréalo con tu familia', d.reto || 'Un reto para hacer juntos');
+    const tit = setText(root, 'Pesebre', d.title); if (tit) tit.style.whiteSpace = 'normal';
+    setText(root, 'Coloréalo con tu familia', d.reto || d.sub || 'Un reto para hacer juntos');
     setText(root, /Al terminar ganas \d+ panes/, `Al terminar ganas ${panesContenido()} panes`);
-    setText(root, 'Pesebre para colorear', d.retoSub || 'Para hacer en casa');
+    // el reto (o el juego en familia) en 2–3 pasos cortos, en lugar de la ilustración
+    const card = root.querySelector('a[aria-label^="Reto en familia"]');
+    if (card && d.pasos) {
+      const tipo = d.type === 'juego' ? 'Juego en familia' : 'Reto en familia';
+      const div = document.createElement('div'); div.className = 'hub-pasos'; div.setAttribute('style', card.getAttribute('style'));
+      Object.assign(div.style, { display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '14px', boxShadow: '' });
+      div.setAttribute('role', 'group'); div.setAttribute('aria-label', `${tipo}: ${d.pasos.length} pasos`);
+      div.innerHTML = `<span class="hp-tag">${tipo} · ${TYPES[d.type].min} min</span><ol>${d.pasos.map(t => `<li>${t}</li>`).join('')}</ol>`;
+      card.replaceWith(div);
+    }
+    // la fila del descargable: el del día; en los retos de acción no se repite (el reto es esta pantalla)
+    const imp = find(root, 'Imprimible');
+    if (imp) {
+      if (d.descarga.accion) imp.style.display = 'none';
+      else { setText(imp, 'Pesebre para colorear', d.descarga.s); setText(imp, 'Imprimible', d.descarga.t); imp.setAttribute('aria-label', `${d.descarga.t}: ${d.descarga.s}`); }
+    }
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-bob'));
     sparkles(root);
     on(root, 'Volver al mapa', () => go('mapa', {}, 'down', { replace: true }));
     on(root, 'Escuchar a Teodoro', () => nota('Teodoro explica el reto', 'Audio por grabar'));
-    on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true, replay: p.replay }, 'fade'));
+    if (!d.pasos) on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true, replay: p.replay }, 'fade'));
     on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); animate(el, 'a-pop'); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 260); });
     // los extras del reto son descargables: con free piden Premium (y lo dicen antes de tocarlos)
-    if (!premium()) ['Imprimible', 'Canción'].forEach(t => { const el = find(root, t); if (!el || el.querySelector('.pill-premium')) return; const pl = document.createElement('span'); pl.className = 'pill-premium'; pl.textContent = 'Premium'; el.style.position ||= 'relative'; el.appendChild(pl); });
-    on(root, 'Imprimible', () => abrirDescargable(n, 'hub'));
+    if (!premium()) [d.descarga.t, 'Canción'].forEach(t => { const el = find(root, t); if (!el || el.querySelector('.pill-premium')) return; const pl = document.createElement('span'); pl.className = 'pill-premium'; pl.textContent = 'Premium'; el.style.position ||= 'relative'; el.appendChild(pl); });
+    if (imp) on(root, imp, () => abrirDescargable(n, 'hub'));
     on(root, 'Canción', () => premium() ? go('reproductor', { day: n, extra: 'cancion' }, 'up') : go('free', { back: 'hub', day: n }, 'page'));
   },
 });
@@ -624,9 +654,9 @@ register('completado', {
   files: F('S-06-Completado', 'S-06-Completado-oscuro'),
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
-    const que = { domingo: '¡Escuchaste el Evangelio!', meditacion: '¡Terminaste la meditación!', cuento: '¡Terminaste la historia!', amigos: '¡Terminaste la historia!', cancion: '¡Cantaste la canción!', reto: '¡Hicieron el reto!', juego: '¡Jugaste con Teodoro!', video: '¡Viste el video!' }[d.type];
+    const que = TYPES[d.type].fin;
     setText(root, '¡Terminaste el cuento!', que);
-    setText(root, /sobre el cuento de hoy/, d.type === 'reto' ? 'sobre el reto de hoy' : 'sobre lo de hoy');
+    setText(root, /sobre el cuento de hoy/, usaHub(n) ? 'sobre el reto de hoy' : 'sobre el video de hoy');
     const chip = find(root, 'Ganaste 20 panes');
     if (chip) { replaceText(chip, /\+20/, '+' + panesContenido()); chip.setAttribute('aria-label', `Ganaste ${panesContenido()} panes`); chip.classList.add('a-pop'); }
     floaty(layer, '+' + panesContenido(), 290, 110);
@@ -638,12 +668,13 @@ register('completado', {
     if (chip) { chip.style.pointerEvents = 'none'; chip.removeAttribute('role'); }
     const out = () => go('mapa', {}, 'down', { replace: true });
     on(root, 'Ahora no', out); on(root, 'Cerrar', out);
-    if (hasTrivia(n)) { on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push', { replace: true })); return; }
+    // calificar el video o la canción (no el reto): fila discreta sobre el botón
+    if (hasTrivia(n)) { on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push', { replace: true })); if (!usaHub(n)) rateRow(root, n); return; }
     // día sin trivia: el día ya quedó completo; si toca sorpresa se abre aquí, si no, Teodoro camina en el mapa
     const sorpresa = RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha';
     const titulo = textEl(root, /¿Jugamos/);
     if (titulo) titulo.innerHTML = sorpresa ? `Hoy toca<br>${{ memorama: 'Memorama', adivinanza: 'Adivinanza', desafio: 'Desafío' }[RULES.sorpresa[n]]}` : 'Un paso más<br>hacia Belén';
-    const sub = textEl(root, /sobre lo de hoy|sobre el reto de hoy/);
+    const sub = textEl(root, /sobre el video de hoy|sobre el reto de hoy/);
     if (sub) { if (sorpresa) sub.textContent = 'Un juego sorpresa para hoy'; else sub.style.display = 'none'; }
     if (!sorpresa) { if (q) q.style.display = 'none'; $$(root, '[style*="rotate(-12deg)"], [style*="rotate(12deg)"]').forEach(c => { c.style.display = 'none'; }); }
     const btn = find(root, '¡A jugar!');
@@ -654,6 +685,7 @@ register('completado', {
       const teo = $$(root, 'img').find(i => i.src.includes(IMG.tPregunta)); if (teo) teo.style.top = parseFloat(teo.style.top) + 40 + 'px';
       if (btn) btn.style.top = '636px';
     }
+    if (!usaHub(n)) rateRow(root, n);
   },
 });
 
@@ -740,14 +772,6 @@ register('cerrado', {
     $$(root, 'img').find(i => /duerme/.test(i.alt || ''))?.classList.add('a-bob');
     const ok = find(root, 'Entendido');
     if (ok) { setText(ok, 'Entendido', 'Hasta mañana'); on(root, ok, () => go('hoy', {}, 'down', { tab: true })); }
-    // calificar el día: aquí, al cerrar, y no en el momento del premio
-    const dlg = root.querySelector('[role=dialog]');
-    if (dlg && S.calificado !== lastDay()) {
-      const q = document.createElement('button');
-      q.type = 'button'; q.className = 'cal-link'; q.textContent = '¿Les gustó hoy?';
-      dlg.appendChild(q);
-      on(root, q, () => { S.calificado = lastDay(); save(); go('calificacion', { back: 'mapa' }, 'page', { replace: true }); });
-    }
   },
 });
 
@@ -971,6 +995,8 @@ register('finalCompartir', {
 
 /** Descargable del día (todos los días tienen uno): premium lo abre; free ve la hoja de Premium. */
 export function abrirDescargable(n, from = 'mapa') {
+  // en los retos de acción, el «descargable» son los pasos del reto
+  if (DAYS[n]?.descarga?.accion) { go('hub', { day: n, replay: contentDone(n) }, 'up'); return; }
   if (premium()) go('imprimible', { day: n, back: from }, 'push');
   else go('free', { back: from, day: n }, 'page');
 }
