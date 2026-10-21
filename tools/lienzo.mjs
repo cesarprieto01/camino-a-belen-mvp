@@ -36,6 +36,36 @@ const tap = (q) => p.evaluate((q) => {
 const js = (f, a) => p.evaluate(f, a);
 
 const SHOTS = {
+  // ---- estados de cada objeto ----
+  ...Object.fromEntries([0, 1, 2, 3, 4, 5].map(k => [`hoy-bat${k}`, async () => { await setup({ hoy: 9, upto: 8, S: { bateria: k } }); }])),
+  'regreso': async () => { await setup({ hoy: 16, upto: 8, S: { bateria: 0, regreso: true } }); },
+  'post-incompleto': async () => { await setup({ hoy: 27, upto: 21 }); },
+  'se-une-tarde': async () => { await setup({ hoy: 5, inscrito: false }); },
+  'mapa-energia': async () => { await setup({ hoy: 9, upto: 8, scr: 'mapa', S: { bateria: 2 } }); await p.waitForTimeout(900); await tap('Energía de Teodoro'); },
+  'mapa-musica-off': async () => { await setup({ hoy: 9, upto: 8, scr: 'mapa' }); await p.waitForTimeout(900); await js(() => { const b = document.querySelector('#viewport .layer:last-child button[aria-label^="Música de fondo"]'); b?.click(); }); },
+  'ruleta-girada': async () => { await setup({ hoy: 11, upto: 10, scr: 'mapa', S: { ruletas: { 4: 'gorro', 11: 'bufanda' }, prendas: ['gorro', 'bufanda'] } }); await p.waitForTimeout(900); await js(() => document.querySelector('#viewport .layer:last-child .sheet-min')?.click()); },
+  'mapa-dia-libre': async () => { await setup({ hoy: 12, upto: 10, scr: 'mapa' }); },
+  'trivia-correcto': async () => { await SHOTS['trivia-texto'](); await p.waitForTimeout(500); const t = await js(async () => { const { TRIVIA } = await import('/js/data.js'); const { cur } = await import('/js/core.js'); const q = TRIVIA[cur.params.day][cur.params.i || 0]; return q.o[q.a].t || q.o[q.a]; }); await tap(t); },
+  'trivia-pista': async () => { await SHOTS['trivia-texto'](); await p.waitForTimeout(500); const t = await js(async () => { const { TRIVIA } = await import('/js/data.js'); const { cur } = await import('/js/core.js'); const q = TRIVIA[cur.params.day][cur.params.i || 0]; const k = q.o.findIndex((_, i) => i !== q.a); return q.o[k].t || q.o[k]; }); await tap(t); },
+  'trivia-reintento': async () => { await SHOTS['trivia-pista'](); await p.waitForTimeout(400); const t = await js(async () => { const { TRIVIA } = await import('/js/data.js'); const { cur } = await import('/js/core.js'); const q = TRIVIA[cur.params.day][cur.params.i || 0]; return q.o[q.a].t || q.o[q.a]; }); await tap(t); },
+  'trivia-varias-sel': async () => { await SHOTS['trivia-varias'](); await p.waitForTimeout(500); const ts = await js(async () => { const { TRIVIA } = await import('/js/data.js'); const { cur } = await import('/js/core.js'); const q = TRIVIA[cur.params.day][cur.params.i || 0]; return q.a.map(i => q.o[i].t || q.o[i]); }); for (const t of ts) await tap(t); },
+  'trivia-imagenes-ok': async () => { await SHOTS['trivia-imagenes'](); await p.waitForTimeout(500); const t = await js(async () => { const { TRIVIA } = await import('/js/data.js'); const { cur } = await import('/js/core.js'); const q = TRIVIA[cur.params.day][cur.params.i || 0]; return q.o[q.a].t || q.o[q.a]; }); await tap(t); },
+  'trivia-fin-2': async () => { await setup({ hoy: 2, upto: 1, completos: { 2: { contenido: true, trivia: true, estrellas: 2 } } }); await js(async () => { const c = await import('/js/core.js'); c.go('triviaFin', { day: 2, ok: 4 }, 'none'); }); },
+  'trivia-fin-1': async () => { await setup({ hoy: 2, upto: 1, completos: { 2: { contenido: true, trivia: true, estrellas: 1 } } }); await js(async () => { const c = await import('/js/core.js'); c.go('triviaFin', { day: 2, ok: 2 }, 'none'); }); },
+  'calificar-4': async () => { await SHOTS['completado-9'](); await p.waitForTimeout(700); await js(() => { const st = [...document.querySelectorAll('#viewport .layer:last-child [role=radio], #viewport .layer:last-child button[aria-label*="estrella"]')]; st[3]?.click(); }); },
+  'premio-manzana': async () => { await setup({ hoy: 11, upto: 10, scr: 'mapa', S: { ruletas: { 4: 'gorro' } } }); await p.waitForTimeout(900); await js(async () => { const c = await import('/js/core.js'); c.go('ruletaPremio', { day: 11, premio: 'manzana' }, 'modal'); }); await p.waitForTimeout(600); },
+  'memorama-reglas': async () => { await setup({ hoy: 3, upto: 2, completos: { 3: { contenido: true, trivia: true, estrellas: 2 } } }); await js(async () => { const c = await import('/js/core.js'); c.go('memoramaReglas', { day: 3 }, 'none'); }); },
+  'memorama-fin': async () => { await setup({ hoy: 3, upto: 2, completos: { 3: { contenido: true, trivia: true, estrellas: 2 } } }); await js(async () => { const c = await import('/js/core.js'); c.go('memoramaFin', { day: 3 }, 'none'); }); },
+  'adivinanza-intro': async () => { await setup({ hoy: 7, upto: 6 }); await js(async () => { const c = await import('/js/core.js'); c.go('adivinanzaIntro', { day: 6 }, 'none'); }); },
+  'adivinanza-juego': async () => { await SHOTS['adivinanza-listos'](); await p.waitForTimeout(500); await tap('¿Listos?'); },
+  'adivinanza-tiempo': async () => { await setup({ hoy: 7, upto: 6 }); await js(async () => { const c = await import('/js/core.js'); c.go('adivinanzaTiempo', { day: 6, ok: 3 }, 'none'); }); },
+  'adivinanza-fin': async () => { await setup({ hoy: 7, upto: 6 }); await js(async () => { const c = await import('/js/core.js'); c.go('adivinanzaFin', { day: 6, ok: 4 }, 'none'); }); },
+  'desafio-otra': async () => { await SHOTS['desafio'](); await p.waitForTimeout(500); await tap('Sacar otra carta'); },
+  'desafio-fin': async () => { await setup({ hoy: 9, upto: 8, completos: { 9: { contenido: true, trivia: true, estrellas: 2 } } }); await js(async () => { const c = await import('/js/core.js'); c.go('desafioFin', { day: 9 }, 'none'); }); },
+  'invitacion': async () => { await setup({ hoy: 0 }); await js(async () => { const c = await import('/js/core.js'); c.go('invitacion', {}, 'none'); }); },
+  'final-compartir': async () => { await setup({ hoy: 26, upto: 25, scr: 'finalCompartir', params: { day: 26 } }); },
+  'teodoro-prendas': async () => { await setup({ hoy: 19, upto: 18, scr: 'teodoro', S: { ruletas: { 4: 'gorro', 11: 'bufanda', 18: 'bolso' }, prendas: ['gorro', 'bufanda', 'bolso'], prendasVistas: 3 } }); },
+  'hub-cancion': async () => { await setup({ hoy: 13, upto: 12, scr: 'hub', params: { day: 13 } }); await p.waitForTimeout(400); await js(() => document.querySelector('#viewport .layer:last-child')?.scrollTo?.(0, 400)); },
   'completado-9': async () => { await setup({ hoy: 9, upto: 8, completos: { 9: { contenido: true } }, scr: 'completado', params: { day: 9 } }); },
   'ruleta-mapa': async () => { await setup({ hoy: 11, upto: 10, scr: 'mapa' }); await p.waitForTimeout(900); await js(() => document.querySelector('#viewport .layer:last-child .sheet-min')?.click()); },
   'trivia-varias': async () => { await setup({ hoy: 1, upto: 0, completos: { 1: { contenido: true } } }); const i = await js(async () => { const { TRIVIA } = await import('/js/data.js'); return TRIVIA[1].findIndex(q => Array.isArray(q.a)); }); await js(async (i) => { const c = await import('/js/core.js'); c.go('trivia', { day: 1, i: Math.max(i, 0), ok: 0 }, 'none'); }, i); },
@@ -103,12 +133,14 @@ for (const tema of ['claro', 'oscuro']) {
   TEMA = tema;
   for (const n of names) {
     try {
-      await js(() => { document.querySelectorAll('.toast,.nota').forEach(t => t.remove()); });
+      // cada pantalla parte de la app recién cargada: nada de la anterior queda encima
+      await p.reload(); await p.waitForTimeout(900); await p.addStyleTag({ content: '#panelBtn,.toast,.nota{display:none!important}' });
       await SHOTS[n].call(null, tema);
       await p.evaluate(async (tema) => { const c = await import('/js/core.js'); if (c.S.tema !== tema) { c.S.tema = tema; c.save(); } }, tema);
       await p.waitForTimeout(n === 'listo' ? 250 : 1400);
       await js(() => document.querySelectorAll('.nota').forEach(t => t.remove()));
       await p.locator('#viewport').screenshot({ path: `${dir}/${n}-${tema}.jpg`, type: 'jpeg', quality: 84 });
+      if (process.env.HTML) fs.writeFileSync(`${dir}/${n}-${tema}.html`, await p.evaluate(fs.readFileSync('tools/serializar.js', 'utf8')));
       const s = await js(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen).join('>'));
       console.log(tema, n, '→', s);
     } catch (e) { errs.push(n + ': ' + e.message); }
