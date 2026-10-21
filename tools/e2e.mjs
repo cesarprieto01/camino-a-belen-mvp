@@ -385,7 +385,9 @@ const flows = {
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };
 for (const name of scen.split(',')) {
-  try { if (name !== 'inicio' && name !== 'completo') await base(); await flows[name](); } catch (e) { errs.push(name + ': ' + e.message); }
+  // el panel de controles del prototipo no debe quedar abierto de un recorrido a otro
+  await p.evaluate(() => { const b = document.getElementById('panelBtn'); if (b?.getAttribute('aria-expanded') === 'true') b.click(); });
+  try { if (name === 'inicio' || name === 'completo') { await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(1200); } else await base(); await flows[name](); } catch (e) { errs.push(name + ': ' + e.message); }
 }
 console.log(errs.length ? errs.join('\n') : 'OK sin errores');
 await b.close();
