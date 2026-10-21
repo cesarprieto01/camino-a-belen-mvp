@@ -33,13 +33,14 @@ async function templates() {
   const icons = {};
   for (let n = 1; n <= 26; n++) { const i = zero.querySelector(`a[aria-label^="Día ${n},"] img`); if (i) icons[n] = i.getAttribute('src'); }
   const houses = $$(full, '[aria-label^="Ruleta sorpresa"]').map(a => a.innerHTML);
+  const ruletaImg = full.querySelector('[aria-label^="Ruleta sorpresa"] img')?.getAttribute('src');
   const sheet = [...full.children].find(el => el.style.bottom === '10px');
   const rows = [...sheet.children].filter(el => el.style.height === '58px');
   tpl = {
     key,
     done: node(1).getAttribute('style'),
     doneInner: [...node(1).childNodes].filter(c => !(c.tagName === 'SPAN' && c.getAttribute('aria-hidden'))).map(c => c.outerHTML || '').join(''),
-    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(1).replace(/fill="#(?!fff|FFF)[0-9A-Fa-f]{3,6}"/g, 'fill="#FFFFFF" stroke="#9DB3BD" stroke-width="1.8" stroke-linejoin="round"').replace(/fill: ?#(?!fff|FFF)[0-9A-Fa-f]{3,6}/g, 'fill: #FFFFFF') },
+    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(1).replace(/fill="#(?!fff|FFF)[0-9A-Fa-f]{3,6}"/g, key === 'oscuro' ? 'fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.8" stroke-linejoin="round"' : 'fill="#FFFFFF" stroke="#9DB3BD" stroke-width="1.8" stroke-linejoin="round"').replace(/fill: ?#(?!fff|FFF)[0-9A-Fa-f]{3,6}/g, key === 'oscuro' ? 'fill: none' : 'fill: #FFFFFF') },
     today: node(9).getAttribute('style'),
     todayInner: node(9).innerHTML,
     locked: node(10).getAttribute('style'),
@@ -53,11 +54,21 @@ async function templates() {
     sheet26: sheet26 ? sheet26.outerHTML : null,
     pastSheet: pastSheet?.outerHTML, selShadow: pastNode?.style.boxShadow,
     bubble: bubble?.outerHTML, bubbleArrow: bubble?.nextElementSibling?.outerHTML,
-    energySheet: energySheet?.outerHTML, ruletaRow: d11Rows[1]?.outerHTML,
+    energySheet: energySheet?.outerHTML, ruletaRow: d11Rows[1]?.outerHTML, ruletaImg,
   };
   return tpl;
 }
 
+/** Historia vista, trivia sin terminar: el día NO se ve hecho (ni azul ni ✓). Aspecto de pendiente: su ícono, borde punteado y 0 estrellas en contorno. */
+const triviaPend = (el, n, p) => {
+  const T = tpl;
+  restyle(el, T.locked, p, 64);
+  const icon = T.icons[n] ? `<img src="${T.icons[n]}" alt="" style="width: 40px; height: 34px; object-fit: contain; opacity: 1">` : '';
+  el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon).replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
+  el.style.outline = '3px dashed #F5DB78'; el.style.outlineOffset = '3px';
+  delete el.dataset.today;
+  el.setAttribute('aria-label', `Día ${n}: falta la trivia`);
+};
 const pos = el => ({ x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: parseFloat(el.style.width) });
 const restyle = (el, style, p, size) => {
   el.setAttribute('style', style);
@@ -73,6 +84,8 @@ register('mapa', {
     const trivAct = activeDay();          // primera trivia pendiente
     const act = walkDay();                // donde va Teodoro (primera historia sin ver)
     const focus = act ?? Math.min(lastDay(), 26);
+    // Teodoro nunca camina hacia atrás: si se vio un día más adelante (o una trivia de un día ya pasado), se queda en su día sin animación
+    if (S.pasoAnimado && ((act != null && S.pasoAnimado > act) || (S.teoMapa != null && S.pasoAnimado < S.teoMapa))) { S.pasoAnimado = null; save(); }
 
     // 1) La vista: el mapa largo va en un scroller; cabecera y hoja quedan fijas
     const scroller = document.createElement('div');
@@ -86,6 +99,8 @@ register('mapa', {
     scroller.append(root);
     root.style.marginBottom = '0';
     fixed.forEach(el => layer.appendChild(el));
+    // cabecera por encima de Teodoro y los nodos, con un velo suave debajo
+    fixed.filter(el => el.style.top === '0px' || el.style.top === '52px').forEach(el => el.classList.add(el.style.height === '112px' ? 'map-velo' : 'map-head'));
     // el final del mapa sigue el color del mapa (nunca se ve el fondo negro al hacer scroll)
     const mapBg = getComputedStyle(root).backgroundColor;
     scroller.style.background = mapBg && mapBg !== 'rgba(0, 0, 0, 0)' ? mapBg : (dark() ? '#0A2340' : '#F3EEE3');
@@ -107,9 +122,7 @@ register('mapa', {
         el.setAttribute('aria-label', `Día ${n}, ${d.title}, completado${stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
       } else if (contentDone(n) && n !== act && !(S.pasoAnimado === n && !reduced())) {
         // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
-        restyle(el, T.done, p, 64);
-        el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
-        el.setAttribute('aria-label', `Día ${n}, ${d.title}: historia vista, trivia pendiente, 0 estrellas`);
+        triviaPend(el, n, p);
       } else if (n === act || (S.pasoAnimado && n === S.pasoAnimado)) {
         restyle(el, T.today, p, 84);
         el.innerHTML = T.todayInner.replace(/>\d+</, `>${n}<`);
@@ -136,6 +149,7 @@ register('mapa', {
     const bubble = root.querySelector('[data-curiosidad]');
     const place = n => {
       const t = nodes[n]; if (!t || !teo) return;
+      S.teoMapa = n; // dónde lo vio la familia la última vez
       const size = t.el.dataset.today ? 84 : 64;
       const cx = parseFloat(t.el.style.left) + size / 2, cy = parseFloat(t.el.style.top);
       // Teodoro protagonista: grande, centrado y parado sobre su día
@@ -173,10 +187,10 @@ register('mapa', {
       const opened = !!S.ruletas[d];
       const nextUp = !opened && RULES.ruleta.find(x => !S.ruletas[x]) === d;
       a.innerHTML = (opened ? T.houseOpen : nextUp ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Girada' : d === lastDay() ? 'Sorpresa de hoy' : d < lastDay() ? 'Te espera' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
+      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Girada' : d === lastDay() ? 'Sorpresa de hoy' : d < lastDay() ? 'Ruleta' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
       replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
       // el candado solo en lo que aún no llega
-      if (/^(Sorpresa de hoy|Te espera)$/.test(label)) a.querySelectorAll('span svg').forEach(s => s.remove());
+      if (/^(Sorpresa de hoy|Ruleta)$/.test(label)) a.querySelectorAll('span svg').forEach(s => s.remove());
       if (nextUp || (d <= lastDay() && !opened)) a.querySelector('img').classList.add('a-sway');
       // lienzo: la casa ya no es un botón; solo la abierta deja ver su premio
       a.setAttribute('aria-label', opened ? `Ruleta sorpresa de la semana ${i + 1}: ya la abriste. Ver tu premio` : `Ruleta sorpresa de la semana ${i + 1}: aparece al iniciar el día ${d}`);
@@ -189,7 +203,8 @@ register('mapa', {
     const zeroBlock = [...root.children].find(el => /Día 0/.test(el.textContent || ''));
     if (zeroBlock) {
       replaceText(zeroBlock, /Día 0 · ¿Qué es el Adviento\?/, 'Aquí empieza el camino');
-      replaceText(zeroBlock, /No esperamos algo, esperamos a Alguien/, S.hoy <= 0 ? 'Salimos el 29 de noviembre' : 'Salimos el 29 de noviembre · ¡ya vamos en camino!');
+      const sub = [...zeroBlock.querySelectorAll('*')].find(el => el.childElementCount === 0 && /No esperamos algo/.test(el.textContent));
+      if (sub) { if (S.hoy <= 0) sub.remove(); else sub.textContent = '¡Ya vamos en camino!'; }
       on(root, zeroBlock, () => toast('Aquí empieza el camino', 'El 29 de noviembre salimos hacia Belén'));
       // sin espacio vacío debajo: la casa del inicio queda justo encima de la hoja
       const fin = zeroBlock.offsetTop + zeroBlock.offsetHeight + 110;
@@ -208,8 +223,11 @@ register('mapa', {
     // 5) Cabecera fija
     const chip = layer.querySelector('[aria-label^="Día 9 de 26"]');
     if (chip) replaceText(chip, /^(\s*)9(\s*)$/, `$1${Math.max(focus, 0)}$2`);
-    if (chip && S.hoy <= 0) { chip.textContent = 'Sale el 29'; chip.style.fontWeight = '800'; chip.style.color = '#0B748A'; chip.setAttribute('aria-label', 'El camino sale el 29 de noviembre'); }
     chip?.setAttribute('aria-label', `Día ${focus} de 26`);
+    // Teodoro va atrasado: la píldora dice su día y el de hoy
+    const hoyN = Math.min(lastDay(), 26);
+    if (chip && S.hoy > 0 && focus !== hoyN) { replaceText(chip, /\/ 26/, `· hoy ${hoyN}`); chip.setAttribute('aria-label', `Día ${focus}. Hoy es el día ${hoyN}`); }
+    if (chip && S.hoy <= 0) { chip.textContent = 'Sale el 29'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', 'El camino sale el 29 de noviembre'); }
     paintEnergy(layer);
     // el mapa recuerda desde dónde se entró al camino (Hoy, Teodoro, Mundos o la espera)
     if (params.from) mapOrigin = params.from;
@@ -256,7 +274,7 @@ register('mapa', {
       // el día queda a la vista, por encima de la hoja (mida lo que mida)
       const sh = layer.querySelector('[data-sheet]');
       const sheetTop = sh ? 844 - 10 - sh.offsetHeight : 600; // sin contar la animación de entrada de la hoja
-      const top = parseFloat(t.el.style.top) - Math.max(170, sheetTop - 150);
+      const top = parseFloat(t.el.style.top) - Math.max(200, sheetTop - 150); // nunca pegado a la cabecera
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
     if (params.dia != null && nodes[params.dia]) { const el = nodes[params.dia].el; el.style.boxShadow = (T.selShadow || '0 0 0 6px rgba(245,219,120,.8)'); scrollToNode(params.dia, false); }
@@ -273,12 +291,8 @@ register('mapa', {
         delete n.el.dataset.today;
         n.el.classList.add('a-pop');
       } else if (n) {
-        // solo vio la historia: queda con la trivia pendiente y 0 estrellas
-        restyle(n.el, T.done, n.p, 64);
-        n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${from}<`) + (T.badges[0] || '');
-        delete n.el.dataset.today;
-        n.el.classList.add('a-pop');
-        n.el.classList.add('a-pop');
+        // solo vio la historia: queda con la trivia pendiente y 0 estrellas, sin pintarse de «hecho»
+        triviaPend(n.el, from, n.p);
       }
       const to = act ?? null;
       if (to == null && nodes[from + 1] && teo && S.hoy < 26) {
@@ -444,7 +458,7 @@ function paintSheet(layer, T, dia) {
 
   sheet.dataset.day = String(n);
   let kicker = 'HOY';
-  if (act != null && act < lastDay()) kicker = 'TE ESPERA';
+  if (act != null && act < lastDay()) kicker = `DÍA ${n}`;
   if (act == null) kicker = S.hoy >= 27 ? 'CAMINO TERMINADO' : `DÍA ${n} · LISTO`;
   if (n === 0) kicker = 'DÍA 0 · ANTES DE SALIR';
   if (dia != null && dia !== walkDay() && n > 0) kicker = contentDone(n) && !isDone(n) ? `DÍA ${n} · TRIVIA PENDIENTE` : `DÍA ${n}`;
@@ -461,7 +475,8 @@ function paintSheet(layer, T, dia) {
     const t = document.createElement('template'); t.innerHTML = T.rowOff;
     const r = t.content.firstElementChild;
     const im = r.querySelector('img'); const ic = iconOf(1, dark()); if (im && ic) im.src = A(ic);
-    const [tt, st] = r.querySelector(':scope > div').children; tt.textContent = `Día 1 · ${DAYS[1].title}`; st.textContent = 'Se abre el 29 de noviembre';
+    r.style.opacity = ''; r.classList.add('sheet-row');
+    const [tt, st] = r.querySelector(':scope > div').children; tt.textContent = DAYS[1].title; st.textContent = 'Día 1';
     cta.before(r);
     const txt = [...cta.childNodes].find(c => c.nodeType === 3 && c.nodeValue.trim()); if (txt) txt.nodeValue = 'Invitar a un amigo';
     const icon = cta.querySelector('svg'); if (icon) icon.style.display = 'none';
@@ -477,6 +492,7 @@ function paintSheet(layer, T, dia) {
     const t = document.createElement('template');
     t.innerHTML = on ? T.rowOn : T.rowOff;
     const r = t.content.firstElementChild;
+    r.style.opacity = ''; r.classList.add('sheet-row'); // el candado ya marca el bloqueo
     if (icon) { const im = r.querySelector('img'); if (im) im.src = icon; }
     const [tt, st] = r.querySelector(':scope > div').children;
     tt.textContent = title; st.textContent = sub;
@@ -500,7 +516,24 @@ function paintSheet(layer, T, dia) {
   const ruletaHoy = RULES.ruleta.includes(n) && !S.ruletas[n] && !contentDone(n) && T.ruletaRow;
   if (ruletaHoy) {
     const t = document.createElement('template'); t.innerHTML = T.ruletaRow;
-    list.push(t.content.firstElementChild);
+    const r = t.content.firstElementChild;
+    r.style.opacity = ''; r.classList.add('sheet-row');
+    const im = r.querySelector('img'); if (im && T.ruletaImg) im.src = T.ruletaImg;
+    const [tt, st] = r.querySelector(':scope > div').children;
+    const chipR = r.lastElementChild;
+    tt.textContent = 'Ruleta';
+    if (S.ruletaPendiente[n]) {
+      // dijo «Más tarde»: la fila es la acción para girarla
+      st.textContent = 'La dejaste para después';
+      chipR.textContent = 'Girar'; chipR.removeAttribute('role'); chipR.removeAttribute('aria-label');
+      r.setAttribute('role', 'button'); r.setAttribute('aria-label', 'Ruleta pendiente: girar'); r.style.cursor = 'pointer';
+      on(layer, r, () => go('ruletaPop', { day: n, from: 'mapa' }, 'modal'));
+    } else {
+      st.textContent = 'Antes de la historia';
+      const cuando = n === lastDay() ? 'Hoy' : `Día ${n}`;
+      chipR.textContent = cuando; chipR.setAttribute('aria-label', cuando);
+    }
+    list.push(r);
     seen('S-03f-Mapa-dia11');
   } else if (n !== 0 && n !== 26) {
     const trivOn = contentDone(n) && !isDone(n);
@@ -529,20 +562,25 @@ function paintSheet(layer, T, dia) {
   const ICO = {
     trivia: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     regalo: `<img src="${A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain">`,
+    ruleta: `<img src="${T.ruletaImg || A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain">`,
     casa: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1Z"/></svg>',
   };
+  let altHecho = false; // máximo una acción secundaria por hoja
   const addAlt = (txt, ico, fn, extra = {}, chip = '') => {
+    if (altHecho) return; altHecho = true;
     const alt = document.createElement('button'); alt.type = 'button'; alt.className = 'sheet-alt';
     alt.innerHTML = `${ICO[ico]}<span>${txt}</span>${chip ? `<em class="sa-chip">${chip}</em>` : ''}<svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
     Object.assign(alt.dataset, extra); cta.after(alt); on(layer, alt, fn);
   };
+  // prioridad: volver a tu día > trivias pendientes > ruleta pendiente > sorpresa pendiente
+  if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver a tu día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
   const mas = /trivia/i.test(label.text);
   if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
+  // la ruleta del propio día ya está en su fila o en el botón principal
+  const rulPend = RULES.ruleta.filter(r => r <= lastDay() && r !== n && S.ruletaPendiente[r] && !S.ruletas[r]);
+  if (n > 0 && rulPend.length) addAlt('Ruleta pendiente', 'ruleta', () => go('ruletaPop', { day: rulPend[0], from: 'mapa' }, 'modal'), {}, `Día ${rulPend[0]}`);
   const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');
   if (n > 0 && sorpPend.length) addAlt(`Sorpresa pendiente · ${SORPRESA_NOMBRE[RULES.sorpresa[sorpPend[0]]]}`, 'regalo', () => openSorpresa(sorpPend[0]), {}, `Día ${sorpPend[0]}`);
-  if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver a tu día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
-  const rulPend = RULES.ruleta.filter(r => r <= lastDay() && S.ruletaPendiente[r] && !S.ruletas[r]);
-  if (n > 0 && rulPend.length) addAlt('Ruleta pendiente', 'regalo', () => go('ruletaPop', { day: rulPend[0], from: 'mapa' }, 'modal'), {}, `Día ${rulPend[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
   sheet.style.height = 'auto';
   sheet.classList.add('in-up');

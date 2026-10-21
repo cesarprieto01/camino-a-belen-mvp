@@ -237,7 +237,8 @@ function asPage(layer, root) {
   const grab = document.createElement('span'); grab.className = 'page-grab'; grab.setAttribute('aria-hidden', 'true'); layer.appendChild(grab);
   // deslizar hacia abajo desde la parte de arriba la cierra (como «Volver»)
   let y0 = null, dy = 0;
-  layer.addEventListener('pointerdown', ev => { const r = layer.getBoundingClientRect(); const k = r.height / layer.offsetHeight || 1; if ((ev.clientY - r.top) / k < 70) { y0 = ev.clientY; dy = 0; layer.setPointerCapture?.(ev.pointerId); } });
+  // (sin capturar el toque si empieza en un botón: la X de arriba tiene que seguir funcionando)
+  layer.addEventListener('pointerdown', ev => { if (ev.target.closest?.('a, button, [role=button]')) return; const r = layer.getBoundingClientRect(); const k = r.height / layer.offsetHeight || 1; if ((ev.clientY - r.top) / k < 70) { y0 = ev.clientY; dy = 0; layer.setPointerCapture?.(ev.pointerId); } });
   layer.addEventListener('pointermove', ev => { if (y0 == null) return; const k = layer.getBoundingClientRect().height / layer.offsetHeight || 1; dy = Math.max(0, (ev.clientY - y0) / k); layer.style.animation = 'none'; layer.style.transform = `translateY(${dy}px)`; });
   const end = () => { if (y0 == null) return; y0 = null; layer.style.transition = 'transform .28s cubic-bezier(.32,.72,0,1)'; if (dy > 110) back('hoy', 'down'); else layer.style.transform = ''; setTimeout(() => { layer.style.transition = ''; }, 300); };
   layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);

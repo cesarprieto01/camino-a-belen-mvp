@@ -373,3 +373,46 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 
 /* candado de los días cerrados, abajo a la derecha del círculo */
 .node-lock { position: absolute; right: -6px; bottom: -4px; width: 26px; height: auto; filter: drop-shadow(0 2px 3px rgba(2,37,79,.25)); pointer-events: none; }
+
+/* — mapa — */
+/* cabecera fija por encima de Teodoro y los nodos, con un velo suave debajo */
+.layer[data-screen="mapa"] .map-velo { height: 130px !important; z-index: 30; pointer-events: none; background: linear-gradient(180deg, rgba(234,244,248,.9) 0%, rgba(234,244,248,0) 100%) !important; }
+:root[data-theme="dark"] .layer[data-screen="mapa"] .map-velo { background: linear-gradient(180deg, rgba(0,8,43,.85) 0%, rgba(0,8,43,0) 100%) !important; }
+.layer[data-screen="mapa"] .map-head { z-index: 31; }
+/* hoja del día: misma tipografía que el resto de la app */
+.layer[data-screen="mapa"] .sheet-head > :nth-child(2) { font-family: 'Neue Montreal', Mulish, sans-serif !important; font-weight: 700 !important; letter-spacing: -.01em; }
+.layer[data-screen="mapa"] .sheet-row > div > :first-child { font-family: 'Neue Montreal', Mulish, sans-serif; font-weight: 700 !important; letter-spacing: -.01em; }
+.layer[data-screen="mapa"] .sheet-row { opacity: 1 !important; }
+.layer[data-screen="mapa"] .sheet-alt, .layer[data-screen="mapa"] .mb-cta { font: 700 16px 'Neue Montreal', Mulish, sans-serif; }
+
+/* — inicio y mundos — */
+/* espera: el «0» pintado en el nodo de salida se tapa con el mismo disco y una estrellita */
+.espera-salida { position: absolute; left: 186px; top: 398px; width: 18px; height: 18px; border-radius: 50%; background: #F4F7FA; box-shadow: 0 0 2px 1px #F4F7FA; display: grid; place-items: center; pointer-events: none; }
+:root[data-theme="dark"] .espera-salida { background: #214C79; box-shadow: 0 0 2px 1px #214C79; }
+
+/* — trivia y juegos — */
+/* cabeceras ilustradas: se funden con el fondo, sin línea donde terminan */
+.soft-head { -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%); mask-image: linear-gradient(180deg, #000 55%, transparent 100%); }
+/* píldora de ayuda («Toca la respuesta», «Elige todas las correctas») */
+.tv-pill { height: 30px; padding: 0 14px; border-radius: 15px; background: #E2F3F7; font-size: 14px; display: flex; align-items: center; }
+:root[data-theme="dark"] .tv-pill { background: rgba(255,255,255,.1); }
+/* aviso de correcto / pista: en su propio espacio, el texto puede bajar de línea */
+.tv-status { height: auto !important; min-height: 40px; flex-wrap: wrap; row-gap: 2px; text-align: center; }
+.tv-note > span:first-child { white-space: normal !important; height: auto !important; min-height: 38px; padding-top: 6px !important; padding-bottom: 6px !important; box-sizing: border-box; }
+/* 4 imágenes: un poco más bajas para que el aviso quepa entre la grilla y «Siguiente» */
+.trivia-pic4 .pic4 > * { height: 124px !important; padding: 6px 6px 8px !important; gap: 2px !important; }
+.trivia-pic4 .pic4 > * img { width: 78px !important; height: 78px !important; }
+/* texto: círculo y palabra en la misma fila */
+.tv-txt [role=group] { top: 420px !important; }
+.tv-txt [role=group] > *, .tv-multi [role=group] > * { height: 88px !important; display: flex !important; align-items: center; gap: 12px; padding: 0 14px; box-sizing: border-box; }
+.tv-txt [role=group] > * > span, .tv-multi [role=group] > * > span { position: static !important; flex: none; }
+.tv-txt [role=group] > * > div, .tv-multi [role=group] > * > div { position: static !important; flex: 1; min-width: 0; font-size: 18px !important; line-height: 22px !important; }
+/* varias correctas: una debajo de la otra, check a la izquierda */
+.tv-multi [role=group] { top: 424px !important; gap: 8px !important; }
+.tv-multi [role=group] > * { height: auto !important; min-height: 56px; padding: 8px 14px; border-radius: 18px !important; transform: none !important; }
+.trivia-pic4 .pic4.pic4-fit > * { height: var(--tile) !important; }
+.trivia-pic4 .pic4.pic4-fit > * img { width: calc(var(--tile) - 44px) !important; height: calc(var(--tile) - 44px) !important; }
+/* adivinanza: las formas de dar pistas son texto con ícono, no botones */
+.adv-tips > div { background: none !important; box-shadow: none !important; }
+/* con «¿Listos?» puesto, los botones de la palabra esperan */
+.adv-wait { opacity: .45; cursor: default !important; transition: opacity .2s ease-out; }

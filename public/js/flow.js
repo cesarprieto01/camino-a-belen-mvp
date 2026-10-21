@@ -42,7 +42,7 @@ export function ctaLabel(n) {
   return { text: 'Hasta mañana', go: () => go('hoy', {}, 'down', { tab: true }) };
 }
 /** Termina el contenido del día: suma batería y panes. */
-function finishContent(n) {
+export function finishContent(n) {
   const first = !contentDone(n);
   S.completos[n] = { ...(S.completos[n] || {}), contenido: true };
   // terminar un cuento (o cualquier contenido del día) deja a Teodoro al 100%
@@ -123,7 +123,8 @@ export function unirse(from) {
 /** Entrar al camino desde Hoy, Teodoro o Mundos. */
 export function entrar(from) {
   if (!S.inscrito) return fase() === 'antes' ? go('teaser', {}, 'modal') : unirse(from);
-  if (fase() === 'antes') return go('espera', {}, 'page'); // antes del 29: la espera con la cuenta regresiva
+  // antes del 29 nadie ve el mapa: se entra a los mundos, con Adviento cerrado y su cuenta regresiva
+  if (fase() === 'antes') return from === 'mundos' ? toast('Empieza el 29 de noviembre') : go('mundos', {}, 'push');
   go('mapa', { from }, 'push');
 }
 const dayLine = n => n === 0 ? 'Día 0 · ¿Qué es el Adviento?' : `Día ${n} · ${DAYS[n].title}`;
@@ -156,6 +157,11 @@ function ánimo(root) {
   const dias = Math.ceil((new Date(2026, 10, 29) - new Date()) / 864e5);
   if (dias > 7) replaceText(root, /¡Ya casi salimos!/, '¡Prepárate para salir!');
 }
+/** Avatares apilados de «familias ya se unieron»: menos solape para que se lean las iniciales. */
+function juntarAvatares(root) {
+  $$(root, 'span').filter(sp => /^-\d+px$/.test(sp.style.marginLeft) && sp.style.borderRadius === '50%' && /^[A-ZÁÉÍÓÚÑ]$/.test(sp.textContent.trim()))
+    .forEach(sp => { sp.style.marginLeft = '-4px'; });
+}
 
 // ---------- Hoy ----------
 register('hoy', {
@@ -187,7 +193,7 @@ register('hoy', {
     if (fase() !== 'antes' && S.inscrito && DAYS[hd]?.type === 'domingo') {
       const ev = find(root, 'Evangelio del día');
       if (ev) {
-        const sub = textEl(ev, /Escuchar/); if (sub) sub.textContent = contentDone(hd) ? 'Hecho en tu Camino a Belén' : 'Lo escuchas en tu Camino a Belén';
+        const sub = textEl(ev, /Escuchar/); if (sub) sub.textContent = contentDone(hd) ? 'Hecho' : `Camino a Belén · Día ${hd}`;
         if (contentDone(hd)) { ev.style.opacity = '.7'; const pts = textEl(ev, /^\+\d+$/); if (pts) pts.textContent = '✓'; }
         ev.dataset.camino = '1';
       }
@@ -198,6 +204,7 @@ register('hoy', {
     if (fase() === 'antes') {
       startCountdown(root);
       ánimo(root);
+      juntarAvatares(root);
       on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
       on(root, 'Inscribirme', (ev, el) => inscribir(el)); on(root, 'Unirme gratis', (ev, el) => inscribir(el));
       on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
@@ -258,9 +265,11 @@ export function paintCaminoCard(card, from) {
   if (bar) {
     const pct = (doneCount() / 26 * 100).toFixed(1) + '%';
     const head = bar.nextElementSibling;
+    // el avatar de Teodoro nunca se sale de la barra (en 0 % queda al inicio, en 100 % al final)
+    const headAt = p => `clamp(0px, calc(${p} - 14px), calc(100% - 28px))`;
     bar.style.transition = 'width 1s cubic-bezier(.2,.8,.2,1)'; bar.style.width = '0%';
-    if (head?.style.left) { head.style.transition = 'left 1s cubic-bezier(.2,.8,.2,1)'; head.style.left = 'calc(0% - 14px)'; }
-    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct; if (head?.style.left) head.style.left = `calc(${pct} - 14px)`; }));
+    if (head?.style.left) { head.style.transition = 'left 1s cubic-bezier(.2,.8,.2,1)'; head.style.left = headAt('0%'); }
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct; if (head?.style.left) head.style.left = headAt(pct); }));
     prog.setAttribute('aria-label', `Día ${n} de 26: ${doneCount()} hechos, faltan ${26 - doneCount()} para Belén`);
   }
   // atrasado: pasitos (✓ último hecho · Teodoro en su día · pendientes · hoy en dorado)
@@ -279,7 +288,8 @@ export function paintCaminoCard(card, from) {
   card.setAttribute('aria-label', `Camino a Belén, día ${n} de 26`);
   // el botón dice lo que hará
   const btn = [...card.querySelectorAll('a')].find(a => /Continuar la Aventura/i.test(a.textContent));
-  const label = st.key === 4 ? 'Unirme gratis' : st.key === 5 ? 'Ver el nacimiento' : st.sorpresa ? 'Abrir la sorpresa' : st.done ? 'Ver el camino' : 'Continuar la aventura';
+  const primerDia = !doneCount() && !contentDone(1); // aún no ha visto la primera historia
+  const label = st.key === 4 ? 'Unirme gratis' : st.key === 5 ? 'Ver el nacimiento' : st.sorpresa ? 'Abrir la sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
   const span = btn?.querySelector('span'); if (span) span.textContent = label; else if (btn) setText(btn, /Continuar la Aventura/i, label);
   // Navidad: el pesebre en la tarjeta
   if (S.hoy >= 27 && scene) {
@@ -333,7 +343,7 @@ register('teaser', {
     on(root, 'Ahora no', () => back('hoy', 'fade'));
     on(root, 'Cerrar', () => back('hoy', 'fade'));
     tabs(root); appContent(root);
-    ['Ver el camino', 'Ir al camino'].forEach(t => on(root, t, () => toast('Primero inscríbete')));
+    ['Ver el camino', 'Ir al camino'].forEach(t => on(root, t, () => toast('Primero únete')));
     const hero = $$(root, 'img').find(i => i.src.includes(IMG.t5) || /Teodoro/.test(i.alt));
     hero?.classList.add('a-bob');
   },
@@ -359,19 +369,28 @@ register('espera', {
   files: F('V2-Espera-claro', 'V2-Espera'),
   mount(root, p, layer) {
     startCountdown(root);
-    on(root, 'Ver tu camino a Belén', () => go('mapa', { from: 'espera' }, 'push'));
-    // antes del 29 se puede mirar el camino (todo cerrado) e invitar
-    const inv = find(root, 'Invitar a un amigo');
-    const verDia0 = () => go('mapa', { from: 'espera' }, 'push');
-    if (inv) {
-      on(root, inv, verDia0);
-      const ico = inv.querySelector('svg'); if (ico) ico.outerHTML = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5Z" fill="#0B748A"/></svg>';
-      setText(inv, 'Invitar a un amigo', 'Ver el camino');
+    // antes del 29 no hay vista previa del camino: la ilustración es solo imagen, sin el día 0
+    const hero = root.querySelector('a[aria-label="Ver tu camino a Belén"]');
+    if (hero) {
+      hero.removeAttribute('href'); hero.removeAttribute('aria-label'); hero.dataset.bound = '1'; hero.tabIndex = -1; hero.style.pointerEvents = 'none';
+      const im = hero.querySelector('img'); if (im) im.alt = 'El camino a Belén con todos los días cerrados: Teodoro espera la salida';
+      // el «0» del nodo de salida está pintado en la imagen: se tapa con el mismo disco y una estrellita
+      const tapa = document.createElement('span'); tapa.className = 'espera-salida'; tapa.setAttribute('aria-hidden', 'true');
+      tapa.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6Z" fill="#E2BE55"/></svg>';
+      if (im) im.after(tapa); else hero.appendChild(tapa); // debajo del degradado del borde, como el resto de la imagen
     }
-    // vuelve a donde estaba (Hoy o Teodoro), sin pasar otra vez por el teaser
+    const salir = () => back('hoy', 'down', ['teaser', 'confirmacion']);
+    // el botón principal vuelve al inicio; «Invitar a un amigo» queda debajo
+    const inv = find(root, 'Invitar a un amigo');
+    if (inv) {
+      on(root, inv, () => go('hoy', {}, 'down', { tab: true }));
+      const ico = inv.querySelector('svg'); if (ico) ico.outerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B748A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg>';
+      setText(inv, 'Invitar a un amigo', 'Volver al inicio');
+    }
     const ahoraNo = find(root, 'Ahora no');
     if (ahoraNo) { setText(ahoraNo, 'Ahora no', 'Invitar a un amigo'); on(root, ahoraNo, () => go('invitacion', {}, 'push')); }
-    on(root, 'Cerrar', () => back('hoy', 'down', ['teaser', 'confirmacion']));
+    on(root, 'Cerrar', salir);
+    juntarAvatares(root);
     // «2.418 familias ya se unieron»: el número cuenta hasta su valor; la frase se cambia una sola vez
     const fam = textEl(root, /2\.418 familias/);
     if (fam) {
@@ -411,7 +430,9 @@ register('teodoro', {
     const n = walkDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     replaceText(root, /^Día 9$/, `Día ${n}`);
-    const isla = root.querySelector('a[aria-label^="Adviento:"]'); // se toma antes de tocar etiquetas
+    const isla = root.querySelector('a[aria-label^="Adviento:"]') || islaAdviento(root); // se toma antes de tocar etiquetas
+    quitarCorona(root);
+    juntarAvatares(root);
     const tCard = root.querySelector('a[aria-label="Ver el camino"]')?.parentElement;
     const { st, toMap } = tCard && fase() !== 'antes' ? paintCaminoCard(tCard, 'teodoro') : { st: cardState(), toMap: () => entrar('teodoro') };
     replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
@@ -435,6 +456,29 @@ register('teodoro', {
     if (S.prendas.length > (S.prendasVistas || 0)) { S.prendasVistas = S.prendas.length; save(); toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`); }
   },
 });
+/** El mundo de Adviento flotando junto a Teodoro: las pantallas de antes del 29 no lo traen y se pone igual que en el cuarto. */
+function islaAdviento(root) {
+  const cuarto = $$(root, 'img').find(i => /^Tab Teodoro|^Cuarto de Nazaret/.test(i.alt || ''));
+  if (!cuarto) return null;
+  const a = document.createElement('a');
+  a.setAttribute('aria-label', 'Adviento: Camino a Belén');
+  a.style.cssText = 'position:absolute;left:294px;top:226px;width:84px;height:84px;display:block;text-decoration:none;z-index:7';
+  a.innerHTML = '<span aria-hidden="true" style="position:absolute;left:0;top:2px;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle,rgba(255,240,190,.85) 0%,rgba(255,240,190,0) 70%)"></span>'
+    + `<img alt="" src="${A('30e9a5e1af04caa8950aa97de2e7ae0e')}" style="position:absolute;left:0;top:0;width:84px;height:84px;filter:drop-shadow(0 8px 10px rgba(0,8,43,.3))">`;
+  root.appendChild(a);
+  return a;
+}
+/** La corona de Adviento con velas sobre la mesa de noche (dibujada en el adorno del cuarto): fuera. */
+function quitarCorona(root) {
+  const deco = $$(root, 'svg').find(s => s.getAttribute('width') === '390' && s.style.pointerEvents === 'none');
+  if (!deco) return;
+  [...deco.querySelectorAll('circle, rect, path, ellipse')].forEach(el => {
+    if (el.closest('defs')) return;
+    let b; try { b = el.getBBox(); } catch { return; }
+    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+    if (!el.closest('g[transform]') && cx > 290 && cx < 372 && cy > 150 && cy < 216) el.remove();
+  });
+}
 /** El cuarto de Teodoro trae nombre, racha y panes pintados en la imagen: se tapan con los datos reales (mismo estilo que Hoy). */
 function patchCuarto(root) {
   const bg = $$(root, 'img').find(i => /^Tab Teodoro/.test(i.alt || ''));
@@ -469,15 +513,26 @@ function patchCuarto(root) {
     .setAttribute('aria-label', `${S.panes} panes`);
 }
 register('mundos', {
-  files: F('V2-02-Mundos-claro', 'V2-02-Mundos'),
+  // antes del 29: Enero y Adviento con candado y la cuenta regresiva sobre Adviento
+  file() { return (fase() === 'antes' ? F('V2-02-Mundos-pre-claro', 'V2-02-Mundos-pre') : F('V2-02-Mundos-claro', 'V2-02-Mundos'))[dark() ? 1 : 0]; },
   mount(root) {
     tabs(root);
-    const n = walkDay() ?? Math.min(lastDay(), 26);
-    replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
-    root.querySelector('a[aria-label^="Adviento:"]')?.setAttribute('aria-label', `Adviento: Camino a Belén, día ${n} de 26. Entrar al camino`);
-    on(root, 'Adviento', () => entrar('mundos'));
+    const adv = root.querySelector('a[aria-label^="Adviento:"]');
+    if (fase() === 'antes') {
+      startCountdown(root);
+      const ms = Math.max(0, new Date(2026, 10, 29) - new Date());
+      adv?.setAttribute('aria-label', `Adviento: empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
+      // sin unirse abre la invitación; ya dentro, solo recuerda cuándo se sale
+      on(root, adv, () => S.inscrito ? toast('Empieza el 29 de noviembre') : go('teaser', {}, 'modal'));
+    } else {
+      const n = walkDay() ?? Math.min(lastDay(), 26);
+      replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
+      adv?.setAttribute('aria-label', `Adviento: Camino a Belén, día ${n} de 26. Entrar al camino`);
+      on(root, adv, () => entrar('mundos'));
+      adv?.querySelector('img[alt^="Teodoro"]')?.classList.add('a-bob');
+    }
     on(root, 'Volver al cuarto de Teodoro', () => back('teodoro'));
-    on(root, 'Enero', () => toast('Enero', 'El próximo mundo: pronto'));
+    on(root, root.querySelector('[aria-label^="Mundo Enero"]'), () => toast('Enero', 'El próximo mundo: pronto'));
   },
 });
 
@@ -557,7 +612,7 @@ register('hub', {
     sparkles(root);
     on(root, 'Volver al mapa', () => go('mapa', {}, 'down', { replace: true }));
     on(root, 'Escuchar a Teodoro', () => nota('Teodoro explica el reto', 'Audio por grabar'));
-    on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true }, 'fade'));
+    on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true, replay: p.replay }, 'fade'));
     on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); animate(el, 'a-pop'); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 260); });
     // los extras del reto son descargables: con free piden Premium (y lo dicen antes de tocarlos)
     if (!premium()) ['Imprimible', 'Canción'].forEach(t => { const el = find(root, t); if (!el || el.querySelector('.pill-premium')) return; const pl = document.createElement('span'); pl.className = 'pill-premium'; pl.textContent = 'Premium'; el.style.position ||= 'relative'; el.appendChild(pl); });
@@ -570,7 +625,7 @@ register('completado', {
   files: F('S-06-Completado', 'S-06-Completado-oscuro'),
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
-    const que = { domingo: '¡Escuchaste el Evangelio!', meditacion: '¡Terminaste la meditación!', cuento: '¡Terminaste el cuento!', amigos: '¡Terminaste la historia!', cancion: '¡Cantaste la canción!', reto: '¡Hicieron el reto!', juego: '¡Jugaste con Teodoro!', video: '¡Viste el video!' }[d.type];
+    const que = { domingo: '¡Escuchaste el Evangelio!', meditacion: '¡Terminaste la meditación!', cuento: '¡Terminaste la historia!', amigos: '¡Terminaste la historia!', cancion: '¡Cantaste la canción!', reto: '¡Hicieron el reto!', juego: '¡Jugaste con Teodoro!', video: '¡Viste el video!' }[d.type];
     setText(root, '¡Terminaste el cuento!', que);
     setText(root, /sobre el cuento de hoy/, d.type === 'reto' ? 'sobre el reto de hoy' : 'sobre lo de hoy');
     const chip = find(root, 'Ganaste 20 panes');
@@ -592,7 +647,21 @@ register('calificacion', {
   h1: '¿Te gustó?',
   files: F('V2-Calificacion-claro', 'V2-Calificacion'),
   mount(root, p) {
-    // las 3 caritas empiezan sin elegir; la elegida crece, se dora y lleva la palomita
+    // sin «Enviar»: el bloque de la pregunta y las caritas baja al centro y «Ahora no» sube cerca
+    const DY = 70;
+    $$(root, '*').filter(el => el.style.position === 'absolute' && el.parentElement?.closest('[role=radio]') == null && (t => t >= 140 && t <= 470)(parseFloat(el.style.top)))
+      .forEach(el => { el.style.top = parseFloat(el.style.top) + DY + 'px'; });
+    const enviar = find(root, 'Enviar'); if (enviar) enviar.style.display = 'none';
+    const ahoraNo = find(root, 'Ahora no'); if (ahoraNo) ahoraNo.style.top = '610px';
+    // en claro, el texto blanco sobre el cielo no se lee: píldora oscura
+    if (!dark()) {
+      const pill = 'display:inline-block;padding:4px 12px;border-radius:14px;background:#0B4F6C;color:#FFFFFF;text-shadow:none';
+      [...['Poco', 'Más o menos', '¡Mucho!'].map(t => textEl(root, t)), ahoraNo].filter(Boolean).forEach(el => {
+        const t = [...el.childNodes].find(c => c.nodeType === 3 && c.nodeValue.trim()); if (!t) return;
+        const s = document.createElement('span'); s.style.cssText = pill; s.textContent = t.nodeValue.trim(); t.replaceWith(s);
+      });
+    }
+    // las 3 caritas empiezan sin elegir; tocar una la dora y envía
     const opts = $$(root, '[role=radio]');
     const badge = $$(root, 'span').find(sp => sp.style.borderRadius === '50%' && sp.querySelector('svg path[d^="M5 12.5"]'));
     const geo = opts.map(o => ({ cx: parseFloat(o.style.left) + parseFloat(o.style.width) / 2, cy: parseFloat(o.style.top) + parseFloat(o.style.height) / 2 }));
@@ -608,20 +677,19 @@ register('calificacion', {
     opts.forEach((o, k) => paintFace(o, k, false));
     if (badge) badge.style.display = 'none';
     S._voto = null;
-    const enviar = find(root, 'Enviar');
-    const lock = v => { if (enviar) { enviar.style.opacity = v ? '.45' : '1'; enviar.style.pointerEvents = v ? 'none' : ''; enviar.setAttribute('aria-disabled', String(v)); } };
-    lock(true);
+    const volver = () => back(p.back || 'mapa', 'down');
     opts.forEach((el, k) => on(root, el, () => {
+      if (S._voto) return;
       opts.forEach((o, j) => paintFace(o, j, j === k));
-      S._voto = el.getAttribute('aria-label'); lock(false); navigator.vibrate?.(10);
+      S._voto = el.getAttribute('aria-label'); navigator.vibrate?.(10);
+      toast('¡Gracias!');
+      setTimeout(volver, 400);
     }));
     // solo las caritas: un niño no tiene que escribir
     const lq = textEl(root, /Lo que más te gustó/);
     const box = lq?.closest('[style*="border-radius"]');
     if (box && box !== root) box.style.display = 'none';
     const pide = textEl(root, /Quieres contarnos algo/); if (pide && pide !== root) pide.style.display = 'none';
-    const volver = () => back(p.back || 'mapa', 'down');
-    on(root, 'Enviar', () => { if (!S._voto) return; toast('¡Gracias por contarnos!'); volver(); });
     on(root, 'Ahora no', volver); on(root, 'Cerrar', volver);
   },
 });
@@ -630,8 +698,8 @@ register('free', {
   files: F('V2-24-Dia-completo-claro', 'V2-24-Dia-completo'),
   mount(root, p) {
     const volver = () => back(p.back || 'mapa', 'down');
-    on(root, 'Ver Theo Premium', () => nota('Paywall de Theo Premium', 'Ya existe en la app'));
-    on(root, 'Volver al mapa', volver); on(root, 'Cerrar', volver);
+    ['Ver Theo Premium', 'Hazte Premium'].forEach(t => on(root, t, () => nota('Paywall de Theo Premium', 'Ya existe en la app')));
+    on(root, 'Volver al mapa', volver); on(root, 'Ahora no', volver); on(root, 'Cerrar', volver);
     setText(root, 'Volver al mapa', 'Ahora no');
   },
 });

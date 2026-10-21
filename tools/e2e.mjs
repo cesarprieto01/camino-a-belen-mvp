@@ -13,10 +13,11 @@ await p.goto('http://localhost:5190/app.html');
 await p.evaluate(() => localStorage.clear());
 await p.reload(); await p.waitForTimeout(1200);
 // la app arranca desde cero; los recorridos (salvo «inicio») parten del día 9 con 8 días hechos
-if (!scen.startsWith('inicio') && !scen.startsWith('completo')) {
+// cada recorrido (salvo «inicio» y «completo») arranca del mismo estado, aunque se corran varios seguidos
+const base = async () => {
   await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 9, inscrito: true, teaserVisto: true, panes: 120 }); for (let d = 0; d <= 8; d++) c.S.completos[d] = { contenido: true, trivia: d > 0, estrellas: d ? 2 : 0 }; [3, 6].forEach(d => c.S.sorpresas[d] = 'hecha'); c.S.ruletas[4] = 'gorro'; c.S.prendas = ['gorro']; c.S.prendasVistas = 1; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
   await p.waitForTimeout(900);
-}
+};
 let k = 0;
 // detector de textos rotos: frases repetidas seguidas («ya se unieron ya se unieron…»), «undefined», «NaN»
 const textCheck = async (name) => {
@@ -131,6 +132,10 @@ const flows = {
   },
   async reto() {
     await scenario('Reto en familia'); await tap('Ver el reto'); await shot('hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await shot('completado');
+    // desde el hub, el «¡Lo hicimos!» del desafío cierra el reto (una sola confirmación)
+    await scenario('Reto en familia'); await tap('Ver el reto'); await tap('Reto en familia'); await tap('¡Vamos!'); await shot('desafio-hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200);
+    if (await screen() !== 'completado') errs.push('desafío desde el hub no va a completado: ' + await screen());
+    await shot('desafio-hub-completado');
   },
   async regreso() { await scenario('Regreso tras una semana'); await shot('regreso'); await tap('Empezar por el día'); await shot('mapa'); },
   async atrasado() { await scenario('Va atrasado'); await shot('hoy-atrasado'); await tap('Continuar la aventura'); await shot('mapa'); },
@@ -151,8 +156,9 @@ const flows = {
     await tap('Invitar a un amigo'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Volver'); await expect('espera', 'volver de invitación');
     await tap('Cerrar'); await expect('teodoro', 'espera Cerrar vuelve a Teodoro'); await shot('teodoro-dentro');
-    await tap('Entrar'); await expect('espera', 'Entrar abre la espera antes del 29'); await shot('espera-entrar');
-    await tap('Cerrar'); await expect('teodoro', 'de la espera a Teodoro');
+    await tap('Entrar'); await expect('mundos', 'Entrar abre los mundos antes del 29'); await shot('mundos-antes');
+    await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'de los mundos a Teodoro');
+    await tap('Mundos de Teodoro'); await expect('mundos', 'la isla abre los mundos antes del 29'); await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'isla: vuelve a Teodoro');
     await tap('Ver Camino a Belén'); await expect('espera', 'la ilustración abre la espera'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
     await tap('Invitar'); await expect('invitacion', 'invitar desde Teodoro'); await tap('Volver'); await expect('teodoro', 'volver a Teodoro');
     await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
@@ -172,7 +178,7 @@ const flows = {
     await p.waitForTimeout(3200); await shot('cerrado');
     const ov = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen).join('>'));
     if (ov !== 'mapa>cerrado') errs.push('cerrado no es hoja sobre el mapa: ' + ov);
-    await tap('¿Les gustó hoy?'); await shot('calificar'); await tap('¡Mucho!'); await shot('calificar-elegido'); await tap('Enviar'); await p.waitForTimeout(800);
+    await tap('¿Les gustó hoy?'); await shot('calificar'); await tap('¡Mucho!'); await shot('calificar-elegido'); await p.waitForTimeout(800);
     if (await screen() !== 'mapa') errs.push('tras calificar: esperaba mapa, quedó ' + await screen());
     await tap('Atrás'); await shot('hoy-fin');
   },
@@ -183,17 +189,22 @@ const flows = {
     if (s0.hoy !== 0 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
     if (!(await waitScreen('teaser'))) errs.push('el teaser no sale solo al entrar: ' + await screen());
     await shot('teaser'); await tap('Unirme gratis'); await p.waitForTimeout(2400); await shot('espera');
-    await tap('Cerrar'); await shot('hoy-dentro'); await tap('Entrar'); await p.waitForTimeout(800);
-    if ((await screen()) !== 'espera') errs.push('antes del 29, «Entrar» no abre la espera: ' + await screen());
-    await tap('Ver el camino'); await p.waitForTimeout(1200); await shot('mapa-antes');
-    const hoja = await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet]')?.textContent || '');
-    if (!/Salimos el 29 de noviembre/.test(hoja) || /Día 0|Qué es el Adviento/.test(hoja)) errs.push('el mapa antes del 29 todavía muestra un día 0: ' + hoja.slice(0, 120));
-    await tap('Volver al inicio'); await p.waitForTimeout(800);
+    if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child a[aria-label="Ver tu camino a Belén"]'))) errs.push('la espera todavía abre una vista previa del camino');
+    await tap('Cerrar'); await shot('hoy-dentro');
+    if ((await screen()) !== 'hoy') errs.push('la X de la espera no vuelve a Hoy: ' + await screen());
+    await tap('Entrar'); await p.waitForTimeout(800);
+    if ((await screen()) !== 'mundos') errs.push('antes del 29, «Entrar» no abre los mundos: ' + await screen());
+    await shot('mundos-antes');
+    await tap('Adviento'); await p.waitForTimeout(600);
+    if ((await screen()) !== 'mundos') errs.push('antes del 29, tocar Adviento ya unido no debe salir de los mundos: ' + await screen());
+    await tap('Volver al cuarto de Teodoro'); await p.waitForTimeout(800);
+    if ((await screen()) !== 'hoy') errs.push('volver de los mundos no regresa a Hoy: ' + await screen());
     // pasa la medianoche del 28 al 29: empieza el camino
     if (!(await p.evaluate(() => !!document.querySelector('[data-act="dayPlus"]')))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); }
     await p.evaluate(() => document.querySelector('[data-act="dayPlus"]')?.click()); await p.waitForTimeout(1200); await shot('dia1');
     const s1 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, bat: c.S.bateria }; });
     if (s1.hoy !== 1 || s1.bat !== 5) errs.push('día 1 mal: ' + JSON.stringify(s1));
+    if (!(await p.evaluate(() => /Iniciar la aventura/.test(document.querySelector('#viewport .layer:last-child').textContent)))) errs.push('el día 1 no dice «Iniciar la aventura»');
   },
   // hojas de página: free sobre el reto, espera sobre Hoy, calificación sobre el mapa
   async paginas() {
@@ -231,7 +242,7 @@ const flows = {
       await nextDay();
       if (await screen() !== 'hoy') errs.push(`día ${d}: no abre en Hoy`);
       await textCheck('hoy-' + d);
-      await tap('Continuar la aventura');
+      await tap(d === 1 ? 'Iniciar la aventura' : 'Continuar la aventura');
       let steps = 0, done = false;
       while (!done && steps++ < 45) {
         await p.waitForTimeout(650);
@@ -374,7 +385,7 @@ const flows = {
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };
 for (const name of scen.split(',')) {
-  try { await flows[name](); } catch (e) { errs.push(name + ': ' + e.message); }
+  try { if (name !== 'inicio' && name !== 'completo') await base(); await flows[name](); } catch (e) { errs.push(name + ': ' + e.message); }
 }
 console.log(errs.length ? errs.join('\n') : 'OK sin errores');
 await b.close();

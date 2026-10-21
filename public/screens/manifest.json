@@ -151,6 +151,70 @@
   "x": 6040,
   "y": 6628
  },
+ "S-03c-Mapa-dia-pasado-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "03c · Mapa: tocar un día ya hecho → ver otra vez o repetir la trivia (mejora estrellas; los panes solo la 1.ª vez) · ☾ o",
+  "dark": true,
+  "x": 6510,
+  "y": 7728
+ },
+ "S-03c-Mapa-dia-pasado": {
+  "w": 390,
+  "h": 844,
+  "title": "03c · Mapa: tocar un día ya hecho → ver otra vez o repetir la trivia (mejora estrellas; los panes solo la 1.ª vez) · ☀ c",
+  "dark": false,
+  "x": 6510,
+  "y": 6628
+ },
+ "S-03d-Mapa-dia-cerrado-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "03d · Mapa: tocar un día cerrado → globo «Se abre el 9 de diciembre» · ☾ oscuro",
+  "dark": true,
+  "x": 6980,
+  "y": 7728
+ },
+ "S-03d-Mapa-dia-cerrado": {
+  "w": 390,
+  "h": 844,
+  "title": "03d · Mapa: tocar un día cerrado → globo «Se abre el 9 de diciembre» · ☀ claro",
+  "dark": false,
+  "x": 6980,
+  "y": 6628
+ },
+ "S-03e-Mapa-energia-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "03e · Mapa: tocar la batería → cómo está Teodoro · ☾ oscuro",
+  "dark": true,
+  "x": 7450,
+  "y": 7728
+ },
+ "S-03e-Mapa-energia": {
+  "w": 390,
+  "h": 844,
+  "title": "03e · Mapa: tocar la batería → cómo está Teodoro · ☀ claro",
+  "dark": false,
+  "x": 7450,
+  "y": 6628
+ },
+ "S-03f-Mapa-dia11-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "03f · Mapa día 11 (casa sorpresa) → «Ver historia» abre la ruleta · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 11083
+ },
+ "S-03f-Mapa-dia11": {
+  "w": 390,
+  "h": 844,
+  "title": "03f · Mapa día 11 (casa sorpresa) → «Ver historia» abre la ruleta · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 9648
+ },
  "S-04-Hub-familia-oscuro": {
   "w": 390,
   "h": 844,
@@ -165,6 +229,22 @@
   "title": "04b · Hub del día · reto en familia · ☀ claro",
   "dark": false,
   "x": 8120,
+  "y": 6628
+ },
+ "S-04c-Imprimible-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "04c · Hub familia: imprimible del pesebre para colorear · ☾ oscuro",
+  "dark": true,
+  "x": 8590,
+  "y": 7728
+ },
+ "S-04c-Imprimible": {
+  "w": 390,
+  "h": 844,
+  "title": "04c · Hub familia: imprimible del pesebre para colorear · ☀ claro",
+  "dark": false,
+  "x": 8590,
   "y": 6628
  },
  "S-05-Reproductor-oscuro": {
@@ -434,7 +514,7 @@
  "V2-24-Dia-completo-claro": {
   "w": 390,
   "h": 844,
-  "title": "Free · todo el día abierto, solo los descargables con Premium · ☀ claro",
+  "title": "Free · invitación a Premium: desbloquea toda la aventura · ☀ claro",
   "dark": false,
   "x": 0,
   "y": 22620
@@ -442,8 +522,8 @@
  "V2-24-Dia-completo": {
   "w": 390,
   "h": 844,
-  "title": "Free · todo el día abierto, solo los descargables con Premium · ☾ oscuro",
-  "dark": true,
+  "title": "Free · invitación a Premium: desbloquea toda la aventura · ☾ oscuro",
+  "dark": false,
   "x": 0,
   "y": 23584
  },
@@ -591,6 +671,22 @@
   "x": 1610,
   "y": 4844
  },
+ "V2-Desafio-carta2-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Desafío en familia · «Sacar otra carta»: otro reto · ☀ claro",
+  "dark": false,
+  "x": 6980,
+  "y": 13338
+ },
+ "V2-Desafio-carta2": {
+  "w": 390,
+  "h": 844,
+  "title": "Desafío en familia · «Sacar otra carta»: otro reto · ☾ oscuro",
+  "dark": true,
+  "x": 6980,
+  "y": 14302
+ },
  "V2-Desafio-claro": {
   "w": 390,
   "h": 844,
@@ -662,6 +758,22 @@
   "dark": false,
   "x": 470,
   "y": 28915
+ },
+ "V2-Final-compartir-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Día 26 · compartir la llegada con la familia · ☀ claro",
+  "dark": false,
+  "x": 940,
+  "y": 28915
+ },
+ "V2-Final-compartir": {
+  "w": 390,
+  "h": 844,
+  "title": "Día 26 · compartir la llegada con la familia · ☾ oscuro",
+  "dark": true,
+  "x": 940,
+  "y": 29879
  },
  "V2-Final": {
   "w": 390,
@@ -879,6 +991,22 @@
   "x": 4230,
   "y": 6628
  },
+ "V2-Trivia-fin-sorpresa-adivinanza-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 6) → Adivinanza · ☀ claro",
+  "dark": false,
+  "x": 2080,
+  "y": 13338
+ },
+ "V2-Trivia-fin-sorpresa-adivinanza": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 6) → Adivinanza · ☾ oscuro",
+  "dark": true,
+  "x": 2080,
+  "y": 14302
+ },
  "V2-Trivia-fin-sorpresa-claro": {
   "w": 390,
   "h": 844,
@@ -886,6 +1014,22 @@
   "dark": false,
   "x": 0,
   "y": 13338
+ },
+ "V2-Trivia-fin-sorpresa-desafio-claro": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 9) → Desafío en familia · ☀ claro",
+  "dark": false,
+  "x": 5570,
+  "y": 13338
+ },
+ "V2-Trivia-fin-sorpresa-desafio": {
+  "w": 390,
+  "h": 844,
+  "title": "Trivia: resultado en día sorpresa (día 9) → Desafío en familia · ☾ oscuro",
+  "dark": true,
+  "x": 5570,
+  "y": 14302
  },
  "V2-Trivia-fin-sorpresa": {
   "w": 390,
@@ -935,148 +1079,20 @@
   "x": 940,
   "y": 18626
  },
- "S-03c-Mapa-dia-pasado": {
+ "V2-02-Mundos-pre-claro": {
   "w": 390,
   "h": 844,
-  "title": "03c · Mapa: tocar un día ya hecho → ver otra vez o repetir la trivia (mejora estrellas; los panes solo la 1.ª vez) · ☀ claro",
+  "title": "Tab Teodoro · Mundos antes del 29 nov · los dos mundos con candado y cuenta regresiva en Adviento · ☀ claro",
   "dark": false,
-  "x": 6510,
-  "y": 6628
+  "x": 1410,
+  "y": 18626
  },
- "S-03c-Mapa-dia-pasado-oscuro": {
+ "V2-02-Mundos-pre": {
   "w": 390,
   "h": 844,
-  "title": "03c · Mapa: tocar un día ya hecho → ver otra vez o repetir la trivia (mejora estrellas; los panes solo la 1.ª vez) · ☾ oscuro",
+  "title": "Tab Teodoro · Mundos antes del 29 nov · los dos mundos con candado y cuenta regresiva en Adviento · ☾ oscuro",
   "dark": true,
-  "x": 6510,
-  "y": 7728
- },
- "S-03d-Mapa-dia-cerrado": {
-  "w": 390,
-  "h": 844,
-  "title": "03d · Mapa: tocar un día cerrado → globo «Se abre el 9 de diciembre» · ☀ claro",
-  "dark": false,
-  "x": 6980,
-  "y": 6628
- },
- "S-03d-Mapa-dia-cerrado-oscuro": {
-  "w": 390,
-  "h": 844,
-  "title": "03d · Mapa: tocar un día cerrado → globo «Se abre el 9 de diciembre» · ☾ oscuro",
-  "dark": true,
-  "x": 6980,
-  "y": 7728
- },
- "S-03e-Mapa-energia": {
-  "w": 390,
-  "h": 844,
-  "title": "03e · Mapa: tocar la batería → cómo está Teodoro · ☀ claro",
-  "dark": false,
-  "x": 7450,
-  "y": 6628
- },
- "S-03e-Mapa-energia-oscuro": {
-  "w": 390,
-  "h": 844,
-  "title": "03e · Mapa: tocar la batería → cómo está Teodoro · ☾ oscuro",
-  "dark": true,
-  "x": 7450,
-  "y": 7728
- },
- "S-03f-Mapa-dia11": {
-  "w": 390,
-  "h": 844,
-  "title": "03f · Mapa día 11 (casa sorpresa) → «Ver historia» abre la ruleta · ☀ claro",
-  "dark": false,
-  "x": 0,
-  "y": 9648
- },
- "S-03f-Mapa-dia11-oscuro": {
-  "w": 390,
-  "h": 844,
-  "title": "03f · Mapa día 11 (casa sorpresa) → «Ver historia» abre la ruleta · ☾ oscuro",
-  "dark": true,
-  "x": 0,
-  "y": 11083
- },
- "S-04c-Imprimible": {
-  "w": 390,
-  "h": 844,
-  "title": "04c · Hub familia: imprimible del pesebre para colorear · ☀ claro",
-  "dark": false,
-  "x": 8590,
-  "y": 6628
- },
- "S-04c-Imprimible-oscuro": {
-  "w": 390,
-  "h": 844,
-  "title": "04c · Hub familia: imprimible del pesebre para colorear · ☾ oscuro",
-  "dark": true,
-  "x": 8590,
-  "y": 7728
- },
- "V2-Desafio-carta2-claro": {
-  "w": 390,
-  "h": 844,
-  "title": "Desafío en familia · «Sacar otra carta»: otro reto · ☀ claro",
-  "dark": false,
-  "x": 6980,
-  "y": 13338
- },
- "V2-Desafio-carta2": {
-  "w": 390,
-  "h": 844,
-  "title": "Desafío en familia · «Sacar otra carta»: otro reto · ☾ oscuro",
-  "dark": true,
-  "x": 6980,
-  "y": 14302
- },
- "V2-Final-compartir-claro": {
-  "w": 390,
-  "h": 844,
-  "title": "Día 26 · compartir la llegada con la familia · ☀ claro",
-  "dark": false,
-  "x": 940,
-  "y": 28915
- },
- "V2-Final-compartir": {
-  "w": 390,
-  "h": 844,
-  "title": "Día 26 · compartir la llegada con la familia · ☾ oscuro",
-  "dark": true,
-  "x": 940,
-  "y": 29879
- },
- "V2-Trivia-fin-sorpresa-adivinanza-claro": {
-  "w": 390,
-  "h": 844,
-  "title": "Trivia: resultado en día sorpresa (día 6) → Adivinanza · ☀ claro",
-  "dark": false,
-  "x": 2080,
-  "y": 13338
- },
- "V2-Trivia-fin-sorpresa-adivinanza": {
-  "w": 390,
-  "h": 844,
-  "title": "Trivia: resultado en día sorpresa (día 6) → Adivinanza · ☾ oscuro",
-  "dark": true,
-  "x": 2080,
-  "y": 14302
- },
- "V2-Trivia-fin-sorpresa-desafio-claro": {
-  "w": 390,
-  "h": 844,
-  "title": "Trivia: resultado en día sorpresa (día 9) → Desafío en familia · ☀ claro",
-  "dark": false,
-  "x": 5570,
-  "y": 13338
- },
- "V2-Trivia-fin-sorpresa-desafio": {
-  "w": 390,
-  "h": 844,
-  "title": "Trivia: resultado en día sorpresa (día 9) → Desafío en familia · ☾ oscuro",
-  "dark": true,
-  "x": 5570,
-  "y": 14302
+  "x": 1410,
+  "y": 20333
  }
 }

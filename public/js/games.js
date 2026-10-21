@@ -1,8 +1,8 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
 import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
-  floaty, confetti, addPanes, dark, stars, isDone } from './core.js';
+  floaty, confetti, addPanes, dark, stars, isDone, _stack } from './core.js';
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS } from './data.js';
-import { finishTrivia, openSorpresa } from './flow.js';
+import { finishTrivia, finishContent, openSorpresa } from './flow.js';
 
 const F = (c, o) => dark() ? o : c;
 const speak = text => {
@@ -42,13 +42,26 @@ async function tTemplates() {
   return triviaTpl;
 }
 
+// si cerraron la trivia a medias, se retoma en la pregunta donde iban (con lo ya respondido)
+const resume = p => (p.replay || p.i != null || !S.triviaProgreso?.[p.day]) ? p : { ...p, ...S.triviaProgreso[p.day] };
+const keep = (n, prog) => { (S.triviaProgreso ||= {})[n] = prog; save(); };
+// las ilustraciones de cabecera se funden con el fondo, sin línea donde terminan
+export function softHead(root) {
+  [...root.children].slice(0, 6).filter(el => el.style.top === '0px' && parseFloat(el.style.height) >= 280 && (el.tagName === 'IMG' || /linear-gradient/.test(el.style.background))).forEach(el => el.classList.add('soft-head'));
+}
+
 register('trivia', {
-  file: p => { const q = TRIVIA[p.day][p.i || 0]; return isPic(q) ? F('V2-06a-Trivia-sin-elegir-claro', 'V2-06a-Trivia-sin-elegir') : F('V2-06c-Trivia-varias-claro', 'V2-06c-Trivia-varias'); },
+  file: p => { p = resume(p); const q = TRIVIA[p.day][p.i || 0]; return isPic(q) ? F('V2-06a-Trivia-sin-elegir-claro', 'V2-06a-Trivia-sin-elegir') : F('V2-06c-Trivia-varias-claro', 'V2-06c-Trivia-varias'); },
   async mount(root, p, layer) {
+    p = resume(p);
+    // ya había acertado la última y cerró antes de ver el resultado
+    if (p.fin != null) { go('triviaFin', { day: p.day, ok: p.fin }, 'modal', { replace: true }); return; }
     const T = await tTemplates();
     const n = p.day, i = p.i || 0, ok = p.ok || 0;
     const q = TRIVIA[n][i];
-    let fallos = 0, answered = false;
+    let fallos = p.f || 0, answered = false;
+    softHead(root);
+    root.classList.add(isPic(q) ? (q.o.length === 4 ? 'tv-pic4' : 'tv-pic') : isMulti(q) ? 'tv-multi' : 'tv-txt');
 
     if (!isPic(q)) seen(isMulti(q) ? 'V2-06c-Trivia-varias-claro' : 'V2-06b-Trivia-4-opciones-claro');
     if (isPic(q) && i > 0) seen('V2-06-Trivia-claro');
@@ -94,18 +107,22 @@ register('trivia', {
       el.setAttribute('aria-label', o);
       return el;
     });
-    // 3 opciones con imagen; 4 con texto en grilla 2×2
-    if (!isPic(q)) group.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    // texto: 2×2 con círculo y palabra en la misma fila; varias correctas: lista; 4 imágenes: 2×2 compacto
+    if (isMulti(q)) group.style.gridTemplateColumns = '1fr';
+    else if (!isPic(q)) group.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
     else if (q.o.length === 4) { group.style.display = 'grid'; group.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))'; group.style.gap = '12px'; group.classList.add('pic4'); root.classList.add('trivia-pic4'); }
     opts.forEach((el, k) => { group.appendChild(el); el.style.animation = `rise .4s ${.08 * k}s cubic-bezier(.2,.8,.2,1) both`; });
+    // preguntas de 3 líneas: las opciones empiezan debajo de la pregunta
+    if (card) group.style.setProperty('top', Math.max(group.offsetTop, card.offsetTop + card.offsetHeight + 12) + 'px', 'important');
 
     // pie: pista de interacción y «Comprobar»
     const hint = [...root.children].find(el => el.style.top === '700px' || el.style.top === '702px');
     const check = [...root.children].find(el => el.tagName === 'A' && /Comprobar/.test(el.textContent));
-    if (!isMulti(q)) {
-      check?.remove();
-      if (hint && !isPic(q)) { hint.innerHTML = `<span style="height:30px;padding:0 14px;border-radius:15px;background:${dark() ? 'rgba(255,255,255,.1)' : '#E2F3F7'};font-size:14px;display:flex;align-items:center">Toca la respuesta</span>`; }
-    }
+    if (!isMulti(q)) check?.remove();
+    if (hint) hint.innerHTML = `<span class="tv-pill">${isMulti(q) ? 'Elige todas las correctas' : 'Toca la respuesta'}</span>`;
+    // avisos, pista y «Toca la respuesta» van en su propio espacio, debajo de las opciones (nunca encima)
+    const place = el => el?.style.setProperty('top', (group.offsetTop + group.offsetHeight + 14) + 'px', 'important');
+    place(hint);
 
     const clearFeedback = () => $$(root, '[role=status], [role=note], [data-next], [data-spark]').forEach(e => e.remove());
     const showNext = () => {
@@ -140,7 +157,15 @@ register('trivia', {
       });
       const t = document.createElement('template'); t.innerHTML = T.status; const st = t.content.firstElementChild;
       const spans = st.querySelectorAll(':scope > span'); spans[spans.length - 1].textContent = q.ok;
-      root.appendChild(st); st.classList.add('a-pop');
+      st.classList.add('tv-status'); root.appendChild(st); place(st); st.classList.add('a-pop');
+      // 4 imágenes con pregunta larga: la grilla se encoge lo justo para que el aviso quepa sobre «Siguiente»
+      if (group.classList.contains('pic4')) {
+        const h = Math.min(124, Math.floor((752 - 12 - st.offsetHeight - 14 - group.offsetTop - 10) / 2));
+        if (h < 124) { group.style.setProperty('--tile', Math.max(h, 84) + 'px'); group.classList.add('pic4-fit'); place(st); }
+      }
+      // si cierran ahora, al volver siguen en la próxima pregunta (o ven el resultado)
+      const okN = ok + (fallos === 0 ? 1 : 0);
+      if (!p.replay) keep(n, i < 4 ? { i: i + 1, ok: okN, h: (p.h || '') + (fallos === 0 ? '1' : '0') } : { i, fin: okN });
       const sp = document.createElement('div'); sp.dataset.spark = '1'; sp.innerHTML = T.sparkles; [...sp.children].forEach((s, k) => { s.classList.add('a-twinkle'); s.style.animationDelay = k * .2 + 's'; });
       root.append(...sp.children);
       setTeo(IMG.tCelebra, 'a-hop');
@@ -159,9 +184,13 @@ register('trivia', {
       const t = document.createElement('template'); t.innerHTML = T.note; const nt = t.content.firstElementChild;
       const b = nt.querySelector('b'); if (b) b.nextSibling.nodeValue = ' ' + q.pista;
       nt.setAttribute('aria-label', 'Casi. Pista: ' + q.pista);
+      nt.classList.add('tv-note');
       if (hint) hint.style.display = 'none';
-      if (isMulti(q)) { nt.style.top = '650px'; }
-      root.appendChild(nt); nt.classList.add('a-rise');
+      // varias correctas: solo la pista, para no chocar con «Comprobar»
+      if (isMulti(q)) nt.querySelector(':scope > span:last-child')?.remove();
+      root.appendChild(nt); place(nt); nt.classList.add('a-rise');
+      // el fallo cuenta aunque cierren y vuelvan
+      if (!p.replay) keep(n, { i, ok, h: p.h || '', f: fallos });
       setTeo(IMG.tFarol, 'a-bob');
     };
 
@@ -367,8 +396,12 @@ register('adivinanza', {
     const timer = root.querySelector('[aria-label^="Quedan"]');
     const tFill = timer?.querySelector(':scope > div > div') || timer?.querySelector('div > div'), tTxt = timer && textEl(timer, /\d+s/);
     let left = SECS, done = false, t0 = null;
+    softHead(root);
+    // las formas de dar pistas son ayuda, no botones: texto con ícono sobre el fondo
+    textEl(root, 'Haz mímica')?.closest('[style*="grid-template-columns"]')?.classList.add('adv-tips');
+    const acts = [find(root, '¡La adivinaron!'), find(root, 'Pasar a otra palabra')].filter(Boolean);
     // «¿Listos?»: la palabra se tapa hasta que quien da las pistas toma el celular; ahí arranca el reloj
-    if (card && !reduced()) {
+    if (card) {
       const gate = document.createElement('button');
       gate.type = 'button'; gate.className = 'adv-gate';
       gate.innerHTML = `<b>¿Listos?</b><span>${k ? 'Pásale el celular a quien da las pistas' : 'Que solo mire quien da las pistas'}</span><i>Toca para ver la palabra</i>`;
@@ -376,7 +409,13 @@ register('adivinanza', {
       gate.style.cssText = `left:${card.offsetLeft}px;top:${card.offsetTop}px;width:${card.offsetWidth}px;height:${card.offsetHeight}px`;
       if (tFill) tFill.style.width = '100%'; if (tTxt) tTxt.textContent = SECS + 's';
       root.appendChild(gate);
-      on(root, gate, () => { gate.classList.add('off'); setTimeout(() => gate.remove(), 260); t0 = performance.now(); requestAnimationFrame(tick); });
+      // mientras está la tapa, los botones de la palabra esperan
+      acts.forEach(a => { a.classList.add('adv-wait'); a.setAttribute('aria-disabled', 'true'); });
+      on(root, gate, () => {
+        acts.forEach(a => { a.classList.remove('adv-wait'); a.removeAttribute('aria-disabled'); });
+        if (reduced()) gate.remove(); else { gate.classList.add('off'); setTimeout(() => gate.remove(), 260); }
+        t0 = performance.now(); requestAnimationFrame(tick);
+      });
     } else t0 = performance.now();
     const tick = () => {
       if (done || !layer.isConnected || t0 == null) return;
@@ -404,6 +443,7 @@ register('adivinanza', {
 register('adivinanzaTiempo', {
   file: () => F('V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-tiempo'),
   mount(root, p) {
+    softHead(root);
     const w = p.words[p.k];
     setText(root, 'ESTRELLA', w.w);
     const img = $$(root, 'img').find(i => i.src.includes(IMG.estrella)); if (img) img.src = A(IMG[w.img]);
@@ -446,7 +486,7 @@ register('desafioIntro', {
   file: () => F('V2-Desafio-intro-claro', 'V2-Desafio-intro'),
   mount(root, p) {
     const salir = p.fromHub ? () => back('hub') : later(p.day);
-    on(root, '¡Vamos!', () => go('desafio', { day: p.day, fromHub: p.fromHub }, 'fade'));
+    on(root, '¡Vamos!', () => go('desafio', { day: p.day, fromHub: p.fromHub, replay: p.replay }, 'fade'));
     on(root, 'Ahora no', salir); on(root, 'Cerrar', salir);
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
   },
@@ -454,6 +494,7 @@ register('desafioIntro', {
 register('desafio', {
   file: () => F('V2-Desafio-claro', 'V2-Desafio'),
   mount(root, p, layer) {
+    softHead(root);
     // cada día de desafío empieza en otra carta del mazo
     let c = p.c ?? (Math.floor(p.day / 3) * 2) % DESAFIOS.length;
     const scroll = [...root.children].find(el => el.style.top === '360px');
@@ -471,7 +512,15 @@ register('desafio', {
       c = (c + 1) % DESAFIOS.length; paint2(); seen('V2-Desafio-carta2-claro');
       scroll.animate([{ transform: 'rotateY(-90deg) scale(.9)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
     });
-    on(root, '¡Lo hicimos!', (ev, el) => { animate(el, 'a-pop'); navigator.vibrate?.(20); setTimeout(() => go('desafioFin', { day: p.day, c, fromHub: p.fromHub }, 'fade'), 260); });
+    on(root, '¡Lo hicimos!', (ev, el) => {
+      animate(el, 'a-pop'); navigator.vibrate?.(20);
+      if (!p.fromHub) { setTimeout(() => go('desafioFin', { day: p.day, c }, 'fade'), 260); return; }
+      // abierto desde el reto: este «¡Lo hicimos!» cierra el reto (sin volver a confirmarlo en el hub)
+      if (_stack.at(-1)?.name === 'hub') _stack.pop();
+      if (p.replay) { toast('¡Otra vez en familia!'); setTimeout(() => go('mapa', {}, 'down', { replace: true }), 260); return; }
+      finishContent(p.day);
+      setTimeout(() => go('completado', { day: p.day }, 'fade', { replace: true }), 260);
+    });
     on(root, 'Salir', p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day));
   },
 });
@@ -486,15 +535,6 @@ register('desafioFin', {
     if (stamp) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';
     $$(root, 'img').forEach(i => { i.addEventListener('error', () => { i.src = A(IMG.corona); }, { once: true }); if (i.complete && !i.naturalWidth) i.src = A(IMG.corona); });
     const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
-    if (p.fromHub) {
-      // el reto del hub: los panes se ganan al marcar «¡Lo hicimos!» en el hub
-      paintFin(root, layer, p.day, false, false);
-      setText(root, /Ya ganaste estos panes/, 'Ahora márcalo en el reto');
-      const back = () => go('hub', { day: p.day }, 'back');
-      on(root, 'Volver al camino', back); on(root, 'Cerrar', back);
-      setText(root, 'Volver al camino', 'Volver al reto');
-      return;
-    }
     const first = sorpresaHecha(p.day, layer);
     paintFin(root, layer, p.day, first);
   },

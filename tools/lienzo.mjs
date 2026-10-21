@@ -59,6 +59,12 @@ const SHOTS = {
   'calificacion': async () => { await setup({ hoy: 10, upto: 9, scr: 'mapa' }); await p.waitForTimeout(600); await js(async () => { const c = await import('/js/core.js'); c.go('calificacion', { day: 9 }, 'page'); }); await p.waitForTimeout(500); },
   'free': async () => { await setup({ hoy: 13, upto: 12, extra: { plan: 'free' } }); await js(async () => { const c = await import('/js/core.js'); c.go('hub', { day: 13 }, 'none'); }); await p.waitForTimeout(600); await tap('Imprimible'); },
   'teodoro': async () => { await setup({ hoy: 9, upto: 8, scr: 'teodoro' }); },
+  'hoy-dia1': async () => { await setup({ hoy: 1 }); },
+  'mundos': async () => { await setup({ hoy: 9, upto: 8, scr: 'mundos' }); },
+  'mundos-pre': async () => { await setup({ hoy: 0, scr: 'mundos' }); },
+  'pre-teodoro': async () => { await setup({ hoy: 0, inscrito: false, scr: 'teodoro' }); },
+  'pre-teodoro-dentro': async () => { await setup({ hoy: 0, scr: 'teodoro' }); },
+  'teodoro-nazaret': async () => { await setup({ hoy: 9, upto: 8, scr: 'teodoro', S: { cuartoNuevo: true } }); },
 };
 const names = only ? only.split(',') : Object.keys(SHOTS);
 for (const tema of ['claro', 'oscuro']) {
