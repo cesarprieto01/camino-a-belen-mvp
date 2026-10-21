@@ -364,7 +364,7 @@ const flows = {
   // días libres: tocar un día desbloqueado o con trivia pendiente abre su hoja; la ruleta aplazada vuelve
   async libre() {
     const st = () => p.evaluate(async () => { const c = await import('/js/core.js'); const L = document.querySelector('#viewport .layer:last-child'); return { s: c.cur.name, dia: c.cur.params.dia, titulo: L.querySelector('.sheet-head')?.children[1]?.textContent, cta: L.querySelector('[data-sheet] a')?.textContent.trim() }; });
-    const tapNodo = n => p.evaluate(n => document.querySelector(`#viewport .layer:last-child a[aria-label^="Día ${n},"]`)?.click(), n);
+    const tapNodo = n => p.evaluate(n => document.querySelector(`#viewport .layer:last-child a[aria-label^="Día ${n},"], #viewport .layer:last-child a[aria-label^="Día ${n}:"]`)?.click(), n);
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 10, inscrito: true, teaserVisto: true }); c.S.completos[0] = { contenido: true }; for (const d of [1, 2, 3]) c.S.completos[d] = { contenido: true }; c.save(); c.clearHistory(); c.go('mapa', {}, 'none'); });
     await p.waitForTimeout(1500);
     // día 10 desbloqueado (va en el 4): su hoja, no un bloqueo
