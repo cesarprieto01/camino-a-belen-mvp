@@ -1,7 +1,7 @@
 // Arranque del MVP y panel de control para el equipo.
 // El panel sigue el orden del lienzo (secciones 1 a 8) para que diseño y prueba hablen el mismo idioma.
 import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, prefetch, logical, flowScreens, sections } from './core.js';
-import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf } from './data.js';
+import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf, hasTrivia } from './data.js';
 import './flow.js';
 import './map.js';
 import './games.js';
@@ -49,7 +49,7 @@ const STAR_PATTERN = [3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 3, 1, 3
 function fill(upto, opts = {}) {
   S.completos = {};
   S.completos[0] = { contenido: true };
-  for (let n = 1; n <= upto; n++) S.completos[n] = { contenido: true, trivia: n !== 26, estrellas: STAR_PATTERN[n - 1] };
+  for (let n = 1; n <= upto; n++) S.completos[n] = hasTrivia(n) ? { contenido: true, trivia: true, estrellas: STAR_PATTERN[n - 1] } : { contenido: true };
   S.ruletas = {}; S.prendas = []; S.sorpresas = {}; S.ruletaPendiente = {};
   RULES.ruleta.forEach((d, i) => { if (d <= upto) { S.ruletas[d] = PRENDAS[i].id; S.prendas.push(PRENDAS[i].id); } });
   Object.keys(RULES.sorpresa).forEach(d => { if (+d <= upto) S.sorpresas[d] = 'hecha'; });
@@ -62,18 +62,19 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teas
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
   { sec: 1, t: 'Sin inscribirse', mira: 'Tarjeta en Hoy → teaser → inscripción → espera', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-claro', 'V2-Teaser-claro', 'V2-Confirmacion-claro', 'V2-Espera-claro'] },
-  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre la espera con la cuenta regresiva · «Ver el camino» muestra el mapa cerrado hasta el 29 · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre los Mundos con Adviento cerrado y la cuenta regresiva · la ilustración abre la espera · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
-  { sec: 2, t: 'Un día de cuento', mira: 'Día 10 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(10, 9), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
-  { sec: 2, t: 'Equivocarse en la trivia', mira: 'Toca una respuesta mala: pista sutil y reintento', run: day(10, 9), go: 'mapa', covers: ['V2-08-Pista-claro', 'V2-08b-Reintento-claro'] },
+  { sec: 2, t: 'Un día con trivia', mira: 'Día 17 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(17, 16), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
+  { sec: 2, t: 'Un día sin trivia', mira: 'Día 10 · mapa → historia → un paso más hacia Belén → mañana seguimos', run: day(10, 9), go: 'hoy', covers: [] },
+  { sec: 2, t: 'Equivocarse en la trivia', mira: 'Toca una respuesta mala: pista sutil y reintento', run: day(17, 16), go: 'mapa', covers: ['V2-08-Pista-claro', 'V2-08b-Reintento-claro'] },
   { sec: 2, t: 'Reto en familia', mira: 'Día 13 · hub: el reto abre el Desafío, la canción el reproductor y el imprimible su pantalla', run: day(13, 12), go: 'mapa', covers: ['S-04-Hub-familia', 'S-04c-Imprimible'] },
   { sec: 2, t: 'Tocar un día cerrado', mira: 'Toca un día que aún no llega: globo con la fecha en que se abre', run: day(10, 9), go: 'mapa', covers: ['S-03d-Mapa-dia-cerrado'] },
   { sec: 2, t: 'Repetir un día ya hecho', mira: 'Toca un día con ✓ en el mapa: ver otra vez o repetir la trivia', run: day(10, 9), go: 'mapa', covers: ['S-03c-Mapa-dia-pasado'] },
   { sec: 2, t: 'Calificar el día', mira: '«Califícanos» al terminar: 3 caritas y comentario', run: day(10, 9), go: 'mapa', covers: ['V2-Calificacion-claro'] },
-  { sec: 3, t: 'Día de ruleta', mira: 'Día 11 · la hoja avisa «Ruleta de la semana · Hoy»; «Ver historia» la abre, gira y da premio', run: day(11, 10), go: 'mapa', covers: ['S-03f-Mapa-dia11', 'S-05b-Ruleta-pop', 'S-05c-Ruleta-premio'] },
+  { sec: 3, t: 'Día de ruleta', mira: 'Día 11 · toca la ruleta del mapa: gira y da premio; «Volver al camino» deja en el mapa', run: day(11, 10), go: 'mapa', covers: ['S-03f-Mapa-dia11', 'S-05b-Ruleta-pop', 'S-05c-Ruleta-premio'] },
   { sec: 3, t: 'Premio: cuarto nuevo', mira: 'La ruleta cae en la casa: cuarto de Nazaret', run: day(11, 10, { forzarPremio: 'cuarto' }), go: 'mapa', covers: ['S-09-Premio-cuarto', 'V3-Teodoro-nazaret'] },
   { sec: 4, t: 'Memorama', mira: 'Día 3 · tras la trivia: «Hoy toca Memorama»', run: day(3, 2), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-claro', 'V2-Memorama-reglas-claro', 'V2-Memorama-claro', 'V2-Memorama-fin-claro'] },
-  { sec: 4, t: 'Adivinanza', mira: 'Día 6 · tras la trivia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
+  { sec: 4, t: 'Adivinanza', mira: 'Día 6 (sin trivia) · tras la historia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
   { sec: 4, t: 'Desafío en familia', mira: 'Día 9 · «Hoy toca Desafío» · sacar otra carta (Avemaría) · ¡lo hicimos!', run: day(9, 8), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Desafio-intro-claro', 'V2-Desafio-claro', 'V2-Desafio-carta2-claro', 'V2-Desafio-fin-claro'] },
   { sec: 5, t: 'Va atrasado', mira: 'En el día 9, hoy es el 11: puede ponerse al día', run: day(11, 8, { bateria: 3 }), go: 'hoy', covers: ['S-01-Hoy-atrasado'] },
   { sec: 5, t: 'Regreso tras una semana', mira: 'Teodoro le guardó el camino · batería en 0', run: day(16, 8, { bateria: 0, regreso: true }), go: 'hoy', covers: ['V2-10-Regreso'] },
@@ -89,12 +90,13 @@ const REC = [
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
   'La barra de pestañas es la del tab Teodoro en todas las pantallas (en el lienzo, Hoy y Mundos usan otra barra clara e ilustrada, también en modo oscuro).',
-  'Los días 18 y 24 tienen ruleta (al empezar) y juego sorpresa (al final de la trivia): la regla «cada 3 días, y así sigue» cae en días de ruleta.',
+  'Los días 18 y 24 tienen ruleta (en el mapa) y juego sorpresa (al final de la trivia): la regla «cada 3 días, y así sigue» cae en días de ruleta.',
   'Títulos de la hoja de energía por nivel (dormido, durmiéndose, cansadito, tranquilo, travieso, feliz): el lienzo solo trae el de 5 de 5.',
   'Extras del reto (imprimible y canción) piden Premium a usuarios free, como dice «El camino es para todos».',
   'El Desafío abierto desde el hub del reto no da panes extra: se ganan al marcar «¡Lo hicimos!» en el hub.',
   'Repetir la trivia de un día pasado: si mejora las estrellas gana +10 panes; si no, solo cuenta como práctica.',
   'Al terminar la trivia, Teodoro camina en el mapa al día siguiente y luego aparece «Mañana seguimos».',
+  'Solo los días 1, 2, 3, 4, 9, 11, 17, 18 y 24 tienen trivia (cronograma de contenido). Los demás se completan con la historia, sin estrellas; si toca sorpresa (6, 12, 15, 21) se abre al terminar la historia.',
   'Trivia: 5 preguntas por día, todas con 4 respuestas; revisión pastoral hecha (exactitud bíblica, una sola respuesta válida, lenguaje para 5–8 años). Falta la aprobación final del equipo de contenido.',
   'Estrellas: 5 de 5 = 3 estrellas · 3 o 4 = 2 · menos = 1. Solo cuenta el primer intento de cada pregunta.',
   'Ruleta: 10 casillas (7 panes, manzana, prenda de la semana, cuarto). Prendas: gorro, bufanda, bolso y cama de paja.',
@@ -103,7 +105,7 @@ const DECISIONES = [
   'Pop-ups sobre la pantalla real: teaser, final de trivia, ruleta y premios, «Se acabó el tiempo» y «Mañana seguimos».',
   'Hojas de página (se cierran deslizando): free sobre el reto, calificación sobre el mapa, espera sobre Hoy.',
   'Pantalla completa a propósito: el reto en familia (es un destino con contenido, extras y un juego dentro: en hoja quedaría apretado y se perdería al deslizar) y la invitación (simula salir a WhatsApp/iMessage; en la app real es la hoja de compartir del sistema).',
-  'Pantalla completa también: festejos grandes (cuarto nuevo, llegada a Belén) y la confirmación de inscripción (1,6 s y sigue sola).',
+  'Pantalla completa también: la llegada a Belén y la confirmación de inscripción (1,6 s y sigue sola). Todos los premios de la ruleta, también el cuarto nuevo, son pop-ups sobre el mapa con «Volver al camino».',
   'Calificar el día se pide al cerrarlo («¿Les gustó hoy?»), no en el momento del premio.',
   'Atrasado: tras ver la historia de un día puede seguir con la del siguiente; las trivias quedan pendientes y se pueden hacer después.',
   'Domingo: la misión «Evangelio del día» de Hoy es el mismo Evangelio del camino; lleva al camino y se marca hecha con él (no se hace dos veces).',
@@ -113,7 +115,7 @@ const DECISIONES = [
   'Cada domingo, una pregunta de la trivia es del Evangelio del día (Adviento 2026, ciclo B: Mc 13 · Mc 1 · Jn 1 · Lc 1).',
   'Letreros del mapa: al tocarlos explican su palabra (Maranatha = «Ven, Señor Jesús», Shemá = «Escucha», Jaire = «Alégrate», Acogida).',
   '«¿Te gustó?»: solo las tres caritas, sin campo de texto.',
-  'Ruleta sin mínimo de estrellas: sale el día que toca (4, 11, 18 y 24) y basta con girarla.',
+  'Ruleta sin mínimo de estrellas: los días 4, 11, 18 y 24 se juega al tocar la ruleta dibujada en el mapa (ya no sale sola al empezar el día); «Ver historia» abre directo la historia.',
   'Trivia: todas las preguntas con 4 respuestas (a las de imagen se les sumó una alternativa claramente incorrecta).',
   'Racha = la que traía en Theo (3) + días seguidos del camino; si se salta un día, cuenta desde ahí.',
 ];
@@ -220,7 +222,7 @@ function render() {
     <details class="p-group p-rules"><summary>Reglas que usa el MVP</summary><ul class="p-list">
       <li><b>Panes</b><small>Contenido +${RULES.panes.contenidoPremium} premium / +${RULES.panes.contenidoFree} free · trivia +${RULES.panes.trivia} · sorpresa +${RULES.panes.sorpresa} · ruleta ${RULES.panes.ruleta}</small></li>
       <li><b>Batería</b><small>Terminar un cuento la llena · cada día sin caminar baja una rayita · nunca bloquea</small></li>
-      <li><b>Ruleta</b><small>Días ${RULES.ruleta.join(', ')} · al iniciar el día, antes del contenido</small></li>
+      <li><b>Ruleta</b><small>Días ${RULES.ruleta.join(', ')} · al tocarla en el mapa</small></li>
       <li><b>Sorpresa</b><small>${Object.entries(RULES.sorpresa).map(([d, g]) => `día ${d} ${g}`).join(' · ')} · nunca el mismo día que la ruleta</small></li>
       <li><b>Atrasado y regreso</b><small>Puede hacer varios días seguidos hasta alcanzar hoy · regreso tras ${RULES.regresoDias}+ días sin abrir</small></li>
     </ul></details>`;

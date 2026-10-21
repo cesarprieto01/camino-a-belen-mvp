@@ -1,57 +1,87 @@
 [
  {
   "n": 0,
-  "title": "Empieza aquí",
-  "y": 300
+  "title": "El flujo completo y las decisiones del prototipo",
+  "y": 220
  },
  {
   "n": 1,
   "title": "Antes del 29 de noviembre",
-  "y": 3380
+  "y": 2420
+ },
+ {
+  "n": 2,
+  "title": "Hoy y tab Teodoro",
+  "y": 5168
+ },
+ {
+  "n": 3,
+  "title": "Mapa y la hoja del día",
+  "y": 7916
+ },
+ {
+  "n": 4,
+  "title": "Juegos",
+  "y": 10664
+ },
+ {
+  "n": 5,
+  "title": "Hojas de página",
+  "y": 13412
+ },
+ {
+  "n": 0,
+  "title": "Empieza aquí",
+  "y": 16660
+ },
+ {
+  "n": 1,
+  "title": "Antes del 29 de noviembre",
+  "y": 19740
  },
  {
   "n": 2,
   "title": "Un día normal",
-  "y": 6128
+  "y": 22488
  },
  {
   "n": 3,
   "title": "Día de ruleta",
-  "y": 9148
+  "y": 25508
  },
  {
   "n": 4,
   "title": "Cada 3 días",
-  "y": 12838
+  "y": 29198
  },
  {
   "n": 5,
   "title": "La energía de Teodoro",
-  "y": 15586
+  "y": 31946
  },
  {
   "n": 6,
   "title": "Dónde vive el Adviento en la app",
-  "y": 18366
+  "y": 34726
  },
  {
   "n": 7,
   "title": "Durante el camino",
-  "y": 22360
+  "y": 38720
  },
  {
   "n": 8,
   "title": "Nochebuena",
-  "y": 28655
+  "y": 45015
  },
  {
   "n": 9,
   "title": "Piezas de referencia",
-  "y": 31163
+  "y": 47523
  },
  {
   "n": 10,
   "title": "Dirección de arte",
-  "y": 33819
+  "y": 50179
  }
 ]

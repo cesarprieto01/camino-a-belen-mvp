@@ -35,7 +35,7 @@ for f in ASSETS.iterdir():
         blob_file[f.stem] = f.name
 
 canvas = json.loads((SRC / 'canvas.json').read_text())
-boards = {k: b for k, b in canvas['boards'].items() if b.get('page') in (None, 'page-1')}
+boards = {k: b for k, b in canvas['boards'].items() if b.get('page') in (None, 'page-1') and not k.startswith('MVP-')}  # las capturas del MVP no son pantallas
 
 def blob(m):
     bid = m.group(1)

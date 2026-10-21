@@ -1,10 +1,13 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
-import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone,
+import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
-import { DAYS, TYPES, RULES, IMG, dateOf, iconOf, SORPRESA_NOMBRE } from './data.js';
-import { startDay, ctaLabel, openSorpresa } from './flow.js';
+import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia } from './data.js';
+import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
+import { bindMute } from './musica.js';
 
 const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
+// solo algunos días tienen trivia (isDone ya lo sabe): los demás no llevan estrellas
+const badgeOf = n => hasTrivia(n) ? (tpl.badges[stars(n)] || '') : '';
 const F0 = { claro: 'V2-Mapa-dia0-claro', oscuro: 'V2-Mapa-dia0' };
 
 let tpl = null; // piezas sacadas de las plantillas, por tema
@@ -23,19 +26,16 @@ async function templates() {
   const bubble = closed.querySelector('[role=status]');
   const energy = await frag(key === 'claro' ? 'S-03e-Mapa-energia' : 'S-03e-Mapa-energia-oscuro');
   const energySheet = [...energy.children].find(el => el.style.bottom === '10px');
-  const d11 = await frag(key === 'claro' ? 'S-03f-Mapa-dia11' : 'S-03f-Mapa-dia11-oscuro');
-  const d11Rows = [...[...d11.children].find(el => el.style.bottom === '10px').children].filter(el => el.style.height === '58px');
   const trivSheet = [...triv.children].find(el => el.style.bottom === '10px');
-  const trivRows = [...trivSheet.children].filter(el => el.style.height === '58px');
+  const trivRows = [...trivSheet.children].filter(el => isRow(el));
   const sheet26 = [...d26.children].find(el => el.style.bottom === '10px' || /Llegamos a Belén/.test(el.textContent || '') && el.style.position === 'absolute' && parseFloat(el.style.left) <= 20);
   const node = n => full.querySelector(`a[aria-label^="Día ${n},"]`);
   const badge = n => { const s = node(n).querySelector(':scope > span[aria-hidden]'); return s ? s.outerHTML : ''; };
   const icons = {};
   for (let n = 1; n <= 26; n++) { const i = zero.querySelector(`a[aria-label^="Día ${n},"] img`); if (i) icons[n] = i.getAttribute('src'); }
   const houses = $$(full, '[aria-label^="Ruleta sorpresa"]').map(a => a.innerHTML);
-  const ruletaImg = full.querySelector('[aria-label^="Ruleta sorpresa"] img')?.getAttribute('src');
   const sheet = [...full.children].find(el => el.style.bottom === '10px');
-  const rows = [...sheet.children].filter(el => el.style.height === '58px');
+  const rows = [...sheet.children].filter(el => isRow(el));
   tpl = {
     key,
     done: node(1).getAttribute('style'),
@@ -48,13 +48,13 @@ async function templates() {
     last: node(26).getAttribute('style'),
     icons,
     houseOpen: houses[0], houseNext: houses[1], houseFuture: houses[2],
-    rowOn: rows[0].outerHTML, rowOff: rows[1].outerHTML,
+    rowOn: rows[0].outerHTML, rowOff: rows[1].outerHTML, printRow: rows.find(r => r.tagName === 'A')?.outerHTML,
     doneBadge: trivRows[0].lastElementChild.outerHTML,
     trivIcon: rows[1].querySelector('img')?.getAttribute('src'),
     sheet26: sheet26 ? sheet26.outerHTML : null,
     pastSheet: pastSheet?.outerHTML, selShadow: pastNode?.style.boxShadow,
     bubble: bubble?.outerHTML, bubbleArrow: bubble?.nextElementSibling?.outerHTML,
-    energySheet: energySheet?.outerHTML, ruletaRow: d11Rows[1]?.outerHTML, ruletaImg,
+    energySheet: energySheet?.outerHTML,
   };
   return tpl;
 }
@@ -68,6 +68,16 @@ const triviaPend = (el, n, p) => {
   el.style.outline = '3px dashed #F5DB78'; el.style.outlineOffset = '3px';
   delete el.dataset.today;
   el.setAttribute('aria-label', `Día ${n}: falta la trivia`);
+};
+// filas de la hoja (el lienzo las dibuja de 52 o 58 px); el botón principal mide 56
+const isRow = el => el.style.height === '52px' || el.style.height === '58px';
+/** Lo que salió en la ruleta, dicho corto. */
+const premioTxt = id => {
+  if (id === 'panes') return `Te tocaron ${RULES.panes.ruleta} panes`;
+  if (id === 'manzana') return 'Te tocó una manzana para Teodoro';
+  if (id === 'cuarto') return 'Te tocó un cuarto nuevo para Teodoro';
+  const p = PRENDAS.find(x => x.id === id);
+  return p ? `Te tocó ${p.nombre} para Teodoro` : '¡Ya tienes tu premio!';
 };
 const pos = el => ({ x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: parseFloat(el.style.width) });
 const restyle = (el, style, p, size) => {
@@ -118,8 +128,8 @@ register('mapa', {
       const icon = T.icons[n] ? `<img src="${T.icons[n]}" alt="" style="width: 40px; height: 34px; object-fit: contain; opacity: .55">` : '';
       if (isDone(n) && !(S.pasoAnimado === n && !reduced())) {
         restyle(el, T.done, p, 64);
-        el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + (T.badges[stars(n)] || '');
-        el.setAttribute('aria-label', `Día ${n}, ${d.title}, completado${stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
+        el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + badgeOf(n);
+        el.setAttribute('aria-label', `Día ${n}, ${d.title}, completado${hasTrivia(n) && stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
       } else if (contentDone(n) && n !== act && !(S.pasoAnimado === n && !reduced())) {
         // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
         triviaPend(el, n, p);
@@ -180,23 +190,27 @@ register('mapa', {
       } else bubble.remove();
     }
 
-    // 4) Casas de la ruleta (semanas 1–4)
+    // 4) Ruletas del camino (días 4, 11, 18 y 24): solo se juegan tocándolas aquí
     $$(root, '[aria-label^="Ruleta sorpresa"]').forEach((a, i) => {
       const d = RULES.ruleta[i];
       const img = a.querySelector('img').getAttribute('src');
       const opened = !!S.ruletas[d];
-      const nextUp = !opened && RULES.ruleta.find(x => !S.ruletas[x]) === d;
-      a.innerHTML = (opened ? T.houseOpen : nextUp ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = S.hoy <= 0 ? `Día ${d}` : opened ? 'Girada' : d === lastDay() ? 'Sorpresa de hoy' : d < lastDay() ? 'Ruleta' : nextUp ? (d - S.hoy === 1 ? 'Mañana' : `Faltan ${d - S.hoy} días`) : `Día ${d}`;
+      const lista = !opened && S.hoy > 0 && d <= lastDay(); // ya llegó su día y no la ha girado
+      const f = dateOf(d), mes = f.mes.toLowerCase();
+      a.innerHTML = (opened ? T.houseOpen : lista ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
+      const label = opened ? 'Girada' : lista ? '¡Gírala!' : `${f.dd} ${mes.slice(0, 3)}`;
       replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
       // el candado solo en lo que aún no llega
-      if (/^(Sorpresa de hoy|Ruleta)$/.test(label)) a.querySelectorAll('span svg').forEach(s => s.remove());
-      if (nextUp || (d <= lastDay() && !opened)) a.querySelector('img').classList.add('a-sway');
-      // lienzo: la casa ya no es un botón; solo la abierta deja ver su premio
-      a.setAttribute('aria-label', opened ? `Ruleta sorpresa de la semana ${i + 1}: ya la abriste. Ver tu premio` : `Ruleta sorpresa de la semana ${i + 1}: aparece al iniciar el día ${d}`);
-      if (opened) on(root, a, () => go(S.ruletas[d] === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: S.ruletas[d], day: d, from: 'mapa' }, 'modal'));
-      else if (d <= lastDay() && S.ruletaPendiente[d] && S.hoy > 0) { a.setAttribute('aria-label', `Ruleta de la semana ${i + 1}: la dejaste para después. Girar`); on(root, a, () => go('ruletaPop', { day: d, from: 'mapa' }, 'modal')); }
-      else { a.removeAttribute('href'); a.dataset.bound = '1'; a.setAttribute('role', 'img'); a.style.cursor = 'default'; }
+      if (lista || opened) a.querySelectorAll('span svg').forEach(s => s.remove());
+      if (lista) { a.classList.add('rul-gira'); a.querySelector('img').classList.add('rul-pulso'); }
+      a.removeAttribute('href'); a.style.minWidth = '44px'; a.style.minHeight = '44px';
+      a.setAttribute('aria-label', opened ? `Ruleta de la semana ${i + 1}: ya la giraste` : lista ? `Ruleta de la semana ${i + 1}: ¡gírala!` : `Ruleta de la semana ${i + 1}: se abre el ${f.dd} de ${mes}`);
+      on(root, a, () => {
+        animate(a, 'a-pop');
+        if (lista) go('ruletaPop', { day: d, from: 'mapa' }, 'modal');
+        else if (opened) toast('Ya la giraste', premioTxt(S.ruletas[d]));
+        else toast(`Se abre el ${f.dd} de ${mes}`, 'Ese día la giras aquí');
+      });
     });
 
     // Casa del día 0
@@ -229,6 +243,7 @@ register('mapa', {
     if (chip && S.hoy > 0 && focus !== hoyN) { replaceText(chip, /\/ 26/, `· hoy ${hoyN}`); chip.setAttribute('aria-label', `Día ${focus}. Hoy es el día ${hoyN}`); }
     if (chip && S.hoy <= 0) { chip.textContent = 'Sale el 29'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', 'El camino sale el 29 de noviembre'); }
     paintEnergy(layer);
+    bindMute(layer.querySelector('.map-head button[aria-label^="Música"]'));
     // el mapa recuerda desde dónde se entró al camino (Hoy, Teodoro, Mundos o la espera)
     if (params.from) mapOrigin = params.from;
     const volver = on(layer, 'Volver a Mundos', leaveMap);
@@ -287,7 +302,7 @@ register('mapa', {
       const n = nodes[from];
       if (n && isDone(from)) {
         restyle(n.el, T.done, n.p, 64);
-        n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${from}<`) + (T.badges[stars(from)] || '');
+        n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${from}<`) + badgeOf(from);
         delete n.el.dataset.today;
         n.el.classList.add('a-pop');
       } else if (n) {
@@ -406,18 +421,33 @@ function showPast(layer, n, el) {
   const head = [...sheet.children].find(x => /YA LO HICISTE/.test(x.textContent));
   head.children[0].textContent = `YA LO HICISTE · DÍA ${n}`;
   head.children[1].textContent = d.type === 'domingo' ? `Domingo · ${d.vela}.ª velita` : d.title;
-  const [r1, r2] = [...sheet.children].filter(x => x.style.height === '58px');
+  const [r1, r2] = [...sheet.children].filter(x => isRow(x));
   const C = contOf(d.type);
   const ic = iconOf(n, dark()); if (ic) r1.querySelector('img').src = A(ic);
   const [t1, s1] = r1.querySelector(':scope > div').children; t1.textContent = C[0]; s1.textContent = C[1];
   on(layer, r1.querySelector('a'), () => go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
   const st = stars(n);
+  const cta = [...sheet.children].find(x => x.tagName === 'A' && !isRow(x));
+  if (!hasTrivia(n)) {
+    // sin trivia: solo el contenido; el botón vuelve a verlo
+    r2.remove();
+    const tn = [...cta.querySelectorAll('*'), cta].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim());
+    if (tn) tn.nodeValue = { domingo: 'Escuchar otra vez', cancion: 'Escuchar otra vez', reto: 'Ver el reto' }[d.type] || 'Ver otra vez';
+    on(layer, cta, () => go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
+  } else {
   r2.querySelectorAll('[role=img] svg path').forEach((p, i) => p.setAttribute('fill', i < st ? '#F7C948' : (dark() ? 'rgba(255,255,255,.28)' : '#D3DDE5')));
   r2.querySelector('[role=img]')?.setAttribute('aria-label', `${st} de 3 estrellas`);
   const s2 = r2.querySelector(':scope > div').children[1]; s2.textContent = st === 3 ? '¡Ya tienes las 3 estrellas!' : `+${RULES.panes.trivia} panes si mejoras tus estrellas`;
-  if (t1.textContent.trim() === head.children[1].textContent.trim()) t1.textContent = C[0] === d.title ? 'Actividad' : C[0];
-  const cta = [...sheet.children].find(x => x.tagName === 'A');
   on(layer, cta, () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push'));
+  }
+  if (t1.textContent.trim() === head.children[1].textContent.trim()) t1.textContent = C[0] === d.title ? 'Actividad' : C[0];
+  const pr = [...sheet.children].find(x => x.tagName === 'A' && isRow(x));
+  if (pr) {
+    const r = document.createElement('div'); r.innerHTML = pr.innerHTML; r.setAttribute('style', pr.getAttribute('style'));
+    r.className = 'sheet-row'; r.dataset.print = '1'; r.setAttribute('role', 'button'); r.tabIndex = 0; r.style.cursor = 'pointer';
+    r.setAttribute('aria-label', pr.getAttribute('aria-label') || 'Imprimible del día. Abrir');
+    pr.replaceWith(r); on(layer, r, () => abrirDescargable(n, 'mapa'));
+  }
   // la sorpresa que dejó para después sigue aquí
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'sheet-alt';
@@ -452,8 +482,8 @@ function paintSheet(layer, T, dia) {
   const n = act ?? Math.min(lastDay(), 26);
   const d = DAYS[n];
   const head = [...sheet.children].find(el => /HOY · DÍA/.test(el.textContent));
-  const rows = [...sheet.children].filter(el => el.style.height === '58px');
-  const cta = sheet.querySelector('a');
+  const rows = [...sheet.children].filter(el => isRow(el));
+  const cta = [...sheet.children].filter(el => el.tagName === 'A' && !isRow(el)).pop() || sheet.querySelector('a');
   rows.forEach(r => r.remove());
 
   sheet.dataset.day = String(n);
@@ -513,33 +543,24 @@ function paintSheet(layer, T, dia) {
   const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : n === 0 ? A(IMG.pergamino) : null;
   const list = [];
   list.push(build(!contentDone(n), CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : 'now', rowIcon));
-  const ruletaHoy = RULES.ruleta.includes(n) && !S.ruletas[n] && !contentDone(n) && T.ruletaRow;
-  if (ruletaHoy) {
-    const t = document.createElement('template'); t.innerHTML = T.ruletaRow;
-    const r = t.content.firstElementChild;
-    r.style.opacity = ''; r.classList.add('sheet-row');
-    const im = r.querySelector('img'); if (im && T.ruletaImg) im.src = T.ruletaImg;
-    const [tt, st] = r.querySelector(':scope > div').children;
-    const chipR = r.lastElementChild;
-    tt.textContent = 'Ruleta';
-    if (S.ruletaPendiente[n]) {
-      // dijo «Más tarde»: la fila es la acción para girarla
-      st.textContent = 'La dejaste para después';
-      chipR.textContent = 'Girar'; chipR.removeAttribute('role'); chipR.removeAttribute('aria-label');
-      r.setAttribute('role', 'button'); r.setAttribute('aria-label', 'Ruleta pendiente: girar'); r.style.cursor = 'pointer';
-      on(layer, r, () => go('ruletaPop', { day: n, from: 'mapa' }, 'modal'));
-    } else {
-      st.textContent = 'Antes de la historia';
-      const cuando = n === lastDay() ? 'Hoy' : `Día ${n}`;
-      chipR.textContent = cuando; chipR.setAttribute('aria-label', cuando);
+  if (n !== 0 && n !== 26) {
+    if (hasTrivia(n)) {
+      const trivOn = contentDone(n) && !isDone(n);
+      list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Se abre al terminar ${CONT[2]}`, isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
     }
-    list.push(r);
-    seen('S-03f-Mapa-dia11');
-  } else if (n !== 0 && n !== 26) {
-    const trivOn = contentDone(n) && !isDone(n);
-    list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Se abre al terminar ${CONT[2]}`, isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
     const sorp = RULES.sorpresa[n];
     if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));
+  }
+  // imprimible del día (lienzo): una fila tocable
+  if (n >= 1 && T.printRow) {
+    const t = document.createElement('template'); t.innerHTML = T.printRow;
+    const a = t.content.firstElementChild;
+    // un botón, no un enlace: el enlace de la hoja es solo el botón principal
+    const r = document.createElement('div'); r.innerHTML = a.innerHTML; r.setAttribute('style', a.getAttribute('style'));
+    r.className = 'sheet-row'; r.dataset.print = '1'; r.setAttribute('role', 'button'); r.tabIndex = 0; r.style.cursor = 'pointer';
+    r.setAttribute('aria-label', a.getAttribute('aria-label') || 'Imprimible del día. Abrir');
+    on(layer, r, () => abrirDescargable(n, 'mapa'));
+    list.push(r);
   }
   list.forEach(r => cta.before(r));
   list.filter(r => r.dataset.lock).forEach(r => {
@@ -547,7 +568,7 @@ function paintSheet(layer, T, dia) {
     on(layer, r, () => S.plan === 'free' ? go('free', { back: 'mapa' }, 'page')
       : (animate(r, 'a-shake'), toast(`Primero ${CONT[2]}`, 'La trivia se abre al terminarla')));
   });
-  if (list.length > 2) { sheet.style.height = 'auto'; }
+  sheet.style.height = 'auto';
 
   // Botón principal
   const label = ctaLabel(n);
@@ -558,11 +579,10 @@ function paintSheet(layer, T, dia) {
   on(layer, cta, label.go);
   // trivias que quedaron pendientes al seguir con las historias: a un toque
   const trivAct = activeDay();
-  const pendTriv = Array.from({ length: Math.min(lastDay(), 26) }, (_, i) => i + 1).filter(d => contentDone(d) && !isDone(d) && d !== n);
+  const pendTriv = Array.from({ length: Math.min(lastDay(), 26) }, (_, i) => i + 1).filter(d => triviaPendiente(d) && d !== n);
   const ICO = {
     trivia: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.5v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>',
     regalo: `<img src="${A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain">`,
-    ruleta: `<img src="${T.ruletaImg || A(IMG.regalo)}" alt="" style="width:22px;height:22px;object-fit:contain">`,
     casa: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1Z"/></svg>',
   };
   let altHecho = false; // máximo una acción secundaria por hoja
@@ -572,13 +592,10 @@ function paintSheet(layer, T, dia) {
     alt.innerHTML = `${ICO[ico]}<span>${txt}</span>${chip ? `<em class="sa-chip">${chip}</em>` : ''}<svg class="sa-go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
     Object.assign(alt.dataset, extra); cta.after(alt); on(layer, alt, fn);
   };
-  // prioridad: volver a tu día > trivias pendientes > ruleta pendiente > sorpresa pendiente
+  // prioridad: volver a tu día > trivias pendientes > sorpresa pendiente (la ruleta nunca va en la hoja: se toca en el mapa)
   if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver a tu día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
   const mas = /trivia/i.test(label.text);
   if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
-  // la ruleta del propio día ya está en su fila o en el botón principal
-  const rulPend = RULES.ruleta.filter(r => r <= lastDay() && r !== n && S.ruletaPendiente[r] && !S.ruletas[r]);
-  if (n > 0 && rulPend.length) addAlt('Ruleta pendiente', 'ruleta', () => go('ruletaPop', { day: rulPend[0], from: 'mapa' }, 'modal'), {}, `Día ${rulPend[0]}`);
   const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');
   if (n > 0 && sorpPend.length) addAlt(`Sorpresa pendiente · ${SORPRESA_NOMBRE[RULES.sorpresa[sorpPend[0]]]}`, 'regalo', () => openSorpresa(sorpPend[0]), {}, `Día ${sorpPend[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
@@ -616,8 +633,8 @@ function sheetDrag(layer) {
     b.addEventListener('click', ev => { ev.stopPropagation(); setMini(s, !s.classList.contains('mini')); });
     // barra compacta: ícono · día y título · acción principal
     const head = s.querySelector('.sheet-head') || [...s.children].find(el => el.children.length === 2 && /HOY|TE ESPERA|DÍA|ANTES DE SALIR|NOCHEBUENA|YA LO HICISTE/i.test(el.children[0]?.textContent || ''));
-    const cta = [...s.children].find(el => el.tagName === 'A');
-    const rowImg = s.querySelector('[style*="height: 58px"] img, [style*="height:58px"] img');
+    const cta = [...s.children].filter(el => el.tagName === 'A' && !isRow(el)).pop();
+    const rowImg = [...s.children].find(isRow)?.querySelector('img');
     const pend = s.querySelector('.sheet-alt[data-pend]');
     const bar = document.createElement('div'); bar.className = 'mini-bar';
     const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();

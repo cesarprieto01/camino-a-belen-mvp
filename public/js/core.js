@@ -1,7 +1,7 @@
 // Núcleo del MVP: estado del camino, carga de pantallas del lienzo,
 // navegación con transiciones y utilidades para «vestir» las pantallas.
 import { FILES } from './assets.js';
-import { DAYS, RULES, BATTERY_IDS, TEODORO_IDS, IMG } from './data.js';
+import { DAYS, RULES, BATTERY_IDS, TEODORO_IDS, IMG, hasTrivia } from './data.js';
 
 export const A = id => 'assets/' + (FILES[id] || id);
 export const $ = (r, s) => r.querySelector(s);
@@ -24,6 +24,7 @@ export const DEFAULT = () => ({
   regreso: false, teaserVisto: false, ultimoJugado: null, // día del calendario en que terminó un contenido
   pasoAnimado: null,   // día recién completado (animación en el mapa)
   forzarPremio: '',    // panel: forzar casilla de la ruleta
+  musica: true,        // música de fondo del mapa y la trivia (on/off)
   notas: {}, huecos: [], vistas: {},
 });
 export let S = load();
@@ -35,7 +36,7 @@ function load() {
   try { return { ...DEFAULT(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULT(); }
 }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* navegador privado */ } emit(); }
-export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas }; S = Object.assign(DEFAULT(), keep, over); save(); }
+export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica }; S = Object.assign(DEFAULT(), keep, over); save(); }
 export function shareURL() {
   const { notas, huecos, ...rest } = S;
   return location.origin + location.pathname + '#estado=' + btoa(unescape(encodeURIComponent(JSON.stringify(rest)))) + '&pantalla=' + (cur?.name || 'hoy');
@@ -46,8 +47,12 @@ function emit() { subs.forEach(f => f()); }
 
 // Derivados del estado
 export const day = n => DAYS[n];
-export const isDone = n => !!S.completos[n]?.trivia || (n === 0 && !!S.completos[0]?.contenido) || (n === 26 && !!S.completos[26]?.contenido);
 export const contentDone = n => !!S.completos[n]?.contenido;
+/** LA regla del día completo (úsenla todos): vio el contenido y, solo si ese día tiene trivia, la terminó. */
+export const isDone = n => hasTrivia(n) ? !!S.completos[n]?.trivia : contentDone(n);
+export const dayDone = isDone;
+/** Vio el contenido pero le falta la trivia (solo en los días que tienen). */
+export const triviaPendiente = n => hasTrivia(n) && contentDone(n) && !S.completos[n]?.trivia;
 export const lastDay = () => Math.min(S.hoy, 26);
 /** Día que toca jugar: el primero sin terminar hasta hoy. null si ya está todo hecho. */
 export function activeDay() {
@@ -62,13 +67,13 @@ export function walkDay() {
   for (let n = a; n <= Math.min(lastDay(), 26); n++) if (!S.completos[n]?.contenido) return n;
   // ya vio todas las historias hasta hoy: se queda en hoy (la trivia de hoy); las demás quedan como pendientes
   const h = Math.min(lastDay(), 26);
-  return S.completos[h]?.trivia ? a : h;
+  return isDone(h) ? a : h;
 }
 export const doneCount = () => Object.keys(S.completos).filter(n => +n >= 1 && isDone(+n)).length;
 export const pendientes = () => { const a = activeDay(); return a == null || a < 1 ? 0 : lastDay() - a + 1; };
 export const fase = () => S.hoy <= 0 ? 'antes' : S.hoy >= 27 ? 'despues' : 'camino';
 export const dark = () => S.tema === 'oscuro';
-export const stars = n => S.completos[n]?.estrellas || 0;
+export const stars = n => hasTrivia(n) ? S.completos[n]?.estrellas || 0 : 0; // sin trivia no hay estrellas
 
 export function addPanes(n) { S.panes += n; }
 export function setBateria(v) { S.bateria = Math.max(0, Math.min(5, v)); }
@@ -268,6 +273,8 @@ async function _go(name, params, anim) {
   const root = layer.firstElementChild.firstElementChild;
   let h = MAN[file]?.h || 844;
   // 'page': hoja de página (como en iOS): la pantalla entera sube como tarjeta y la de abajo se queda detrás
+  // una pantalla del lienzo hecha a pantalla completa puede rearmarse como pop-up antes de montarse
+  if (OVERLAY.has(anim) && prev) def.prepare?.(root, params);
   const isOv = OVERLAY.has(anim) && prev && (anim === 'page' ? asPage(layer, root) : asOverlay(layer, root, anim));
   // la pantalla que se va: si era un pop-up, también se va lo que tenía debajo
   const leaving = prev ? (prev.base ? [prev, prev.base] : [prev]) : [];

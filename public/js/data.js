@@ -108,7 +108,11 @@ export const RULES = {
   // terminar un cuento la llena (5/5); cada día completo sin hacer nada baja una rayita
   bateria: { contenido: 5, diaSinAdviento: -1 },
   regresoDias: 7,
+  // días con trivia según el cronograma de contenido (Adviento 2026, columna ACTIVIDAD = TRIVIA).
+  // Los demás días no tienen trivia ni estrellas: el día se completa con la historia.
+  trivia: [1, 2, 3, 4, 9, 11, 17, 18, 24],
 };
+export const hasTrivia = n => RULES.trivia.includes(n);
 
 // Prenda de cada semana (la del regalo de la ruleta). Semana 4: por definir en el lienzo.
 export const PRENDAS = [

@@ -1,8 +1,11 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
 import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
-  floaty, confetti, addPanes, dark, stars, isDone, _stack } from './core.js';
-import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS } from './data.js';
+  floaty, confetti, addPanes, dark, stars, _stack } from './core.js';
+import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, hasTrivia } from './data.js';
 import { finishTrivia, finishContent, openSorpresa } from './flow.js';
+import { bindMute } from './musica.js';
+// botón de música de la cabecera (trivia y su resultado)
+const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
 
 const F = (c, o) => dark() ? o : c;
 const speak = text => {
@@ -50,9 +53,13 @@ export function softHead(root) {
   [...root.children].slice(0, 6).filter(el => el.style.top === '0px' && parseFloat(el.style.height) >= 280 && (el.tagName === 'IMG' || /linear-gradient/.test(el.style.background))).forEach(el => el.classList.add('soft-head'));
 }
 
+// solo los días del cronograma tienen trivia; en los demás no se abre (enlace viejo, repetir un día pasado…)
+const sinTrivia = n => { if (hasTrivia(n)) return false; go('mapa', {}, 'down', { replace: true }); return true; };
+
 register('trivia', {
-  file: p => { p = resume(p); const q = TRIVIA[p.day][p.i || 0]; return isPic(q) ? F('V2-06a-Trivia-sin-elegir-claro', 'V2-06a-Trivia-sin-elegir') : F('V2-06c-Trivia-varias-claro', 'V2-06c-Trivia-varias'); },
+  file: p => { p = resume(p); const q = TRIVIA[p.day]?.[p.i || 0]; if (!q) return F('V2-06c-Trivia-varias-claro', 'V2-06c-Trivia-varias'); return isPic(q) ? F('V2-06a-Trivia-sin-elegir-claro', 'V2-06a-Trivia-sin-elegir') : F('V2-06c-Trivia-varias-claro', 'V2-06c-Trivia-varias'); },
   async mount(root, p, layer) {
+    if (sinTrivia(p.day)) return;
     p = resume(p);
     // ya había acertado la última y cerró antes de ver el resultado
     if (p.fin != null) { go('triviaFin', { day: p.day, ok: p.fin }, 'modal', { replace: true }); return; }
@@ -61,7 +68,10 @@ register('trivia', {
     const q = TRIVIA[n][i];
     let fallos = p.f || 0, answered = false;
     softHead(root);
+    muteBtn(root);
+    const list = !isPic(q); // texto (una o varias): lista vertical
     root.classList.add(isPic(q) ? (q.o.length === 4 ? 'tv-pic4' : 'tv-pic') : isMulti(q) ? 'tv-multi' : 'tv-txt');
+    if (list) root.classList.add('tv-list');
 
     if (!isPic(q)) seen(isMulti(q) ? 'V2-06c-Trivia-varias-claro' : 'V2-06b-Trivia-4-opciones-claro');
     if (isPic(q) && i > 0) seen('V2-06-Trivia-claro');
@@ -87,6 +97,8 @@ register('trivia', {
     const teo = $$(root, 'img').find(im => im.src.includes(IMG.tPregunta));
     const setTeo = (id, cls) => { if (!teo) return; teo.src = A(id); teo.classList.remove('a-hop', 'a-bob', 'a-shake'); void teo.offsetWidth; cls && teo.classList.add(cls); };
     setTeo(IMG.tPregunta, 'a-bob');
+    // en lista (o con pregunta de 3 líneas), Teodoro un poco más chico y la pregunta más arriba: caben las opciones y el aviso
+    if (card && (list || card.offsetHeight > 160)) { card.style.top = '222px'; teo?.classList.add('tv-teo-sm'); }
 
     const group = root.querySelector('[role=group]');
     const tplOpt = group.children[0].outerHTML;
@@ -107,22 +119,30 @@ register('trivia', {
       el.setAttribute('aria-label', o);
       return el;
     });
-    // texto: 2×2 con círculo y palabra en la misma fila; varias correctas: lista; 4 imágenes: 2×2 compacto
-    if (isMulti(q)) group.style.gridTemplateColumns = '1fr';
-    else if (!isPic(q)) group.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    // texto: lista, una debajo de la otra; 4 imágenes: 2×2 compacto
+    if (list) group.style.gridTemplateColumns = '1fr';
     else if (q.o.length === 4) { group.style.display = 'grid'; group.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))'; group.style.gap = '12px'; group.classList.add('pic4'); root.classList.add('trivia-pic4'); }
     opts.forEach((el, k) => { group.appendChild(el); el.style.animation = `rise .4s ${.08 * k}s cubic-bezier(.2,.8,.2,1) both`; });
     // preguntas de 3 líneas: las opciones empiezan debajo de la pregunta
-    if (card) group.style.setProperty('top', Math.max(group.offsetTop, card.offsetTop + card.offsetHeight + 12) + 'px', 'important');
+    if (card) group.style.setProperty('top', (list ? card.offsetTop + card.offsetHeight + 12 : Math.max(group.offsetTop, card.offsetTop + card.offsetHeight + 12)) + 'px', 'important');
 
     // pie: pista de interacción y «Comprobar»
     const hint = [...root.children].find(el => el.style.top === '700px' || el.style.top === '702px');
     const check = [...root.children].find(el => el.tagName === 'A' && /Comprobar/.test(el.textContent));
     if (!isMulti(q)) check?.remove();
+    else if (check) { check.style.top = 'auto'; check.style.bottom = '24px'; }
     if (hint) hint.innerHTML = `<span class="tv-pill">${isMulti(q) ? 'Elige todas las correctas' : 'Toca la respuesta'}</span>`;
     // avisos, pista y «Toca la respuesta» van en su propio espacio, debajo de las opciones (nunca encima)
     const place = el => el?.style.setProperty('top', (group.offsetTop + group.offsetHeight + 14) + 'px', 'important');
     place(hint);
+    // si el aviso no cabe sobre el botón de abajo: la lista ya respondida se compacta y el botón baja un poco
+    const fit = (fb, btn, tight) => {
+      if (!fb || !btn) return;
+      const over = () => fb.offsetTop + fb.offsetHeight + 12 - btn.offsetTop;
+      if (over() > 0 && tight) { group.classList.add('tv-tight'); place(fb); }
+      if (over() > 0) btn.style.bottom = Math.max(14, parseFloat(getComputedStyle(btn).bottom) - over()) + 'px';
+    };
+    fit(hint, check);
 
     const clearFeedback = () => $$(root, '[role=status], [role=note], [data-next], [data-spark]').forEach(e => e.remove());
     const showNext = () => {
@@ -171,6 +191,7 @@ register('trivia', {
       setTeo(IMG.tCelebra, 'a-hop');
       if (fallos === 0) floaty(layer, '¡Bien!', 160, 230, null);
       showNext();
+      fit(st, root.querySelector('[data-next]'), list);
     };
     const wrong = (k, el) => {
       fallos++;
@@ -189,6 +210,7 @@ register('trivia', {
       // varias correctas: solo la pista, para no chocar con «Comprobar»
       if (isMulti(q)) nt.querySelector(':scope > span:last-child')?.remove();
       root.appendChild(nt); place(nt); nt.classList.add('a-rise');
+      fit(nt, check);
       // el fallo cuenta aunque cierren y vuelvan
       if (!p.replay) keep(n, { i, ok, h: p.h || '', f: fallos });
       setTeo(IMG.tFarol, 'a-bob');
@@ -232,6 +254,8 @@ register('triviaFin', {
   },
   async mount(root, p, layer) {
     const n = p.day;
+    if (sinTrivia(n)) return;
+    muteBtn(root);
     const { est, first, gana, mejoro } = finishTrivia(n, p.ok, p.replay);
     setText(root, /^\d de 5$/, `${p.ok} de 5`);
     replaceText(root, /respuestas correctas/, 'a la primera');
@@ -272,6 +296,8 @@ function sorpresaHecha(n, layer) {
 }
 function paintFin(root, layer, n, first, bind = true) {
   replaceText(root, /guardadas en el día \d+/, `Tus estrellas del día ${n}`);
+  // días sin trivia: no hay estrellas que mostrar
+  if (!hasTrivia(n)) root.querySelector('[role=img][aria-label^="Tus "]')?.remove();
   const s = stars(n);
   const box = textEl(root, /estrellas del día/)?.parentElement;
   if (box) $$(box, 'svg').forEach((sv, k) => sv.querySelectorAll('path').forEach(pt => pt.setAttribute('fill', k < s ? '#F7C948' : '#D3DDE5')));

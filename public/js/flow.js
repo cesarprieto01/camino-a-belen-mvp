@@ -2,7 +2,8 @@
 import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag, racha } from './core.js';
-import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf } from './data.js';
+import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia } from './data.js';
+import './musica.js'; // música de fondo del mapa y la trivia
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = () => S.plan === 'premium';
@@ -14,7 +15,6 @@ export function startDay(n) {
   const d = DAYS[n];
   if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, nacimiento: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; }
   if (!contentDone(n)) {
-    if (RULES.ruleta.includes(n) && !S.ruletas[n] && !S.ruletaPendiente[n]) { go('ruletaPop', { day: n }, 'modal'); return; }
     go(d.type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'up');
     return;
   }
@@ -33,7 +33,6 @@ export function ctaLabel(n) {
   if (n === 26 && !contentDone(26)) return { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
   if (n === 0) return { text: 'Invitar a un amigo', go: () => go('invitacion', {}, 'push') };
-  if (RULES.ruleta.includes(n) && S.ruletaPendiente[n] && !S.ruletas[n]) return { text: 'Girar la ruleta', go: () => go('ruletaPop', { day: n, from: 'mapa' }, 'modal') };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Abrir la sorpresa', go: () => openSorpresa(n) };
   const a = activeDay();
@@ -616,7 +615,7 @@ register('hub', {
     on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); animate(el, 'a-pop'); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 260); });
     // los extras del reto son descargables: con free piden Premium (y lo dicen antes de tocarlos)
     if (!premium()) ['Imprimible', 'Canción'].forEach(t => { const el = find(root, t); if (!el || el.querySelector('.pill-premium')) return; const pl = document.createElement('span'); pl.className = 'pill-premium'; pl.textContent = 'Premium'; el.style.position ||= 'relative'; el.appendChild(pl); });
-    on(root, 'Imprimible', () => premium() ? go('imprimible', { day: n }, 'push') : go('free', { back: 'hub', day: n }, 'page'));
+    on(root, 'Imprimible', () => abrirDescargable(n, 'hub'));
     on(root, 'Canción', () => premium() ? go('reproductor', { day: n, extra: 'cancion' }, 'up') : go('free', { back: 'hub', day: n }, 'page'));
   },
 });
@@ -635,11 +634,26 @@ register('completado', {
     $$(root, '[style*="rotate(-12deg)"], [style*="rotate(12deg)"]').forEach((c, i) => { c.style.setProperty('--r', i ? '12deg' : '-12deg'); c.style.animation = `popRot .55s ${.15 + i * .1}s cubic-bezier(.2,.9,.3,1.3) both`; });
     $$(root, 'img').find(i => i.src.includes(IMG.tPregunta))?.classList.add('a-bob');
     confetti(layer, 195, 260, 30);
-    on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push', { replace: true }));
     const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
     if (chip) { chip.style.pointerEvents = 'none'; chip.removeAttribute('role'); }
     const out = () => go('mapa', {}, 'down', { replace: true });
     on(root, 'Ahora no', out); on(root, 'Cerrar', out);
+    if (hasTrivia(n)) { on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push', { replace: true })); return; }
+    // día sin trivia: el día ya quedó completo; si toca sorpresa se abre aquí, si no, Teodoro camina en el mapa
+    const sorpresa = RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha';
+    const titulo = textEl(root, /¿Jugamos/);
+    if (titulo) titulo.innerHTML = sorpresa ? `Hoy toca<br>${{ memorama: 'Memorama', adivinanza: 'Adivinanza', desafio: 'Desafío' }[RULES.sorpresa[n]]}` : 'Un paso más<br>hacia Belén';
+    const sub = textEl(root, /sobre lo de hoy|sobre el reto de hoy/);
+    if (sub) { if (sorpresa) sub.textContent = 'Un juego sorpresa para hoy'; else sub.style.display = 'none'; }
+    if (!sorpresa) { if (q) q.style.display = 'none'; $$(root, '[style*="rotate(-12deg)"], [style*="rotate(12deg)"]').forEach(c => { c.style.display = 'none'; }); }
+    const btn = find(root, '¡A jugar!');
+    if (btn) { setText(btn, '¡A jugar!', sorpresa ? 'Abrir la sorpresa' : 'Volver al camino'); on(root, btn, () => sorpresa ? openSorpresa(n) : go('mapa', { thenCerrado: true }, 'down', { replace: true })); }
+    if (!sorpresa) {
+      const no = find(root, 'Ahora no'); if (no) no.style.display = 'none';
+      // sin subtítulo ni segunda fila: Teodoro baja un poco y el botón sube, para que no quede un hueco
+      const teo = $$(root, 'img').find(i => i.src.includes(IMG.tPregunta)); if (teo) teo.style.top = parseFloat(teo.style.top) + 40 + 'px';
+      if (btn) btn.style.top = '636px';
+    }
   },
 });
 
@@ -743,7 +757,8 @@ register('ruletaPop', {
   files: F('S-05b-Ruleta-pop', 'S-05b-Ruleta-pop-oscuro'),
   mount(root, p, layer) {
     const n = p.day;
-    setText(root, /Antes del cuento…/, 'Antes de la historia…');
+    // la ruleta se juega al tocarla en el mapa, no al empezar el día
+    const antes = textEl(root, /Antes del cuento…/); if (antes) antes.textContent = `Semana ${RULES.ruleta.indexOf(n) + 1}`;
     // velo más firme: el mapa de atrás no compite con la ruleta
     const sc = root.querySelector('.ov-scrim'); if (sc) { sc.style.background = 'rgba(0,20,50,.8)'; sc.style.backdropFilter = 'blur(6px)'; sc.style.webkitBackdropFilter = 'blur(6px)'; }
     const wheel = root.querySelector('[role=img][aria-label^="Ruleta"] > div');
@@ -794,7 +809,7 @@ register('ruletaPop', {
       }
       const week = RULES.ruleta.indexOf(n);
       const prize = premio === 'prenda' ? PRENDAS[week].id : premio;
-      S.ruletas[n] = prize; delete S.ruletaPendiente[n];
+      S.ruletas[n] = prize;
       if (premio === 'panes') addPanes(RULES.panes.ruleta);
       if (premio === 'prenda') S.prendas.push(PRENDAS[week].id);
       if (premio === 'cuarto') S.cuartoNuevo = true;
@@ -802,19 +817,15 @@ register('ruletaPop', {
       save();
       navigator.vibrate?.(30);
       await wait(300);
-      go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n, from: p.from }, 'modal', { replace: true });
+      go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n }, 'modal', { replace: true });
     });
     const tarde0 = find(root, 'Más tarde'); if (tarde0) tarde0.dataset.back = '1';
-    // una X para cerrar (igual que «Más tarde»: la ruleta queda pendiente y se puede girar después)
+    // una X para cerrar (igual que «Más tarde»: solo cierra; la ruleta sigue en el mapa)
     const x = document.createElement('button'); x.type = 'button'; x.className = 'pop-x'; x.setAttribute('aria-label', 'Cerrar');
     x.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
     (root.querySelector('.ov-body') || root).appendChild(x);
     x.addEventListener('click', () => tarde0?.click());
-    on(root, 'Más tarde', () => {
-      S.ruletaPendiente[n] = true; save();
-      toast('La ruleta te espera', 'Gírala cuando quieras desde el mapa');
-      if (p.from === 'mapa') go('mapa', {}, 'down', { replace: true }); else go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
-    });
+    on(root, 'Más tarde', () => go('mapa', {}, 'down', { replace: true }));
   },
 });
 register('ruletaPremio', {
@@ -833,29 +844,69 @@ register('ruletaPremio', {
     if (!info.sub && subEl) subEl.textContent = 'Ya están en la canasta de Teodoro';
     else if (p.premio === 'manzana' && subEl) subEl.textContent = 'Teodoro se la comió: ¡más energía!';
     if (p.premio !== 'cuarto') floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
-    const cont = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
     confetti(layer, 195, 300, 36);
-    const seguir = on(root, 'Empezar el cuento', cont); if (seguir) seguir.dataset.back = '1';
-    setText(root, 'Empezar el cuento', p.from === 'mapa' || contentDone(n) ? 'Volver al camino' : ctaLabel(n).text);
+    const alMapa = () => go('mapa', {}, 'down', { replace: true });
+    const seguir = on(root, 'Empezar el cuento', alMapa); if (seguir) seguir.dataset.back = '1';
+    setText(root, 'Empezar el cuento', 'Volver al camino');
+    // la ilustración del botón (▶ de «empezar») ya no aplica
+    find(root, 'Volver al camino')?.querySelector('svg')?.remove();
     const ver = find(root, 'Ver a Teodoro');
-    if (ver && !(p.from === 'mapa' || contentDone(n))) ver.style.display = 'none'; // primero la historia
-    else on(root, 'Ver a Teodoro', () => go('teodoro', {}, 'fade', { tab: true }));
+    if (ver) { if (prenda) { setText(ver, 'Ver a Teodoro', 'Ver el cuarto de Teodoro'); on(root, ver, () => go('teodoro', {}, 'fade', { tab: true })); } else ver.style.display = 'none'; }
+    xEnTarjeta(root, alMapa);
   },
 });
+/** X dentro de la tarjeta del premio (arriba a la derecha). */
+function xEnTarjeta(root, fn, left = 314, top = 186) {
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'premio-x'; x.setAttribute('aria-label', 'Cerrar');
+  x.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  x.style.left = left + 'px'; x.style.top = top + 'px';
+  (root.querySelector('.ov-body') || root).appendChild(x);
+  on(root, x, fn);
+  return x;
+}
 register('premioCuarto', {
   files: F('S-09-Premio-cuarto', 'S-09-Premio-cuarto-oscuro'),
+  dismiss: () => go('mapa', {}, 'down', { replace: true }),
+  // el lienzo lo trae a pantalla completa: se rearma como tarjeta sobre el mapa (velo + tarjeta de 350)
+  prepare(root) {
+    const kids = [...root.children];
+    kids.filter(el => el.style.top === '0px' && /^\s*9:41/.test(el.textContent) || el.style.bottom === '8px').forEach(el => el.remove());
+    const T = 120, Y = 82, H = 680;
+    const card = document.createElement('div'); card.className = 'premio-card';
+    card.setAttribute('role', 'dialog'); card.setAttribute('aria-label', 'Premio de la ruleta: cuarto nuevo');
+    card.style.cssText = `position:absolute;left:20px;top:${Y}px;width:350px;height:${H}px;border-radius:32px;overflow:hidden;background:${root.style.background};box-shadow:${dark() ? '0 0 0 1px rgba(255,255,255,.12), 0 24px 60px rgba(0,8,43,.5)' : '0 24px 60px rgba(0,8,43,.4)'}`;
+    const inner = document.createElement('div'); inner.style.cssText = `position:absolute;left:-20px;top:-${T}px;width:390px;height:844px`;
+    kids.filter(el => el.parentElement === root).forEach(el => inner.appendChild(el)); // (aún no está en el documento)
+    card.appendChild(inner);
+    const scrim = document.createElement('div'); scrim.setAttribute('aria-hidden', 'true');
+    scrim.style.cssText = `position:absolute;top:0;bottom:0;left:0;right:0;background:${dark() ? 'rgba(0,8,43,.66)' : 'rgba(2,37,79,.64)'}`;
+    root.append(scrim, card);
+  },
   mount(root, p, layer) {
     const n = p.day;
     confetti(layer, 195, 300, 50);
     const room = $$(root, 'img').find(i => i.src.includes(IMG.cuarto)) || $$(root, 'img')[1];
     room?.parentElement?.classList.add('a-pop');
     const nextW = RULES.ruleta.find(x => !S.ruletas[x]);
-    setText(root, /La próxima ruleta.*/, nextW ? `La próxima ruleta, el día ${nextW}` : 'Ya abriste todas las ruletas');
-    const out = () => p.from === 'mapa' || contentDone(n) ? go('mapa', {}, 'down', { replace: true }) : go(DAYS[n].type === 'reto' ? 'hub' : 'reproductor', { day: n }, 'fade', { replace: true });
-    on(root, 'Salir de la ruleta', out); on(root, 'Cerrar', out);
-    const sigue = !(p.from === 'mapa' || contentDone(n));
+    const prox = textEl(root, /La próxima ruleta.*/);
+    if (nextW) setText(root, /La próxima ruleta.*/, `La próxima ruleta, el día ${nextW}`);
+    const proxBox = prox?.closest('div[style*="top: 712px"]'); if (proxBox) { if (nextW) proxBox.style.top = '750px'; else proxBox.style.display = 'none'; }
+    const alMapa = () => go('mapa', {}, 'down', { replace: true });
+    // la X del lienzo pasa adentro de la tarjeta, arriba a la derecha
+    const salir = find(root, 'Salir de la ruleta');
+    if (salir) { Object.assign(salir.style, { left: '312px', top: '136px' }); on(root, salir, alMapa); }
+    on(root, 'Cerrar', alMapa);
     const btn = find(root, 'Ver su cuarto nuevo'); // se toma antes de cambiarle el texto
-    if (btn) { on(root, btn, out); btn.dataset.back = '1'; setText(btn, 'Ver su cuarto nuevo', sigue ? ctaLabel(n).text : 'Volver al camino'); }
+    if (btn) { on(root, btn, alMapa); btn.dataset.back = '1'; setText(btn, 'Ver su cuarto nuevo', 'Volver al camino'); btn.querySelector('svg')?.remove(); }
+    // márgenes de tarjeta: el botón y el texto no tocan los bordes
+    if (btn) Object.assign(btn.style, { left: '40px', right: '40px' });
+    const txt = textEl(root, /¡Ganaste un cuarto nuevo!/)?.parentElement; if (txt) Object.assign(txt.style, { left: '40px', right: '40px' });
+    const box = btn?.parentElement;
+    if (box) {
+      const ver = document.createElement('a'); ver.className = 'premio-link'; ver.textContent = 'Ver el cuarto de Teodoro';
+      ver.style.cssText = 'position:absolute;left:20px;right:20px;top:704px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;text-decoration:none;color:inherit;cursor:pointer';
+      box.appendChild(ver); on(root, ver, () => go('teodoro', {}, 'fade', { tab: true }));
+    }
   },
 });
 
@@ -899,7 +950,7 @@ register('finalCompartir', {
   files: F('V2-Final-compartir-claro', 'V2-Final-compartir'),
   mount(root, p, layer) {
     const dias = doneCount();
-    const estrellas = Object.values(S.completos).reduce((s, c) => s + (c.estrellas || 0), 0);
+    const estrellas = Object.keys(S.completos).reduce((s, k) => s + stars(+k), 0); // solo los días con trivia tienen estrellas
     replaceText(root, /Lucía/g, S.nombre);
     const card = root.querySelector('[role=img][aria-label^="Tarjeta"]');
     if (card) {
@@ -918,12 +969,24 @@ register('finalCompartir', {
   },
 });
 
+/** Descargable del día (todos los días tienen uno): premium lo abre; free ve la hoja de Premium. */
+export function abrirDescargable(n, from = 'mapa') {
+  if (premium()) go('imprimible', { day: n, back: from }, 'push');
+  else go('free', { back: from, day: n }, 'page');
+}
 register('imprimible', {
   files: F('S-04c-Imprimible', 'S-04c-Imprimible-oscuro'),
   mount(root, p) {
+    const d = DAYS[p.day];
+    if (d) {
+      setText(root, 'Pesebre para colorear', d.title);
+      const sub = textEl(root, /Imprímelo y coloréalo/); if (sub) sub.textContent = 'Para colorear en familia';
+      const im = $$(root, 'img').find(i => /para colorear/.test(i.alt || ''));
+      if (im) { if (d.imprimible) im.src = A(d.imprimible); im.alt = `Vista previa para colorear: ${d.title}`; }
+    }
     const sheet = [...root.querySelectorAll('div, img')].find(x => x.style.transform && /rotate/.test(x.style.transform));
     sheet?.classList.add('a-pop');
-    on(root, 'Volver', () => back('hub'));
+    on(root, 'Volver', () => back(p.back || 'mapa'));
     ['Imprimir', 'Guardar'].forEach(t => on(root, t, () => nota(t, 'En el celular se abre el menú del teléfono')));
   },
 });

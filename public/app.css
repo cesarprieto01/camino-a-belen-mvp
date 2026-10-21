@@ -385,6 +385,13 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .layer[data-screen="mapa"] .sheet-row { opacity: 1 !important; }
 .layer[data-screen="mapa"] .sheet-alt, .layer[data-screen="mapa"] .mb-cta { font: 700 16px 'Neue Montreal', Mulish, sans-serif; }
 
+/* botón de música de la cabecera: 40px de dibujo, 44px de área táctil */
+.layer[data-screen="mapa"] .map-head button[aria-label^="Música"] { position: relative; cursor: pointer; }
+.layer[data-screen="mapa"] .map-head button[aria-label^="Música"]::after { content: ''; position: absolute; inset: -2px; border-radius: 50%; }
+/* ruleta del camino lista para girar: pulso suave que invita a tocarla */
+.layer[data-screen="mapa"] .rul-pulso { animation: rulPulso 2.2s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes rulPulso { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .layer[data-screen="mapa"] .rul-pulso { animation: none; } }
 /* — inicio y mundos — */
 /* espera: el «0» pintado en el nodo de salida se tapa con el mismo disco y una estrellita */
 .espera-salida { position: absolute; left: 186px; top: 398px; width: 18px; height: 18px; border-radius: 50%; background: #F4F7FA; box-shadow: 0 0 2px 1px #F4F7FA; display: grid; place-items: center; pointer-events: none; }
@@ -402,17 +409,19 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 /* 4 imágenes: un poco más bajas para que el aviso quepa entre la grilla y «Siguiente» */
 .trivia-pic4 .pic4 > * { height: 124px !important; padding: 6px 6px 8px !important; gap: 2px !important; }
 .trivia-pic4 .pic4 > * img { width: 78px !important; height: 78px !important; }
-/* texto: círculo y palabra en la misma fila */
-.tv-txt [role=group] { top: 420px !important; }
-.tv-txt [role=group] > *, .tv-multi [role=group] > * { height: 88px !important; display: flex !important; align-items: center; gap: 12px; padding: 0 14px; box-sizing: border-box; }
-.tv-txt [role=group] > * > span, .tv-multi [role=group] > * > span { position: static !important; flex: none; }
-.tv-txt [role=group] > * > div, .tv-multi [role=group] > * > div { position: static !important; flex: 1; min-width: 0; font-size: 18px !important; line-height: 22px !important; }
-/* varias correctas: una debajo de la otra, check a la izquierda */
-.tv-multi [role=group] { top: 424px !important; gap: 8px !important; }
-.tv-multi [role=group] > * { height: auto !important; min-height: 56px; padding: 8px 14px; border-radius: 18px !important; transform: none !important; }
-.trivia-pic4 .pic4.pic4-fit > * { height: var(--tile) !important; }
-.trivia-pic4 .pic4.pic4-fit > * img { width: calc(var(--tile) - 44px) !important; height: calc(var(--tile) - 44px) !important; }
+/* texto (una o varias correctas): lista vertical, círculo o check a la izquierda */
+.tv-list [role=group] { gap: 8px !important; }
+.tv-list [role=group] > * { height: auto !important; min-height: 56px; display: flex !important; align-items: center; gap: 12px; padding: 8px 14px; box-sizing: border-box; border-radius: 18px !important; transform: none !important; text-align: left; }
+.tv-list [role=group] > * > span { position: static !important; flex: none; }
+.tv-list [role=group] > * > div { position: static !important; flex: 1; min-width: 0; font-size: 18px !important; line-height: 22px !important; }
+/* ya respondida, la lista se compacta si el aviso no cabe */
+.tv-list [role=group].tv-tight { gap: 6px !important; }
+.tv-list [role=group].tv-tight > * { min-height: 46px; padding: 4px 14px; }
+.tv-teo-sm { top: 54px !important; width: 170px !important; height: 170px !important; left: 110px !important; object-fit: contain; }
 /* adivinanza: las formas de dar pistas son texto con ícono, no botones */
 .adv-tips > div { background: none !important; box-shadow: none !important; }
 /* con «¿Listos?» puesto, los botones de la palabra esperan */
 .adv-wait { opacity: .45; cursor: default !important; transition: opacity .2s ease-out; }
+/* — inicio y mundos — premios de la ruleta como pop-up: X dentro de la tarjeta */
+.premio-x { position: absolute; width: 44px; height: 44px; border-radius: 22px; border: 0; background: rgba(11,116,138,.1); color: #0B748A; display: grid; place-items: center; cursor: pointer; z-index: 6; }
+:root[data-theme="dark"] .premio-x { background: rgba(255,255,255,.14); color: #FFFFFF; }

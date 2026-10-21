@@ -88,11 +88,27 @@ const flows = {
     await shot('mapa-sorpresa');
     await tap('Atrás'); await shot('hoy-sorpresa');
   },
+  // la ruleta solo se juega tocándola en el mapa: día 11 → tocar la ruleta → girar → premio → vuelve al mapa
   async ruleta() {
-    await scenario('Día de ruleta'); await shot('mapa');
-    await tap('Ver historia'); await shot('ruleta');
-    await tap('¡Girar!'); await p.waitForTimeout(5200); await shot('premio');
-    await tap('Ver historia'); await shot('reproductor');
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 11, inscrito: true, teaserVisto: true, forzarPremio: 'panes' }); for (let d = 0; d <= 10; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('mapa', {}, 'none', { tab: true }); });
+    await p.waitForTimeout(1500); await shot('mapa');
+    const hoja = await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet]')?.textContent || '');
+    if (/Ruleta/.test(hoja)) errs.push('la hoja del día todavía habla de la ruleta: ' + hoja.replace(/\s+/g, ' ').slice(0, 140));
+    const lbl = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label^="Ruleta de la semana 2"]')?.textContent.replace(/\s+/g, ' ').trim());
+    if (!/¡Gírala!/.test(await lbl() || '')) errs.push('la ruleta del día 11 no dice «¡Gírala!»: ' + await lbl());
+    await tap('Ruleta de la semana 2'); await p.waitForTimeout(900);
+    if ((await screen()) !== 'ruletaPop') errs.push('tocar la ruleta del mapa no abre la ruleta: ' + await screen());
+    await shot('ruleta'); await tap('¡Girar!'); await p.waitForTimeout(5200); await shot('premio');
+    if (!['ruletaPremio', 'premioCuarto'].includes(await screen())) errs.push('girar no lleva al premio: ' + await screen());
+    await tap('Volver al camino'); await p.waitForTimeout(1500);
+    if ((await screen()) !== 'mapa') errs.push('el premio no vuelve al mapa: ' + await screen());
+    if (!/Girada/.test(await lbl() || '')) errs.push('la ruleta girada no dice «Girada»: ' + await lbl());
+    // ya girada: un aviso con el premio, no otra ruleta
+    await tap('Ruleta de la semana 2'); await p.waitForTimeout(600);
+    if ((await screen()) !== 'mapa') errs.push('tocar una ruleta girada no se queda en el mapa: ' + await screen());
+    // la de un día que aún no llega: aviso con la fecha
+    await tap('Ruleta de la semana 3'); await p.waitForTimeout(600);
+    if ((await screen()) !== 'mapa') errs.push('tocar una ruleta futura no se queda en el mapa: ' + await screen());
   },
   async memorama() {
     await scenario('Memorama'); await shot('mapa');
@@ -243,6 +259,9 @@ const flows = {
       if (await screen() !== 'hoy') errs.push(`día ${d}: no abre en Hoy`);
       await textCheck('hoy-' + d);
       await tap(d === 1 ? 'Iniciar la aventura' : 'Continuar la aventura');
+      // días de ruleta: se gira tocándola en el mapa (ya no sale sola)
+      const rw = [4, 11, 18, 24].indexOf(d);
+      if (rw >= 0) { await p.waitForTimeout(1200); await tap('Ruleta de la semana ' + (rw + 1)); }
       let steps = 0, done = false;
       while (!done && steps++ < 45) {
         await p.waitForTimeout(650);
@@ -259,7 +278,7 @@ const flows = {
           case 'ruletaPremio': case 'premioCuarto': if (!(await clickYellow())) errs.push(`día ${d}: premio sin botón`); break;
           case 'reproductor': await finishPlayer(); await p.waitForTimeout(900); break;
           case 'hub': await tap('¡Lo hicimos!'); await p.waitForTimeout(600); break;
-          case 'completado': await tap('¡A jugar!'); break;
+          case 'completado': { const t = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].map(a => a.textContent.trim()).find(x => /^(¡A jugar!|Abrir la sorpresa|Volver al camino)$/.test(x))); await tap(t || '¡A jugar!'); break; }
           case 'trivia': await answerTrivia(); break;
           case 'triviaFin': if (!(await tap('Abrir la sorpresa'))) { errs.pop(); await tap('Volver al camino'); } break;
           case 'memoramaReglas': await clickYellow(); break;
@@ -331,21 +350,23 @@ const flows = {
     // 1) inscripción → espera
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({}); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(1600);
     await tap('Unirme gratis'); await p.waitForTimeout(2400); await backs('inscripción', 3);
-    // 2) un día completo: historia → ¡Terminaste! → trivia → final de trivia → mapa
-    await st({ s: { hoy: 10 }, upto: 9 }); await p.waitForTimeout(900);
+    // 2) un día completo con trivia (17): historia → ¡Terminaste! → trivia → final de trivia → mapa
+    await st({ s: { hoy: 17 }, upto: 16 }); await p.waitForTimeout(900);
     await tap('Continuar la aventura'); await p.waitForTimeout(700);
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
     await finishPlayer(); await p.waitForTimeout(1300); await tap('¡A jugar!'); await answerTrivia(); await p.waitForTimeout(500);
     await tap('Volver al camino'); await p.waitForTimeout(3500);
     await backs('día completo', 4);
-    // 3) ruleta → premio → historia → mapa
+    // 3) ruleta (se toca en el mapa) → premio → mapa; la historia se abre sin ruleta
     await st({ s: { hoy: 11, forzarPremio: 'panes' }, upto: 10 }); await p.waitForTimeout(900);
-    await tap('Continuar la aventura'); await p.waitForTimeout(700);
-    await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
+    await tap('Continuar la aventura'); await p.waitForTimeout(900);
+    await tap('Ruleta de la semana 2'); await p.waitForTimeout(900);
     await tap('¡Girar!'); await p.waitForTimeout(5300);
-    // en el premio, el «atrás» del sistema hace lo mismo que «seguir» (va a la historia)
+    // en el premio, el «atrás» del sistema hace lo mismo que «Volver al camino» (al mapa)
     await p.goBack(); await p.waitForTimeout(1000);
-    if ((await screen()) !== 'reproductor') errs.push('atrás en el premio de la ruleta no sigue a la historia: ' + await screen());
+    if ((await screen()) !== 'mapa') errs.push('atrás en el premio de la ruleta no vuelve al mapa: ' + await screen());
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
+    if ((await screen()) !== 'reproductor') errs.push('«Ver historia» en día de ruleta no abre la historia: ' + await screen());
     await finishPlayer(); await p.waitForTimeout(1300); await tap('Ahora no'); await p.waitForTimeout(900);
     await backs('ruleta', 4);
     // 4) sorpresa (desafío) → final → mapa
@@ -358,7 +379,7 @@ const flows = {
     await st({ s: { hoy: 13 }, upto: 12 }); await p.waitForTimeout(900);
     await tap('Continuar la aventura'); await p.waitForTimeout(700);
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
-    await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await tap('Ahora no'); await p.waitForTimeout(1000);
+    await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await tap('Volver al camino'); await p.waitForTimeout(1000);
     await backs('reto', 4);
   },
   // días libres: tocar un día desbloqueado o con trivia pendiente abre su hoja; la ruleta aplazada vuelve
@@ -379,8 +400,27 @@ const flows = {
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('ruletaPop', { day: 4, from: 'mapa' }, 'modal'); }); await p.waitForTimeout(900); await shot('ruleta-x');
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child .pop-x')?.click()); await p.waitForTimeout(1200);
     s = await st(); if (s.s !== 'mapa') errs.push('la X de la ruleta no cierra: ' + s.s);
-    await tap('Ruleta pendiente'); await p.waitForTimeout(900);
+    // la ruleta se gira tocándola en el mapa
+    await tap('Ruleta de la semana 1'); await p.waitForTimeout(900);
     if ((await screen()) !== 'ruletaPop') errs.push('la ruleta aplazada no se puede girar después: ' + await screen());
+  },
+  // día sin trivia (10): la historia completa el día y vuelve al mapa; día sin trivia con sorpresa (12): la abre
+  async sintrivia() {
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 10, inscrito: true, teaserVisto: true }); for (let d = 0; d <= 9; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('reproductor', { day: 10 }, 'none'); });
+    await p.waitForTimeout(800);
+    await p.evaluate(() => { const sl = document.querySelector('#viewport .layer:last-child [role=slider]'); const r = sl.getBoundingClientRect(); sl.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.right - 1, clientY: r.top + 5 })); });
+    await p.waitForTimeout(1400); await shot('completado-sin-trivia');
+    const txt = await p.evaluate(() => document.querySelector('#viewport .layer:last-child').textContent);
+    if (/¡A jugar!|trivia/i.test(txt)) errs.push('día sin trivia todavía ofrece la trivia');
+    const st = await p.evaluate(async () => { const c = await import('/js/core.js'); return { done: c.isDone(10), st: c.stars(10), act: c.activeDay() }; });
+    if (!st.done || st.st || st.act != null) errs.push('el día 10 sin trivia no queda completo: ' + JSON.stringify(st));
+    await tap('Volver al camino'); await p.waitForTimeout(3500);
+    if (!['mapa', 'cerrado'].includes(await screen())) errs.push('tras un día sin trivia no vuelve al mapa: ' + await screen());
+    await shot('mapa-sin-trivia');
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 12, inscrito: true, teaserVisto: true }); for (let d = 0; d <= 11; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('completado', { day: 12 }, 'none'); c.S.completos[12] = { contenido: true }; c.save(); });
+    await p.waitForTimeout(1200); await shot('completado-sorpresa');
+    await tap('Abrir la sorpresa'); await p.waitForTimeout(900);
+    if (await screen() !== 'memoramaReglas') errs.push('día 12 sin trivia no abre la sorpresa: ' + await screen());
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };
