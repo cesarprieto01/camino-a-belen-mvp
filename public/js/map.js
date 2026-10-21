@@ -542,7 +542,7 @@ function paintSheet(layer, T, dia) {
   if (n > 0 && sorpPend.length) addAlt(`Sorpresa pendiente · ${SORPRESA_NOMBRE[RULES.sorpresa[sorpPend[0]]]}`, 'regalo', () => openSorpresa(sorpPend[0]), {}, `Día ${sorpPend[0]}`);
   if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver a tu día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
   const rulPend = RULES.ruleta.filter(r => r <= lastDay() && S.ruletaPendiente[r] && !S.ruletas[r]);
-  if (n > 0 && rulPend.length) addAlt('Ruleta pendiente · ¡Girar!', 'regalo', () => go('ruletaPop', { day: rulPend[0], from: 'mapa' }, 'modal'), {}, `Día ${rulPend[0]}`);
+  if (n > 0 && rulPend.length) addAlt('Ruleta pendiente', 'regalo', () => go('ruletaPop', { day: rulPend[0], from: 'mapa' }, 'modal'), {}, `Día ${rulPend[0]}`);
   // día 0 visto: volver al inicio sin buscar la flecha
   sheet.style.height = 'auto';
   sheet.classList.add('in-up');
