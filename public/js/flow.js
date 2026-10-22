@@ -574,6 +574,19 @@ register('teodoro', {
     paintEnergy(root);
     patchCuarto(root);
     if (fase() === 'antes') { startCountdown(root); ánimo(root); }
+    // antes del 29: el mundo Enero bloqueado sobra en el cuarto (se ve en Mundos); las misiones suben a su sitio
+    const enero = textEl(root, 'Enero')?.closest('div[style*="top: 1064px"]');
+    if (enero) {
+      const cont = enero.parentElement, y = parseFloat(enero.style.top);
+      enero.remove();
+      // lo de abajo queda a 28 px de la tarjeta del camino (en oscuro el título de las misiones ya se montaba encima)
+      const card = [...cont.children].find(el => el.getAttribute('role') === 'group' && /^Camino a Belén/.test(el.getAttribute('aria-label') || ''));
+      const abajo = [...cont.children].filter(el => parseFloat(el.style.top) > y);
+      const tope = Math.min(...abajo.map(el => parseFloat(el.style.top)));
+      const dy = card ? tope - (parseFloat(card.style.top) + card.offsetHeight + 28) : 224;
+      abajo.forEach(el => { el.style.top = (parseFloat(el.style.top) - dy) + 'px'; });
+      for (let el = cont, h0 = parseFloat(cont.style.height); el && el !== root.parentElement; el = el.parentElement) if (parseFloat(el.style.height) === h0) el.style.height = (h0 - dy) + 'px';
+    }
     // la isla del cuarto lleva a los mundos de Teodoro; el botón de la tarjeta, al camino
     if (isla) {
       on(root, isla, () => go('mundos', {}, 'push'));
