@@ -1,6 +1,6 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
 import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
-  lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia } from './core.js';
+  lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia, puedeDia } from './core.js';
 import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, usaHub } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
@@ -159,6 +159,15 @@ register('mapa', {
       }
       on(root, el, () => tapNode(n, el, layer));
     }
+
+    // 2b) Días de pago para free: candado (Teodoro igual avanza con el calendario)
+    Object.entries(nodes).forEach(([k, t]) => {
+      const n = +k;
+      if (n > lastDay() || puedeDia(n) || contentDone(n) || t.el.dataset.today) return;
+      t.el.style.outline = 'none';
+      if (!t.el.querySelector('.node-lock')) t.el.insertAdjacentHTML('beforeend', '<img class="node-lock" src="assets/candado.webp" alt="">');
+      t.el.setAttribute('aria-label', `${t.el.getAttribute('aria-label')}, con Premium o el Pase de Adviento`);
+    });
 
     // 3) Teodoro y la burbuja de curiosidad
     const teo = $$(root, 'img').find(i => (i.alt || '').startsWith('Teodoro'));
@@ -555,7 +564,8 @@ function paintSheet(layer, T, dia) {
   const ty = TYPES[d.type];
   const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : n === 0 ? A(IMG.pergamino) : null;
   const list = [];
-  list.push(build(!contentDone(n), CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : 'now', rowIcon));
+  const pago = !puedeDia(n) && !contentDone(n); // free en un día de pago: todo con candado y la hoja lleva al pago
+  list.push(build(!contentDone(n) && !pago, CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : pago ? 'lock' : 'now', rowIcon));
   if (n !== 0 && n !== 26) {
     if (hasTrivia(n)) {
       const trivOn = contentDone(n) && !isDone(n);
@@ -572,13 +582,14 @@ function paintSheet(layer, T, dia) {
     const r = document.createElement('div'); r.innerHTML = a.innerHTML; r.setAttribute('style', a.getAttribute('style'));
     r.className = 'sheet-row'; r.dataset.print = '1'; r.setAttribute('role', 'button'); r.tabIndex = 0; r.style.cursor = 'pointer';
     filaDescarga(r, d);
-    on(layer, r, () => abrirDescargable(n, 'mapa'));
+    if (pago) { r.lastElementChild.outerHTML = '<img src="assets/candado.webp" alt="" aria-hidden="true" style="width:24px;height:auto;flex:none;margin-right:6px">'; r.dataset.lock = '1'; }
+    else on(layer, r, () => abrirDescargable(n, 'mapa'));
     list.push(r);
   }
   list.forEach(r => cta.before(r));
   list.filter(r => r.dataset.lock).forEach(r => {
     r.style.cursor = 'pointer'; r.setAttribute('role', 'button');
-    on(layer, r, () => { animate(r, 'a-shake'); toast(`Primero ${CONT[2]}`, 'La trivia se abre al terminarla'); });
+    on(layer, r, () => pago ? startDay(n) : (animate(r, 'a-shake'), toast(`Primero ${CONT[2]}`, 'La trivia se abre al terminarla')));
   });
   sheet.style.height = 'auto';
 

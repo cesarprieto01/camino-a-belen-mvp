@@ -86,6 +86,10 @@ export function cuentaGracia(corto = false) {
 }
 export const doneCount = () => Object.keys(S.completos).filter(n => +n >= 1 && isDone(+n)).length;
 export const pendientes = () => { const a = activeDay(); return a == null || a < 1 ? 0 : lastDay() - a + 1; };
+/** Plan: Theo Premium y el Pase de Adviento abren todo; free tiene la entrada y 2 ganchos por semana (domingo y miércoles). */
+export const DIAS_GRATIS = new Set([0, 1, 4, 8, 11, 15, 18, 22, 25, 26]);
+export const conTodo = () => S.plan !== 'free';
+export const puedeDia = n => conTodo() || DIAS_GRATIS.has(n);
 export const fase = () => S.hoy <= 0 ? 'antes' : S.hoy <= 26 ? 'camino' : S.hoy <= GRACIA_FIN ? 'gracia' : 'recuerdo';
 export const dark = () => S.tema === 'oscuro';
 export const stars = n => hasTrivia(n) ? S.completos[n]?.estrellas || 0 : 0; // sin trivia no hay estrellas

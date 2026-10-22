@@ -1,13 +1,13 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
 import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
-  addPanes, setBateria, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN } from './core.js';
+  addPanes, setBateria, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub } from './data.js';
 import './musica.js'; // música de fondo del mapa y la trivia
 import { rateRow } from './games.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
-const premium = () => S.plan === 'premium';
+const premium = conTodo; // Theo Premium o Pase de Adviento
 export const panesContenido = () => premium() ? RULES.panes.contenidoPremium : RULES.panes.contenidoFree;
 
 // ---------- Reglas del día ----------
@@ -16,6 +16,7 @@ export function startDay(n) {
   const d = DAYS[n];
   // desde el 7 de enero: lo hecho se vuelve a ver; lo que faltó ya no se abre (el nacimiento siempre)
   if (fase() === 'recuerdo' && n < 26 && !contentDone(n)) { toast('El camino de este año terminó', 'Nos vemos en Adviento'); return; }
+  if (!puedeDia(n)) { go('free', { back: 'mapa', dia: n }, 'page'); return; }
   if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, nacimiento: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; }
   if (!contentDone(n)) {
     go(usaHub(n) ? 'hub' : 'reproductor', { day: n }, 'up');
@@ -33,6 +34,7 @@ export function openSorpresa(n) {
 export function ctaLabel(n) {
   const d = DAYS[n];
   const verbo = TYPES[d.type].verbo;
+  if (!puedeDia(n)) return { text: 'Desbloquear el día', go: () => startDay(n) };
   if (n === 26 && !contentDone(26)) return fase() === 'recuerdo' ? { text: 'Ver el nacimiento', play: true, go: () => go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') } : { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
   if (n === 0) return { text: 'Invitar a un amigo', go: () => go('invitacion', {}, 'push') };
@@ -957,9 +959,28 @@ register('free', {
   files: F('V2-24-Dia-completo-claro', 'V2-24-Dia-completo'),
   mount(root, p) {
     const volver = () => back(p.back || 'mapa', 'down');
-    ['Ver Theo Premium', 'Hazte Premium'].forEach(t => on(root, t, () => nota('Paywall de Theo Premium', 'Ya existe en la app')));
+    // compra simulada: el MVP no cobra; cambia el plan y abre el día que se quería hacer
+    const comprar = (plan, t, s) => { S.plan = plan; save(); toast(t, s); nota('Compra simulada', 'En la app real abre el pago de la tienda'); volver(); if (p.dia != null) setTimeout(() => startDay(p.dia), 450); };
+    ['Ver Theo Premium', 'Hazte Premium'].forEach(t => on(root, t, () => p.dia != null ? comprar('premium', '¡Ya eres Premium!', 'Los 26 días son tuyos') : nota('Paywall de Theo Premium', 'Ya existe en la app')));
     on(root, 'Volver al mapa', volver); on(root, 'Ahora no', volver); on(root, 'Cerrar', volver);
     setText(root, 'Volver al mapa', 'Ahora no');
+    // día de pago del camino: el mismo paywall, con el Pase de Adviento como segunda opción
+    if (p.dia != null) {
+      const txt = textEl(root, /Imprimibles y más actividades/);
+      if (txt) { txt.innerHTML = 'Los 26 días de Adviento con Teodoro,<br>y <span style="color: inherit; font-weight: 500">todo Theo</span> para tu familia'; const acento = txt.querySelector('span'); if (acento) acento.style.color = getComputedStyle(find(root, 'Hazte Premium') || txt).color; txt.style.top = '584px'; }
+      const prem = find(root, 'Hazte Premium'), no = find(root, 'Ahora no');
+      if (prem) { prem.style.top = '644px'; prem.style.height = '60px'; }
+      if (prem) {
+        const pase = prem.cloneNode(true);
+        pase.textContent = 'Pase de Adviento · US$19,99';
+        Object.assign(pase.style, { top: '716px', height: '56px', background: 'transparent', boxShadow: 'none', border: '2px solid currentColor', fontSize: '19px' });
+        if (dark()) pase.style.color = '#FFFFFF';
+        prem.after(pase);
+        on(root, pase, () => comprar('pase', '¡Tu Pase de Adviento está listo!', 'Los 26 días, hasta el 6 de enero'));
+      }
+      if (no) no.style.top = '780px';
+      seen('V2-24-Dia-completo-claro');
+    }
   },
 });
 

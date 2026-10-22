@@ -126,6 +126,10 @@ const SHOTS = {
   'mundos-pre': async () => { await setup({ hoy: 0, scr: 'mundos' }); },
   'pre-teodoro': async () => { await setup({ hoy: 0, inscrito: false, scr: 'teodoro' }); },
   'pre-teodoro-dentro': async () => { await setup({ hoy: 0, scr: 'teodoro' }); },
+  // plan: free con días de pago (candado), ventana de pago con el Pase de Adviento, y día gratis
+  'free-mapa': async () => { await setup({ hoy: 13, upto: 12, scr: 'mapa', extra: { plan: 'free' } }); },
+  'free-pago': async () => { await setup({ hoy: 13, upto: 12, scr: 'mapa', extra: { plan: 'free' } }); await p.waitForTimeout(900); await js(async () => { const c = await import('/js/core.js'); c.go('free', { back: 'mapa', dia: 13 }, 'page'); }); await p.waitForTimeout(600); },
+  'free-dia-gratis': async () => { await setup({ hoy: 11, upto: 10, scr: 'mapa', extra: { plan: 'free' } }); },
   // periodo de gracia (25 dic – 6 ene) y recuerdo (desde el 7 ene)
   'gracia-medias': async () => { await setup({ hoy: 32, upto: 14 }); },
   'gracia-medias-mapa': async () => { await setup({ hoy: 32, upto: 14, scr: 'mapa' }); },

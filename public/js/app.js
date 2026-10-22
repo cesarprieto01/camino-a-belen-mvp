@@ -1,6 +1,6 @@
 // Arranque del MVP y panel de control para el equipo.
 // El panel sigue el orden del lienzo (secciones 1 a 8) para que diseño y prueba hablen el mismo idioma.
-import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, GRACIA_FIN, cuentaGracia, vistos, prefetch, logical, flowScreens, sections } from './core.js';
+import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, GRACIA_FIN, cuentaGracia, vistos, puedeDia, prefetch, logical, flowScreens, sections } from './core.js';
 import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf, hasTrivia } from './data.js';
 import './flow.js';
 import './map.js';
@@ -80,7 +80,9 @@ const REC = [
   { sec: 5, t: 'Teodoro cansado', mira: 'Batería 2 de 5 · en el mapa toca la batería: cómo está Teodoro', run: day(10, 9, { bateria: 2 }), go: 'mapa', covers: ['S-01-Energia', 'S-03e-Mapa-energia'] },
   { sec: 6, t: 'Hoy, tab Teodoro y Mundos', mira: 'Dónde aparece el camino dentro de la app', run: day(9, 8), go: 'teodoro', covers: ['R-Hoy-completo', 'V3-Teodoro', 'V2-02-Mundos-claro'] },
   { sec: 6, t: 'Sin mascota', mira: 'Sin pestaña Teodoro: Hoy → Misiones Diarias «Mundos» → Adviento → el mapa · atrás vuelve a Hoy', run: day(9, 8, { mascota: false }), go: 'hoy', covers: ['R-Hoy', 'R-Misiones', 'R-Mundos'] },
-  { sec: 7, t: 'Usuario free', mira: 'Día 13 · todo abierto, los descargables piden Premium', run: day(13, 12, { plan: 'free' }), go: 'mapa', covers: ['V2-24-Dia-completo-claro'] },
+  { sec: 7, t: 'Free · día de pago', mira: 'Día 13 · candado en los días de pago; «Desbloquear el día» abre Premium o el Pase de Adviento (US$19,99)', run: day(13, 12, { plan: 'free' }), go: 'mapa', covers: ['V2-24-Dia-completo-claro'] },
+  { sec: 7, t: 'Free · día gratis', mira: 'Día 11 (miércoles) · gancho gratis con trivia y ruleta; los días de pago con candado', run: day(11, 10, { plan: 'free' }), go: 'mapa', covers: [] },
+  { sec: 7, t: 'Pase de Adviento', mira: 'Día 13 · compró el Pase: los 26 días y sus extras', run: day(13, 12, { plan: 'pase' }), go: 'mapa', covers: [] },
   { sec: 7, t: 'Primer día', mira: 'Día 1 · el camino recién empieza', run: day(1, 0), go: 'hoy', covers: ['V2-Mapa-completo-claro'] },
   { sec: 8, t: 'Nochebuena', mira: 'Día 26 · llegada a Belén · ver el nacimiento y compartir', run: day(26, 25), go: 'mapa', covers: ['V2-Mapa-d24-claro', 'V2-Final-claro', 'V2-Final-compartir-claro'] },
   { sec: 8, t: 'Terminó completo', mira: '25 de diciembre · 26 de 26 días', run: day(27, 26), go: 'hoy', covers: [] },
@@ -100,7 +102,9 @@ const DECISIONES = [
   'La barra de pestañas es siempre la del design system de Theo (tabbar.js): clara, ilustrada y la misma en todas las pantallas, también en modo oscuro.',
   'Los días 18 y 24 tienen ruleta (en el mapa) y juego sorpresa (al final de la trivia): la regla «cada 3 días, y así sigue» cae en días de ruleta.',
   'Títulos de la hoja de energía por nivel (dormido, durmiéndose, cansadito, tranquilo, travieso, feliz): el lienzo solo trae el de 5 de 5.',
-  'Extras del reto (imprimible y canción) piden Premium a usuarios free, como dice «El camino es para todos».',
+  'Plan (US y LATAM igual): el reto es de pago con Theo Premium o el Pase de Adviento (US$19,99, pago único hasta el 6 de enero). Free tiene gratis los días 0 y 1 y dos ganchos por semana, domingo y miércoles: 0, 1, 4, 8, 11, 15, 18, 22, 25 y 26.',
+  'Free en un día de pago: candado en el mapa, la hoja dice «Desbloquear el día» y abre la ventana de Premium con el Pase como segunda opción. Teodoro igual avanza con el calendario y solo se cansa por los días gratis que no hicieron.',
+  'Extras del reto (imprimible y canción) piden Premium o el Pase a usuarios free.',
   'El Desafío abierto desde el hub del reto no da panes extra: se ganan al marcar «¡Lo hicimos!» en el hub.',
   'Repetir la trivia de un día pasado: si mejora las estrellas gana +10 panes; si no, solo cuenta como práctica.',
   'Al terminar la trivia, Teodoro camina en el mapa al día siguiente y luego aparece «Mañana seguimos».',
@@ -139,7 +143,7 @@ const PENDIENTES_LIENZO = [
 function advance(k) {
   // Teodoro se cansa por los días sin caminar del 29 nov al 6 ene (también en la gracia, si falta algo); antes del 29 y en el recuerdo no cuenta
   let baja = 0;
-  for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= GRACIA_FIN && (d <= 26 || vistos() < 26) && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
+  for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= GRACIA_FIN && (d <= 26 || vistos() < 26) && (d > 26 || puedeDia(d)) && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
   // la manzana guardada de la ruleta le ahorra a Teodoro un día de cansancio
   if (baja && S.manzana) { baja--; S.manzana = false; }
   S.bateria = Math.max(0, S.bateria - baja);
@@ -220,7 +224,7 @@ function render() {
       <div class="p-btns"><button class="p-btn" data-act="week">7 días sin abrir (regreso)</button></div>
     </section>
     <section class="p-group"><h2>Familia</h2>
-      <div class="p-row"><label>Plan</label><span class="seg">${[['premium', 'Premium'], ['free', 'Free']].map(([v, l]) => `<button data-plan="${v}" aria-pressed="${S.plan === v}">${l}</button>`).join('')}</span></div>
+      <div class="p-row"><label>Plan</label><span class="seg">${[['premium', 'Premium'], ['pase', 'Pase'], ['free', 'Free']].map(([v, l]) => `<button data-plan="${v}" aria-pressed="${S.plan === v}">${l}</button>`).join('')}</span></div>
       <div class="p-row"><label>Inscrito</label><span class="seg">${[['1', 'Sí'], ['0', 'No']].map(([v, l]) => `<button data-ins="${v}" aria-pressed="${S.inscrito === (v === '1')}">${l}</button>`).join('')}</span></div>
     </section>
     <section class="p-group"><h2>Ruleta</h2>
@@ -273,7 +277,7 @@ panel.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.tab) { tab = t.dataset.tab; if (t.dataset.filtro) filtro = t.dataset.filtro; try { localStorage.setItem('cab-tab2', tab); } catch { /* */ } render(); return; }
   if (t.dataset.filtro) { filtro = t.dataset.filtro; render(); return; }
-  if (t.dataset.plan) { S.plan = t.dataset.plan; save(); nota(S.plan === 'free' ? 'Ahora eres free' : 'Ahora eres premium'); return; }
+  if (t.dataset.plan) { S.plan = t.dataset.plan; save(); nota(S.plan === 'free' ? 'Ahora eres free' : S.plan === 'pase' ? 'Ahora tienes el Pase de Adviento' : 'Ahora eres premium'); return; }
   if (t.dataset.tema) { S.tema = t.dataset.tema; save(); go(cur?.name === 'estatica' ? 'hoy' : cur?.name || 'hoy', cur?.params || {}, 'fade'); return; }
   if (t.dataset.ins) { S.inscrito = t.dataset.ins === '1'; save(); go('hoy', {}, 'fade'); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none'); return; }
