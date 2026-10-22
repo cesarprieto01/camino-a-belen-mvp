@@ -239,16 +239,6 @@ function heroe(root) {
   return { lampara, evangelio };
 }
 
-/** La tarjeta grande del camino debajo de Misiones repetía el destacado (misma escena, mismo botón): se quita y lo de abajo sube. */
-function sinDuplicado(root) {
-  const big = [...root.children].find(el => el.getAttribute('role') === 'group' && /^Camino a Belén/.test(el.getAttribute('aria-label') || '') && parseFloat(el.style.top) > 600);
-  if (!big) return;
-  const y = parseFloat(big.style.top), dy = parseFloat($$(root, ':scope > *').map(el => parseFloat(el.style.top)).filter(t => t > y).sort((a, b) => a - b)[0]) - y;
-  big.remove();
-  [...root.children].forEach(el => { const t = parseFloat(el.style.top); if (t > y) el.style.top = (t - dy) + 'px'; });
-  root.style.height = (parseFloat(root.style.height) - dy) + 'px';
-}
-
 /** El destacado dice qué es y en qué va la familia (antes solo había escena y botón). */
 function tituloHeroe(root) {
   const card = root.querySelector('.theo-heroe [role=group][aria-label^="Camino a Belén"]');
@@ -309,11 +299,11 @@ register('hoy', {
     // ya unido antes del 29: el destacado trae «Invitar · Entrar» y la tarjeta grande es la de «ya estás dentro»
     if (fase() === 'antes' && S.inscrito) {
       const t = dark() ? 1 : 0;
-      const fd = await frag(F('R-Hoy-pre-dentro', 'R-Hoy-pre-dentro-oscuro')[t]);
+      const [fd, fg] = await Promise.all([frag(F('R-Hoy-pre-dentro', 'R-Hoy-pre-dentro-oscuro')[t]), frag(F('V2-Pre-Hoy-dentro-claro', 'V2-Pre-Hoy-dentro')[t])]);
       const swap = (sel, from, top) => { const a = root.querySelector(sel), b = from.querySelector('[role=group][aria-label^="Camino a Belén"]'); if (a && b) { if (top) { b.style.top = top; b.style.left = a.style.left; } a.replaceWith(b); } };
       swap('[role=group][aria-label^="Camino a Belén:"]', fd);
+      swap('[role=group][aria-label^="Camino a Belén empieza"]', fg, '800px');
     }
-    sinDuplicado(root);
     await misionMundos(root);
     carruseles(root);
     const destacados = heroe(root);
