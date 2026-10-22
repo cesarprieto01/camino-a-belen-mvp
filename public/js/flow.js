@@ -51,7 +51,7 @@ export function finishContent(n) {
   const first = !contentDone(n);
   S.completos[n] = { ...(S.completos[n] || {}), contenido: true };
   // terminar un cuento (o cualquier contenido del día) deja a Teodoro al 100%
-  if (n > 0) setBateria(5);
+  if (n > 0) { setBateria(5); S.sinCaminar = 0; }
   if (first && n > 0) addPanes(panesContenido());
   if (first && n > 0) S.pasoAnimado = n; // Teodoro avanza en el mapa al ver la historia
   S.ultimoJugado = S.hoy;
@@ -400,6 +400,34 @@ register('hoy', {
   },
 });
 
+/** Escena de Teodoro según los días sin caminar (0 a 10): de la fiesta a una tragedia chistosa que termina congelado.
+ *  Con pila: paso = 5 − pila (0–4); con la pila en 0: los días sin caminar (5–10). «Reactivado» la primera vez que la pila sube.
+ *  Una imagen cuadrada por paso, de día y de noche; cada pieza recorta su parte (Teodoro arriba, sobre el panel). */
+const ESCENA_ALT = ['feliz a reventar', 'en marcha hacia la aventura', 'listo para salir', 'tomando café, serio, esperándote', 'impaciente, mirando el reloj',
+  'desesperado buscándote', 'envuelto en telarañas de tanto esperar', 'cubierto de musgo de tanto esperar', 'atrapado en una ventisca', 'lleno de carámbanos', 'congelado en un bloque de hielo'];
+export const pasoTeodoro = () => S.bateria > 0 ? 5 - S.bateria : Math.max(5, Math.min(10, S.sinCaminar || 0));
+// pasos aún sin imagen (café, impaciente, desesperado): mientras tanto, la telaraña «de tanto esperar»
+const SUPLENTE = { 3: 6, 4: 6, 5: 6 };
+let pilaRecarga = null; // se decide una vez por pantalla: las dos piezas de Hoy muestran lo mismo
+function escenaPila(card, scene) {
+  const imgs = $$(scene, 'img'), land = imgs.find(i => !/^Teodoro/i.test(i.alt || ''));
+  if (!land) return;
+  if (pilaRecarga == null) { pilaRecarga = S.pilaVista != null && S.bateria > S.pilaVista; setTimeout(() => { S.pilaVista = S.bateria; save(); pilaRecarga = null; }, 0); }
+  const tema = dark() ? 'noche' : 'dia';
+  const paso = SUPLENTE[pasoTeodoro()] ?? pasoTeodoro();
+  const antes = { src: land.getAttribute('src'), style: land.getAttribute('style'), alt: land.alt };
+  const otros = [...imgs.filter(i => i !== land), ...$$(scene, ':scope > span')];
+  // si la imagen no carga, la ilustración de siempre
+  land.onerror = () => {
+    land.onerror = null; land.setAttribute('src', antes.src); land.setAttribute('style', antes.style); land.alt = antes.alt; otros.forEach(o => { o.style.display = ''; });
+  };
+  otros.forEach(o => { o.style.display = 'none'; });
+  const destacado = !!card.closest('.theo-heroe'); // la pieza más estrecha: la escena sube un poco para que el panel no tape a Teodoro
+  Object.assign(land.style, { left: '0', top: destacado ? '-22px' : '0', width: '100%', height: destacado ? 'calc(100% + 22px)' : '100%', objectFit: 'cover', objectPosition: '50% 0%', transform: 'none', maxWidth: 'none' });
+  land.alt = `Teodoro ${pilaRecarga ? 'recargándose de golpe' : ESCENA_ALT[paso]}`;
+  land.src = `assets/pila/${pilaRecarga ? 'reactivado' : `dias-${paso}`}-${tema}.webp`;
+}
+
 /** Tarjeta del camino (la misma en Hoy y en el tab Teodoro): paisaje con Teodoro, energía,
  *  barra de progreso (o pasitos si va atrasado) y un botón. Pinta el estado y conecta los toques. */
 export function paintCaminoCard(card, from) {
@@ -450,6 +478,8 @@ export function paintCaminoCard(card, from) {
     if (teo) teo.style.display = 'none';
     $$(scene, 'span').forEach(sp => { sp.style.display = 'none'; });
   }
+  const pesebre = S.hoy >= 27 && st.key !== 6 && st.key !== 4 && st.key !== 8;
+  if (scene && !pesebre && fase() !== 'antes') escenaPila(card, scene);
   const toMap = () => st.key === 5 || st.key === 7 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar(from);
   if (scene) on(card, scene, toMap);
   if (btn) on(card, btn, toMap);
@@ -791,7 +821,7 @@ register('reproductor', {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
       if (p.nacimiento) { if (p.replay) back('hoy', 'down'); else go('final', { day: 26 }, 'fade', { replace: true }); return; }
       if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go('hub', { day: n }, 'down', { replace: true }); return; }
-      if (p.replay) { setBateria(5); S.ultimoJugado = S.hoy; save(); toast('¡Otra vez con Teodoro!', 'Teodoro quedó al 100%'); go('mapa', {}, 'down', { replace: true }); return; }
+      if (p.replay) { setBateria(5); S.sinCaminar = 0; S.ultimoJugado = S.hoy; save(); toast('¡Otra vez con Teodoro!', 'Teodoro quedó al 100%'); go('mapa', {}, 'down', { replace: true }); return; }
       finishContent(n);
       if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', {}, 'down', { replace: true }); return; }
       go('completado', { day: n }, 'fade', { replace: true });

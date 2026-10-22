@@ -76,7 +76,9 @@ const REC = [
   { sec: 4, t: 'Adivinanza', mira: 'Día 6 (sin trivia) · tras la historia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
   { sec: 4, t: 'Desafío en familia', mira: 'Día 9 · «Hoy toca Desafío» · sacar otra carta (Avemaría) · ¡lo hicimos!', run: day(9, 8), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Desafio-intro-claro', 'V2-Desafio-claro', 'V2-Desafio-carta2-claro', 'V2-Desafio-fin-claro'] },
   { sec: 5, t: 'Va atrasado', mira: 'En el día 9, hoy es el 11: puede ponerse al día', run: day(11, 8, { bateria: 3 }), go: 'hoy', covers: ['R-Hoy-completo'] },
-  { sec: 5, t: 'Regreso tras una semana', mira: 'Teodoro le guardó el camino · batería en 0', run: day(16, 8, { bateria: 0, regreso: true }), go: 'hoy', covers: ['V2-10-Regreso'] },
+  { sec: 5, t: 'Regreso tras una semana', mira: 'Teodoro le guardó el camino · batería en 0', run: day(16, 8, { bateria: 0, regreso: true, sinCaminar: 7 }), go: 'hoy', covers: ['V2-10-Regreso'] },
+  { sec: 5, t: 'Pila en 0', mira: '5 días sin caminar: Teodoro desesperado buscándote', run: day(14, 8, { bateria: 0, sinCaminar: 5 }), go: 'hoy', covers: [] },
+  { sec: 5, t: '10 días sin caminar', mira: 'La tragedia chistosa llega al final: Teodoro congelado en un bloque de hielo', run: day(19, 8, { bateria: 0, sinCaminar: 10 }), go: 'hoy', covers: [] },
   { sec: 5, t: 'Teodoro cansado', mira: 'Batería 2 de 5 · en el mapa toca la batería: cómo está Teodoro', run: day(10, 9, { bateria: 2 }), go: 'mapa', covers: ['S-01-Energia', 'S-03e-Mapa-energia'] },
   { sec: 6, t: 'Hoy, tab Teodoro y Mundos', mira: 'Dónde aparece el camino dentro de la app', run: day(9, 8), go: 'teodoro', covers: ['R-Hoy-completo', 'V3-Teodoro', 'V2-02-Mundos-claro'] },
   { sec: 6, t: 'Sin mascota', mira: 'Sin pestaña Teodoro: Hoy → Misiones Diarias «Mundos» → Adviento → el mapa · atrás vuelve a Hoy', run: day(9, 8, { mascota: false }), go: 'hoy', covers: ['R-Hoy', 'R-Misiones', 'R-Mundos'] },
@@ -102,6 +104,7 @@ const DECISIONES = [
   'La barra de pestañas es siempre la del design system de Theo (tabbar.js): clara, ilustrada y la misma en todas las pantallas, también en modo oscuro.',
   'Los días 18 y 24 tienen ruleta (en el mapa) y juego sorpresa (al final de la trivia): la regla «cada 3 días, y así sigue» cae en días de ruleta.',
   'Títulos de la hoja de energía por nivel (dormido, durmiéndose, cansadito, tranquilo, travieso, feliz): el lienzo solo trae el de 5 de 5.',
+  'Escena de Teodoro en las 3 piezas del camino (destacado y pieza grande de Hoy, tab Teodoro) según los días sin caminar, de la fiesta a una tragedia chistosa que termina congelado: 0 felicidad explosiva · 1 ¡vamos a la aventura! · 2 listo para salir · 3 café tipo Mona Lisa · 4 impaciente · 5 desesperado (pila en 0) · 6 telaraña · 7 musgo · 8 ventisca · 9 carámbanos · 10 bloque glacial. «Reactivado» la primera vez que la pila sube. Día y noche según el tema. En el mapa Teodoro no cambia.',
   'Plan (US y LATAM igual): el reto es de pago con Theo Premium o el Pase de Adviento (US$19,99, pago único hasta el 6 de enero). Free tiene gratis los días 0 y 1 y dos ganchos por semana, domingo y miércoles: 0, 1, 4, 8, 11, 15, 18, 22, 25 y 26.',
   'Free en un día de pago: candado en el mapa, la hoja dice «Desbloquear el día» y abre la ventana de Premium con el Pase como segunda opción. Teodoro igual avanza con el calendario y solo se cansa por los días gratis que no hicieron.',
   'Extras del reto (imprimible y canción) piden Premium o el Pase a usuarios free.',
@@ -145,6 +148,7 @@ function advance(k) {
   let baja = 0;
   for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= GRACIA_FIN && (d <= 26 || vistos() < 26) && (d > 26 || puedeDia(d)) && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
   // la manzana guardada de la ruleta le ahorra a Teodoro un día de cansancio
+  S.sinCaminar = (S.sinCaminar || 0) + baja; // días seguidos sin caminar: la escena de Teodoro sigue exagerándose hasta 10
   if (baja && S.manzana) { baja--; S.manzana = false; }
   S.bateria = Math.max(0, S.bateria - baja);
   const antes = S.hoy;
