@@ -92,7 +92,7 @@ export function cardState() {
   if (S.hoy >= 27) {
     const faltan = 26 - doneCount();
     return faltan ? { key: 6, title: '¡Feliz Navidad!', sub: `Te faltan ${faltan} días · puedes seguir hasta Reyes`, cta: 'Seguir caminando' }
-      : { key: 5, title: '¡Feliz Navidad!', sub: '¡Llegaste a Belén! 26 de 26 días', cta: 'Ver el nacimiento' };
+      : { key: 5, title: '¡Feliz Navidad!', sub: '¡Llegamos a Belén! 26 de 26 días', cta: 'Ver el nacimiento' };
   }
   const h = Math.min(S.hoy, 26);
   if (act == null && RULES.sorpresa[h] && isDone(h) && S.sorpresas[h] !== 'hecha') return { key: 3, sorpresa: true };
@@ -138,12 +138,12 @@ function roll(el, v) {
 function startCountdown(layer) {
   const target = new Date(2026, 10, 29, 0, 0, 0);
   // cada número del lienzo va seguido de su unidad (días · h/horas · min): así se encuentran todos los contadores
-  const unit = el => (el.nextElementSibling?.textContent || el.nextSibling?.nodeValue || '').trim();
-  const cells = [...layer.querySelectorAll('*')].filter(el => el.childElementCount === 0 && /^\d{1,2}$/.test(el.textContent.trim()) && /^(días|h|horas|min)$/.test(unit(el)));
+  const unit = el => (el.nextElementSibling?.textContent || el.nextSibling?.nodeValue || '').trim().toLowerCase();
+  const cells = [...layer.querySelectorAll('*')].filter(el => el.childElementCount === 0 && /^\d{1,2}$/.test(el.textContent.trim()) && /^(días|h|horas|min|minutos)$/.test(unit(el)));
   cells.forEach(el => { el.dataset.cd = unit(el); el.dataset.pad = el.textContent.trim().length; });
   const tick = () => {
     const ms = Math.max(0, target - new Date());
-    const v = { días: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, horas: Math.floor(ms / 36e5) % 24, min: Math.floor(ms / 6e4) % 60 };
+    const v = { días: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, horas: Math.floor(ms / 36e5) % 24, min: Math.floor(ms / 6e4) % 60, minutos: Math.floor(ms / 6e4) % 60 };
     cells.forEach(el => roll(el, String(v[el.dataset.cd]).padStart(+el.dataset.pad, '0')));
     const d = v.días;
     $$(layer, '[role=img][aria-label^="Empieza en"]').forEach(g => g.setAttribute('aria-label', `Empieza en ${d} días, ${v.h} horas y ${v.min} minutos`));
@@ -257,7 +257,7 @@ function tituloHeroe(root) {
   const st = cardState(), n = walkDay() ?? Math.min(lastDay(), 26);
   const sub = fase() === 'antes' ? 'Empieza el 29 de noviembre'
     : st.key === 4 ? 'Aún llegas a Belén'
-    : st.key === 5 ? '¡Llegaron a Belén!'
+    : st.key === 5 ? '¡Llegamos a Belén!'
     : st.key === 6 ? st.sub
     : `Día ${n} de 26`;
   const t = document.createElement('div'); t.className = 'heroe-titulo';
@@ -372,7 +372,7 @@ register('hoy', {
       if (tag) {
         if (hecha) { tag.textContent = '✓ Hecha'; Object.assign(tag.style, { background: '#0A8445', color: '#FFFFFF' }); }
         else if (st.key === 4) tag.textContent = 'Descúbrelo';
-        else if (st.key === 6) tag.textContent = `Faltan ${26 - doneCount()} días`;
+        else if (st.key === 6) tag.textContent = `Día ${n}`;
         else if (st.sorpresa) tag.textContent = 'Juego sorpresa';
         else tag.textContent = `Día ${n}`;
       }
@@ -936,7 +936,7 @@ register('cerrado', {
     // calendario con la fecha del día que se abre
     const cal = root.querySelector('[aria-label$="de diciembre"], [aria-label$="de noviembre"]');
     if (cal) { cal.setAttribute('aria-label', `${fd.dd} de ${fd.mes.toLowerCase()}`); setText(cal, 'DIC', fd.mes.slice(0, 3)); setText(cal, /^\d+$/, String(fd.dd)); cal.classList.add('a-pop'); }
-    setText(root, /El día \d+ se abre a medianoche\./, next > 26 ? '¡Llegaste a Belén! Mañana es Navidad.' : `El día ${next} se abre a medianoche.`);
+    setText(root, /El día \d+ se abre a medianoche\./, next > 26 ? '¡Llegamos a Belén! Mañana es Navidad.' : `El día ${next} se abre a medianoche.`);
 
     // cuenta regresiva real hasta medianoche
     const cdEl = textEl(root, /Faltan \d+ h \d+ min/);
@@ -1042,6 +1042,7 @@ register('ruletaPremio', {
     const subEl = textEl(root, 'Ya está en el');
     if (!info.sub && subEl) subEl.textContent = 'Ya están en la canasta de Teodoro';
     else if (p.premio === 'manzana' && subEl) subEl.textContent = 'Teodoro se la comió: ¡más energía!';
+    else if (p.premio !== 'cuarto' && subEl) subEl.textContent = 'Teodoro ya la tiene puesta'; // el enlace al cuarto va aparte, no dos veces
     if (p.premio !== 'cuarto') floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
     confetti(layer, 195, 300, 36);
     const alMapa = () => go('mapa', {}, 'down', { replace: true });
@@ -1134,7 +1135,7 @@ register('final', {
     const scene = $$(root, 'img')[0];
     if (first && !reduced()) {
       scene?.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 1200, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
-      $$(root, 'a').forEach(a => a.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 1800, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'backwards' }));
+      $$(root, 'a').filter(a => a.getAttribute('aria-label') !== 'Cerrar').forEach(a => a.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 600, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'backwards' }));
       setTimeout(() => layer.isConnected && goldRain(layer), 600);
       setTimeout(() => layer.isConnected && goldRain(layer), 1400);
     }

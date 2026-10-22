@@ -198,7 +198,7 @@ register('mapa', {
       const lista = !opened && S.hoy > 0 && d <= lastDay(); // ya llegó su día y no la ha girado
       const f = dateOf(d), mes = f.mes.toLowerCase();
       a.innerHTML = (opened ? T.houseOpen : lista ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = opened ? 'Girada' : lista ? '¡Gírala!' : `${f.dd} ${mes.slice(0, 3)}`;
+      const label = opened ? '¡Ya la giraste!' : lista ? '¡Gírala!' : `Día ${d}`;
       replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
       // el candado solo en lo que aún no llega
       if (lista || opened) a.querySelectorAll('span svg').forEach(s => s.remove());
@@ -397,7 +397,7 @@ function showEnergy(layer) {
   if (imgs[0]) { imgs[0].src = teodoroImg(); imgs[0].classList.add('a-bob'); }
   paintEnergy(sheet);
   [...sheet.querySelectorAll('div')].filter(x => /le dan energía/.test(x.textContent) && ![...x.children].some(c => /le dan energía/.test(c.textContent)))
-    .forEach(x => { x.textContent = 'Cada día que caminan juntos lo llena. Si pasan días sin caminar, se cansa un poquito.'; });
+    .forEach(x => { x.textContent = 'Cada día que caminan juntos lo llena.'; });
   const cta = [...sheet.querySelectorAll('a')].pop();
   const act = walkDay();
   if (act != null && cta) { const lbl = ctaLabel(act); const tn = [...cta.querySelectorAll('*'), cta].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim()); if (tn) tn.nodeValue = lbl.text; on(layer, cta, lbl.go); }
@@ -501,6 +501,7 @@ function paintSheet(layer, T, dia) {
   if (act == null) kicker = S.hoy >= 27 ? 'CAMINO TERMINADO' : `DÍA ${n} · LISTO`;
   if (n === 0) kicker = 'DÍA 0 · ANTES DE SALIR';
   if (dia != null && dia !== walkDay() && n > 0) kicker = contentDone(n) && !isDone(n) ? `DÍA ${n} · TRIVIA PENDIENTE` : `DÍA ${n}`;
+  if (n > 0 && S.hoy <= 26 && n === S.hoy && /^(HOY|DÍA \d+)$/.test(kicker)) kicker = `HOY · DÍA ${n}`;
   if (head) {
     head.classList.add('sheet-head');
     head.children[0].textContent = kicker;
@@ -575,8 +576,7 @@ function paintSheet(layer, T, dia) {
   list.forEach(r => cta.before(r));
   list.filter(r => r.dataset.lock).forEach(r => {
     r.style.cursor = 'pointer'; r.setAttribute('role', 'button');
-    on(layer, r, () => S.plan === 'free' ? go('free', { back: 'mapa' }, 'page')
-      : (animate(r, 'a-shake'), toast(`Primero ${CONT[2]}`, 'La trivia se abre al terminarla')));
+    on(layer, r, () => { animate(r, 'a-shake'); toast(`Primero ${CONT[2]}`, 'La trivia se abre al terminarla'); });
   });
   sheet.style.height = 'auto';
 
@@ -604,7 +604,7 @@ function paintSheet(layer, T, dia) {
     Object.assign(alt.dataset, extra); cta.after(alt); on(layer, alt, fn);
   };
   // prioridad: volver a tu día > trivias pendientes > sorpresa pendiente (la ruleta nunca va en la hoja: se toca en el mapa)
-  if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver a tu día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
+  if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver con Teodoro · Día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
   const mas = /trivia/i.test(label.text);
   if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
   const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');

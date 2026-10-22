@@ -16,6 +16,7 @@ const speak = (text, onEnd) => {
     speechSynthesis.speak(u); return true;
   } catch { nota('Escuchar', 'Este navegador no lee en voz alta'); return false; }
 };
+let conVoz = false; // la familia pidió escuchar: la pista y el acierto también se leen
 const callar = () => { try { speechSynthesis.cancel(); } catch { /* sin voz */ } };
 // botón «Escuchar» que, mientras lee, pasa a «Parar» para cortar la lectura
 const ICO_ESCUCHAR = '<path d="M4 9v6h4l5 4V5L8 9z"></path><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path>';
@@ -31,7 +32,8 @@ function listenButton(root, layer, text) {
     btn.setAttribute('aria-label', v ? 'Parar la lectura' : 'Escuchar la pregunta');
     btn.setAttribute('aria-pressed', String(v));
   };
-  on(root, btn, () => { if (leyendo) { callar(); pintar(false); return; } if (speak(text, () => layer.isConnected && pintar(false))) pintar(true); });
+  btn.style.minHeight = '44px'; // toque mínimo
+  on(root, btn, () => { if (leyendo) { callar(); pintar(false); return; } conVoz = true; if (speak(text, () => layer.isConnected && pintar(false))) pintar(true); });
   // al salir de la pantalla, deja de leer
   const mo = new MutationObserver(() => { if (!layer.isConnected) { if (leyendo) callar(); mo.disconnect(); } });
   mo.observe(document.getElementById('viewport') || document.body, { childList: true });
@@ -106,7 +108,11 @@ register('trivia', {
       dots.forEach((d, k) => {
         d.setAttribute('style', k === i ? cur : pend);
         // hechas: color lleno si salió a la primera, ámbar si fue al reintento
-        if (k < i) { d.style.background = (p.h || '')[k] === '0' ? '#E8A33D' : (dark() ? '#FFF6DD' : '#0B748A'); }
+        // actual: azul y ancho · hecha a la primera: azul · al reintento: ámbar oscuro · pendiente: aro gris
+        const azul = dark() ? '#FFF6DD' : '#0B748A';
+        if (k === i) d.style.background = azul;
+        else if (k < i) d.style.background = (p.h || '')[k] === '0' ? '#B8731A' : azul;
+        else { d.style.background = 'transparent'; d.style.boxShadow = `inset 0 0 0 2px ${dark() ? 'rgba(255,255,255,.55)' : '#7A8A94'}`; }
         d.style.transition = 'width .3s, background .3s';
       });
     }
@@ -211,6 +217,7 @@ register('trivia', {
       const sp = document.createElement('div'); sp.dataset.spark = '1'; sp.innerHTML = T.sparkles; [...sp.children].forEach((s, k) => { s.classList.add('a-twinkle'); s.style.animationDelay = k * .2 + 's'; });
       root.append(...sp.children);
       setTeo(IMG.tCelebra, 'a-hop');
+      if (conVoz) speak('¡Correcto! ' + q.ok);
       if (fallos === 0) floaty(layer, '¡Bien!', 160, 230, null);
       showNext();
       fit(st, root.querySelector('[data-next]'), list);
@@ -223,7 +230,7 @@ register('trivia', {
         const t = document.createElement('template'); t.innerHTML = T.picBad; const c = t.content.firstElementChild;
         c.querySelector('img').src = el.querySelector('img').src; c.querySelector(':scope > span:last-child').textContent = el.querySelector('span').textContent;
         c.dataset.bad = '1'; el.replaceWith(c); opts[k] = c; animate(c, 'a-shake');
-      } else if (el) { el.dataset.bad = '1'; el.style.opacity = '.5'; el.style.filter = 'grayscale(1)'; animate(el, 'a-shake'); }
+      } else if (el) { marcarMala(el); animate(el, 'a-shake'); }
       const t = document.createElement('template'); t.innerHTML = T.note; const nt = t.content.firstElementChild;
       const b = nt.querySelector('b'); if (b) b.nextSibling.nodeValue = ' ' + q.pista;
       nt.setAttribute('aria-label', 'Casi. Pista: ' + q.pista);
@@ -236,13 +243,22 @@ register('trivia', {
       // el fallo cuenta aunque cierren y vuelvan
       if (!p.replay) keep(n, { i, ok, h: p.h || '', f: fallos });
       setTeo(IMG.tFarol, 'a-bob');
+      if (conVoz) speak('Pista: ' + q.pista);
     };
+    // la equivocada: borde rojo, ✕ en el círculo y sin apagarla (se tiene que leer)
+    function marcarMala(el) {
+      el.dataset.bad = '1'; el.setAttribute('aria-disabled', 'true');
+      el.setAttribute('aria-label', (el.textContent.trim() || 'Respuesta') + ', no es');
+      Object.assign(el.style, { opacity: '1', filter: 'none', boxShadow: 'inset 0 0 0 2px #C8463F', background: dark() ? 'rgba(200,70,63,.18)' : '#FFF1EF' });
+      const circ = $$(el, 'span, div').find(x => x.style.borderRadius === '50%' && x.offsetWidth >= 18 && x.offsetWidth <= 34);
+      if (circ) { Object.assign(circ.style, { background: '#C8463F', border: '0', display: 'grid', placeItems: 'center', color: '#FFFFFF', font: '900 15px/1 Mulish, sans-serif' }); circ.innerHTML = '✕'; }
+    }
 
     if (isMulti(q)) {
       const sel = new Set();
       // delegación: las opciones se reemplazan al marcarlas
       group.addEventListener('click', ev => {
-        const c = ev.target.closest('[role=checkbox]'); if (!c || answered) return;
+        const c = ev.target.closest('[role=checkbox]'); if (!c || answered || c.dataset.bad) { if (c?.dataset.bad) animate(c, 'a-shake'); return; }
         const k = opts.indexOf(c); if (k < 0) return;
         sel.has(k) ? sel.delete(k) : sel.add(k);
         const t = document.createElement('template'); t.innerHTML = sel.has(k) ? T.txtOn : T.txtOff;
@@ -254,13 +270,25 @@ register('trivia', {
       if (check) on(root, check, () => {
         if (answered) return;
         const want = new Set(q.a);
+        if (!sel.size) { animate(check, 'a-shake'); return; } // sin marcar nada no es un fallo
         const good = sel.size === want.size && [...sel].every(k => want.has(k));
         if (good) correct();
-        else { [...sel].filter(k => !want.has(k)).forEach(k => animate(opts[k], 'a-shake')); wrong(-1, null); }
+        else if ([...sel].every(k => want.has(k))) { toast('¡Casi! Falta una'); animate(check, 'a-shake'); }
+        else {
+          // las equivocadas se desmarcan y quedan marcadas como «no es»
+          [...sel].filter(k => !want.has(k)).forEach(k => {
+            sel.delete(k);
+            const t = document.createElement('template'); t.innerHTML = T.txtOff; const nc = t.content.firstElementChild;
+            nc.querySelector('div').textContent = opts[k].querySelector('div').textContent; nc.setAttribute('role', 'checkbox'); nc.setAttribute('aria-checked', 'false'); nc.dataset.bound = '1';
+            opts[k].replaceWith(nc); opts[k] = nc; marcarMala(nc); animate(nc, 'a-shake');
+          });
+          wrong(-1, null);
+        }
       });
     } else {
       opts.forEach((el, k) => on(root, el, () => {
-        if (answered || opts[k].dataset.bad) return;
+        if (answered) return;
+        if (opts[k].dataset.bad) { animate(opts[k], 'a-shake'); return; } // ya la descartó: no cuenta otro fallo
         k === q.a ? correct(k) : wrong(k, opts[k]);
       }));
     }
@@ -297,7 +325,7 @@ register('triviaFin', {
     }
     const chip = root.querySelector('[aria-label^="Ganaste 10 panes"]');
     if (mejoro) setTimeout(() => toast('¡Mejoraste tus estrellas!', `+${RULES.panes.trivia} panes`), 600);
-    if (!gana && chip) chip.style.visibility = 'hidden';
+    if (!gana && chip) chip.style.display = 'none';
     else if (chip) { chip.classList.add('a-pop'); floaty(layer, `+${RULES.panes.trivia}`, 230, 430); }
     const dlg = root.querySelector('[role=dialog]'); dlg?.classList.add('a-rise');
     $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).slice(-1).forEach(i => i.classList.add('a-hop'));
@@ -309,6 +337,7 @@ register('triviaFin', {
     // el aviso de la sorpresa muestra cartas de juego, no un regalo (no es un premio)
     const aviso = textEl(root, '¡Hoy hay juego sorpresa!')?.closest('div[style*="border-radius"]');
     aviso?.querySelectorAll('img').forEach(i => { i.src = A(IMG.dorso); i.style.objectFit = 'contain'; });
+    replaceText(root, /^Hoy toca (.+)$/, '$1');
     on(root, 'Ahora no', () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(n); });
   },
 });
@@ -320,9 +349,9 @@ function sorpresaHecha(n, layer) {
   return first;
 }
 function paintFin(root, layer, n, first, bind = true) {
-  replaceText(root, /guardadas en el día \d+/, `Tus estrellas del día ${n}`);
-  // días sin trivia: no hay estrellas que mostrar
-  if (!hasTrivia(n)) root.querySelector('[role=img][aria-label^="Tus "]')?.remove();
+  // los juegos sorpresa no puntúan: las estrellas de la trivia aquí se leían como nota del juego
+  root.querySelector('[role=img][aria-label^="Tus "]')?.remove();
+  textEl(root, /estrellas|guardadas en el día/)?.closest('div, span')?.remove();
   const s = stars(n);
   const box = textEl(root, /estrellas del día/)?.parentElement;
   if (box) $$(box, 'svg').forEach((sv, k) => sv.querySelectorAll('path').forEach(pt => pt.setAttribute('fill', k < s ? '#F7C948' : '#D3DDE5')));
@@ -369,7 +398,7 @@ register('memorama', {
     deck.forEach((k, idx) => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'mm-card'; b.dataset.bound = '1';
-      b.setAttribute('aria-label', `Carta ${idx + 1}, boca abajo`);
+      b.setAttribute('aria-label', `Carta ${idx + 1}, boca abajo`); b.dataset.n = idx + 1;
       b.innerHTML = `<span class="mm-in"><span class="mm-face"><img src="${A(IMG.dorso)}" alt="" style="width:100%;height:100%;object-fit:cover"></span><span class="mm-face mm-back" style="${faceStyle};position:absolute;inset:0;width:auto;height:auto;display:grid;place-items:center;transform:rotateY(180deg)"><img src="${A(IMG[k])}" alt="" style="width:84px;height:${k === 'teodoro' ? 108 : 100}px;object-fit:contain"></span></span>`;
       b.style.animation = `pop .4s ${idx * .035}s cubic-bezier(.2,.9,.3,1.3) both`;
       b.addEventListener('click', async () => {
@@ -380,14 +409,14 @@ register('memorama', {
         moves++; paint(); lock = true;
         const [a, c] = open; open = [];
         if (a.k === c.k) {
-          found++; paint(); a.b.classList.add('done'); c.b.classList.add('done'); navigator.vibrate?.(20);
+          found++; paint(); [a, c].forEach(x => { x.b.classList.add('done'); x.b.setAttribute('aria-label', `${NAMES[k]}, pareja encontrada`); x.b.setAttribute('aria-disabled', 'true'); }); navigator.vibrate?.(20);
           if (hintEl) hintEl.textContent = found === 6 ? '¡Encontraste todas!' : `¡Pareja! ${NAMES[k]}`;
           lock = false;
           if (found === 6) { await wait(700); go('memoramaFin', { day: n, moves }, 'fade'); }
         } else {
-          await wait(850);
+          await wait(1300); // a los 5 años hace falta tiempo para recordar los dos dibujos
           a.b.classList.remove('up'); c.b.classList.remove('up');
-          a.b.setAttribute('aria-label', 'Carta boca abajo'); c.b.setAttribute('aria-label', 'Carta boca abajo'); navigator.vibrate?.(8);
+          [a, c].forEach(x => x.b.setAttribute('aria-label', `Carta ${x.b.dataset.n}, boca abajo`)); navigator.vibrate?.(8);
           if (hintEl) hintEl.textContent = 'Casi… ¡otra vez!';
           lock = false;
         }
@@ -472,7 +501,7 @@ register('adivinanza', {
       if (done || !layer.isConnected || t0 == null) return;
       left = Math.max(0, SECS - (performance.now() - t0) / 1000);
       if (tFill) { tFill.style.width = (left / SECS * 100) + '%'; tFill.style.background = left < 10 ? 'linear-gradient(90deg,#E0565B,#F5A35B)' : ''; }
-      if (tTxt) tTxt.textContent = Math.ceil(left) + 's';
+      if (tTxt) { const sec = Math.ceil(left); if (tTxt.textContent !== sec + 's' && [10, 3, 2, 1].includes(sec)) navigator.vibrate?.(sec === 10 ? 60 : 30); tTxt.textContent = sec + 's'; }
       if (left <= 0) { done = true; go('adivinanzaTiempo', { ...p, res: [...res, { w: w.w, ok: false }] }, 'modal'); return; }
       requestAnimationFrame(tick);
     };
@@ -563,6 +592,13 @@ register('desafio', {
       c = (c + 1) % DESAFIOS.length; paint2(); seen('V2-Desafio-carta2-claro');
       scroll.animate([{ transform: 'rotateY(-90deg) scale(.9)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
     });
+    const otra = find(root, 'Sacar otra carta');
+    if (otra) {
+      otra.style.right = 'calc(50% + 4px)';
+      const luego = document.createElement('a'); luego.href = '#'; luego.setAttribute('style', otra.getAttribute('style'));
+      Object.assign(luego.style, { left: 'calc(50% + 4px)', right: '20px' }); luego.textContent = 'Más tarde';
+      otra.after(luego); on(root, luego, p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day));
+    }
     on(root, '¡Lo hicimos!', (ev, el) => {
       animate(el, 'a-pop'); navigator.vibrate?.(20);
       if (!p.fromHub) { setTimeout(() => go('desafioFin', { day: p.day, c }, 'fade'), 260); return; }

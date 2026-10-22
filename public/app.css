@@ -431,8 +431,8 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 /* cabeceras ilustradas: se funden con el fondo, sin línea donde terminan */
 .soft-head { -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%); mask-image: linear-gradient(180deg, #000 55%, transparent 100%); }
 /* píldora de ayuda («Toca la respuesta», «Elige todas las correctas») */
-.tv-pill { height: 30px; padding: 0 14px; border-radius: 15px; background: #E2F3F7; font-size: 14px; display: flex; align-items: center; }
-:root[data-theme="dark"] .tv-pill { background: rgba(255,255,255,.1); }
+.tv-pill { height: 30px; padding: 0 4px; background: none; font-size: 16px; display: flex; align-items: center; } /* es una indicación, no un botón */
+:root[data-theme="dark"] .tv-pill { background: none; }
 /* aviso de correcto / pista: en su propio espacio, el texto puede bajar de línea */
 .tv-status { height: auto !important; min-height: 40px; flex-wrap: wrap; row-gap: 2px; text-align: center; }
 .tv-note > span:first-child { white-space: normal !important; height: auto !important; min-height: 38px; padding-top: 6px !important; padding-bottom: 6px !important; box-sizing: border-box; }
@@ -511,3 +511,9 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
   #panelBtn { opacity: .38; transition: opacity .2s; }
   #panelBtn:hover, #panelBtn:focus-visible, #panelBtn:active, body.panel-open #panelBtn { opacity: 1; }
 }
+
+/* memorama: la pareja encontrada lleva ✓, no solo un brillo */
+.mm-card.done { position: relative; }
+.mm-card.done::after { content: '✓'; position: absolute; right: 6px; top: 6px; width: 24px; height: 24px; border-radius: 50%; background: #2E8B57; color: #FFFFFF; font: 900 14px/24px Mulish, sans-serif; text-align: center; z-index: 3; }
+/* trivia: «¡Casi! Toca otra respuesta» se lee a 16 px */
+.tv-note { font-size: 16px; }

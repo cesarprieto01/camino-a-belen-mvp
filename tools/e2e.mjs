@@ -106,7 +106,7 @@ const flows = {
     if (!['ruletaPremio', 'premioCuarto'].includes(await screen())) errs.push('girar no lleva al premio: ' + await screen());
     await tap('Volver al camino'); await p.waitForTimeout(1500);
     if ((await screen()) !== 'mapa') errs.push('el premio no vuelve al mapa: ' + await screen());
-    if (!/Girada/.test(await lbl() || '')) errs.push('la ruleta girada no dice «Girada»: ' + await lbl());
+    if (!/¡Ya la giraste!/.test(await lbl() || '')) errs.push('la ruleta girada no dice «¡Ya la giraste!»: ' + await lbl());
     // ya girada: un aviso con el premio, no otra ruleta
     await tap('Ruleta de la semana 2'); await p.waitForTimeout(600);
     if ((await screen()) !== 'mapa') errs.push('tocar una ruleta girada no se queda en el mapa: ' + await screen());
@@ -396,7 +396,7 @@ const flows = {
     // día 10 desbloqueado (va en el 4): su hoja, no un bloqueo
     await tapNodo(10); await p.waitForTimeout(1200); let s = await st(); await shot('dia10');
     if (s.dia !== 10 || !/Ver|Escuchar|Jugar|Comenzar/.test(s.cta || '')) errs.push('tocar el día 10 no abre su hoja: ' + JSON.stringify(s));
-    await tap('Volver a tu día'); await p.waitForTimeout(1000); s = await st();
+    await tap('Volver con Teodoro'); await p.waitForTimeout(1000); s = await st();
     if (s.dia != null) errs.push('«Volver a tu día» no vuelve: ' + JSON.stringify(s));
     // día 2 (historia vista, trivia pendiente): hoja con «Jugar la trivia», sin saltar directo
     await tapNodo(2); await p.waitForTimeout(1200); s = await st(); await shot('dia2');
