@@ -660,6 +660,12 @@ function patchCuarto(root) {
   if (!bg) {
     // Cuarto de Nazaret: los datos son texto y Teodoro va suelto (su pose sigue a la batería)
     replaceText(root, /^Ces$/, S.nombre);
+    // las píldoras de arriba eran texto blanco sobre beige translúcido (no se leían): fondo azul noche translúcido
+    [...root.children].filter(el => { const t = parseFloat(el.style.top); return t >= 40 && t <= 62 && el.offsetHeight <= 52; })
+      .flatMap(el => el.style.display === 'flex' && !el.style.background ? [...el.children] : [el])
+      .forEach(el => { Object.assign(el.style, { background: 'rgba(14,42,72,.62)', backdropFilter: 'blur(10px)', webkitBackdropFilter: 'blur(10px)', color: '#FFFFFF' });
+        const av = $$(el, 'span, div').find(x => x.style.borderRadius === '50%' && !x.textContent.trim() && !x.querySelector('img'));
+        if (av) { av.textContent = S.nombre[0]; Object.assign(av.style, { display: 'grid', placeItems: 'center', color: '#FFFFFF', font: '700 16px Mulish, sans-serif' }); } });
     const rp = root.querySelector('[aria-label^="Racha"]');
     if (rp) { const tn = [...rp.querySelectorAll('*'), rp].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && /^\s*\d+\s*$/.test(c.nodeValue)); if (tn) tn.nodeValue = String(racha()); rp.setAttribute('aria-label', `Racha: ${racha()} días`); }
     const teo = $$(root, 'img').find(i => /^Teodoro en su Cuarto/.test(i.alt || ''));
@@ -675,7 +681,7 @@ function patchCuarto(root) {
     'left:16px;top:54px;height:46px;padding:0 18px 0 5px;border-radius:40px;background:#FFFFFF;box-shadow:inset 0 0 0 3px #F4E291,0 4px 12px rgba(0,8,43,.12);color:#1E8DA5;display:flex;align-items:center;gap:8px;font:700 18px "Neue Montreal",Mulish,sans-serif;letter-spacing:.6px')
     .setAttribute('aria-label', `Perfil: ${S.nombre}`);
   add(`${racha()}<svg aria-hidden="true" width="16" height="20" viewBox="0 0 24 30"><path d="M12 1C13 8 21 11 21 19a9 9 0 0 1-18 0c0-5 3-7 4-11 2 3 3 4 3 6 1-4 2-8 2-13Z" fill="#F28C28"/><path d="M12 14c1 4 5 5 5 9a5 5 0 0 1-10 0c0-3 2-4 2-6 1 1 2 2 2 3 0-2 1-4 1-6Z" fill="#FFC94A"/></svg>`,
-    'left:206px;top:55px;width:74px;height:44px;border-radius:22px;background:#37ABC4;display:flex;align-items:center;justify-content:center;gap:4px;color:#FFFFFF;font:700 18px "Neue Montreal",Mulish,sans-serif;box-shadow:0 4px 12px rgba(0,8,43,.12)')
+    'left:206px;top:55px;width:74px;height:44px;border-radius:22px;background:#1F7F95;display:flex;align-items:center;justify-content:center;gap:4px;color:#FFFFFF;font:700 18px "Neue Montreal",Mulish,sans-serif;box-shadow:0 4px 12px rgba(0,8,43,.12)')
     .setAttribute('aria-label', `Racha: ${racha()} días seguidos`);
   // prendas ganadas en la ruleta: Teodoro las lleva puestas (la cama de paja va en el suelo)
   ponerPrendas();
@@ -797,11 +803,13 @@ register('hub', {
     setText(root, 'Coloréalo con tu familia', d.reto || d.sub || 'Un reto para hacer juntos');
     setText(root, /Al terminar ganas \d+ panes/, `Al terminar ganas ${panesContenido()} panes`);
     // el reto (o el juego en familia) en 2–3 pasos cortos, en lugar de la ilustración
+    // títulos largos: más angostos para no chocar con los árboles de los lados
+    if (d.title.length > 22) { const tt = textEl(root, d.title); if (tt) Object.assign(tt.style, { maxWidth: '278px', marginLeft: 'auto', marginRight: 'auto', fontSize: '24px', lineHeight: '1.15' }); }
     const card = root.querySelector('a[aria-label^="Reto en familia"]');
     if (card && d.pasos) {
       const tipo = d.type === 'juego' ? 'Juego en familia' : 'Reto en familia';
       const div = document.createElement('div'); div.className = 'hub-pasos'; div.setAttribute('style', card.getAttribute('style'));
-      Object.assign(div.style, { display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '14px', boxShadow: '' });
+      Object.assign(div.style, { display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingTop: '24px', gap: '14px', boxShadow: '' });
       div.setAttribute('role', 'group'); div.setAttribute('aria-label', `${tipo}: ${d.pasos.length} pasos`);
       div.innerHTML = `<span class="hp-tag">${tipo} · ${TYPES[d.type].min} min</span><ol>${d.pasos.map(t => `<li>${t}</li>`).join('')}</ol>`;
       card.replaceWith(div);
@@ -809,7 +817,12 @@ register('hub', {
     // la fila del descargable: el del día; en los retos de acción no se repite (el reto es esta pantalla)
     const imp = find(root, 'Imprimible');
     if (imp) {
-      if (d.descarga.accion) imp.style.display = 'none';
+      if (d.descarga.accion) {
+        // sin imprimible, la fila de la canción sube a su sitio (antes quedaba un hueco)
+        const can = find(root, 'Canción'), y = parseFloat(imp.style.top);
+        if (can && !isNaN(y) && parseFloat(can.style.top) > y) can.style.top = y + 'px';
+        imp.style.display = 'none';
+      }
       else { setText(imp, 'Pesebre para colorear', d.descarga.s); setText(imp, 'Imprimible', d.descarga.t); imp.setAttribute('aria-label', `${d.descarga.t}: ${d.descarga.s}`); }
     }
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-bob'));

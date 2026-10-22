@@ -170,6 +170,8 @@ register('mapa', {
       teo.style.width = '92px'; teo.style.height = '118px'; teo.style.objectFit = 'contain'; teo.style.objectPosition = '50% 100%'; teo.style.zIndex = '2'; teo.style.pointerEvents = 'none';
       teo.style.filter = 'drop-shadow(0 6px 8px rgba(8,93,111,.25))';
       teo.classList.add('a-bob');
+      // los días que vienen se ven por encima de Teodoro (antes su cabeza tapaba el número o el candado del siguiente)
+      Object.entries(nodes).forEach(([k, t]) => { if (t?.el && +k > (walkDay() ?? 0)) t.el.style.zIndex = '3'; });
       if (focus >= 1) place(S.pasoAnimado || focus); else teo.style.display = 'none';
       // volvió tras días sin caminar: Teodoro despierta al verlos
       if (params.despierta && !reduced()) { teo.classList.remove('a-bob'); setTimeout(() => { teo.src = teodoroImg(Math.max(S.bateria, 3)); animate(teo, 'a-hop'); }, 500); }

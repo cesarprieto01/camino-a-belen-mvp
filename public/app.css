@@ -464,7 +464,7 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 :root[data-theme="dark"] .hub-pasos { background: #274E7C !important; color: #FFFFFF; }
 :root[data-theme="dark"] .hub-pasos .hp-tag { background: rgba(255,255,255,.14); }
 :root[data-theme="dark"] .hub-pasos li { color: #FFFFFF; }
-.rep-sub { display: block; margin-top: 4px; font: 500 15px/20px Mulish, sans-serif; opacity: .85; }
+.rep-sub { display: block; margin-top: 4px; font: 500 15px/20px Mulish, sans-serif; opacity: 1; }
 /* la cita del domingo (lectura · velita) en segunda línea, más pequeña */
 .sheet-cita { display: block; margin-top: 2px; font: 500 14px/18px Mulish, sans-serif !important; color: #5F5F5F; letter-spacing: 0; }
 :root[data-theme="dark"] .sheet-cita { color: rgba(255,255,255,.72); }
@@ -517,3 +517,7 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .mm-card.done::after { content: '✓'; position: absolute; right: 6px; top: 6px; width: 24px; height: 24px; border-radius: 50%; background: #2E8B57; color: #FFFFFF; font: 900 14px/24px Mulish, sans-serif; text-align: center; z-index: 3; }
 /* trivia: «¡Casi! Toca otra respuesta» se lee a 16 px */
 .tv-note { font-size: 16px; }
+
+/* reproductor: el título y el subtítulo blancos se leen sobre el cielo claro; el control para bajar contrasta */
+.layer[data-screen="reproductor"] .root > *:not(img) { text-shadow: 0 1px 2px rgba(4,30,48,.55), 0 0 14px rgba(4,30,48,.35); }
+.layer[data-screen="reproductor"] a[aria-label="Bajar el reproductor"] { background: rgba(255,255,255,.95) !important; box-shadow: 0 0 0 4px rgba(0,8,43,.35); }
