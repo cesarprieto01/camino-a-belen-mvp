@@ -277,6 +277,24 @@ function tituloHeroe(root) {
   if (S.hoy >= 27) card.querySelector('img[alt^="Energía de Teodoro"]')?.style.setProperty('display', 'none');
 }
 
+/** «Mundos» en Misiones Diarias aparece al unirse al reto (antes o durante el camino); sin unirse no está. */
+async function misionMundos(root) {
+  const fila = () => [...root.children].filter(el => el.tagName === 'A' && el.style.top === '512px');
+  let m = root.querySelector('a[aria-label^="Mundos"]');
+  if (!S.inscrito && m) {
+    const x = parseFloat(m.style.left); m.remove();
+    fila().forEach(a => { const l = parseFloat(a.style.left); if (l > x) a.style.left = (l - 248) + 'px'; });
+  } else if (S.inscrito && !m) {
+    const f = await frag(F('R-Misiones', 'R-Misiones-oscuro')[dark() ? 1 : 0]);
+    m = f.querySelector('a[aria-label^="Mundos"]');
+    const primera = fila()[0];
+    if (!m || !primera) return;
+    fila().forEach(a => { a.style.left = (parseFloat(a.style.left) + 248) + 'px'; });
+    m.style.left = '16px'; m.style.top = '512px';
+    primera.before(m);
+  }
+}
+
 register('hoy', {
   h1: /^Misiones Diarias$/, // el inicio de Theo no tiene título propio: la primera sección hace de encabezado
   file() {
@@ -296,6 +314,7 @@ register('hoy', {
       swap('[role=group][aria-label^="Camino a Belén:"]', fd);
     }
     sinDuplicado(root);
+    await misionMundos(root);
     carruseles(root);
     const destacados = heroe(root);
     tituloHeroe(root);
@@ -335,6 +354,7 @@ register('hoy', {
       on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
       on(root, 'Invitar', () => go('invitacion', {}, 'push'));
       on(root, 'Entrar', () => entrar('hoy'));
+      on(root, root.querySelector('a[aria-label^="Mundos"]'), () => go('mundos', {}, 'push'));
       if (!S.inscrito && !S.teaserVisto) { S.teaserVisto = true; save(); await wait(900); if (layer.isConnected) go('teaser', {}, 'modal'); }
       return;
     }
@@ -565,7 +585,7 @@ register('teodoro', {
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     replaceText(root, /^Día 9$/, `Día ${n}`);
     root.querySelector('a[aria-label^="Adviento:"]')?.remove(); // la isla vieja del cuarto: el lienzo ahora pone el ícono de Mundos
-    const isla = islaAdviento(root);
+    const isla = S.inscrito ? islaAdviento(root) : null; // la puerta a Mundos aparece al unirse al reto
     quitarCorona(root);
     juntarAvatares(root);
     const tCard = root.querySelector('a[aria-label="Ver el camino"]')?.parentElement;
@@ -593,6 +613,8 @@ register('teodoro', {
       isla.querySelectorAll('span').forEach(sp => { if (/Día/.test(sp.textContent)) sp.style.display = 'none'; });
       isla.classList.add('a-bob');
     }
+    // la puerta a Mundos siempre lleva el ícono de Mundos (el planeta), nunca la isla
+    $$(root, 'a[aria-label="Ver mis mundos"] img').slice(0, 1).forEach(i => { i.src = 'assets/mundos.webp'; i.style.objectFit = 'contain'; });
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
     on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
     on(root, 'Inscribirme', (ev, el) => inscribir(el)); on(root, 'Unirme gratis', (ev, el) => inscribir(el));
