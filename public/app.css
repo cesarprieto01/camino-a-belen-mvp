@@ -498,3 +498,11 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .theo-heroe-pie b { font: 500 22px/1.1 'Neue Montreal', Mulish, sans-serif; color: #FFFFFF; }
 .theo-heroe-pie i { font: 400 13px/1.3 'Neue Montreal', Mulish, sans-serif; font-style: normal; }
 @media (prefers-reduced-motion: reduce) { .theo-heroe-pista > * { transition: none; } }
+/* título del destacado del camino (dentro del panel de cristal) */
+.heroe-titulo { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; margin-bottom: -2px; }
+.heroe-titulo b { font: 500 18px/1.15 'Neue Montreal', Mulish, sans-serif; color: #FFFFFF; }
+.heroe-titulo span { font: 500 13px/1.2 'Neue Montreal', Mulish, sans-serif; color: #F5DB78; }
+/* las de los lados del héroe: sin texto a medias */
+.theo-heroe-t .theo-heroe-pie { transition: opacity .2s; }
+.theo-heroe-t.lado .theo-heroe-pie { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .theo-heroe-t .theo-heroe-pie { transition: none; } }

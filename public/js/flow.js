@@ -178,8 +178,11 @@ function carruseles(root) {
   });
   // el top 10 trae número, portada y textos con tops distintos: van con la fila cuyo título está justo encima
   const filas = [...fila.entries()].filter(([, els]) => els.some(e => parseFloat(e.style.left) + e.offsetWidth > 392));
-  const top10 = [...fila.entries()].filter(([t]) => t >= 2700 && t < 3040).flatMap(([, els]) => els);
-  const grupos = filas.filter(([t]) => t < 2700 || t >= 3040).map(([, els]) => els);
+  const yDe = re => parseFloat([...root.children].find(el => re.test(el.textContent.trim()))?.style.top);
+  const t0 = yDe(/^Top 10/), t1 = yDe(/^Tu racha$/);
+  const enTop = t => t > t0 && t < t1;
+  const top10 = [...fila.entries()].filter(([t]) => enTop(t)).flatMap(([, els]) => els);
+  const grupos = filas.filter(([t]) => !enTop(t)).map(([, els]) => els);
   if (top10.length) grupos.push(top10);
   grupos.forEach(els => {
     const top = Math.min(...els.map(e => parseFloat(e.style.top)));
@@ -202,6 +205,7 @@ function heroe(root) {
   const W = 256, H = 330, top = parseFloat(card.style.top);
   ['Destacado anterior', 'Evangelio del día,'].forEach(l => root.querySelector(`a[aria-label^="${l}"]`)?.remove());
   const box = document.createElement('div'); box.className = 'theo-heroe';
+  box.setAttribute('role', 'region'); box.setAttribute('aria-roledescription', 'carrusel'); box.setAttribute('aria-label', 'Destacados');
   Object.assign(box.style, { position: 'absolute', left: '0', top: (top - 10) + 'px', width: '100%', height: (H + 30) + 'px', zIndex: 2 });
   const pista = document.createElement('div'); pista.className = 'theo-heroe-pista';
   pista.style.padding = `10px ${(390 - W) / 2}px 20px`;
@@ -221,7 +225,9 @@ function heroe(root) {
     slides.forEach(sl => {
       const d = (sl.offsetLeft + W / 2 - c) / (W + 16); const k = 1 - Math.min(Math.abs(d), 1) * .285;
       sl.style.transformOrigin = d < 0 ? '100% 50%' : '0% 50%'; sl.style.transform = `scale(${k})`;
-      sl.setAttribute('aria-hidden', Math.abs(d) > .5 ? 'true' : 'false');
+      const lado = Math.abs(d) > .5;
+      sl.setAttribute('aria-hidden', lado ? 'true' : 'false'); sl.classList.toggle('lado', lado);
+      $$(sl, 'a').concat(sl.tagName === 'A' ? [sl] : []).forEach(a => { a.tabIndex = lado ? -1 : 0; });
     });
   };
   let raf = 0; pista.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(pinta); }, { passive: true });
@@ -233,8 +239,46 @@ function heroe(root) {
   return { lampara, evangelio };
 }
 
+/** La tarjeta grande del camino debajo de Misiones repetía el destacado (misma escena, mismo botón): se quita y lo de abajo sube. */
+function sinDuplicado(root) {
+  const big = [...root.children].find(el => el.getAttribute('role') === 'group' && /^Camino a Belén/.test(el.getAttribute('aria-label') || '') && parseFloat(el.style.top) > 600);
+  if (!big) return;
+  const y = parseFloat(big.style.top), dy = parseFloat($$(root, ':scope > *').map(el => parseFloat(el.style.top)).filter(t => t > y).sort((a, b) => a - b)[0]) - y;
+  big.remove();
+  [...root.children].forEach(el => { const t = parseFloat(el.style.top); if (t > y) el.style.top = (t - dy) + 'px'; });
+  root.style.height = (parseFloat(root.style.height) - dy) + 'px';
+}
+
+/** El destacado dice qué es y en qué va la familia (antes solo había escena y botón). */
+function tituloHeroe(root) {
+  const card = root.querySelector('.theo-heroe [role=group][aria-label^="Camino a Belén"]');
+  const panel = card && $$(card, 'div').find(d => /blur/.test(d.style.backdropFilter || d.style.webkitBackdropFilter || ''));
+  if (!panel) return;
+  const st = cardState(), n = walkDay() ?? Math.min(lastDay(), 26);
+  const sub = fase() === 'antes' ? 'Empieza el 29 de noviembre'
+    : st.key === 4 ? 'Aún llegas a Belén'
+    : st.key === 5 ? '¡Llegaron a Belén!'
+    : st.key === 6 ? st.sub
+    : `Día ${n} de 26`;
+  const t = document.createElement('div'); t.className = 'heroe-titulo';
+  t.innerHTML = `<b>${st.key === 4 ? '¡Ya salimos! ¿Vienes?' : 'Camino a Belén'}</b><span>${sub}</span>`;
+  panel.prepend(t);
+  // el panel creció con el título: Teodoro y su sombra suben para que no le tape las patas
+  const escena = card.querySelector('a[aria-label="Ver el camino"]');
+  if (escena) $$(escena, ':scope > img, :scope > span').filter(el => /^Teodoro/.test(el.alt || '') || el.tagName === 'SPAN').forEach(el => { el.style.top = (parseFloat(el.style.top) - 30) + 'px'; });
+  // antes del 29 la etiqueta «EMPIEZA EN» sobra: el título ya lo dice
+  const lab = $$(panel, 'span').find(sp => /^EMPIEZA EN$/.test(sp.textContent.trim())); if (lab) lab.style.display = 'none';
+  // sin unirse con el camino ya en marcha: una barra vacía parece un fallo; y el botón no lleva flecha (es empezar, no seguir)
+  if (st.key === 4) {
+    const bar = panel.querySelector('[role=img][aria-label^="Día "]'); if (bar) bar.style.display = 'none';
+    $$(panel, 'a svg').forEach(sv => { sv.style.display = 'none'; });
+    card.querySelector('img[alt^="Energía de Teodoro"]')?.style.setProperty('display', 'none');
+  }
+  if (S.hoy >= 27) card.querySelector('img[alt^="Energía de Teodoro"]')?.style.setProperty('display', 'none');
+}
+
 register('hoy', {
-  h1: /^Misiones Diarias$/,
+  h1: /^Misiones Diarias$/, // el inicio de Theo no tiene título propio: la primera sección hace de encabezado
   file() {
     const t = dark() ? 1 : 0;
     if (fase() === 'antes') return F('R-Hoy-completo-pre', 'R-Hoy-completo-pre-oscuro')[t];
@@ -247,13 +291,14 @@ register('hoy', {
     // ya unido antes del 29: el destacado trae «Invitar · Entrar» y la tarjeta grande es la de «ya estás dentro»
     if (fase() === 'antes' && S.inscrito) {
       const t = dark() ? 1 : 0;
-      const [fd, fg] = await Promise.all([frag(F('R-Hoy-pre-dentro', 'R-Hoy-pre-dentro-oscuro')[t]), frag(F('V2-Pre-Hoy-dentro-claro', 'V2-Pre-Hoy-dentro')[t])]);
+      const fd = await frag(F('R-Hoy-pre-dentro', 'R-Hoy-pre-dentro-oscuro')[t]);
       const swap = (sel, from, top) => { const a = root.querySelector(sel), b = from.querySelector('[role=group][aria-label^="Camino a Belén"]'); if (a && b) { if (top) { b.style.top = top; b.style.left = a.style.left; } a.replaceWith(b); } };
       swap('[role=group][aria-label^="Camino a Belén:"]', fd);
-      swap('[role=group][aria-label^="Camino a Belén empieza"]', fg, '800px');
     }
+    sinDuplicado(root);
     carruseles(root);
     const destacados = heroe(root);
+    tituloHeroe(root);
     replaceText(root, /^Ces$/, S.nombre);
     root.querySelector('img[alt="Perfil de Ces"]')?.setAttribute('alt', `Perfil de ${S.nombre}`);
     paintEnergy(root);
@@ -303,7 +348,14 @@ register('hoy', {
     if (mundos) {
       const hecha = st.done || st.key === 5;
       const tag = textEl(mundos, 'Descúbrelo');
-      if (hecha && tag) { tag.textContent = '✓ Hecha'; Object.assign(tag.style, { background: '#0A8445', color: '#FFFFFF' }); }
+      // el chip es la lista de pendientes de los niños: cambia con el día
+      if (tag) {
+        if (hecha) { tag.textContent = '✓ Hecha'; Object.assign(tag.style, { background: '#0A8445', color: '#FFFFFF' }); }
+        else if (st.key === 4) tag.textContent = 'Descúbrelo';
+        else if (st.key === 6) tag.textContent = `Faltan ${26 - doneCount()} días`;
+        else if (st.sorpresa) tag.textContent = 'Juego sorpresa';
+        else tag.textContent = `Día ${n}`;
+      }
       mundos.setAttribute('aria-label', `Mundos: Adviento, día ${n} de 26${hecha ? ' · hecha' : ''}`);
       on(root, mundos, () => go('mundos', { from: 'hoy' }, 'push'));
     }
@@ -371,7 +423,7 @@ export function paintCaminoCard(card, from) {
   // el botón dice lo que hará
   const btn = [...card.querySelectorAll('a')].find(a => /Continuar la Aventura/i.test(a.textContent));
   const primerDia = !doneCount() && !contentDone(1); // aún no ha visto la primera historia
-  const label = st.key === 4 ? 'Unirme gratis' : st.key === 5 ? 'Ver el nacimiento' : st.sorpresa ? 'Ir al juego sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
+  const label = st.key === 4 ? 'Unirme gratis' : st.key === 5 ? 'Ver el nacimiento' : st.key === 6 ? 'Seguir caminando' : st.sorpresa ? 'Ir al juego sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
   const span = btn?.querySelector('span'); if (span) span.textContent = label; else if (btn) setText(btn, /Continuar la Aventura/i, label);
   // Navidad: el pesebre en la tarjeta
   if (S.hoy >= 27 && scene) {

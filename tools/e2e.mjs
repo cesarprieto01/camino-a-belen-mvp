@@ -180,7 +180,7 @@ const flows = {
     await tap('Entrar'); await expect('mundos', 'Entrar abre los mundos antes del 29'); await shot('mundos-antes');
     await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'de los mundos a Teodoro');
     await tap('Mundos de Teodoro'); await expect('mundos', 'la isla abre los mundos antes del 29'); await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'isla: vuelve a Teodoro');
-    await tap('Ver Camino a Belén'); await expect('espera', 'la ilustración abre la espera'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
+    await tap('Ver el camino'); await expect('espera', 'la ilustración abre la espera'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
     await tap('Invitar'); await expect('invitacion', 'invitar desde Teodoro'); await tap('Volver'); await expect('teodoro', 'volver a Teodoro');
     await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
     await tap('Invitar'); await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Unirme gratis'); await expect('invitacion', 'vista previa vuelve');
@@ -236,7 +236,7 @@ const flows = {
     await tap('Ahora no'); await p.waitForTimeout(500);
     if (await layers() !== 'hub') errs.push('al cerrar free no queda el reto: ' + await layers());
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 0, inscrito: true, teaserVisto: true }); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
-    await p.waitForTimeout(900); await tap('Ver Camino a Belén'); await p.waitForTimeout(500); await shot('espera-hoja');
+    await p.waitForTimeout(900); await tap('Ver el camino'); await p.waitForTimeout(500); await shot('espera-hoja');
     if (await layers() !== 'hoy>espera(hoja)') errs.push('espera no es hoja sobre Hoy: ' + await layers());
     await p.goBack(); await p.waitForTimeout(600);
     if (await layers() !== 'hoy') errs.push('atrás del sistema no cierra la hoja: ' + await layers());
