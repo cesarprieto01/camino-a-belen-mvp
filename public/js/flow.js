@@ -564,7 +564,8 @@ register('teodoro', {
     const n = walkDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
     replaceText(root, /^Día 9$/, `Día ${n}`);
-    const isla = root.querySelector('a[aria-label^="Adviento:"]') || islaAdviento(root); // se toma antes de tocar etiquetas
+    root.querySelector('a[aria-label^="Adviento:"]')?.remove(); // la isla vieja del cuarto: el lienzo ahora pone el ícono de Mundos
+    const isla = islaAdviento(root);
     quitarCorona(root);
     juntarAvatares(root);
     const tCard = root.querySelector('a[aria-label="Ver el camino"]')?.parentElement;
@@ -575,7 +576,7 @@ register('teodoro', {
     if (fase() === 'antes') { startCountdown(root); ánimo(root); }
     // la isla del cuarto lleva a los mundos de Teodoro; el botón de la tarjeta, al camino
     if (isla) {
-      isla.setAttribute('aria-label', 'Mundos de Teodoro: Adviento'); on(root, isla, () => go('mundos', {}, 'push'));
+      on(root, isla, () => go('mundos', {}, 'push'));
       isla.querySelectorAll('span').forEach(sp => { if (/Día/.test(sp.textContent)) sp.style.display = 'none'; });
       isla.classList.add('a-bob');
     }
@@ -590,15 +591,15 @@ register('teodoro', {
     if (S.prendas.length > (S.prendasVistas || 0)) { S.prendasVistas = S.prendas.length; save(); toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`); }
   },
 });
-/** El mundo de Adviento flotando junto a Teodoro: las pantallas de antes del 29 no lo traen y se pone igual que en el cuarto. */
+/** El acceso a Mundos en el cuarto de Teodoro: el mismo ícono de Mundos de Misiones Diarias, junto a la cama (lienzo «Tab Teodoro»). */
 function islaAdviento(root) {
   const cuarto = $$(root, 'img').find(i => /^Tab Teodoro|^Cuarto de Nazaret/.test(i.alt || ''));
   if (!cuarto) return null;
   const a = document.createElement('a');
-  a.setAttribute('aria-label', 'Adviento: Camino a Belén');
-  a.style.cssText = 'position:absolute;left:294px;top:226px;width:84px;height:84px;display:block;text-decoration:none;z-index:7';
-  a.innerHTML = '<span aria-hidden="true" style="position:absolute;left:0;top:2px;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle,rgba(255,240,190,.85) 0%,rgba(255,240,190,0) 70%)"></span>'
-    + `<img alt="" src="${A('30e9a5e1af04caa8950aa97de2e7ae0e')}" style="position:absolute;left:0;top:0;width:84px;height:84px;filter:drop-shadow(0 8px 10px rgba(0,8,43,.3))">`;
+  a.setAttribute('aria-label', 'Mundos de Teodoro');
+  // 48 px de ícono con 44 px de toque mínimo garantizado
+  a.style.cssText = 'position:absolute;left:332px;top:194px;width:48px;height:48px;display:block;text-decoration:none;z-index:7';
+  a.innerHTML = '<img alt="" src="assets/mundos.webp" style="position:absolute;left:0;top:0;width:48px;height:48px;filter:drop-shadow(0 8px 10px rgba(0,8,43,.3))">';
   root.appendChild(a);
   return a;
 }
