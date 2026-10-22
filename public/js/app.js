@@ -1,6 +1,6 @@
 // Arranque del MVP y panel de control para el equipo.
 // El panel sigue el orden del lienzo (secciones 1 a 8) para que diseño y prueba hablen el mismo idioma.
-import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, prefetch, logical, flowScreens, sections } from './core.js';
+import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, GRACIA_FIN, cuentaGracia, vistos, prefetch, logical, flowScreens, sections } from './core.js';
 import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf, hasTrivia } from './data.js';
 import './flow.js';
 import './map.js';
@@ -85,6 +85,11 @@ const REC = [
   { sec: 8, t: 'Nochebuena', mira: 'Día 26 · llegada a Belén · ver el nacimiento y compartir', run: day(26, 25), go: 'mapa', covers: ['V2-Mapa-d24-claro', 'V2-Final-claro', 'V2-Final-compartir-claro'] },
   { sec: 8, t: 'Terminó completo', mira: '25 de diciembre · 26 de 26 días', run: day(27, 26), go: 'hoy', covers: [] },
   { sec: 8, t: 'Terminó incompleto', mira: '25 de diciembre · le faltan 5 días', run: day(27, 21), go: 'hoy', covers: [] },
+  { sec: 8, t: 'Gracia · a medias', mira: '30 de diciembre · lleva 14 de 26: «Seguir con el día 15» y «Quedan 8 días para llegar a Belén»', run: day(32, 14), go: 'hoy', covers: [] },
+  { sec: 8, t: 'Gracia · último día', mira: '6 de enero · lleva 20 de 26: «Último día para llegar a Belén»', run: day(39, 20), go: 'hoy', covers: [] },
+  { sec: 8, t: 'Gracia · sin empezar', mira: '2 de enero · inscrito sin días hechos: «Teodoro te espera»', run: day(35, 0), go: 'hoy', covers: [] },
+  { sec: 8, t: 'Gracia · sin inscribirse', mira: '28 de diciembre: pop-up «¡Aún llegas a Belén!»', run: () => { reset({ hoy: 30, inscrito: false }); S.completos = {}; }, go: 'hoy', covers: [] },
+  { sec: 8, t: 'Recuerdo · 7 de enero', mira: 'Lleva 14 de 26: «Caminaste 14 días con Teodoro»; lo que faltó queda apagado', run: day(40, 14), go: 'hoy', covers: [] },
   { sec: 8, t: 'Se une tarde', mira: 'Día 5 sin inscribirse: «¡Ya salimos! ¿Vienes?»', run: () => { reset({ hoy: 5, inscrito: false }); S.completos = {}; }, go: 'hoy', covers: [] },
 ];
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
@@ -132,17 +137,17 @@ const PENDIENTES_LIENZO = [
 ];
 
 function advance(k) {
-  // Teodoro solo se cansa por días del camino (1–26) en que no caminaron; antes del 29 no cuenta
+  // Teodoro se cansa por los días sin caminar del 29 nov al 6 ene (también en la gracia, si falta algo); antes del 29 y en el recuerdo no cuenta
   let baja = 0;
-  for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= 26 && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
+  for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= GRACIA_FIN && (d <= 26 || vistos() < 26) && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
   // la manzana guardada de la ruleta le ahorra a Teodoro un día de cansancio
   if (baja && S.manzana) { baja--; S.manzana = false; }
   S.bateria = Math.max(0, S.bateria - baja);
   const antes = S.hoy;
-  S.hoy = Math.min(27, S.hoy + k);
+  S.hoy = Math.min(GRACIA_FIN + 1, S.hoy + k);
   if (k >= RULES.regresoDias && S.inscrito && S.hoy >= 1) S.regreso = true;
   save();
-  nota(antes === 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy >= 27 ? 'Ya es Navidad' : `Hoy es el día ${S.hoy}`);
+  nota(antes === 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy === 27 ? 'Ya es Navidad' : S.hoy > GRACIA_FIN ? 'El camino quedó como recuerdo' : S.hoy > 27 ? cuentaGracia() : `Hoy es el día ${S.hoy}`);
   go('hoy', {}, 'fade');
 }
 
@@ -157,7 +162,7 @@ btn.onclick = () => { const o = panel.classList.toggle('open'); btn.setAttribute
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const check = on => `<span class="p-check ${on ? 'on' : ''}" aria-label="${on ? 'Visto' : 'Sin ver'}">${on ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}</span>`;
 
-function dayLabel(n) { if (n <= 0) return 'Antes del 29 nov'; if (n >= 27) return '25 dic – 6 ene'; const f = dateOf(n); return `Día ${n} · ${f.dow.slice(0, 3).toLowerCase()} ${f.dd} ${f.mes.slice(0, 3).toLowerCase()}`; }
+function dayLabel(n) { if (n <= 0) return 'Antes del 29 nov'; if (n > GRACIA_FIN) return 'Desde el 7 ene'; if (n >= 27) { const f = dateOf(n); return `Gracia · ${f.dd} ${f.mes.slice(0, 3).toLowerCase()}`; } const f = dateOf(n); return `Día ${n} · ${f.dow.slice(0, 3).toLowerCase()} ${f.dd} ${f.mes.slice(0, 3).toLowerCase()}`; }
 function coverage() {
   const all = flowScreens();
   const seenN = [...all.keys()].filter(k => S.vistas?.[k]).length;
@@ -170,15 +175,15 @@ function render() {
   const name = cur ? (NAMES[cur.name] || cur.name) : '—';
   const sec = SECTIONS.find(s => s[0] === SECTION_OF(cur?.name || 'hoy'));
   const cov = coverage();
-  const hoyTxt = fase() === 'antes' ? 'Antes del 29 de noviembre' : fase() === 'despues' ? 'Del 25 de diciembre al 6 de enero' : `Hoy: día ${S.hoy} de 26`;
+  const hoyTxt = fase() === 'antes' ? 'Antes del 29 de noviembre' : fase() === 'gracia' ? `Gracia · ${cuentaGracia(true)}` : fase() === 'recuerdo' ? 'Desde el 7 de enero: recuerdo' : `Hoy: día ${S.hoy} de 26`;
   const progTxt = act == null ? (fase() === 'antes' ? (S.inscrito ? 'Inscrito' : 'Sin inscribirse') : 'Al día') : act < lastDay() ? `Va en el día ${act}` : `Toca el día ${act}`;
-  const dayTitle = S.hoy <= 0 ? 'Antes del 29 de noviembre' : S.hoy >= 27 ? 'Después de Nochebuena' : `Día ${S.hoy} de 26`;
-  const daySub = S.hoy <= 0 ? 'El camino aún no empieza' : S.hoy >= 27 ? 'Del 25 de diciembre al 6 de enero' : (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })();
+  const dayTitle = S.hoy <= 0 ? 'Antes del 29 de noviembre' : S.hoy > GRACIA_FIN ? 'Camino cerrado' : S.hoy >= 27 ? `Gracia · ${cuentaGracia(true)}` : `Día ${S.hoy} de 26`;
+  const daySub = S.hoy <= 0 ? 'El camino aún no empieza' : S.hoy > GRACIA_FIN ? 'Desde el 7 de enero' : S.hoy >= 27 ? (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })() : (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })();
   const simple = `<section class="p-simple">
     <div class="p-day">
       <button class="p-arrow" data-act="dayMinus" aria-label="Día anterior" ${S.hoy <= 0 ? 'disabled' : ''}>‹</button>
       <div><b>${dayTitle}</b><small>${daySub} · ${progTxt}</small></div>
-      <button class="p-arrow" data-act="dayPlus" aria-label="Día siguiente" ${S.hoy >= 27 ? 'disabled' : ''}>›</button>
+      <button class="p-arrow" data-act="dayPlus" aria-label="Día siguiente" ${S.hoy > GRACIA_FIN ? 'disabled' : ''}>›</button>
     </div>
     <div class="seg p-wide">${[['claro', 'Día'], ['oscuro', 'Noche']].map(([v, l]) => `<button data-tema="${v}" aria-pressed="${S.tema === v}">${l}</button>`).join('')}</div>
     <div class="p-teo">

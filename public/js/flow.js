@@ -1,7 +1,7 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
 import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
-  addPanes, setBateria, doneCount, frag, racha } from './core.js';
+  addPanes, setBateria, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub } from './data.js';
 import './musica.js'; // música de fondo del mapa y la trivia
 import { rateRow } from './games.js';
@@ -14,6 +14,8 @@ export const panesContenido = () => premium() ? RULES.panes.contenidoPremium : R
 /** Empieza (o retoma) el día n desde el mapa. */
 export function startDay(n) {
   const d = DAYS[n];
+  // desde el 7 de enero: lo hecho se vuelve a ver; lo que faltó ya no se abre (el nacimiento siempre)
+  if (fase() === 'recuerdo' && n < 26 && !contentDone(n)) { toast('El camino de este año terminó', 'Nos vemos en Adviento'); return; }
   if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, nacimiento: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; }
   if (!contentDone(n)) {
     go(usaHub(n) ? 'hub' : 'reproductor', { day: n }, 'up');
@@ -31,7 +33,7 @@ export function openSorpresa(n) {
 export function ctaLabel(n) {
   const d = DAYS[n];
   const verbo = TYPES[d.type].verbo;
-  if (n === 26 && !contentDone(26)) return { text: 'Comenzar', play: true, go: () => startDay(26) };
+  if (n === 26 && !contentDone(26)) return fase() === 'recuerdo' ? { text: 'Ver el nacimiento', play: true, go: () => go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') } : { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
   if (n === 0) return { text: 'Invitar a un amigo', go: () => go('invitacion', {}, 'push') };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
@@ -43,6 +45,7 @@ export function ctaLabel(n) {
 }
 /** Termina el contenido del día: suma batería y panes. */
 export function finishContent(n) {
+  if (fase() === 'recuerdo') return false; // el camino ya cerró: volver a ver no suma
   const first = !contentDone(n);
   S.completos[n] = { ...(S.completos[n] || {}), contenido: true };
   // terminar un cuento (o cualquier contenido del día) deja a Teodoro al 100%
@@ -88,12 +91,17 @@ export function sparkles(root) {
 export function cardState() {
   const act = activeDay();
   if (fase() === 'antes') return S.inscrito ? { key: 2 } : { key: 1 };
-  if (!S.inscrito) return { key: 4, title: '¡Ya salimos! ¿Vienes?', sub: 'Aún llegas a Belén', cta: 'Unirme gratis' };
   if (S.hoy >= 27) {
-    const faltan = 26 - doneCount();
-    return faltan ? { key: 6, title: '¡Feliz Navidad!', sub: `Te faltan ${faltan} días · puedes seguir hasta Reyes`, cta: 'Seguir caminando' }
-      : { key: 5, title: '¡Feliz Navidad!', sub: '¡Llegamos a Belén! 26 de 26 días', cta: 'Ver el nacimiento' };
+    // gracia (25 dic – 6 ene): se invita a terminar, con el contador de días que quedan; desde el 7 de enero, recuerdo
+    const v = vistos(), recuerdo = fase() === 'recuerdo';
+    if (!S.inscrito) return recuerdo ? { key: 7, title: 'Camino a Belén', sub: 'Nos vemos en Adviento', cta: 'Ver el nacimiento' }
+      : { key: 4, title: '¡Aún llegas a Belén!', sub: cuentaGracia(true), cta: 'Unirme gratis', cuenta: true };
+    if (v >= 26) return { key: 5, title: recuerdo ? 'Camino a Belén' : '¡Feliz Navidad!', sub: '¡Llegaste a Belén!', cta: 'Ver el nacimiento' };
+    if (recuerdo) return v ? { key: 8, title: 'Camino a Belén', sub: `Caminaste ${v} ${v === 1 ? 'día' : 'días'} con Teodoro`, cta: 'Ver tu camino' }
+      : { key: 7, title: 'Camino a Belén', sub: 'Nos vemos en Adviento', cta: 'Ver el nacimiento' };
+    return { key: 6, title: 'Camino a Belén', sub: cuentaGracia(true).replace('Último día', '¡Último día!'), cuenta: true }; // mismo diseño que en el camino: barra y «Continuar la aventura»
   }
+  if (!S.inscrito) return { key: 4, title: '¡Ya salimos! ¿Vienes?', sub: 'Aún llegas a Belén', cta: 'Unirme gratis' };
   const h = Math.min(S.hoy, 26);
   if (act == null && RULES.sorpresa[h] && isDone(h) && S.sorpresas[h] !== 'hecha') return { key: 3, sorpresa: true };
   return { key: 3, done: act == null };
@@ -245,13 +253,9 @@ function tituloHeroe(root) {
   const panel = card && $$(card, 'div').find(d => /blur/.test(d.style.backdropFilter || d.style.webkitBackdropFilter || ''));
   if (!panel) return;
   const st = cardState(), n = walkDay() ?? Math.min(lastDay(), 26);
-  const sub = fase() === 'antes' ? 'Empieza el 29 de noviembre'
-    : st.key === 4 ? 'Aún llegas a Belén'
-    : st.key === 5 ? '¡Llegamos a Belén!'
-    : st.key === 6 ? st.sub
-    : `Día ${n} de 26`;
+  const sub = fase() === 'antes' ? 'Empieza el 29 de noviembre' : st.sub || `Día ${n} de 26`;
   const t = document.createElement('div'); t.className = 'heroe-titulo';
-  t.innerHTML = `<b>${st.key === 4 ? '¡Ya salimos! ¿Vienes?' : 'Camino a Belén'}</b><span>${sub}</span>`;
+  t.innerHTML = `<b>${st.title || 'Camino a Belén'}</b><span>${sub}</span>`;
   panel.prepend(t);
   // el panel creció con el título: Teodoro y su sombra suben para que no le tape las patas
   const escena = card.querySelector('a[aria-label="Ver el camino"]');
@@ -259,12 +263,12 @@ function tituloHeroe(root) {
   // antes del 29 la etiqueta «EMPIEZA EN» sobra: el título ya lo dice
   const lab = $$(panel, 'span').find(sp => /^EMPIEZA EN$/.test(sp.textContent.trim())); if (lab) lab.style.display = 'none';
   // sin unirse con el camino ya en marcha: una barra vacía parece un fallo; y el botón no lleva flecha (es empezar, no seguir)
-  if (st.key === 4) {
+  if (st.key === 4 || (S.hoy >= 27 && st.key !== 6)) {
     const bar = panel.querySelector('[role=img][aria-label^="Día "]'); if (bar) bar.style.display = 'none';
     $$(panel, 'a svg').forEach(sv => { sv.style.display = 'none'; });
     card.querySelector('img[alt^="Energía de Teodoro"]')?.style.setProperty('display', 'none');
   }
-  if (S.hoy >= 27) card.querySelector('img[alt^="Energía de Teodoro"]')?.style.setProperty('display', 'none');
+  if (S.hoy >= 27 && st.key !== 6) card.querySelector('img[alt^="Energía de Teodoro"]')?.style.setProperty('display', 'none'); // en la gracia la energía sigue
 }
 
 /** «Mundos» en Misiones Diarias aparece al unirse al reto (antes o durante el camino); sin unirse no está. */
@@ -349,7 +353,7 @@ register('hoy', {
       return;
     }
 
-    if (!S.inscrito && !S.tardeVisto && S.hoy <= 26) { S.tardeVisto = true; save(); setTimeout(async () => { const c = await import('./core.js'); if (!S.inscrito && c.cur?.name === 'hoy' && c.cur.layer === layer) go('teaser', { tarde: true }, 'modal'); }, 900); }
+    if (!S.inscrito && !S.tardeVisto && S.hoy >= 1 && S.hoy <= GRACIA_FIN) { S.tardeVisto = true; save(); setTimeout(async () => { const c = await import('./core.js'); if (!S.inscrito && c.cur?.name === 'hoy' && c.cur.layer === layer) go('teaser', { tarde: true }, 'modal'); }, 900); }
     const n = walkDay() ?? Math.min(lastDay(), 26); // donde va Teodoro
     // la tarjeta del camino sale dos veces (destacado y tarjeta grande): las dos con el mismo estado
     const cards = $$(root, '[role=group][aria-label^="Camino a Belén"]');
@@ -363,6 +367,7 @@ register('hoy', {
       if (tag) {
         if (hecha) { tag.textContent = '✓ Hecha'; Object.assign(tag.style, { background: '#0A8445', color: '#FFFFFF' }); }
         else if (st.key === 4) tag.textContent = 'Descúbrelo';
+        else if (st.key === 7 || st.key === 8) tag.textContent = 'Volver a ver';
         else if (st.key === 6) tag.textContent = `Día ${n}`;
         else if (st.sorpresa) tag.textContent = 'Juego sorpresa';
         else tag.textContent = `Día ${n}`;
@@ -408,14 +413,14 @@ export function paintCaminoCard(card, from) {
   const prog = card.querySelector('[role=img][aria-label^="Día "]');
   const bar = prog && $$(prog, 'div').find(el => /%/.test(el.style.width));
   if (bar) {
-    const pct = (doneCount() / 26 * 100).toFixed(1) + '%';
+    const pct = (vistos() / 26 * 100).toFixed(1) + '%';
     const head = bar.nextElementSibling;
     // el avatar de Teodoro nunca se sale de la barra (en 0 % queda al inicio, en 100 % al final)
     const headAt = p => `clamp(0px, calc(${p} - 14px), calc(100% - 28px))`;
     bar.style.transition = 'width 1s cubic-bezier(.2,.8,.2,1)'; bar.style.width = '0%';
     if (head?.style.left) { head.style.transition = 'left 1s cubic-bezier(.2,.8,.2,1)'; head.style.left = headAt('0%'); }
     requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct; if (head?.style.left) head.style.left = headAt(pct); }));
-    prog.setAttribute('aria-label', `Día ${n} de 26: ${doneCount()} hechos, faltan ${26 - doneCount()} para Belén`);
+    prog.setAttribute('aria-label', `Día ${n} de 26: ${vistos()} hechos, faltan ${26 - vistos()} para Belén`);
   }
   // atrasado: pasitos (✓ último hecho · Teodoro en su día · pendientes · hoy en dorado)
   const pasos = card.querySelector('[role=img][aria-label^="Vas en el día"]');
@@ -434,16 +439,16 @@ export function paintCaminoCard(card, from) {
   // el botón dice lo que hará
   const btn = [...card.querySelectorAll('a')].find(a => /Continuar la Aventura/i.test(a.textContent));
   const primerDia = !doneCount() && !contentDone(1); // aún no ha visto la primera historia
-  const label = st.key === 4 ? 'Unirme gratis' : st.key === 5 ? 'Ver el nacimiento' : st.key === 6 ? 'Seguir caminando' : st.sorpresa ? 'Ir al juego sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
+  const label = st.cta ? st.cta : st.sorpresa ? 'Ir al juego sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
   const span = btn?.querySelector('span'); if (span) span.textContent = label; else if (btn) setText(btn, /Continuar la Aventura/i, label);
   // Navidad: el pesebre en la tarjeta
-  if (S.hoy >= 27 && scene) {
+  if (S.hoy >= 27 && scene && st.key !== 6 && st.key !== 4 && st.key !== 8) {
     const land = $$(scene, 'img').find(i => !/^Teodoro/i.test(i.alt || ''));
     if (land) { land.src = A(IMG.nacimiento); land.alt = 'El nacimiento de Jesús'; Object.assign(land.style, { left: '0', top: '0', width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 35%' }); }
     if (teo) teo.style.display = 'none';
     $$(scene, 'span').forEach(sp => { sp.style.display = 'none'; });
   }
-  const toMap = () => st.key === 5 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar(from);
+  const toMap = () => st.key === 5 || st.key === 7 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar(from);
   if (scene) on(card, scene, toMap);
   if (btn) on(card, btn, toMap);
   const en = card.querySelector('a[aria-label^="Energía de Teodoro"]');
@@ -462,7 +467,7 @@ function simplifyCard(card) {
   hero.style.height = H + 'px'; body.style.top = H + 'px';
   const [land, shadow, teo] = [...hero.children];
   // el paisaje crece en proporción y conserva el mismo encuadre (la imagen trae otro Teodoro fuera de cuadro)
-  if (land?.tagName === 'IMG' && !/nacimiento/i.test(land.alt || '') && S.hoy < 27) {
+  if (land?.tagName === 'IMG' && !/nacimiento/i.test(land.alt || '')) {
     const k = (260 + dy) / 260, l0 = parseFloat(land.style.left) || -263;
     land.style.width = (621 * k) + 'px'; land.style.height = (260 * k) + 'px'; land.style.left = (l0 * k) + 'px'; land.style.top = (-26 * k) + 'px';
   }
@@ -490,7 +495,7 @@ register('teaser', {
     if (p.tarde) {
       const caja = root.querySelector('[aria-label^="Camino a Belén empieza"]') || root;
       const tit = $$(caja, '*').find(el => el.childElementCount === 0 && el.textContent.trim() === 'Camino a Belén');
-      if (tit) tit.textContent = '¡Ya salimos! ¿Vienes?';
+      if (tit) tit.textContent = S.hoy >= 27 ? '¡Aún llegas a Belén!' : '¡Ya salimos! ¿Vienes?';
       caja.setAttribute('aria-label', 'Camino a Belén ya salió: aún llegas');
       // fuera la cuenta regresiva: la caja más pequeña que tiene «EMPIEZA EN» y los minutos
       let cd = textEl(caja, /EMPIEZA EN/i); while (cd && cd !== caja && !/MINUTOS|min/i.test(cd.textContent)) cd = cd.parentElement;
@@ -500,7 +505,7 @@ register('teaser', {
         // la ventana se acorta lo mismo que medía la cuenta regresiva (sin hueco abajo)
         for (let el = cd.parentElement; el && el !== root.parentElement; el = el.parentElement) { const h = parseFloat(el.style.height); if (h > 300) { el.style.height = (h - alto) + 'px'; break; } }
       }
-      replaceText(caja, /^Acompaña a Teodoro 26 días.*$/, 'Aún llegas a Belén. Teodoro te espera en el camino.');
+      replaceText(caja, /^Acompaña a Teodoro 26 días.*$/, S.hoy >= 27 ? `Teodoro te espera en el camino. ${cuentaGracia()}.` : 'Aún llegas a Belén. Teodoro te espera en el camino.');
     }
     on(root, 'Ahora no', () => back('hoy', 'fade'));
     on(root, 'Cerrar', () => back('hoy', 'fade'));
@@ -1169,7 +1174,13 @@ register('final', {
   files: F('V2-Final-claro', 'V2-Final'),
   async mount(root, p, layer) {
     const first = !contentDone(26);
-    if (first) { S.completos[26] = { contenido: true }; S.pasoAnimado = null; addPanes(panesContenido()); save(); }
+    if (first && fase() !== 'recuerdo') { S.completos[26] = { contenido: true }; S.pasoAnimado = null; addPanes(panesContenido()); save(); }
+    // la llegada a Belén se celebra con los 26 cuentos; si faltan, Teodoro espera en el primero sin ver
+    if (vistos() < 26) {
+      const sig = walkDay();
+      setTimeout(() => toast('¡Jesús nació!', sig && fase() !== 'recuerdo' ? `Teodoro te espera en el día ${sig}` : 'Nos vemos en Adviento'), 300);
+      go('mapa', {}, 'fade', { replace: true }); return;
+    }
     replaceText(root, /Lucía/g, S.nombre);
     const total = doneCount() + (isDone(26) ? 0 : 0);
     setText(root, /^26$/, String(Math.min(26, doneCount())));

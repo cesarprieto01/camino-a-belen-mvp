@@ -126,6 +126,17 @@ const SHOTS = {
   'mundos-pre': async () => { await setup({ hoy: 0, scr: 'mundos' }); },
   'pre-teodoro': async () => { await setup({ hoy: 0, inscrito: false, scr: 'teodoro' }); },
   'pre-teodoro-dentro': async () => { await setup({ hoy: 0, scr: 'teodoro' }); },
+  // periodo de gracia (25 dic – 6 ene) y recuerdo (desde el 7 ene)
+  'gracia-medias': async () => { await setup({ hoy: 32, upto: 14 }); },
+  'gracia-medias-mapa': async () => { await setup({ hoy: 32, upto: 14, scr: 'mapa' }); },
+  'gracia-medias-teodoro': async () => { await setup({ hoy: 32, upto: 14, scr: 'teodoro' }); },
+  'gracia-ultimo': async () => { await setup({ hoy: 39, upto: 20 }); },
+  'gracia-nada': async () => { await setup({ hoy: 35, upto: 0 }); },
+  'gracia-nada-mapa': async () => { await setup({ hoy: 35, upto: 0, scr: 'mapa' }); },
+  'gracia-sin-inscribir': async () => { await setup({ hoy: 30, inscrito: false, S: { tardeVisto: false } }); await p.waitForTimeout(1300); },
+  'gracia-completo-mapa': async () => { await setup({ hoy: 32, upto: 26, scr: 'mapa' }); },
+  'recuerdo': async () => { await setup({ hoy: 40, upto: 14 }); },
+  'recuerdo-mapa': async () => { await setup({ hoy: 40, upto: 14, scr: 'mapa' }); },
   'teodoro-nazaret': async () => { await setup({ hoy: 9, upto: 8, scr: 'teodoro', S: { cuartoNuevo: true } }); },
 };
 const names = only ? only.split(',') : Object.keys(SHOTS);

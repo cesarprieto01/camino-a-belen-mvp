@@ -1,6 +1,6 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
 import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
-  lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
+  lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia } from './core.js';
 import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, usaHub } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
@@ -138,6 +138,12 @@ register('mapa', {
         el.innerHTML = T.todayInner.replace(/>\d+</, `>${n}<`);
         el.setAttribute('aria-label', `Día ${n}, hoy: ${d.title}`);
         el.dataset.today = '1';
+      } else if (n <= lastDay() && fase() === 'recuerdo') {
+        restyle(el, n === 26 ? T.last : T.locked, p, n === 26 ? 88 : 64);
+        el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon).replace(/>\d+</, `>${n}<`);
+        [...el.children].filter(c => c.tagName !== 'IMG' && /absolute/.test(c.style.position || '')).forEach(c => c.remove());
+        el.style.opacity = '.6';
+        el.setAttribute('aria-label', `Día ${n}, ${d.title}`);
       } else if (n <= lastDay()) {
         restyle(el, n === 26 ? T.last : T.locked, p, n === 26 ? 88 : 64);
         el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon.replace('opacity: .55', 'opacity: 1')).replace(/>\d+</, `>${n}<`);
@@ -242,7 +248,8 @@ register('mapa', {
     chip?.setAttribute('aria-label', `Día ${focus} de 26`);
     // Teodoro va atrasado: la píldora dice su día y el de hoy
     const hoyN = Math.min(lastDay(), 26);
-    if (chip && S.hoy > 0 && focus !== hoyN) { replaceText(chip, /\/ 26/, `· hoy ${hoyN}`); chip.setAttribute('aria-label', `Día ${focus}. Hoy es el día ${hoyN}`); }
+    if (chip && S.hoy > 0 && S.hoy < 27 && focus !== hoyN) { replaceText(chip, /\/ 26/, `· hoy ${hoyN}`); chip.setAttribute('aria-label', `Día ${focus}. Hoy es el día ${hoyN}`); }
+    if (chip && fase() === 'gracia' && S.inscrito && vistos() < 26) { chip.textContent = cuentaGracia(true); chip.style.whiteSpace = 'nowrap'; chip.style.fontSize = '16px'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', cuentaGracia()); }
     if (chip && S.hoy <= 0) { chip.textContent = 'Sale el 29'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', 'El camino sale el 29 de noviembre'); }
     paintEnergy(layer);
     bindMute(layer.querySelector('.map-head button[aria-label^="Música"]'));
@@ -345,6 +352,7 @@ function tapNode(n, el, layer) {
   const enHoja = layer.dataset.dia != null ? +layer.dataset.dia : walkDay();
   if (n === enHoja) { startDay(n); return; } // el día que ya muestra la hoja: empezar
   if (isDone(n)) { showPast(layer, n, el); return; }
+  if (fase() === 'recuerdo' && !contentDone(n) && n < 26) { animate(el, 'a-pop'); toast('El camino de este año terminó', 'Nos vemos en Adviento'); return; }
   // cualquier día ya desbloqueado (atrasado o con la trivia pendiente): su hoja, sin saltar directo
   if (n <= lastDay()) { animate(el, 'a-pop'); go('mapa', { dia: n }, 'none', { replace: true }); return; }
   showBubble(layer, n, el);
@@ -473,7 +481,7 @@ function paintSheet(layer, T, dia) {
   if (act === 26 && !contentDone(26) && T.sheet26) {
     const t = document.createElement('template'); t.innerHTML = T.sheet26;
     const s26 = t.content.firstElementChild; s26.dataset.sheet = '1'; sheet.replaceWith(s26); sheet = s26;
-    replaceText(sheet, /¡Llegamos a Belén!/, 'Hoy nace Jesús');
+    replaceText(sheet, /¡Llegamos a Belén!/, S.hoy <= 27 ? 'Hoy nace Jesús' : 'El nacimiento');
     const a = sheet.querySelector('a'); if (a) on(layer, a, () => startDay(26));
     sheet.classList.add('in-up');
     return;

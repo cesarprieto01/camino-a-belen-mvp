@@ -58,21 +58,35 @@ export const triviaPendiente = n => hasTrivia(n) && contentDone(n) && !S.complet
 export const lastDay = () => Math.min(S.hoy, 26);
 /** Día que toca jugar: el primero sin terminar hasta hoy. null si ya está todo hecho. */
 export function activeDay() {
-  if (S.hoy <= 0) return null; // antes del 29 no hay día que hacer: el camino empieza en el día 1
+  if (S.hoy <= 0 || S.hoy > GRACIA_FIN) return null; // antes del 29 aún no empieza; desde el 7 de enero queda como recuerdo
   for (let n = 1; n <= lastDay(); n++) if (!isDone(n)) return n;
   return null;
 }
-/** Día donde está Teodoro: siempre el día del calendario (aunque la familia vaya atrasada); nunca camina hacia atrás. */
-export const teoDay = () => S.hoy <= 0 ? null : Math.min(lastDay(), 26);
-/** Día que se propone hacer: el de hoy si falta; si no, el primero pendiente (historia o trivia). */
+/** Día donde está Teodoro: durante el camino, el día del calendario (aunque la familia vaya atrasada); nunca camina hacia atrás. */
+export const teoDay = () => S.hoy <= 0 ? null : S.hoy >= 27 ? (primerSinVer() ?? 26) : Math.min(lastDay(), 26);
+/** Después de Nochebuena Teodoro espera donde la familia se quedó: el primer cuento sin ver (o Belén si los vio todos). */
+const primerSinVer = () => { for (let n = 1; n <= 26; n++) if (!contentDone(n)) return n; return null; };
+/** Día que se propone hacer: el de hoy si falta; si no, el primero pendiente (historia o trivia).
+ *  En la gracia (25 dic – 6 ene) se sigue en orden: el primer cuento sin ver. */
 export function walkDay() {
   const h = teoDay();
-  if (h == null) return activeDay();
+  if (h == null || S.hoy > GRACIA_FIN) return activeDay();
+  if (S.hoy >= 27) return primerSinVer() ?? activeDay();
   return isDone(h) ? activeDay() : h;
+}
+/** 6 de enero (Reyes): último día para terminar el camino; el 25 de diciembre es el 27. */
+export const GRACIA_FIN = 39;
+/** Cuentos vistos (el check del mapa): lo que cuenta para llegar a Belén. */
+export const vistos = () => { let v = 0; for (let n = 1; n <= 26; n++) if (contentDone(n)) v++; return v; };
+/** Contador de la gracia: cuánto queda para terminar el camino (contando hoy). Corto para la cabecera del mapa. */
+export function cuentaGracia(corto = false) {
+  const q = GRACIA_FIN - S.hoy + 1;
+  if (q <= 1) return corto ? 'Último día' : 'Último día para llegar a Belén';
+  return corto ? `Quedan ${q} días` : `Quedan ${q} días para llegar a Belén`;
 }
 export const doneCount = () => Object.keys(S.completos).filter(n => +n >= 1 && isDone(+n)).length;
 export const pendientes = () => { const a = activeDay(); return a == null || a < 1 ? 0 : lastDay() - a + 1; };
-export const fase = () => S.hoy <= 0 ? 'antes' : S.hoy >= 27 ? 'despues' : 'camino';
+export const fase = () => S.hoy <= 0 ? 'antes' : S.hoy <= 26 ? 'camino' : S.hoy <= GRACIA_FIN ? 'gracia' : 'recuerdo';
 export const dark = () => S.tema === 'oscuro';
 export const stars = n => hasTrivia(n) ? S.completos[n]?.estrellas || 0 : 0; // sin trivia no hay estrellas
 
