@@ -506,3 +506,8 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .theo-heroe-t .theo-heroe-pie { transition: opacity .2s; }
 .theo-heroe-t.lado .theo-heroe-pie { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .theo-heroe-t .theo-heroe-pie { transition: none; } }
+/* botón de controles del prototipo: casi transparente mientras no se usa, para que no tape la app (revisión UX 22-oct) */
+@media (max-width: 1100px) {
+  #panelBtn { opacity: .38; transition: opacity .2s; }
+  #panelBtn:hover, #panelBtn:focus-visible, #panelBtn:active, body.panel-open #panelBtn { opacity: 1; }
+}
