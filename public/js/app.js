@@ -135,6 +135,8 @@ function advance(k) {
   // Teodoro solo se cansa por días del camino (1–26) en que no caminaron; antes del 29 no cuenta
   let baja = 0;
   for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= 26 && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
+  // la manzana guardada de la ruleta le ahorra a Teodoro un día de cansancio
+  if (baja && S.manzana) { baja--; S.manzana = false; }
   S.bateria = Math.max(0, S.bateria - baja);
   const antes = S.hoy;
   S.hoy = Math.min(27, S.hoy + k);

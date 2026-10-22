@@ -2,7 +2,7 @@
 // Suena en el mapa y en la trivia; en lo demás se apaga con fundido.
 import { S, save, cur, onChange } from './core.js';
 
-const VOL = 0.75; // 25 % menos que el original
+const VOL = 0.375; // la mitad de lo que sonaba (37,5 % del original): de fondo, sin tapar las voces
 const ARCHIVO = 'audio/burrito-sabanero.m4a';
 const FRAMES = 2499000; // largo exacto del loop original (56,67 s a 44,1 kHz)
 // primeras 256 muestras del original: con ellas se encuentra dónde empieza el loop tras el relleno del AAC (sin clic al repetir)

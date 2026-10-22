@@ -540,7 +540,11 @@ function paintSheet(layer, T, dia) {
     const [tt, st] = r.querySelector(':scope > div').children;
     tt.textContent = title; st.textContent = sub;
     const b = r.lastElementChild;
-    if (badge === 'lock') r.dataset.lock = '1';
+    if (badge === 'lock') {
+      r.dataset.lock = '1';
+      // cerrado = el mismo candado del mapa (el círculo con ✦ parecía un botón)
+      b.outerHTML = '<img src="assets/candado.webp" alt="" aria-hidden="true" style="width:24px;height:auto;flex:none;margin-right:6px">';
+    }
     if (badge === 'ok') {
       r.style.opacity = '1'; r.style.boxShadow = 'none';
       b.outerHTML = T.doneBadge;
@@ -559,7 +563,7 @@ function paintSheet(layer, T, dia) {
   if (n !== 0 && n !== 26) {
     if (hasTrivia(n)) {
       const trivOn = contentDone(n) && !isDone(n);
-      list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Se abre al terminar ${CONT[2]}`, isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
+      list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Después de ${CONT[2]}`.replace('de el ', 'del '), isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
     }
     const sorp = RULES.sorpresa[n];
     if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay juego sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));

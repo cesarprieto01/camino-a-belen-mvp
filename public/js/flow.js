@@ -349,6 +349,7 @@ register('hoy', {
       return;
     }
 
+    if (!S.inscrito && !S.tardeVisto && S.hoy <= 26) { S.tardeVisto = true; save(); setTimeout(async () => { const c = await import('./core.js'); if (!S.inscrito && c.cur?.name === 'hoy' && c.cur.layer === layer) go('teaser', { tarde: true }, 'modal'); }, 900); }
     const n = walkDay() ?? Math.min(lastDay(), 26); // donde va Teodoro
     // la tarjeta del camino sale dos veces (destacado y tarjeta grande): las dos con el mismo estado
     const cards = $$(root, '[role=group][aria-label^="Camino a Belén"]');
@@ -483,7 +484,24 @@ register('teaser', {
     // desde la invitación: es la vista de tu amigo; tú ya estás inscrito
     const reg = find(root, 'Unirme gratis') || find(root, 'Inscribirme');
     if (p.preview) on(root, reg, () => { nota('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
+    else if (p.tarde) on(root, reg, () => entrar('hoy'));
     else on(root, reg, (ev, el) => inscribir(el));
+    // el camino ya salió y la familia no se ha unido: la misma ventana, como invitación a subirse en marcha
+    if (p.tarde) {
+      const caja = root.querySelector('[aria-label^="Camino a Belén empieza"]') || root;
+      const tit = $$(caja, '*').find(el => el.childElementCount === 0 && el.textContent.trim() === 'Camino a Belén');
+      if (tit) tit.textContent = '¡Ya salimos! ¿Vienes?';
+      caja.setAttribute('aria-label', 'Camino a Belén ya salió: aún llegas');
+      // fuera la cuenta regresiva: la caja más pequeña que tiene «EMPIEZA EN» y los minutos
+      let cd = textEl(caja, /EMPIEZA EN/i); while (cd && cd !== caja && !/MINUTOS|min/i.test(cd.textContent)) cd = cd.parentElement;
+      if (cd && cd !== caja) {
+        const alto = cd.offsetHeight + (parseFloat(getComputedStyle(cd.parentElement).rowGap) || 0);
+        cd.style.display = 'none';
+        // la ventana se acorta lo mismo que medía la cuenta regresiva (sin hueco abajo)
+        for (let el = cd.parentElement; el && el !== root.parentElement; el = el.parentElement) { const h = parseFloat(el.style.height); if (h > 300) { el.style.height = (h - alto) + 'px'; break; } }
+      }
+      replaceText(caja, /^Acompaña a Teodoro 26 días.*$/, 'Aún llegas a Belén. Teodoro te espera en el camino.');
+    }
     on(root, 'Ahora no', () => back('hoy', 'fade'));
     on(root, 'Cerrar', () => back('hoy', 'fade'));
     tabs(root); appContent(root);
@@ -1027,7 +1045,8 @@ register('ruletaPop', {
       if (premio === 'panes') addPanes(RULES.panes.ruleta);
       if (premio === 'prenda') S.prendas.push(PRENDAS[week].id);
       if (premio === 'cuarto') S.cuartoNuevo = true;
-      if (premio === 'manzana') { S.manzanaLlena = S.bateria >= 5; setBateria(Math.min(5, S.bateria + 1)); }
+      // con la energía llena, Teodoro la guarda para mañana (no se pierde el premio)
+      if (premio === 'manzana') { S.manzanaLlena = S.bateria >= 5; if (S.manzanaLlena) S.manzana = true; else setBateria(S.bateria + 1); }
       save();
       navigator.vibrate?.(30);
       await wait(300);
@@ -1056,7 +1075,7 @@ register('ruletaPremio', {
     setText(root, '¡Ganaste', info.t1); setText(root, 'un gorro!', info.t2);
     const subEl = textEl(root, 'Ya está en el');
     if (!info.sub && subEl) subEl.textContent = 'Ya están en la canasta de Teodoro';
-    else if (p.premio === 'manzana' && subEl) subEl.textContent = S.manzanaLlena ? '¡Qué rica! Teodoro está feliz' : 'Teodoro se la comió: ¡más energía!';
+    else if (p.premio === 'manzana' && subEl) subEl.textContent = S.manzanaLlena ? 'Teodoro la guardó para mañana' : 'Teodoro se la comió: ¡más energía!';
     else if (prenda && subEl) subEl.textContent = prenda.sub; // el enlace al cuarto va aparte, no dos veces
     // halo del premio: en oscuro, luz azul clara (el dorado sobre azul se veía color barro)
     if (dark()) $$(root, 'div[aria-hidden="true"]').filter(d => /radial-gradient/.test(d.style.background) && /245,\s*219,\s*120/.test(d.style.background)).forEach(d => { d.style.background = 'radial-gradient(closest-side, rgba(255,246,221,.22), rgba(255,246,221,0))'; });
@@ -1174,6 +1193,7 @@ register('finalCompartir', {
     const dias = doneCount();
     const estrellas = Object.keys(S.completos).reduce((s, k) => s + stars(+k), 0); // solo los días con trivia tienen estrellas
     replaceText(root, /Lucía/g, S.nombre);
+    textEl(root, 'Así la verá tu familia')?.style.setProperty('visibility', 'hidden'); // explicaba la pantalla
     const card = root.querySelector('[role=img][aria-label^="Tarjeta"]');
     if (card) {
       card.setAttribute('aria-label', `Tarjeta: Llegamos a Belén con Teodoro. ${dias} días y ${estrellas} estrellas`);

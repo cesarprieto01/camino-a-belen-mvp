@@ -51,7 +51,7 @@ const SCENES = {
 // Video: cuento, meditación, Evangelio del domingo (lo lee un influencer), Amigos de la Biblia y Navidad de Canela.
 export const TYPES = {
   intro: { label: 'Teodoro te lo cuenta', content: 'Video', min: 3, verbo: 'Ver video', fin: '¡Terminaste el video!' },
-  domingo: { label: 'Domingo', content: 'Video', min: 4, verbo: 'Ver video', fin: '¡Escucharon el Evangelio!' },
+  domingo: { label: 'Domingo', content: 'Video', min: 4, verbo: 'Ver video', fin: '¡Escuchaste el Evangelio!' },
   meditacion: { label: 'Meditación', content: 'Video', min: 4, verbo: 'Ver video', fin: '¡Terminaste el video!' },
   cuento: { label: 'Cuento con Teodoro', content: 'Video', min: 5, verbo: 'Ver video', fin: '¡Terminaste el video!' },
   amigos: { label: 'Amigos de la Biblia', content: 'Video', min: 5, verbo: 'Ver video', fin: '¡Terminaste el video!' },

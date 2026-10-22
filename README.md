@@ -32,6 +32,6 @@ Abre http://localhost:5190/app.html. El botón de controles (arriba a la derecha
 - Juego sorpresa cada 3 días (Memorama, Adivinanza, Desafío en familia).
 - Ruleta los días 4, 11, 18 y 24, solo al tocarla en el mapa.
 - Al terminar cada video o canción: «¿Te gustó…?» con 5 estrellas y Compartir.
-- Música de fondo en el mapa y la trivia: «Burrito Sabanero» (piano, en loop sin cortes) al 75 % del volumen original (`public/audio/`, `js/musica.js`).
+- Música de fondo en el mapa y la trivia: «Burrito Sabanero» (piano, en loop sin cortes) al 37,5 % del volumen original (`public/audio/`, `js/musica.js`).
 
 El contenido, las ilustraciones y la marca Theo pertenecen a Familify.
