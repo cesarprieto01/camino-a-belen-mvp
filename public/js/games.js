@@ -490,7 +490,7 @@ register('adivinanza', {
       if (tFill) tFill.style.width = '100%'; if (tTxt) tTxt.textContent = SECS + 's';
       root.appendChild(gate);
       // mientras está la tapa, los botones de la palabra esperan
-      acts.forEach(a => { a.classList.add('adv-wait'); a.setAttribute('aria-disabled', 'true'); });
+      acts.forEach(a => { a.classList.add('adv-wait'); a.setAttribute('aria-disabled', 'true'); if (/adivinaron/i.test(a.textContent)) a.classList.add('adv-cta'); });
       on(root, gate, () => {
         acts.forEach(a => { a.classList.remove('adv-wait'); a.removeAttribute('aria-disabled'); });
         if (reduced()) gate.remove(); else { gate.classList.add('off'); setTimeout(() => gate.remove(), 260); }

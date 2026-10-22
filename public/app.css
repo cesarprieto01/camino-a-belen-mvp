@@ -311,9 +311,9 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .adv-gate { position: absolute; z-index: 30; border: 0; border-radius: 26px; background: linear-gradient(160deg, #0B748A, #085D6F); color: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px; text-align: center; cursor: pointer; box-shadow: 0 12px 28px rgba(8,93,111,.3); transition: opacity .22s cubic-bezier(.23,1,.32,1), transform .22s cubic-bezier(.23,1,.32,1); }
 .adv-gate b { font: 800 34px 'Neue Montreal', Mulish, sans-serif; }
 .adv-gate span { font: 700 16px/1.35 Mulish, sans-serif; opacity: .92; max-width: 240px; }
-.adv-gate i { font: 800 14px Mulish, sans-serif; font-style: normal; margin-top: 10px; padding: 9px 16px; border-radius: 18px; background: #F5DB78; color: #0B748A; }
+.adv-gate i { font: 800 14px Mulish, sans-serif; font-style: normal; margin-top: 10px; padding: 9px 16px; border-radius: 18px; background: #F5DB78; color: #085D6F; }
 .adv-gate.off { opacity: 0; transform: scale(.96); }
-.pill-premium { position: absolute; right: 10px; top: 10px; padding: 3px 9px; border-radius: 10px; background: #F5DB78; color: #0B748A; font: 800 11px Mulish, sans-serif; letter-spacing: .04em; pointer-events: none; }
+.pill-premium { position: absolute; right: 10px; top: 10px; padding: 3px 9px; border-radius: 10px; background: #F5DB78; color: #085D6F; font: 800 12px Mulish, sans-serif; letter-spacing: .04em; pointer-events: none; }
 
 /* minimizar / abrir la hoja del día */
 .sheet-min { position: absolute; right: 10px; top: 8px; width: 44px; height: 44px; border-radius: 22px; border: 0; background: rgba(11,116,138,.08); color: #0B748A; display: grid; place-items: center; cursor: pointer; z-index: 2; transition: transform .3s cubic-bezier(.32,.72,0,1); }
@@ -521,3 +521,12 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 /* reproductor: el título y el subtítulo blancos se leen sobre el cielo claro; el control para bajar contrasta */
 .layer[data-screen="reproductor"] .root > *:not(img) { text-shadow: 0 1px 2px rgba(4,30,48,.55), 0 0 14px rgba(4,30,48,.35); }
 .layer[data-screen="reproductor"] a[aria-label="Bajar el reproductor"] { background: rgba(255,255,255,.95) !important; box-shadow: 0 0 0 4px rgba(0,8,43,.35); }
+
+/* reproductor en claro: el panel de abajo en azul Theo para que el blanco se lea (antes 1,9:1 sobre el celeste) */
+:root:not([data-theme="dark"]) .layer[data-screen="reproductor"] .root > div { background: #0B748A !important; }
+:root:not([data-theme="dark"]) .layer[data-screen="reproductor"] div[aria-hidden="true"][style*="linear-gradient"] { background: linear-gradient(180deg, rgba(11,116,138,0) 42%, rgba(11,116,138,.9) 58%, #0B748A 66%) !important; }
+:root:not([data-theme="dark"]) .layer[data-screen="reproductor"] [role=slider] > div:first-child { background: rgba(255,255,255,.3) !important; }
+/* oscuro: las estrellas del cielo no caen sobre la hora, la batería ni los contadores */
+:root[data-theme="dark"] .layer img[src*="13d1bc33"], :root[data-theme="dark"] .layer img[src*="dfafe8f7"] { -webkit-mask-image: linear-gradient(180deg, transparent 0, transparent 44px, #000 104px); mask-image: linear-gradient(180deg, transparent 0, transparent 44px, #000 104px); }
+/* adivinanza en oscuro: «¡La adivinaron!» en espera se ve en espera, no roto */
+:root[data-theme="dark"] .adv-wait.adv-cta { opacity: 1; background: #3A4F6E !important; color: #A9B8CC !important; box-shadow: none !important; }

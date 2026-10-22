@@ -594,6 +594,8 @@ register('teodoro', {
     paintEnergy(root);
     patchCuarto(root);
     if (fase() === 'antes') { startCountdown(root); ánimo(root); }
+    if (fase() === 'antes' && !dark()) { const mt = [...(root.firstElementChild?.children || [])].find(el => el.style.top === '574px') || textEl(root, 'Mundos')?.parentElement;
+      if (mt) { mt.style.color = '#02254F'; $$(mt, '*').forEach(x => { x.style.color = '#02254F'; x.style.textShadow = 'none'; x.style.opacity = '1'; }); } }
     // antes del 29: el mundo Enero bloqueado sobra en el cuarto (se ve en Mundos); las misiones suben a su sitio
     const enero = textEl(root, 'Enero')?.closest('div[style*="top: 1064px"]');
     if (enero) {
@@ -757,6 +759,7 @@ register('reproductor', {
       const pct = Math.min(100, t / DUR * 100);
       if (fill) fill.style.width = pct + '%';
       if (knob) knob.style.left = `calc(${pct}% - 7px)`;
+      if (slider) { slider.setAttribute('aria-valuenow', String(Math.round(pct))); slider.setAttribute('aria-valuetext', Math.round(pct) + ' %'); }
     };
     const loop = now => {
       if (!layer.isConnected) return;
@@ -781,14 +784,23 @@ register('reproductor', {
     on(root, play, () => setPlaying(!playing));
     on(root, 'Retroceder 10 segundos', () => { t = Math.max(0, t - 1000); paint(); });
     on(root, 'Adelantar 10 segundos', () => { t = Math.min(DUR, t + 1000); paint(); });
-    if (slider) on(root, slider, ev => { const r = slider.getBoundingClientRect(); t = DUR * Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)); paint(); });
-    ['Texto', 'Voz', 'Repetir'].forEach(k => on(root, k, (ev, el) => { const s = el.querySelector('span'); if (s) s.style.background = s.style.background.includes('255,255,255,.2') || s.style.background.includes('0.2') ? '#FFFFFF' : 'rgba(255,255,255,.2)'; nota(k, 'Control del reproductor de Theo (ya existe)'); }));
+    if (slider) {
+      on(root, slider, ev => { if (ev.clientX == null) return; const r = slider.getBoundingClientRect(); t = DUR * Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)); paint(); });
+      slider.addEventListener('keydown', ev => { if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') { ev.preventDefault(); t = Math.min(DUR, Math.max(0, t + (ev.key === 'ArrowRight' ? 1000 : -1000))); paint(); } });
+    }
+    // Texto / Voz / Repetir: activo = círculo blanco con ícono azul; inactivo = círculo translúcido con ícono blanco (antes el ícono desaparecía)
+    const pintaCtl = (el, on) => { const s = el.querySelector('span'); if (s) s.style.background = on ? '#FFFFFF' : 'rgba(255,255,255,.2)';
+      el.querySelectorAll('svg, svg [stroke]').forEach(n => { if (n.getAttribute('stroke') && n.getAttribute('stroke') !== 'none') n.setAttribute('stroke', on ? '#0B748A' : '#FFFFFF'); });
+      el.setAttribute('aria-pressed', String(on)); el.dataset.on = on ? '1' : ''; };
+    ['Texto', 'Voz', 'Repetir'].forEach(k => { const el = find(root, k); if (el) pintaCtl(el, k === 'Voz'); });
+    ['Texto', 'Voz', 'Repetir'].forEach(k => on(root, k, (ev, el) => { pintaCtl(el, !el.dataset.on); nota(k, 'Control del reproductor de Theo (ya existe)'); }));
     const cerrar = () => { cancelAnimationFrame(raf); if (p.nacimiento || p.extra === 'cancion') back('mapa', 'down'); else go('mapa', {}, 'down', { replace: true }); };
-    on(root, 'Bajar el reproductor', cerrar);
+    const barrita = root.querySelector('a[aria-label="Bajar el reproductor"]');
+    if (barrita) { on(root, barrita, cerrar); barrita.setAttribute('aria-hidden', 'true'); barrita.tabIndex = -1; }
     const x = document.createElement('button');
-    x.type = 'button'; x.setAttribute('aria-label', 'Cerrar');
+    x.type = 'button'; x.setAttribute('aria-label', 'Bajar el reproductor');
     x.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-    x.style.cssText = 'position:absolute;left:14px;top:54px;width:44px;height:44px;border-radius:22px;border:0;background:rgba(0,8,43,.35);display:grid;place-items:center;cursor:pointer;z-index:6';
+    x.style.cssText = 'position:absolute;left:14px;top:54px;width:44px;height:44px;border-radius:22px;border:0;background:rgba(0,8,43,.55);display:grid;place-items:center;cursor:pointer;z-index:6';
     root.appendChild(x); on(root, x, cerrar);
     if (slider) { slider.style.paddingBlock = '15px'; slider.style.marginTop = '-15px'; slider.style.backgroundClip = 'content-box'; }
   },
@@ -1025,7 +1037,7 @@ register('ruletaPop', {
       if (premio === 'panes') addPanes(RULES.panes.ruleta);
       if (premio === 'prenda') S.prendas.push(PRENDAS[week].id);
       if (premio === 'cuarto') S.cuartoNuevo = true;
-      if (premio === 'manzana') setBateria(Math.min(5, S.bateria + 1));
+      if (premio === 'manzana') { S.manzanaLlena = S.bateria >= 5; setBateria(Math.min(5, S.bateria + 1)); }
       save();
       navigator.vibrate?.(30);
       await wait(300);
@@ -1054,9 +1066,11 @@ register('ruletaPremio', {
     setText(root, '¡Ganaste', info.t1); setText(root, 'un gorro!', info.t2);
     const subEl = textEl(root, 'Ya está en el');
     if (!info.sub && subEl) subEl.textContent = 'Ya están en la canasta de Teodoro';
-    else if (p.premio === 'manzana' && subEl) subEl.textContent = 'Teodoro se la comió: ¡más energía!';
-    else if (p.premio !== 'cuarto' && subEl) subEl.textContent = 'Teodoro ya la tiene puesta'; // el enlace al cuarto va aparte, no dos veces
-    if (p.premio !== 'cuarto') floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
+    else if (p.premio === 'manzana' && subEl) subEl.textContent = S.manzanaLlena ? '¡Qué rica! Teodoro está feliz' : 'Teodoro se la comió: ¡más energía!';
+    else if (prenda && subEl) subEl.textContent = prenda.sub; // el enlace al cuarto va aparte, no dos veces
+    // halo del premio: en oscuro, luz azul clara (el dorado sobre azul se veía color barro)
+    if (dark()) $$(root, 'div[aria-hidden="true"]').filter(d => /radial-gradient/.test(d.style.background) && /245,\s*219,\s*120/.test(d.style.background)).forEach(d => { d.style.background = 'radial-gradient(closest-side, rgba(255,246,221,.22), rgba(255,246,221,0))'; });
+    if (p.premio === 'panes' || prenda) floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
     confetti(layer, 195, 300, 36);
     const alMapa = () => go('mapa', {}, 'down', { replace: true });
     const seguir = on(root, 'Empezar el cuento', alMapa); if (seguir) seguir.dataset.back = '1';
@@ -1064,7 +1078,12 @@ register('ruletaPremio', {
     // la ilustración del botón (▶ de «empezar») ya no aplica
     find(root, 'Volver al camino')?.querySelector('svg')?.remove();
     const ver = find(root, 'Ver a Teodoro');
-    if (ver) { if (prenda) { setText(ver, 'Ver a Teodoro', 'Ver el cuarto de Teodoro'); on(root, ver, () => go('teodoro', {}, 'fade', { tab: true })); } else ver.style.display = 'none'; }
+    if (ver) { if (prenda) {
+      setText(ver, 'Ver a Teodoro', 'Ver el cuarto de Teodoro'); on(root, ver, () => go('teodoro', {}, 'fade', { tab: true }));
+      // dentro de la ventana, no flotando sobre el mapa
+      const dlg = root.querySelector('[role=dialog]'); if (dlg) dlg.style.height = '548px';
+      Object.assign(ver.style, { top: '654px', left: '40px', right: '40px', height: '44px', color: dark() ? '#FFFFFF' : '#0B748A', zIndex: 5 });
+    } else ver.style.display = 'none'; }
     xEnTarjeta(root, alMapa);
   },
 });
