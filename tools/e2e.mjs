@@ -330,7 +330,7 @@ const flows = {
     await p.mouse.move(g.x, g.y); await p.mouse.down(); await p.mouse.move(g.x, g.y + 60, { steps: 6 }); await p.mouse.move(g.x, g.y + 160, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(600);
     s = await st(); if (!s.mini) errs.push('arrastrar hacia abajo no minimiza');
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child .mb-cta').click()); await p.waitForTimeout(900);
-    if (!['reproductor', 'ruletaPop'].includes(await screen())) errs.push('el ▶ de la barra no abre el día (historia o su ruleta): ' + await screen());
+    if (!['reproductor', 'ruletaPop', 'hub'].includes(await screen())) errs.push('el ▶ de la barra no abre el día (historia, reto o su ruleta): ' + await screen());
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('mapa', {}, 'none'); }); await p.waitForTimeout(1300);
     await tap('3 trivias pendientes'); await p.waitForTimeout(700);
     const c = await p.evaluate(async () => { const c = await import('/js/core.js'); return c.cur.name + ' ' + c.cur.params.day; });
@@ -393,9 +393,9 @@ const flows = {
     const tapNodo = n => p.evaluate(n => document.querySelector(`#viewport .layer:last-child a[aria-label^="Día ${n},"], #viewport .layer:last-child a[aria-label^="Día ${n}:"]`)?.click(), n);
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 10, inscrito: true, teaserVisto: true }); c.S.completos[0] = { contenido: true }; for (const d of [1, 2, 3]) c.S.completos[d] = { contenido: true }; c.save(); c.clearHistory(); c.go('mapa', {}, 'none'); });
     await p.waitForTimeout(1500);
-    // día 10 desbloqueado (va en el 4): su hoja, no un bloqueo
-    await tapNodo(10); await p.waitForTimeout(1200); let s = await st(); await shot('dia10');
-    if (s.dia !== 10 || !/Ver|Escuchar|Jugar|Comenzar/.test(s.cta || '')) errs.push('tocar el día 10 no abre su hoja: ' + JSON.stringify(s));
+    // día 7 atrasado (Teodoro está en el 10, el día del calendario): su hoja, no un bloqueo
+    await tapNodo(7); await p.waitForTimeout(1200); let s = await st(); await shot('dia7');
+    if (s.dia !== 7 || !/Ver|Escuchar|Jugar|Comenzar/.test(s.cta || '')) errs.push('tocar el día 7 no abre su hoja: ' + JSON.stringify(s));
     await tap('Volver con Teodoro'); await p.waitForTimeout(1000); s = await st();
     if (s.dia != null) errs.push('«Volver a tu día» no vuelve: ' + JSON.stringify(s));
     // día 2 (historia vista, trivia pendiente): hoja con «Jugar la trivia», sin saltar directo

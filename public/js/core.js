@@ -62,14 +62,13 @@ export function activeDay() {
   for (let n = 1; n <= lastDay(); n++) if (!isDone(n)) return n;
   return null;
 }
-/** Día donde va Teodoro: el primero cuya historia aún no vieron (las trivias pueden quedar pendientes). */
+/** Día donde está Teodoro: siempre el día del calendario (aunque la familia vaya atrasada); nunca camina hacia atrás. */
+export const teoDay = () => S.hoy <= 0 ? null : Math.min(lastDay(), 26);
+/** Día que se propone hacer: el de hoy si falta; si no, el primero pendiente (historia o trivia). */
 export function walkDay() {
-  const a = activeDay();
-  if (a == null || a < 1) return a;
-  for (let n = a; n <= Math.min(lastDay(), 26); n++) if (!S.completos[n]?.contenido) return n;
-  // ya vio todas las historias hasta hoy: se queda en hoy (la trivia de hoy); las demás quedan como pendientes
-  const h = Math.min(lastDay(), 26);
-  return isDone(h) ? a : h;
+  const h = teoDay();
+  if (h == null) return activeDay();
+  return isDone(h) ? activeDay() : h;
 }
 export const doneCount = () => Object.keys(S.completos).filter(n => +n >= 1 && isDone(+n)).length;
 export const pendientes = () => { const a = activeDay(); return a == null || a < 1 ? 0 : lastDay() - a + 1; };

@@ -1,5 +1,5 @@
 // Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
-import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
+import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark } from './core.js';
 import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, usaHub } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
@@ -61,13 +61,12 @@ async function templates() {
 
 /** Historia vista, trivia sin terminar: el día NO se ve hecho (ni azul ni ✓). Aspecto de pendiente: su ícono, borde punteado y 0 estrellas en contorno. */
 const triviaPend = (el, n, p) => {
+  // ya vio el cuento: el día queda con su check; las estrellas vacías dicen que la trivia sigue abierta
   const T = tpl;
-  restyle(el, T.locked, p, 64);
-  const icon = T.icons[n] ? `<img src="${T.icons[n]}" alt="" style="width: 40px; height: 34px; object-fit: contain; opacity: 1">` : '';
-  el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon).replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
-  el.style.outline = '3px dashed #F5DB78'; el.style.outlineOffset = '3px';
+  restyle(el, T.done, p, 64);
+  el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
   delete el.dataset.today;
-  el.setAttribute('aria-label', `Día ${n}: falta la trivia`);
+  el.setAttribute('aria-label', `Día ${n}: cuento visto, falta la trivia`);
 };
 // filas de la hoja (el lienzo las dibuja de 52 o 58 px); el botón principal mide 56
 const isRow = el => el.style.height === '52px' || el.style.height === '58px';
@@ -92,10 +91,11 @@ register('mapa', {
   async mount(root, params, layer) {
     const T = await templates();
     const trivAct = activeDay();          // primera trivia pendiente
-    const act = walkDay();                // donde va Teodoro (primera historia sin ver)
-    const focus = act ?? Math.min(lastDay(), 26);
-    // Teodoro nunca camina hacia atrás: si se vio un día más adelante (o una trivia de un día ya pasado), se queda en su día sin animación
-    if (S.pasoAnimado && ((act != null && S.pasoAnimado > act) || (S.teoMapa != null && S.pasoAnimado < S.teoMapa))) { S.pasoAnimado = null; save(); }
+    const act = walkDay();                // el día que propone la hoja
+    const teoN = teoDay();                // donde está Teodoro: siempre el día del calendario
+    const focus = teoN ?? 0;
+    // camina solo cuando avanza el calendario, y un paso: del día anterior al de hoy (ponerse al día no lo mueve)
+    const desde = params.dia == null && teoN != null && S.teoMapa != null && S.teoMapa < teoN && !reduced() ? Math.max(S.teoMapa, teoN - 1) : null;
 
     // 1) La vista: el mapa largo va en un scroller; cabecera y hoja quedan fijas
     const scroller = document.createElement('div');
@@ -130,10 +130,10 @@ register('mapa', {
         restyle(el, T.done, p, 64);
         el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + badgeOf(n);
         el.setAttribute('aria-label', `Día ${n}, ${d.title}, completado${hasTrivia(n) && stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
-      } else if (contentDone(n) && n !== act && !(S.pasoAnimado === n && !reduced())) {
+      } else if (contentDone(n) && !(S.pasoAnimado === n && !reduced())) {
         // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
         triviaPend(el, n, p);
-      } else if (n === act || (S.pasoAnimado && n === S.pasoAnimado)) {
+      } else if (n === teoN || (S.pasoAnimado && n === S.pasoAnimado)) {
         restyle(el, T.today, p, 84);
         el.innerHTML = T.todayInner.replace(/>\d+</, `>${n}<`);
         el.setAttribute('aria-label', `Día ${n}, hoy: ${d.title}`);
@@ -171,8 +171,8 @@ register('mapa', {
       teo.style.filter = 'drop-shadow(0 6px 8px rgba(8,93,111,.25))';
       teo.classList.add('a-bob');
       // los días que vienen se ven por encima de Teodoro (antes su cabeza tapaba el número o el candado del siguiente)
-      Object.entries(nodes).forEach(([k, t]) => { if (t?.el && +k > (walkDay() ?? 0)) t.el.style.zIndex = '3'; });
-      if (focus >= 1) place(S.pasoAnimado || focus); else teo.style.display = 'none';
+      Object.entries(nodes).forEach(([k, t]) => { if (t?.el && +k > (teoN ?? 0)) t.el.style.zIndex = '3'; });
+      if (focus >= 1) place(desde ?? focus); else teo.style.display = 'none';
       // volvió tras días sin caminar: Teodoro despierta al verlos
       if (params.despierta && !reduced()) { teo.classList.remove('a-bob'); setTimeout(() => { teo.src = teodoroImg(Math.max(S.bateria, 3)); animate(teo, 'a-hop'); }, 500); }
     }
@@ -295,50 +295,38 @@ register('mapa', {
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
     if (params.dia != null && nodes[params.dia]) { const el = nodes[params.dia].el; el.style.boxShadow = (T.selShadow || '0 0 0 6px rgba(245,219,120,.8)'); scrollToNode(params.dia, false); }
-    else if (focus < 1) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(S.pasoAnimado || focus, false);
+    else if (focus < 1) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(desde ?? focus, false);
 
-    // 7) Animación: Teodoro avanza al siguiente día
-    if (S.pasoAnimado && !reduced()) {
-      const from = S.pasoAnimado; S.pasoAnimado = null; save();
+    // 7) Animación: el día recién hecho se marca; Teodoro solo camina si avanzó el calendario
+    const paso = S.pasoAnimado && !reduced() ? S.pasoAnimado : null;
+    if (paso || desde != null) {
+      S.pasoAnimado = null; save();
       await wait(450);
-      const n = nodes[from];
-      if (n && isDone(from)) {
+      const n = paso && nodes[paso];
+      if (n && isDone(paso)) {
         restyle(n.el, T.done, n.p, 64);
-        n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${from}<`) + badgeOf(from);
+        n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${paso}<`) + badgeOf(paso);
         delete n.el.dataset.today;
+        n.el.setAttribute('aria-label', `Día ${paso}, ${DAYS[paso].title}, completado${hasTrivia(paso) && stars(paso) ? `, ${stars(paso)} de 3 estrellas` : ''}`);
         n.el.classList.add('a-pop');
       } else if (n) {
-        // solo vio la historia: queda con la trivia pendiente y 0 estrellas, sin pintarse de «hecho»
-        triviaPend(n.el, from, n.p);
+        triviaPend(n.el, paso, n.p); // vio el cuento: check, con la trivia aún abierta
+        n.el.classList.add('a-pop');
       }
-      const to = act ?? null;
-      if (to == null && nodes[from + 1] && teo && S.hoy < 26) {
-        await wait(300);
-        const a = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
-        place(from + 1);
-        const b = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
-        const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-        teo.style.left = mid.x + 'px'; teo.style.top = mid.y + 'px';
-        teo.classList.remove('a-bob');
-        const dx = a.x - mid.x, dy = a.y - mid.y;
-        teo.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 900, easing: 'cubic-bezier(.65,0,.35,1)' });
-        await teo.animate([{ translate: '0 0' }, { translate: '0 -14px', offset: .25 }, { translate: '0 0', offset: .5 }, { translate: '0 -10px', offset: .75 }, { translate: '0 0' }], { duration: 900 }).finished;
-        teo.animate([{ scale: '1' }, { scale: '1.06 .94' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
-        teo.classList.add('a-bob');
-      }
-      if (to && nodes[to] && teo) {
+      if (paso === teoN && teo) { place(teoN); teo.classList.remove('a-bob'); animate(teo, 'a-hop'); } // a-hop sigue con el vaivén // terminó el día de hoy: celebra donde está
+      if (desde != null && nodes[teoN] && teo) {
         await wait(350);
         const a = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
-        place(to);
+        place(teoN);
         const b = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
         teo.classList.remove('a-bob');
-        scrollToNode(to, true);
+        scrollToNode(teoN, true);
         const dx = a.x - b.x, dy = a.y - b.y;
         teo.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 1100, easing: 'cubic-bezier(.65,0,.35,1)' });
         await teo.animate([{ translate: '0 0' }, { translate: '0 -16px', offset: .25 }, { translate: '0 0', offset: .5 }, { translate: '0 -12px', offset: .75 }, { translate: '0 0' }], { duration: 1100 }).finished;
         teo.animate([{ scale: '1' }, { scale: '1.06 .94' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
         teo.classList.add('a-bob');
-        nodes[to].el.classList.add('a-pop');
+        nodes[teoN].el.classList.add('a-pop');
       }
       if (params.thenCerrado && activeDay() == null && S.hoy < 27) { await wait(600); if (layer.isConnected) go('cerrado', {}, 'sheet'); }
     } else if (params.thenCerrado && activeDay() == null && S.hoy < 27) {
@@ -610,7 +598,7 @@ function paintSheet(layer, T, dia) {
     Object.assign(alt.dataset, extra); cta.after(alt); on(layer, alt, fn);
   };
   // prioridad: volver a tu día > trivias pendientes > sorpresa pendiente (la ruleta nunca va en la hoja: se toca en el mapa)
-  if (dia != null && dia !== walkDay() && walkDay() != null) addAlt(`Volver con Teodoro · Día ${walkDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
+  if (dia != null && dia !== teoDay() && teoDay() != null) addAlt(`Volver con Teodoro · Día ${teoDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
   const mas = /trivia/i.test(label.text);
   if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
   const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');
