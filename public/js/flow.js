@@ -137,14 +137,16 @@ function roll(el, v) {
 }
 function startCountdown(layer) {
   const target = new Date(2026, 10, 29, 0, 0, 0);
-  // los tres números del lienzo (09 · 14 · 32)
-  const cells = [...layer.querySelectorAll('*')].filter(el => el.childElementCount === 0 && /^(09|9|14|32)$/.test(el.textContent.trim()));
-  cells.forEach(el => { el.dataset.cd = el.textContent.trim(); });
+  // cada número del lienzo va seguido de su unidad (días · h/horas · min): así se encuentran todos los contadores
+  const unit = el => (el.nextElementSibling?.textContent || el.nextSibling?.nodeValue || '').trim();
+  const cells = [...layer.querySelectorAll('*')].filter(el => el.childElementCount === 0 && /^\d{1,2}$/.test(el.textContent.trim()) && /^(días|h|horas|min)$/.test(unit(el)));
+  cells.forEach(el => { el.dataset.cd = unit(el); el.dataset.pad = el.textContent.trim().length; });
   const tick = () => {
     const ms = Math.max(0, target - new Date());
-    const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
-    const vals = { '09': String(d).padStart(2, '0'), '9': String(d), '14': String(h), '32': String(m).padStart(2, '0') };
-    cells.forEach(el => roll(el, vals[el.dataset.cd]));
+    const v = { días: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, horas: Math.floor(ms / 36e5) % 24, min: Math.floor(ms / 6e4) % 60 };
+    cells.forEach(el => roll(el, String(v[el.dataset.cd]).padStart(+el.dataset.pad, '0')));
+    const d = v.días;
+    $$(layer, '[role=img][aria-label^="Empieza en"]').forEach(g => g.setAttribute('aria-label', `Empieza en ${d} días, ${v.h} horas y ${v.min} minutos`));
   };
   tick();
   const iv = setInterval(() => { if (!layer.isConnected) clearInterval(iv); else tick(); }, 1000);
@@ -165,47 +167,124 @@ function juntarAvatares(root) {
 }
 
 // ---------- Hoy ----------
+/** Filas del inicio de Theo que siguen de lado (misiones, cuentos, top 10): en el lienzo se salen de los 390 px.
+ *  Se agrupan en un carrusel horizontal con imán, sin mover nada de su sitio. */
+function carruseles(root) {
+  const fila = new Map();
+  [...root.children].forEach(el => {
+    const l = parseFloat(el.style.left), t = parseFloat(el.style.top);
+    if (el.tagName === 'NAV' || isNaN(l) || isNaN(t) || el.getAttribute('role') === 'group') return;
+    if (/^(A|SPAN)$/.test(el.tagName) && el.offsetWidth < 380 && t > 450) (fila.get(t) || fila.set(t, []).get(t)).push(el);
+  });
+  // el top 10 trae número, portada y textos con tops distintos: van con la fila cuyo título está justo encima
+  const filas = [...fila.entries()].filter(([, els]) => els.some(e => parseFloat(e.style.left) + e.offsetWidth > 392));
+  const top10 = [...fila.entries()].filter(([t]) => t >= 2700 && t < 3040).flatMap(([, els]) => els);
+  const grupos = filas.filter(([t]) => t < 2700 || t >= 3040).map(([, els]) => els);
+  if (top10.length) grupos.push(top10);
+  grupos.forEach(els => {
+    const top = Math.min(...els.map(e => parseFloat(e.style.top)));
+    const bottom = Math.max(...els.map(e => parseFloat(e.style.top) + e.offsetHeight));
+    const right = Math.max(...els.map(e => parseFloat(e.style.left) + e.offsetWidth));
+    const box = document.createElement('div'); box.className = 'theo-fila';
+    Object.assign(box.style, { position: 'absolute', left: '0', top: (top - 12) + 'px', width: '100%', height: (bottom - top + 24) + 'px', zIndex: 2 });
+    const pista = document.createElement('div');
+    Object.assign(pista.style, { position: 'relative', width: (right + 16) + 'px', height: '100%' });
+    els[0].before(box); box.appendChild(pista);
+    els.forEach(e => { e.style.top = (parseFloat(e.style.top) - top + 12) + 'px'; pista.appendChild(e); });
+  });
+}
+
+/** Héroe del inicio: los destacados de Theo se deslizan de lado (tres tarjetas, la del centro grande y las de los lados asomando).
+ *  En el lienzo es una foto fija con dos tarjetas cortadas; aquí son tarjetas completas. */
+function heroe(root) {
+  const card = root.querySelector('[role=group][aria-label^="Camino a Belén"]');
+  if (!card || parseFloat(card.style.top) > 200) return;
+  const W = 256, H = 330, top = parseFloat(card.style.top);
+  ['Destacado anterior', 'Evangelio del día,'].forEach(l => root.querySelector(`a[aria-label^="${l}"]`)?.remove());
+  const box = document.createElement('div'); box.className = 'theo-heroe';
+  Object.assign(box.style, { position: 'absolute', left: '0', top: (top - 10) + 'px', width: '100%', height: (H + 30) + 'px', zIndex: 2 });
+  const pista = document.createElement('div'); pista.className = 'theo-heroe-pista';
+  pista.style.padding = `10px ${(390 - W) / 2}px 20px`;
+  const tarjeta = (label, inner) => { const a = document.createElement('a'); a.href = '#'; a.className = 'theo-heroe-t'; a.setAttribute('aria-label', label); a.innerHTML = inner; return a; };
+  const lampara = tarjeta('Destacado: Lámpara para mis pasos, afirmación',
+    `<img src="assets/miniaturas.webp" alt="" style="position:absolute;left:-1405px;top:-4px;width:2707px;height:337px;max-width:none">
+     <span class="theo-heroe-pie" style="background:linear-gradient(180deg,rgba(74,52,18,0),rgba(74,52,18,.92) 46%)"><b>Lámpara para mis pasos</b><i>Afirmación · Tu palabra es luz en mi camino</i></span>`);
+  const evangelio = tarjeta('Destacado: Evangelio del día',
+    `<img src="assets/evangelio.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 0">`);
+  card.style.position = 'relative'; card.style.left = card.style.top = '0'; card.style.flex = 'none';
+  card.before(box); box.appendChild(pista);
+  pista.append(lampara, card, evangelio);
+  // las de los lados se ven más pequeñas, pegadas hacia el centro (como en Theo)
+  const slides = [lampara, card, evangelio];
+  const pinta = () => {
+    const c = pista.scrollLeft + pista.clientWidth / 2;
+    slides.forEach(sl => {
+      const d = (sl.offsetLeft + W / 2 - c) / (W + 16); const k = 1 - Math.min(Math.abs(d), 1) * .285;
+      sl.style.transformOrigin = d < 0 ? '100% 50%' : '0% 50%'; sl.style.transform = `scale(${k})`;
+      sl.setAttribute('aria-hidden', Math.abs(d) > .5 ? 'true' : 'false');
+    });
+  };
+  let raf = 0; pista.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(pinta); }, { passive: true });
+  pista.scrollLeft = card.offsetLeft - (390 - W) / 2; pinta();
+  // tocar una tarjeta del lado la trae al centro; la del centro se abre
+  slides.forEach(sl => sl.addEventListener('click', ev => {
+    if (sl.getAttribute('aria-hidden') === 'true') { ev.preventDefault(); ev.stopImmediatePropagation(); pista.scrollTo({ left: sl.offsetLeft - (390 - W) / 2, behavior: reduced() ? 'auto' : 'smooth' }); }
+  }, true));
+  return { lampara, evangelio };
+}
+
 register('hoy', {
-  h1: /^(Buenos días|Buenas tardes|Buenas noches|¡Feliz Navidad),/,
+  h1: /^Misiones Diarias$/,
   file() {
     const t = dark() ? 1 : 0;
-    if (fase() === 'antes') return (S.inscrito ? F('V2-Pre-Hoy-dentro-claro', 'V2-Pre-Hoy-dentro') : F('V2-Pre-Hoy-claro', 'V2-Pre-Hoy'))[t];
+    if (fase() === 'antes') return F('R-Hoy-completo-pre', 'R-Hoy-completo-pre-oscuro')[t];
     if (S.regreso && S.inscrito) return F('V2-10-Regreso', 'V2-10-Regreso-oscuro')[t];
-    if (S.inscrito && pendientes() > 1) return F('S-01-Hoy-atrasado', 'S-01-Hoy-atrasado-oscuro')[t];
-    return F('V2-01-Hoy-completo', 'V2-01-Hoy-completo-oscuro')[t];
+    return F('R-Hoy-completo', 'R-Hoy-completo-oscuro')[t];
   },
   async mount(root, p, layer) {
-    tabs(root); appContent(root);
+    tabs(root);
     if (fase() !== 'antes') seen('S-01-Hoy', 'S-01-Energia');
-    const now = fase() === 'antes' ? new Date() : null;
-    const f = now ? { label: `${['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'][now.getDay()]} ${now.getDate()} DE ${['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][now.getMonth()]}` } : dateOf(Math.min(Math.max(S.hoy, 1), 26));
-    if (S.hoy >= 27) f.label = 'VIERNES 25 DE DICIEMBRE';
-    replaceText(root, /^(LUNES|MARTES|MIÉRCOLES|JUEVES|VIERNES|SÁBADO|DOMINGO) \d+ DE [A-ZÉ]+$/, f.label);
-    replaceText(root, /Lucía/g, S.nombre);
-    replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
-    const hr = new Date().getHours();
-    replaceText(root, /Buenas noches/, S.hoy >= 27 ? '¡Feliz Navidad' : hr < 12 ? 'Buenos días' : hr < 19 ? 'Buenas tardes' : 'Buenas noches');
-    if (S.hoy >= 27) replaceText(root, /^¡Feliz Navidad, (.+)$/, '¡Feliz Navidad, $1!');
-    paintEnergy(root);
-    const rp = root.querySelector('[aria-label^="Racha"]');
-    if (rp) { const tn = [...rp.childNodes].find(c => c.nodeType === 3 && /\d/.test(c.nodeValue)); if (tn) tn.nodeValue = String(racha()); rp.setAttribute('aria-label', `Racha: ${racha()} días seguidos`); }
-    // domingo: el «Evangelio del día» de Theo es el mismo del camino → una sola vez
-    const hd = Math.min(Math.max(S.hoy, 0), 26);
-    if (fase() !== 'antes' && S.inscrito && DAYS[hd]?.type === 'domingo') {
-      const ev = find(root, 'Evangelio del día');
-      if (ev) {
-        const sub = textEl(ev, /Escuchar/); if (sub) sub.textContent = contentDone(hd) ? 'Hecho' : `Camino a Belén · Día ${hd}`;
-        if (contentDone(hd)) { ev.style.opacity = '.7'; const pts = textEl(ev, /^\+\d+$/); if (pts) pts.textContent = '✓'; }
-        ev.dataset.camino = '1';
-      }
+    // ya unido antes del 29: el destacado trae «Invitar · Entrar» y la tarjeta grande es la de «ya estás dentro»
+    if (fase() === 'antes' && S.inscrito) {
+      const t = dark() ? 1 : 0;
+      const [fd, fg] = await Promise.all([frag(F('R-Hoy-pre-dentro', 'R-Hoy-pre-dentro-oscuro')[t]), frag(F('V2-Pre-Hoy-dentro-claro', 'V2-Pre-Hoy-dentro')[t])]);
+      const swap = (sel, from, top) => { const a = root.querySelector(sel), b = from.querySelector('[role=group][aria-label^="Camino a Belén"]'); if (a && b) { if (top) { b.style.top = top; b.style.left = a.style.left; } a.replaceWith(b); } };
+      swap('[role=group][aria-label^="Camino a Belén:"]', fd);
+      swap('[role=group][aria-label^="Camino a Belén empieza"]', fg, '800px');
     }
-    on(root, 'Perfil', () => nota('Perfil de Theo', 'Ya existe en la app'));
-    on(root, 'Racha', () => nota('Racha de la app', 'Hacer Adviento suma a esta racha'));
+    carruseles(root);
+    const destacados = heroe(root);
+    replaceText(root, /^Ces$/, S.nombre);
+    root.querySelector('img[alt="Perfil de Ces"]')?.setAttribute('alt', `Perfil de ${S.nombre}`);
+    paintEnergy(root);
+    const r = racha();
+    $$(root, '[aria-label^="Racha"]').forEach(el => {
+      const num = $$(el, 'span').find(sp => sp.childElementCount === 0 && /^\d+( días)?$/.test(sp.textContent.trim()));
+      if (num) num.textContent = /días/.test(num.textContent) ? `${r} ${r === 1 ? 'día' : 'días'}` : String(r);
+      el.setAttribute('aria-label', `Racha de ${r} ${r === 1 ? 'día' : 'días'}`);
+    });
+    const perfil = root.querySelector(`img[alt="Perfil de ${S.nombre}"]`)?.parentElement;
+    if (perfil) on(root, perfil, () => nota('Perfil de Theo', 'Ya existe en la app'));
+    on(root, root.querySelector('[role=img][aria-label^="Racha"]'), () => nota('Racha de la app', 'Hacer Adviento suma a esta racha'));
+    // lo que ya existe en Theo y aquí no cambia
+    const theo = () => nota('Contenido de Theo', 'Ya existe en la app; aquí no cambia');
+    if (destacados) Object.values(destacados).forEach(el => on(root, el, theo));
+    ['El Cuento de hoy', 'La Afirmación de hoy', 'Compartir', 'Regalar Theo'].forEach(t => on(root, t, theo));
+    $$(root, '.theo-fila a').filter(a => !a.dataset.bound && !/^Mundos/.test(a.getAttribute('aria-label') || '')).forEach(a => on(root, a, theo));
+    // domingo con el camino: el «Evangelio del Día» de Theo es el mismo del camino → una sola vez, y lleva allá
+    const hd = Math.min(Math.max(S.hoy, 0), 26);
+    const ev = root.querySelector('a[aria-label="Evangelio del Día"]');
+    if (ev && fase() !== 'antes' && S.inscrito && DAYS[hd]?.type === 'domingo') {
+      const tag = textEl(ev, 'Gratis'); if (tag) tag.textContent = contentDone(hd) ? '✓ Hecho' : `Adviento · Día ${hd}`;
+      ev.setAttribute('aria-label', `Evangelio del Día: es el del Camino a Belén, día ${hd}`);
+      on(root, ev, () => entrar('hoy'));
+    } else if (ev) on(root, ev, theo);
 
     if (fase() === 'antes') {
       startCountdown(root);
       ánimo(root);
       juntarAvatares(root);
+      on(root, 'Ver el camino', () => S.inscrito ? go('espera', {}, 'page') : go('teaser', {}, 'modal'));
       on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
       on(root, 'Inscribirme', (ev, el) => inscribir(el)); on(root, 'Unirme gratis', (ev, el) => inscribir(el));
       on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
@@ -216,15 +295,17 @@ register('hoy', {
     }
 
     const n = walkDay() ?? Math.min(lastDay(), 26); // donde va Teodoro
-    const card = root.querySelector('[role=group][aria-label^="Camino a Belén"]') || root;
-    const { st, toMap } = paintCaminoCard(card, 'hoy');
-    // ya salió el camino y no está inscrito: la invitación a unirse queda a la vista
-    if (st.key === 4 && card !== root) setTimeout(() => { if (layer.isConnected) layer.scrollTo({ top: Math.max(0, card.offsetTop - 150), behavior: reduced() ? 'auto' : 'smooth' }); }, 350);
-    // durante el camino la tarjeta va arriba, a la vista; «Tu día con Dios» pasa debajo
-    if (card !== root && card.style.top === '468px') {
-      const kids = [...card.parentElement.children];
-      const tit = kids.find(el => el.style.top === '176px'), list = kids.find(el => el.style.top === '212px');
-      if (tit && list) { card.style.top = '176px'; tit.style.top = (176 + card.offsetHeight + 22) + 'px'; list.style.top = (176 + card.offsetHeight + 58) + 'px'; }
+    // la tarjeta del camino sale dos veces (destacado y tarjeta grande): las dos con el mismo estado
+    const cards = $$(root, '[role=group][aria-label^="Camino a Belén"]');
+    const { st } = cards.length ? cards.map(c => paintCaminoCard(c, 'hoy'))[0] : { st: cardState() };
+    // Misiones Diarias: Mundos va primero del 29 nov al 26 dic; al terminar el día queda hecha
+    const mundos = root.querySelector('a[aria-label^="Mundos"]');
+    if (mundos) {
+      const hecha = st.done || st.key === 5;
+      const tag = textEl(mundos, 'Descúbrelo');
+      if (hecha && tag) { tag.textContent = '✓ Hecha'; Object.assign(tag.style, { background: '#0A8445', color: '#FFFFFF' }); }
+      mundos.setAttribute('aria-label', `Mundos: Adviento, día ${n} de 26${hecha ? ' · hecha' : ''}`);
+      on(root, mundos, () => go('mundos', { from: 'hoy' }, 'push'));
     }
     on(root, 'Energía de Teodoro', () => toast(`Energía: ${S.bateria} de 5`, ['Dormido', 'Cabeceando', 'Agotado', 'Tranquilo', 'Travieso', 'Feliz'][S.bateria]));
 
@@ -515,9 +596,14 @@ function patchCuarto(root) {
 }
 register('mundos', {
   // antes del 29: Enero y Adviento con candado y la cuenta regresiva sobre Adviento
-  file() { return (fase() === 'antes' ? F('V2-02-Mundos-pre-claro', 'V2-02-Mundos-pre') : F('V2-02-Mundos-claro', 'V2-02-Mundos'))[dark() ? 1 : 0]; },
-  mount(root) {
+  // desde Hoy (sin mascota): Mundos con «volver a Hoy» y la pestaña Hoy encendida
+  file(p = {}) {
+    if (p.from === 'hoy' && fase() !== 'antes') return F('R-Mundos', 'R-Mundos-oscuro')[dark() ? 1 : 0];
+    return (fase() === 'antes' ? F('V2-02-Mundos-pre-claro', 'V2-02-Mundos-pre') : F('V2-02-Mundos-claro', 'V2-02-Mundos'))[dark() ? 1 : 0];
+  },
+  mount(root, p = {}) {
     tabs(root);
+    on(root, 'Volver a Hoy', () => back('hoy'));
     const adv = root.querySelector('a[aria-label^="Adviento:"]');
     // Adviento más grande y centrado; Enero se sigue viendo detrás, con su etiqueta encima (estilos en el bloque «mapa» de app.css)
     root.classList.add('mundos-v'); if (fase() === 'antes') root.classList.add('mundos-pre');

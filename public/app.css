@@ -481,3 +481,20 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 :root[data-theme="dark"] .rr-stars svg { stroke: #FFFFFF; }
 :root[data-theme="dark"] .rr-stars button.on svg { fill: #F5DB78; stroke: #F5DB78; }
 :root[data-theme="dark"] .rr-share { background: rgba(255,255,255,.16); }
+
+/* Inicio real de Theo: los enlaces del lienzo no llevan subrayado (el lienzo lo quita en su <helmet>) */
+#viewport .root a { text-decoration: none; }
+/* filas que siguen de lado (misiones, cuentos, top 10): carrusel con imán, sin barra visible */
+.theo-fila { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.theo-fila::-webkit-scrollbar { display: none; }
+.theo-fila > div > * { scroll-snap-align: start; scroll-margin-left: 16px; }
+/* héroe del inicio: tres destacados que se deslizan con imán */
+.theo-heroe { overflow: hidden; }
+.theo-heroe-pista { display: flex; gap: 16px; height: 100%; box-sizing: border-box; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.theo-heroe-pista::-webkit-scrollbar { display: none; }
+.theo-heroe-pista > * { flex: none; width: 256px; height: 330px; scroll-snap-align: center; transition: transform .12s linear; }
+.theo-heroe-t { position: relative; display: block; border-radius: 22px; overflow: hidden; background: #274E7C; box-shadow: 0 14px 30px rgba(4,14,36,.35); }
+.theo-heroe-pie { position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 18px 18px; display: flex; flex-direction: column; gap: 4px; color: #FFF6DD; text-align: center; }
+.theo-heroe-pie b { font: 500 22px/1.1 'Neue Montreal', Mulish, sans-serif; color: #FFFFFF; }
+.theo-heroe-pie i { font: 400 13px/1.3 'Neue Montreal', Mulish, sans-serif; font-style: normal; }
+@media (prefers-reduced-motion: reduce) { .theo-heroe-pista > * { transition: none; } }

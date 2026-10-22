@@ -43,7 +43,9 @@ const tap = async (q) => {
     const norm = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
     const els = [...L.querySelectorAll('a,button,[role=button],[role=checkbox],[aria-label],[data-bound]')];
     const btns = els.filter(e => e.matches('a,button,[role=button],[role=checkbox]'));
-    const el = els.find(e => norm(e.getAttribute('aria-label')).startsWith(norm(q))) || btns.find(e => norm(e.textContent) === norm(q)) || els.find(e => norm(e.textContent) === norm(q)) || btns.find(e => norm(e.textContent).startsWith(norm(q))) || els.find(e => norm(e.textContent).startsWith(norm(q)));
+    // el nombre exacto de una pestaña es la pestaña (el inicio de Theo trae cuentos que también empiezan por «Teodoro…»)
+    const tab = [...L.querySelectorAll('nav.theo-tabbar a')].find(e => norm(e.getAttribute('aria-label')) === norm(q));
+    const el = tab || els.find(e => norm(e.getAttribute('aria-label')).startsWith(norm(q))) || btns.find(e => norm(e.textContent) === norm(q)) || els.find(e => norm(e.textContent) === norm(q)) || btns.find(e => norm(e.textContent).startsWith(norm(q))) || els.find(e => norm(e.textContent).startsWith(norm(q)));
     if (!el) return false;
     el.scrollIntoView({ block: 'center' });
     el.click(); return true;

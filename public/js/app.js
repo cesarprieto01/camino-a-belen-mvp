@@ -61,8 +61,8 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teas
 
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
-  { sec: 1, t: 'Sin inscribirse', mira: 'Tarjeta en Hoy → teaser → inscripción → espera', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-claro', 'V2-Teaser-claro', 'V2-Confirmacion-claro', 'V2-Espera-claro'] },
-  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre los Mundos con Adviento cerrado y la cuenta regresiva · la ilustración abre la espera · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['V2-Pre-Hoy-dentro-claro', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Sin inscribirse', mira: 'Tarjeta en Hoy → teaser → inscripción → espera', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['R-Hoy-completo-pre', 'V2-Teaser-claro', 'V2-Confirmacion-claro', 'V2-Espera-claro'] },
+  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre los Mundos con Adviento cerrado y la cuenta regresiva · la ilustración abre la espera · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['R-Hoy-pre-dentro', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
   { sec: 2, t: 'Un día con trivia', mira: 'Día 17 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(17, 16), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Un día sin trivia', mira: 'Día 10 · mapa → historia → un paso más hacia Belén → mañana seguimos', run: day(10, 9), go: 'hoy', covers: [] },
@@ -75,10 +75,11 @@ const REC = [
   { sec: 4, t: 'Memorama', mira: 'Día 3 · tras la trivia: «Hoy toca Memorama»', run: day(3, 2), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-claro', 'V2-Memorama-reglas-claro', 'V2-Memorama-claro', 'V2-Memorama-fin-claro'] },
   { sec: 4, t: 'Adivinanza', mira: 'Día 6 (sin trivia) · tras la historia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
   { sec: 4, t: 'Desafío en familia', mira: 'Día 9 · «Hoy toca Desafío» · sacar otra carta (Avemaría) · ¡lo hicimos!', run: day(9, 8), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Desafio-intro-claro', 'V2-Desafio-claro', 'V2-Desafio-carta2-claro', 'V2-Desafio-fin-claro'] },
-  { sec: 5, t: 'Va atrasado', mira: 'En el día 9, hoy es el 11: puede ponerse al día', run: day(11, 8, { bateria: 3 }), go: 'hoy', covers: ['S-01-Hoy-atrasado'] },
+  { sec: 5, t: 'Va atrasado', mira: 'En el día 9, hoy es el 11: puede ponerse al día', run: day(11, 8, { bateria: 3 }), go: 'hoy', covers: ['R-Hoy-completo'] },
   { sec: 5, t: 'Regreso tras una semana', mira: 'Teodoro le guardó el camino · batería en 0', run: day(16, 8, { bateria: 0, regreso: true }), go: 'hoy', covers: ['V2-10-Regreso'] },
   { sec: 5, t: 'Teodoro cansado', mira: 'Batería 2 de 5 · en el mapa toca la batería: cómo está Teodoro', run: day(10, 9, { bateria: 2 }), go: 'mapa', covers: ['S-01-Energia', 'S-03e-Mapa-energia'] },
-  { sec: 6, t: 'Hoy, tab Teodoro y Mundos', mira: 'Dónde aparece el camino dentro de la app', run: day(9, 8), go: 'teodoro', covers: ['V2-01-Hoy-completo', 'V3-Teodoro', 'V2-02-Mundos-claro'] },
+  { sec: 6, t: 'Hoy, tab Teodoro y Mundos', mira: 'Dónde aparece el camino dentro de la app', run: day(9, 8), go: 'teodoro', covers: ['R-Hoy-completo', 'V3-Teodoro', 'V2-02-Mundos-claro'] },
+  { sec: 6, t: 'Sin mascota', mira: 'Sin pestaña Teodoro: Hoy → Misiones Diarias «Mundos» → Adviento → el mapa · atrás vuelve a Hoy', run: day(9, 8, { mascota: false }), go: 'hoy', covers: ['R-Hoy', 'R-Misiones', 'R-Mundos'] },
   { sec: 7, t: 'Usuario free', mira: 'Día 13 · todo abierto, los descargables piden Premium', run: day(13, 12, { plan: 'free' }), go: 'mapa', covers: ['V2-24-Dia-completo-claro'] },
   { sec: 7, t: 'Primer día', mira: 'Día 1 · el camino recién empieza', run: day(1, 0), go: 'hoy', covers: ['V2-Mapa-completo-claro'] },
   { sec: 8, t: 'Nochebuena', mira: 'Día 26 · llegada a Belén · ver el nacimiento y compartir', run: day(26, 25), go: 'mapa', covers: ['V2-Mapa-d24-claro', 'V2-Final-claro', 'V2-Final-compartir-claro'] },
@@ -88,6 +89,9 @@ const REC = [
 ];
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
+  'Inicio real de Theo (lienzo «Inicio real», 21 oct): el destacado de Camino a Belén va primero en el héroe, que se desliza entre tres destacados; Misiones Diarias y las filas de cuentos se deslizan de lado.',
+  'Misiones Diarias: «Mundos» va primera del 29 nov al 26 dic y queda «✓ Hecha» al terminar el día. Abre Mundos desde Hoy; atrás vuelve a Hoy.',
+  'Sin mascota (panel: «Sin mascota»): la barra no trae la pestaña Teodoro y todo lo que llevaba a Teodoro lleva a Hoy.',
   'La barra de pestañas es siempre la del design system de Theo (tabbar.js): clara, ilustrada y la misma en todas las pantallas, también en modo oscuro.',
   'Los días 18 y 24 tienen ruleta (en el mapa) y juego sorpresa (al final de la trivia): la regla «cada 3 días, y así sigue» cae en días de ruleta.',
   'Títulos de la hoja de energía por nivel (dormido, durmiéndose, cansadito, tranquilo, travieso, feliz): el lienzo solo trae el de 5 de 5.',

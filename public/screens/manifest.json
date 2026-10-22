@@ -1094,5 +1094,117 @@
   "dark": true,
   "x": 1410,
   "y": 36693
+ },
+ "R-Hoy-pre": {
+  "w": 390,
+  "h": 844,
+  "title": "Inicio real · antes del 29 nov · sin unirse",
+  "dark": false,
+  "x": 0,
+  "y": 1620
+ },
+ "R-Hoy-pre-dentro": {
+  "w": 390,
+  "h": 844,
+  "title": "Inicio real · antes del 29 nov · ya unido",
+  "dark": false,
+  "x": 2350,
+  "y": 1620
+ },
+ "R-Hoy-pre-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Inicio real · antes del 29 nov · sin unirse · modo oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 2584
+ },
+ "R-Hoy-pre-dentro-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Inicio real · antes del 29 nov · ya unido · modo oscuro",
+  "dark": true,
+  "x": 2350,
+  "y": 2584
+ },
+ "R-Hoy": {
+  "w": 390,
+  "h": 844,
+  "title": "Inicio real · durante el camino · sin mascota",
+  "dark": false,
+  "x": 470,
+  "y": 3828
+ },
+ "R-Mundos": {
+  "w": 390,
+  "h": 844,
+  "title": "Mundos sin mascota · se abre desde Hoy",
+  "dark": false,
+  "x": 1880,
+  "y": 8244
+ },
+ "R-Misiones": {
+  "w": 1040,
+  "h": 360,
+  "title": "Misiones Diarias · tarjeta Mundos",
+  "dark": false,
+  "x": 3290,
+  "y": 3828
+ },
+ "R-Hoy-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Inicio real · durante el camino · sin mascota · modo oscuro",
+  "dark": true,
+  "x": 470,
+  "y": 4792
+ },
+ "R-Mundos-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Mundos sin mascota · se abre desde Hoy · modo oscuro",
+  "dark": true,
+  "x": 1880,
+  "y": 9208
+ },
+ "R-Misiones-oscuro": {
+  "w": 1040,
+  "h": 360,
+  "title": "Misiones Diarias · tarjeta Mundos · modo oscuro",
+  "dark": true,
+  "x": 3290,
+  "y": 4792
+ },
+ "R-Hoy-completo": {
+  "w": 390,
+  "h": 4316,
+  "title": "Inicio real completo · durante el camino",
+  "dark": false,
+  "x": 5740,
+  "y": 1620
+ },
+ "R-Hoy-completo-oscuro": {
+  "w": 390,
+  "h": 4316,
+  "title": "Inicio real completo · durante el camino · modo oscuro",
+  "dark": true,
+  "x": 6210,
+  "y": 1620
+ },
+ "R-Hoy-completo-pre": {
+  "w": 390,
+  "h": 4316,
+  "title": "Inicio real completo · antes del 29 nov",
+  "dark": false,
+  "x": 4800,
+  "y": 1620
+ },
+ "R-Hoy-completo-pre-oscuro": {
+  "w": 390,
+  "h": 4316,
+  "title": "Inicio real completo · antes del 29 nov · modo oscuro",
+  "dark": true,
+  "x": 5270,
+  "y": 1620
  }
 }

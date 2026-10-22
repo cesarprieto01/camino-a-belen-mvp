@@ -3,12 +3,13 @@ const TABS = [
   ['hoy', 'Hoy'], ['explorar', 'Explorar'], ['teodoro', 'Teodoro'], ['musica', 'Música'], ['favoritos', 'Favoritos'],
 ];
 
-/** Crea la barra con la pestaña «active» (clave de TABS) encendida. «onTab(clave)» recibe cada toque. */
-export function tabBar(active, onTab) {
+/** Crea la barra con la pestaña «active» (clave de TABS) encendida. «onTab(clave)» recibe cada toque.
+ *  «sinTeodoro»: familias sin mascota, la barra de cuatro pestañas de siempre. */
+export function tabBar(active, onTab, sinTeodoro = false) {
   const nav = document.createElement('nav');
   nav.className = 'theo-tabbar';
   nav.setAttribute('aria-label', 'Pestañas de Theo');
-  nav.innerHTML = TABS.map(([k, label]) => {
+  nav.innerHTML = TABS.filter(([k]) => !(sinTeodoro && k === 'teodoro')).map(([k, label]) => {
     const on = k === active;
     return `<a role="button" tabindex="0" data-nav="${k}" aria-label="${label}"${on ? ' aria-current="page"' : ''} data-bound="1">`
       + `<img src="assets/tabbar/${k}-${on ? 'on' : 'off'}.png" alt="" aria-hidden="true">${label}</a>`;

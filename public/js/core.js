@@ -14,6 +14,7 @@ export const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matc
 const KEY = 'cab-mvp-v2'; // v2: todos empiezan desde cero (antes del 29, sin inscribirse)
 export const DEFAULT = () => ({
   tema: 'claro', plan: 'premium', nombre: 'Lucía',
+  mascota: true,       // tiene la mascota (tab Teodoro) en Theo; sin ella el camino se abre desde Hoy
   hoy: 0,              // día del calendario: 0 = antes del 29 nov · 1..26 · 27 = 25 dic–6 ene
   inscrito: false,
   completos: {},       // día -> { contenido: true, estrellas: 0..3, trivia: true }
@@ -91,14 +92,15 @@ export async function boot() {
 }
 const TAB_OF = { teodoro: 'teodoro', mundos: 'teodoro' };
 /** Cambia cualquier barra de pestañas por la estándar, con la pestaña activa correcta. */
-function unifyNav(root, name) {
+function unifyNav(root, name, params = {}) {
   const old = root.querySelector('nav');
   if (!old) return;
-  // la barra de Theo (tabbar.js): igual en todas las pantallas y en los dos temas
-  const nav = tabBar(TAB_OF[name] || 'hoy', k => {
+  // la barra de Theo (tabbar.js): igual en todas las pantallas y en los dos temas; sin mascota no hay pestaña Teodoro
+  const activa = name === 'mundos' && params.from === 'hoy' ? 'hoy' : TAB_OF[name] || 'hoy';
+  const nav = tabBar(activa, k => {
     if (k === 'hoy' || k === 'teodoro') go(k, {}, 'none', { tab: true });
     else nota('Fuera de Theo Quest', `«${{ explorar: 'Explorar', musica: 'Música', favoritos: 'Favoritos' }[k]}» ya existe en Theo`);
-  });
+  }, S.mascota === false);
   old.replaceWith(nav);
   // el indicador de inicio del lienzo sobra: la barra trae el suyo
   [...root.children].filter(el => el.style.width === '134px' && el.style.height === '5px').forEach(e => e.remove());
@@ -156,6 +158,7 @@ export const DE_PASO = new Set(['confirmacion', 'completado', 'triviaFin', 'triv
   'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'estatica', 'compartir']);
 const dePaso = name => DE_PASO.has(name) || (name === 'teaser' && S.inscrito);
 export function go(name, params = {}, anim = 'push', opts = {}) {
+  if (name === 'teodoro' && S.mascota === false) name = 'hoy'; // sin mascota el camino vive en Hoy
   if (inFlight === name) return busy; // doble toque
   if (cur && !opts.fromBack && !opts.replace && !dePaso(cur.name)) {
     const { thenCerrado, ...keep } = cur.params || {}; // lo de un solo uso no vuelve al regresar
@@ -266,7 +269,7 @@ async function _go(name, params, anim) {
   // volver a la pantalla de abajo con el estado cambiado: se monta debajo y el pop-up se va encima
   const underOv = !isOv && prev?.base && prev.base.name === name;
   if (underOv) vp().insertBefore(layer, prev.layer); else vp().appendChild(layer);
-  unifyNav(root, name);
+  unifyNav(root, name, params);
   if (name !== 'estatica') seen(file);
   // la transición no espera las animaciones internas del mount (p. ej. Teodoro caminando): solo lo que pinta la pantalla
   try {

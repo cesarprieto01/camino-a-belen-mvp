@@ -51,6 +51,8 @@ for fname, b in boards.items():
     body = t[t.find('<x-dc>') + 6:t.rfind('</x-dc>')]
     body = re.sub(r'<helmet>[\s\S]*?</helmet>', '', body).strip()
     body = re.sub(r'/_blob/([0-9a-f]{32})', blob, body)
+    # arte copiado a mano en assets/ (inicio real): si se pasó a WebP, se apunta al archivo que quedó
+    body = re.sub(r'assets/([\w-]+)\.(?:jpg|png)\b', lambda m: 'assets/' + blob_file.get(m.group(1), m.group(0)[7:]), body)
     # trazos del lienzo que terminan con una curva incompleta (el navegador los rechaza): se recorta el último tramo
     def fix_d(m):
         need = {'M': 2, 'L': 2, 'C': 6, 'S': 4, 'Q': 4, 'T': 2, 'A': 7, 'H': 1, 'V': 1, 'Z': 0}
