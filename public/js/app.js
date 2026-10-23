@@ -250,7 +250,10 @@ function render() {
       <div class="p-row"><label>Inscrito</label><span class="seg">${[['1', 'Sí'], ['0', 'No']].map(([v, l]) => `<button data-ins="${v}" aria-pressed="${S.inscrito === (v === '1')}">${l}</button>`).join('')}</span></div>
     </section>
     <section class="p-group"><h2>Ruleta</h2>
-      <div class="p-chips">${[['', 'Al azar'], ['prenda', 'Prenda de la semana'], ['panes', '20 panes'], ['manzana', 'Manzana'], ['cuarto', 'Cuarto nuevo']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${S.forzarPremio === v}">${l}</button>`).join('')}</div>
+      <p class="p-help">Qué sale al girar:</p>
+      <div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', '¡Gira otra vez!']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div>
+      <div class="p-btns"><button class="p-btn main" data-act="ruletaOtraVez">Girar la ruleta otra vez</button></div>
+      <p class="p-help">Vuelve a abrir la ruleta de esta semana sin cambiar de día (días 4, 11, 18 y 24).</p>
     </section>
     <section class="p-group"><h2>Compartir</h2>
       <div class="p-btns"><button class="p-btn main" data-act="share">Copiar enlace a este estado</button><button class="p-btn" data-act="reset">Volver al día 9</button></div>
@@ -312,6 +315,15 @@ panel.addEventListener('click', e => {
   if (a === 'week') advance(7);
   if (a === 'dayPlus') advance(1);
   if (a === 'dayMinus') retroceder();
+  if (a === 'ruletaOtraVez') {
+    // la ruleta de la semana en curso (la última que ya llegó): se borra su giro y se abre de nuevo, sin cambiar de día
+    const d = [...RULES.ruleta].reverse().find(x => x <= lastDay());
+    if (!d) { nota('Aún no hay ruleta', 'La primera es el día 4'); return; }
+    delete S.ruletas[d]; save();
+    go('mapa', {}, 'none', { replace: true });
+    setTimeout(() => go('ruletaPop', { day: d, from: 'mapa' }, 'modal'), 500);
+    closeMobile();
+  }
   if (a === 'panMinus' || a === 'panPlus') { S.panes = Math.max(0, S.panes + (a === 'panPlus' ? 10 : -10)); save(); }
   if (a === 'reset') { reset({}); go('hoy', {}, 'fade', { tab: true }); }
   if (a === 'share') { navigator.clipboard?.writeText(shareURL()).then(() => nota('Enlace copiado', 'Abre la app en este mismo estado')); }

@@ -407,9 +407,7 @@ const ESCENA_ALT = ['feliz a reventar', 'en marcha hacia la aventura', 'listo pa
   'apagado en el suelo, sin energía', 'envuelto en telarañas de tanto esperar', 'cubierto de musgo de tanto esperar', 'atrapado en una ventisca', 'lleno de carámbanos', 'congelado en un bloque de hielo'];
 export const pasoTeodoro = () => S.bateria > 0 ? 5 - S.bateria : Math.max(5, Math.min(10, S.sinCaminar || 0));
 // solo los pasos con imagen aprobada por César; el resto conserva la ilustración original de Teodoro
-// en revisión: se ven en local; en la versión publicada siguen apagadas hasta el OK de César
-const EN_REVISION = ['localhost', '127.0.0.1'].includes(location.hostname);
-const APROBADAS = new Set(EN_REVISION ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'R'] : []);
+const APROBADAS = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'R']); // aprobadas por César (23-oct-2026)
 let pilaRecarga = null; // se decide una vez por pantalla: las dos piezas de Hoy muestran lo mismo
 function escenaPila(card, scene) {
   const imgs = $$(scene, 'img'), land = imgs.find(i => !/^Teodoro/i.test(i.alt || ''));
