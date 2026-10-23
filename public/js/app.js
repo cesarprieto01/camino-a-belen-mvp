@@ -143,6 +143,13 @@ const PENDIENTES_LIENZO = [
   'Fuera de Theo Quest a propósito: pestañas Explorar, Música y Favoritos; villancicos y oraciones generales; paywall «Ver Theo Premium».',
 ];
 
+/** Cambios del panel (día, tema, batería): se repinta la misma pestaña en el mismo punto del scroll,
+ *  para ir viendo cómo cambia esa sección día a día. Desde cualquier otra pantalla se vuelve a Hoy, como siempre. */
+function repintar(anim = 'fade') {
+  const misma = ['hoy', 'teodoro', 'mundos', 'mapa'].includes(cur?.name);
+  go(misma ? cur.name : 'hoy', misma ? cur.params || {} : {}, anim, { scrollTop: misma ? cur.layer.scrollTop : 0 });
+}
+
 function advance(k) {
   // se guarda cómo estaba Teodoro este día: si luego se vuelve atrás en el panel, vuelve igual
   S.diaGuardado = { ...(S.diaGuardado || {}), [S.hoy]: { bateria: S.bateria, sinCaminar: S.sinCaminar || 0, manzana: !!S.manzana, ultimoJugado: S.ultimoJugado } };
@@ -158,7 +165,7 @@ function advance(k) {
   if (k >= RULES.regresoDias && S.inscrito && S.hoy >= 1) S.regreso = true;
   save();
   nota(antes === 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy === 27 ? 'Ya es Navidad' : S.hoy > GRACIA_FIN ? 'El camino quedó como recuerdo' : S.hoy > 27 ? cuentaGracia() : `Hoy es el día ${S.hoy}`);
-  go('hoy', {}, 'fade');
+  repintar();
 }
 
 /** Volver un día atrás en el panel: Teodoro (escena y batería) vuelve a como estaba ese día. */
@@ -174,7 +181,7 @@ function retroceder() {
   S.pilaVista = S.bateria; // volver atrás no es una recarga: sin «reactivado»
   save();
   nota('Un día atrás', S.hoy <= 0 ? 'Antes del 29 de noviembre' : `Hoy es el día ${S.hoy} · energía ${S.bateria} de 5`);
-  go('hoy', {}, 'fade');
+  repintar();
 }
 
 // ---------- Panel ----------
@@ -303,9 +310,9 @@ panel.addEventListener('click', e => {
   if (t.dataset.tab) { tab = t.dataset.tab; if (t.dataset.filtro) filtro = t.dataset.filtro; try { localStorage.setItem('cab-tab2', tab); } catch { /* */ } render(); return; }
   if (t.dataset.filtro) { filtro = t.dataset.filtro; render(); return; }
   if (t.dataset.plan) { S.plan = t.dataset.plan; save(); nota(S.plan === 'free' ? 'Ahora eres free' : S.plan === 'pase' ? 'Ahora tienes el Pase de Adviento' : 'Ahora eres premium'); return; }
-  if (t.dataset.tema) { S.tema = t.dataset.tema; save(); go(cur?.name === 'estatica' ? 'hoy' : cur?.name || 'hoy', cur?.params || {}, 'fade'); return; }
+  if (t.dataset.tema) { S.tema = t.dataset.tema; save(); if (cur?.name === 'estatica') go('hoy', {}, 'fade'); else go(cur?.name || 'hoy', cur?.params || {}, 'fade', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if (t.dataset.ins) { S.inscrito = t.dataset.ins === '1'; save(); go('hoy', {}, 'fade'); return; }
-  if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none'); return; }
+  if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
   if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
   if (t.dataset.go) { go(t.dataset.go, {}, 'fade'); closeMobile(); return; }
@@ -336,7 +343,7 @@ panel.addEventListener('click', e => {
 });
 panel.addEventListener('change', e => {
   const t = e.target;
-  if (t.id === 'dSel') { S.hoy = +t.value; save(); go('hoy', {}, 'fade'); }
+  if (t.id === 'dSel') { S.hoy = +t.value; save(); repintar(); }
   if (t.id === 'pSel') { const n = +t.value; fill(n); if (n > 0) { S.inscrito = true; S.teaserVisto = true; } if (S.hoy < n) S.hoy = n; save(); go(cur?.name === 'mapa' ? 'mapa' : 'hoy', {}, 'fade'); }
   if (t.id === 'nPan') { S.panes = Math.max(0, +t.value || 0); save(); }
 });

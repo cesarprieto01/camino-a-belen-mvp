@@ -548,6 +548,9 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .heroe-pre .hp-boton:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
 .heroe-pre .hp-escena { top: -22px; height: calc(100% + 22px); } /* la escena sube un poco: el panel no tapa a Teodoro */
 .heroe-pre .hp-escena.hp-baja { top: 0; height: 120%; } /* telaraña, musgo, ventisca y carámbanos: la imagen se amplía desde arriba y Teodoro baja a su zona */
+.heroe-pre .hp-abajo { object-position: 50% 100%; } /* póster: el fondo se ancla abajo para que el camino quede bajo los pies de Teodoro */
+.heroe-pre .hp-teo.hp-claro { filter: brightness(.9) drop-shadow(0 6px 10px rgba(2,37,79,.35)); } /* recorte claro en una escena de noche */
+.heroe-pre .hp-sombra { position: absolute; width: 28%; height: 3.2%; border-radius: 50%; background: radial-gradient(closest-side, rgba(4,10,30,.55), transparent); pointer-events: none; }
 .heroe-pre .hp-bateria { position: absolute; top: 12px; right: 12px; width: 44px; height: auto; z-index: 2; filter: drop-shadow(0 2px 4px rgba(2,37,79,.25)); }
 /* pieza grande de Hoy: «Camino a Belén · Día N de 26» sobre la barra */
 .card-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }

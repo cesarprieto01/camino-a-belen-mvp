@@ -98,7 +98,7 @@ export function cardState() {
     const v = vistos(), recuerdo = fase() === 'recuerdo';
     if (!S.inscrito) return recuerdo ? { key: 7, title: 'Camino a Belén', sub: 'Nos vemos en Adviento', cta: 'Ver el nacimiento' }
       : { key: 4, title: '¡Aún llegas a Belén!', sub: cuentaGracia(true), cta: 'Unirme gratis', cuenta: true };
-    if (v >= 26) return { key: 5, title: recuerdo ? 'Camino a Belén' : '¡Feliz Navidad!', sub: '¡Llegaste a Belén!', cta: 'Ver el nacimiento' };
+    if (v >= 26) return { key: 5, title: S.hoy === 27 ? '¡Feliz Navidad!' : 'Camino a Belén', sub: '¡Llegaste a Belén!', cta: 'Ver el nacimiento' }; // «¡Feliz Navidad!» solo el 25
     if (recuerdo) return v ? { key: 8, title: 'Camino a Belén', sub: `Caminaste ${v} ${v === 1 ? 'día' : 'días'} con Teodoro`, cta: 'Ver tu camino' }
       : { key: 7, title: 'Camino a Belén', sub: 'Nos vemos en Adviento', cta: 'Ver el nacimiento' };
     return { key: 6, title: 'Camino a Belén', sub: cuentaGracia(true).replace('Último día', '¡Último día!'), cuenta: true }; // mismo diseño que en el camino: barra y «Continuar la aventura»
@@ -249,6 +249,22 @@ function heroe(root) {
   return { lampara, evangelio };
 }
 
+/** Póster de la temporada: del 29 nov al 6 ene el destacado cambia cada semana (solo el kicker; el título sigue).
+ *  Teodoro va encima con su recorte original; los claros se oscurecen un poco para la noche. Las poses y la batería
+ *  siguen en la pieza grande de Hoy y en la tab Teodoro. `hasta` = último día del calendario (S.hoy) de cada póster. */
+const NAVIDAD = { fondo: 'navidad', abajo: true, alt: 'Teodoro celebra junto al Niño Jesús en el pesebre, con María y José', teo: 'a98be2e11e018975563512bddc52be5a', claro: true, teoCss: 'left:24%;top:21%;height:37%', sombra: 'left:12%;top:56.6%;width:24%' };
+const POSTERS = [
+  { hasta: 7, kicker: '1.ª semana · Esperanza', fondo: 's1-estela', alt: 'La estrella de Belén enciende el farol de Teodoro', teo: 'c0b753e9a2d8d857108e5116baf8e8cc', teoCss: 'left:71%;top:14.5%', sombra: 'left:57%;top:56.6%' },
+  { hasta: 14, kicker: '2.ª semana · Paz', fondo: 's2-mapa', abajo: true, alt: 'Teodoro con su mapa y un camino de piedras doradas hasta Belén', teo: '2a0a0137c06293e31b84c587a73c958c', claro: true, teoCss: 'left:27%', sombra: 'left:12%;top:57.8%' },
+  { hasta: 21, kicker: '3.ª semana · Alegría', fondo: 's3-pastores', alt: 'Teodoro celebra entre ovejitas que saltan en el campo de los pastores', teo: 'ceb3307f345f840e51bb2c383aae1f04', sombra: 'left:36%;top:57.8%' },
+  { hasta: 25, kicker: '4.ª semana · Amor', fondo: 's4-puerta', abajo: true, alt: 'Teodoro llega a la puerta de Belén detrás de María y José', teo: '57acbcf795f5e41b9eee8c841c7e2fcc', teoCss: 'left:27%', sombra: 'left:13%;top:57.8%' },
+  { hasta: 26, kicker: 'Nochebuena', fondo: 'nochebuena', alt: 'Teodoro mira la luz que sale del portal de Belén', teo: 'cd7abd57ac6154597b18285ae710d7ba', claro: true, teoCss: 'left:73%', sombra: 'left:59%;top:57.8%' },
+  { hasta: 27, kicker: '¡Feliz Navidad!', ...NAVIDAD }, // solo el 25 de diciembre
+  { hasta: 33, kicker: 'Tiempo de Navidad', ...NAVIDAD },
+  { hasta: GRACIA_FIN, kicker: 'Tiempo de Navidad', fondo: 'enero', alt: 'Teodoro con su mapa sigue la estrella de Belén', teo: '42fcde792c2c52338da55536a09cafd0', claro: true, teoCss: 'left:73%', sombra: 'left:59%;top:57.8%' },
+];
+const posterDeHoy = () => ['camino', 'gracia'].includes(fase()) ? POSTERS.find(p => S.hoy <= p.hasta) : null;
+
 /** Destacado del carrusel (lienzo «Inicio real»): fondo de Belén de noche con degradado abajo, Teodoro con el farol,
  *  «Adviento en familia», «Camino a Belén» y un botón amarillo. Igual en modo claro y oscuro.
  *  Los botones de siempre siguen debajo, ocultos: el nuevo los toca para no cambiar lo que hace cada uno. */
@@ -271,17 +287,22 @@ function heroeNuevo(root) {
   const capa = document.createElement('div'); capa.className = 'heroe-pre';
   const flecha = unirse ? '' : '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   const destello = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24"><path fill="#F5DB78" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
-  capa.innerHTML = (escena
+  const poster = posterDeHoy();
+  capa.innerHTML = (poster
+      ? `<img class="hp-fondo${poster.abajo ? ' hp-abajo' : ''}" src="assets/poster/${poster.fondo}.webp" alt="${poster.alt}">`
+        + (poster.sombra ? `<span class="hp-sombra" style="${poster.sombra}" aria-hidden="true"></span>` : '')
+        + `<img class="hp-teo${poster.claro ? ' hp-claro' : ''}" src="${A(poster.teo)}" style="${poster.teoCss || ''}" alt="">`
+      : escena
       ? `<img class="hp-fondo hp-escena${(sinEmpezar || recarga || [0, 1, 2, 3, 4, 6, 7, 8, 9].includes(pasoTeodoro())) ? ' hp-baja' : ''}" src="${escena}" alt="${sinEmpezar ? 'Teodoro salta de alegría' : `Teodoro ${recarga ? 'recargándose de golpe' : ESCENA_ALT[pasoTeodoro()]}`}">`
       : `<img class="hp-fondo" src="assets/inicio/card-superior-noche.webp" alt=""><img class="hp-teo" src="${A('c0b753e9a2d8d857108e5116baf8e8cc')}" alt="Teodoro con su farol">`)
-    + (sinEmpezar ? '' : `<img class="hp-bateria" src="${A(BATTERY_IDS[S.bateria])}" alt="Energía de Teodoro: ${S.bateria} de 5">`) + `
+    + (sinEmpezar || poster ? '' : `<img class="hp-bateria" src="${A(BATTERY_IDS[S.bateria])}" alt="Energía de Teodoro: ${S.bateria} de 5">`) + `
     <span class="hp-degradado" aria-hidden="true"></span>
-    <div class="hp-texto"><span class="hp-kicker">${destello}<span>Adviento en familia</span>${destello}</span><b class="hp-titulo">Camino a Belén</b></div>
+    <div class="hp-texto"><span class="hp-kicker">${destello}<span>${poster ? poster.kicker : 'Adviento en familia'}</span>${destello}</span><b class="hp-titulo">Camino a Belén</b></div>
     <a href="#" class="hp-boton"><span>${texto}</span>${flecha}</a>`;
   card.appendChild(capa);
   capa.querySelector('.hp-boton').addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); accion(); });
   capa.addEventListener('click', ev => { if (ev.target.closest('.hp-boton')) return; ev.preventDefault(); accion(); });
-  card.setAttribute('aria-label', `Camino a Belén, Adviento en familia: ${unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
+  card.setAttribute('aria-label', `Camino a Belén, ${poster ? poster.kicker : 'Adviento en familia'}:${unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
 }
 
 /** El destacado dice qué es y en qué va la familia (antes solo había escena y botón). */

@@ -169,7 +169,7 @@ let busy = Promise.resolve();
 // Historial: para que «volver», «Ahora no» y cerrar regresen a donde estaba la familia
 const stack = []; export const _stack = stack;
 const TABS = ['hoy', 'teodoro', 'mundos'];
-/** Ir a una pantalla. opts.replace: no deja la actual en el historial (pasos automáticos). */
+/** Ir a una pantalla. opts.replace: no deja la actual en el historial (pasos automáticos). opts.scrollTop: abre en ese punto del scroll. */
 // Pantallas de paso: celebraciones, pasos automáticos y juegos en curso. «Volver» nunca regresa a ellas.
 export const DE_PASO = new Set(['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto',
   'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin',
@@ -186,7 +186,7 @@ export function go(name, params = {}, anim = 'push', opts = {}) {
   // las pestañas principales empiezan un historial nuevo
   if (TABS.includes(name) && !opts.fromBack && opts.keepStack !== true && opts.tab) stack.length = 0;
   inFlight = name;
-  busy = busy.then(() => _go(name, params, anim)).catch(e => { console.error(e); nota('Algo falló al abrir la pantalla', e.message); }).finally(() => { inFlight = null; });
+  busy = busy.then(() => _go(name, params, anim, opts)).catch(e => { console.error(e); nota('Algo falló al abrir la pantalla', e.message); }).finally(() => { inFlight = null; });
   return busy;
 }
 /** Volver a la pantalla anterior (o a fallback si no hay historial). Salta las que se indiquen. */
@@ -259,7 +259,7 @@ function closeOverlay(ov, keepBase) {
   setTimeout(() => ov.layer.remove(), 260);
   if (keepBase) { ov.base.layer.inert = false; ov.base.layer.classList.remove('under', 'under-page'); }
 }
-async function _go(name, params, anim) {
+async function _go(name, params, anim, opts = {}) {
   const def = SCREENS[name];
   if (!def) { hueco(`Pantalla «${name}» sin definir`); return; }
   const prev = cur;
@@ -301,6 +301,7 @@ async function _go(name, params, anim) {
     if (bottom + 110 > h) { h = bottom + 110; root.style.height = h + 'px'; root.style.minHeight = h + 'px'; }
   }
   if (h > 844 && !def.noScroll && !isOv) { layer.classList.add('scroll'); pinBottom(layer, root, h); }
+  if (opts.scrollTop && layer.classList.contains('scroll')) layer.scrollTop = opts.scrollTop; // el panel repinta en el mismo punto (antes de la transición: sin salto)
   bindFallback(layer, layer);
   cur.rsnap = snap(); // estado con el que se dibujó
   // el botón de registro dice lo mismo en toda la app (después de conectar los botones)
