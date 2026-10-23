@@ -1127,7 +1127,7 @@ register('ruletaPop', {
         const zona = wheel.parentElement.parentElement;
         zona.querySelector('.gira-otra')?.remove();
         const cartel = document.createElement('div'); cartel.className = 'gira-otra'; cartel.setAttribute('role', 'status');
-        cartel.innerHTML = '<b>¡Gira otra vez!</b><span>Tienes otro giro</span>';
+        cartel.innerHTML = '<b>¡Te ganaste otro giro!</b><span>Toca «¡Girar!» de nuevo</span>';
         zona.appendChild(cartel);
         spun = false; btn.style.opacity = ''; btn.style.pointerEvents = ''; animate(btn, 'a-pop');
         return;
