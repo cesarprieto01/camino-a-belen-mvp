@@ -1098,6 +1098,7 @@ register('ruletaPop', {
       if (wheel) {
         // anticipación: la rueda se echa un poquito atrás antes de salir
         if (!reduced()) await wheel.animate([{ rotate: '0deg' }, { rotate: '-10deg' }], { duration: 180, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'forwards' }).finished;
+        wheel.style.transition = ''; // tras un giro quedó en «none»: sin esto el segundo giro saltaba sin moverse
         wheel.classList.add('wheel-spin');
         if (reduced()) wheel.style.transition = 'transform .3s';
         wheel.getAnimations().forEach(a => a.cancel());
@@ -1127,7 +1128,7 @@ register('ruletaPop', {
         const zona = wheel.parentElement.parentElement;
         zona.querySelector('.gira-otra')?.remove();
         const cartel = document.createElement('div'); cartel.className = 'gira-otra'; cartel.setAttribute('role', 'status');
-        cartel.innerHTML = '<b>¡Te ganaste otro giro!</b><span>Toca «¡Girar!» de nuevo</span>';
+        cartel.innerHTML = '<b>¡Otra oportunidad!</b><span>Gira de nuevo</span>';
         zona.appendChild(cartel);
         spun = false; btn.style.opacity = ''; btn.style.pointerEvents = ''; animate(btn, 'a-pop');
         return;
