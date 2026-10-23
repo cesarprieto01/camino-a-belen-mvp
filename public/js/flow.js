@@ -461,7 +461,7 @@ register('hoy', {
  *  Con pila: paso = 5 − pila (0–4); con la pila en 0: los días sin caminar (5–10). «Reactivado» la primera vez que la pila sube.
  *  Una imagen cuadrada por paso, de día y de noche; cada pieza recorta su parte (Teodoro arriba, sobre el panel). */
 const ESCENA_ALT = ['feliz a reventar', 'en marcha hacia la aventura', 'listo para salir', 'tomando café, serio, esperándote', 'impaciente, mirando el reloj',
-  'apagado en el suelo, sin energía', 'envuelto en telarañas de tanto esperar', 'cubierto de musgo de tanto esperar', 'atrapado en una ventisca', 'lleno de carámbanos', 'congelado en un bloque de hielo'];
+  'dormido en el suelo, sin energía', 'envuelto en telarañas de tanto esperar', 'cubierto de musgo de tanto esperar', 'atrapado en una ventisca', 'lleno de carámbanos', 'congelado en un bloque de hielo'];
 export const pasoTeodoro = () => S.bateria > 0 ? 5 - S.bateria : Math.max(5, Math.min(10, S.sinCaminar || 0));
 // solo los pasos con imagen aprobada por César; el resto conserva la ilustración original de Teodoro
 const APROBADAS = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'R']); // aprobadas por César (23-oct-2026)
