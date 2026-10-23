@@ -249,6 +249,23 @@ function heroe(root) {
   return { lampara, evangelio };
 }
 
+/** Antes del 29: el destacado del carrusel con la estructura nueva (fondo de Belén de noche, Teodoro con el farol, título y un botón).
+ *  Los botones de siempre siguen debajo, ocultos: el nuevo los toca para no cambiar lo que hace cada uno. */
+function heroeAntes(root) {
+  const card = root.querySelector('.theo-heroe [role=group][aria-label^="Camino a Belén"]');
+  if (!card || card.querySelector('.heroe-pre')) return;
+  const boton = find(card, S.inscrito ? 'Entrar' : 'Unirme gratis'), ver = card.querySelector('a[aria-label="Ver el camino"]');
+  const capa = document.createElement('div'); capa.className = 'heroe-pre' + (dark() ? '' : ' claro');
+  capa.innerHTML = `<img class="hp-fondo" src="assets/inicio/card-superior-${dark() ? 'noche' : 'dia'}.webp" alt="">
+    <img class="hp-teo" src="${A('c0b753e9a2d8d857108e5116baf8e8cc')}" alt="Teodoro con su farol">
+    <div class="hp-texto"><span class="hp-kicker">✦ Adviento en familia ✦</span><b class="hp-titulo">Camino a Belén</b>
+    <a href="#" class="hp-boton">${S.inscrito ? 'Entrar' : 'Unirme gratis'}</a></div>`;
+  card.appendChild(capa);
+  capa.querySelector('.hp-boton').addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); (boton || ver)?.click(); });
+  capa.addEventListener('click', ev => { if (ev.target.closest('.hp-boton')) return; ev.preventDefault(); ver?.click(); });
+  card.setAttribute('aria-label', S.inscrito ? 'Camino a Belén: ya te uniste, empieza el 29 de noviembre' : 'Camino a Belén: Adviento en familia, únete gratis');
+}
+
 /** El destacado dice qué es y en qué va la familia (antes solo había escena y botón). */
 function tituloHeroe(root) {
   const card = root.querySelector('.theo-heroe [role=group][aria-label^="Camino a Belén"]');
@@ -314,6 +331,7 @@ register('hoy', {
     carruseles(root);
     const destacados = heroe(root);
     tituloHeroe(root);
+    if (fase() === 'antes') heroeAntes(root);
     replaceText(root, /^Ces$/, S.nombre);
     root.querySelector('img[alt="Perfil de Ces"]')?.setAttribute('alt', `Perfil de ${S.nombre}`);
     paintEnergy(root);

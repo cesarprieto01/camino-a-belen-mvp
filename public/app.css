@@ -536,3 +536,16 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .gira-otra span { font: 600 15px/1.2 Mulish, sans-serif; opacity: .85; }
 @keyframes giraOtra { from { transform: translate(-50%, -50%) scale(.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .gira-otra { animation: none; } }
+/* Destacado del inicio antes del 29: estructura nueva (fondo de Belén, Teodoro con farol, título y botón) */
+.heroe-pre { position: absolute; inset: 0; z-index: 4; border-radius: inherit; overflow: hidden; background: #0B1B3E; cursor: pointer; }
+.heroe-pre .hp-fondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+.heroe-pre .hp-teo { position: absolute; left: 50%; top: 16%; height: 44%; width: auto; transform: translateX(-50%); filter: drop-shadow(0 6px 10px rgba(2,37,79,.35)); }
+.heroe-pre .hp-texto { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 14px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.heroe-pre .hp-kicker { color: #F5DB78; font: 800 10.5px/1.2 Mulish, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.heroe-pre .hp-titulo { color: #FFFFFF; font: 700 27px/1.1 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.01em; }
+.heroe-pre .hp-boton { margin-top: 8px; width: 100%; height: 48px; border-radius: 18px; background: #F5DB78; color: #02254F; font: 800 17px/48px Mulish, system-ui, sans-serif; text-decoration: none; }
+.heroe-pre .hp-boton:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
+.heroe-pre.claro { background: #F6EFE2; }
+.heroe-pre.claro .hp-kicker { color: #9A6B00; }
+.heroe-pre.claro .hp-titulo { color: #02254F; }
+.heroe-pre.claro .hp-boton { background: #0B748A; color: #FFFFFF; }
