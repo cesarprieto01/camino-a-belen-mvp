@@ -536,16 +536,19 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .gira-otra span { font: 600 15px/1.2 Mulish, sans-serif; opacity: .85; }
 @keyframes giraOtra { from { transform: translate(-50%, -50%) scale(.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .gira-otra { animation: none; } }
-/* Destacado del inicio antes del 29: estructura nueva (fondo de Belén, Teodoro con farol, título y botón) */
-.heroe-pre { position: absolute; inset: 0; z-index: 4; border-radius: inherit; overflow: hidden; background: #0B1B3E; cursor: pointer; }
+/* Destacado del carrusel (lienzo «Inicio real»): igual en claro y oscuro */
+.heroe-pre { position: absolute; inset: 0; z-index: 4; border-radius: inherit; overflow: hidden; background: #274E7C; cursor: pointer; }
 .heroe-pre .hp-fondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
 .heroe-pre .hp-teo { position: absolute; left: 50%; top: 16%; height: 44%; width: auto; transform: translateX(-50%); filter: drop-shadow(0 6px 10px rgba(2,37,79,.35)); }
-.heroe-pre .hp-texto { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 14px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
-.heroe-pre .hp-kicker { color: #F5DB78; font: 800 10.5px/1.2 Mulish, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.heroe-pre .hp-titulo { color: #FFFFFF; font: 700 27px/1.1 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.01em; }
-.heroe-pre .hp-boton { margin-top: 8px; width: 100%; height: 48px; border-radius: 18px; background: #F5DB78; color: #02254F; font: 800 17px/48px Mulish, system-ui, sans-serif; text-decoration: none; }
+.heroe-pre .hp-degradado { position: absolute; left: 0; right: 0; bottom: 0; height: 160px; background: linear-gradient(180deg, rgba(4,14,36,0) 0%, rgba(4,14,36,.72) 32%, rgba(4,14,36,.92) 100%); pointer-events: none; }
+.heroe-pre .hp-texto { position: absolute; left: 16px; right: 16px; bottom: 74px; text-align: center; pointer-events: none; }
+.heroe-pre .hp-kicker { display: flex; align-items: center; justify-content: center; gap: 6px; color: #F5DB78; font: 700 11px/14px 'Neue Montreal', Mulish, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.heroe-pre .hp-titulo { display: block; margin-top: 4px; color: #FFFFFF; font: 700 28px/32px 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.01em; }
+.heroe-pre .hp-boton { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 48px; border-radius: 16px; background: #F5DB78; color: #06325A; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 16px/1 'Neue Montreal', Mulish, sans-serif; text-decoration: none; }
 .heroe-pre .hp-boton:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
-.heroe-pre.claro { background: #F6EFE2; }
-.heroe-pre.claro .hp-kicker { color: #9A6B00; }
-.heroe-pre.claro .hp-titulo { color: #02254F; }
-.heroe-pre.claro .hp-boton { background: #0B748A; color: #FFFFFF; }
+.heroe-pre .hp-escena { top: -22px; height: calc(100% + 22px); } /* la escena sube un poco: el panel no tapa a Teodoro */
+.heroe-pre .hp-bateria { position: absolute; top: 12px; right: 12px; width: 44px; height: auto; z-index: 2; filter: drop-shadow(0 2px 4px rgba(2,37,79,.25)); }
+/* pieza grande de Hoy: «Camino a Belén · Día N de 26» sobre la barra */
+.card-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.card-titulo b { font: 700 19px/1.15 'Neue Montreal', Mulish, sans-serif; color: #FFFFFF; }
+.card-titulo span { font: 500 15px/1.2 'Neue Montreal', Mulish, sans-serif; color: #F5DB78; white-space: nowrap; }

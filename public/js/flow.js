@@ -2,7 +2,7 @@
 import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo } from './core.js';
-import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub } from './data.js';
+import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, BATTERY_IDS } from './data.js';
 import './musica.js'; // música de fondo del mapa y la trivia
 import { rateRow } from './games.js';
 
@@ -249,21 +249,39 @@ function heroe(root) {
   return { lampara, evangelio };
 }
 
-/** Antes del 29: el destacado del carrusel con la estructura nueva (fondo de Belén de noche, Teodoro con el farol, título y un botón).
+/** Destacado del carrusel (lienzo «Inicio real»): fondo de Belén de noche con degradado abajo, Teodoro con el farol,
+ *  «Adviento en familia», «Camino a Belén» y un botón amarillo. Igual en modo claro y oscuro.
  *  Los botones de siempre siguen debajo, ocultos: el nuevo los toca para no cambiar lo que hace cada uno. */
-function heroeAntes(root) {
+function heroeNuevo(root) {
   const card = root.querySelector('.theo-heroe [role=group][aria-label^="Camino a Belén"]');
   if (!card || card.querySelector('.heroe-pre')) return;
-  const boton = find(card, S.inscrito ? 'Entrar' : 'Unirme gratis'), ver = card.querySelector('a[aria-label="Ver el camino"]');
-  const capa = document.createElement('div'); capa.className = 'heroe-pre' + (dark() ? '' : ' claro');
-  capa.innerHTML = `<img class="hp-fondo" src="assets/inicio/card-superior-${dark() ? 'noche' : 'dia'}.webp" alt="">
-    <img class="hp-teo" src="${A('c0b753e9a2d8d857108e5116baf8e8cc')}" alt="Teodoro con su farol">
-    <div class="hp-texto"><span class="hp-kicker">✦ Adviento en familia ✦</span><b class="hp-titulo">Camino a Belén</b>
-    <a href="#" class="hp-boton">${S.inscrito ? 'Entrar' : 'Unirme gratis'}</a></div>`;
+  const st = cardState(), antes = fase() === 'antes';
+  const unirse = !S.inscrito;
+  // sin empezar (sin unirse, antes del 29 o sin ningún cuento visto): invitación que cambia cada día entre el farol y la fiesta
+  const sinEmpezar = unirse || antes || vistos() === 0;
+  const texto = unirse ? 'Unirme gratis' : (!antes && vistos() === 0) ? 'Iniciar la aventura' : (!antes && st.cta && !/^Unirme/.test(st.cta)) ? st.cta : 'Seguir la aventura';
+  const tema = dark() ? 'noche' : 'dia';
+  const recarga = S.pilaVista != null && S.bateria > S.pilaVista;
+  const escena = sinEmpezar
+    ? (((S.hoy % 2) + 2) % 2 === 0 ? null : `assets/pila/dias-0-${tema}.webp`) // días pares: farol; impares: felicidad explosiva
+    : `assets/pila/${recarga ? 'reactivado' : `dias-${pasoTeodoro()}`}-${tema}.webp`;
+  const original = antes ? find(card, S.inscrito ? 'Entrar' : 'Unirme gratis') : [...card.querySelectorAll('a')].find(x => x.getAttribute('aria-label') !== 'Ver el camino' && !/Energía/.test(x.getAttribute('aria-label') || ''));
+  const ver = card.querySelector('a[aria-label="Ver el camino"]');
+  const accion = () => { if (antes && S.inscrito) { go('espera', {}, 'page'); return; } (original || ver)?.click(); };
+  const capa = document.createElement('div'); capa.className = 'heroe-pre';
+  const flecha = unirse ? '' : '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  const destello = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24"><path fill="#F5DB78" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
+  capa.innerHTML = (escena
+      ? `<img class="hp-fondo hp-escena" src="${escena}" alt="${sinEmpezar ? 'Teodoro salta de alegría' : `Teodoro ${recarga ? 'recargándose de golpe' : ESCENA_ALT[pasoTeodoro()]}`}">`
+      : `<img class="hp-fondo" src="assets/inicio/card-superior-noche.webp" alt=""><img class="hp-teo" src="${A('c0b753e9a2d8d857108e5116baf8e8cc')}" alt="Teodoro con su farol">`)
+    + (sinEmpezar ? '' : `<img class="hp-bateria" src="${A(BATTERY_IDS[S.bateria])}" alt="Energía de Teodoro: ${S.bateria} de 5">`) + `
+    <span class="hp-degradado" aria-hidden="true"></span>
+    <div class="hp-texto"><span class="hp-kicker">${destello}<span>Adviento en familia</span>${destello}</span><b class="hp-titulo">Camino a Belén</b></div>
+    <a href="#" class="hp-boton"><span>${texto}</span>${flecha}</a>`;
   card.appendChild(capa);
-  capa.querySelector('.hp-boton').addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); (boton || ver)?.click(); });
-  capa.addEventListener('click', ev => { if (ev.target.closest('.hp-boton')) return; ev.preventDefault(); ver?.click(); });
-  card.setAttribute('aria-label', S.inscrito ? 'Camino a Belén: ya te uniste, empieza el 29 de noviembre' : 'Camino a Belén: Adviento en familia, únete gratis');
+  capa.querySelector('.hp-boton').addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); accion(); });
+  capa.addEventListener('click', ev => { if (ev.target.closest('.hp-boton')) return; ev.preventDefault(); accion(); });
+  card.setAttribute('aria-label', `Camino a Belén, Adviento en familia: ${unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
 }
 
 /** El destacado dice qué es y en qué va la familia (antes solo había escena y botón). */
@@ -331,7 +349,7 @@ register('hoy', {
     carruseles(root);
     const destacados = heroe(root);
     tituloHeroe(root);
-    if (fase() === 'antes') heroeAntes(root);
+    heroeNuevo(root);
     replaceText(root, /^Ces$/, S.nombre);
     root.querySelector('img[alt="Perfil de Ces"]')?.setAttribute('alt', `Perfil de ${S.nombre}`);
     paintEnergy(root);
@@ -499,6 +517,19 @@ export function paintCaminoCard(card, from) {
   }
   const pesebre = S.hoy >= 27 && st.key !== 6 && st.key !== 4 && st.key !== 8;
   if (scene && !pesebre && fase() !== 'antes') escenaPila(card, scene);
+  // pieza grande (Hoy y tab Teodoro, la misma): título del evento y en qué día va
+  if (!card.closest('.theo-heroe') && fase() !== 'antes' && !card.querySelector('.card-titulo')) {
+    const panel = $$(card, 'div').find(d => /blur/.test(d.style.backdropFilter || d.style.webkitBackdropFilter || ''));
+    if (panel) {
+      const t = document.createElement('div'); t.className = 'card-titulo';
+      t.innerHTML = `<b>Camino a Belén</b><span>${st.key === 3 || st.key === undefined ? `Día ${n} de 26` : (st.sub || `Día ${n} de 26`)}</span>`;
+      panel.prepend(t);
+      // el panel crece hacia arriba lo que ocupa el título (si no, aplasta el botón)
+      const h = parseFloat(panel.style.height), tp = parseFloat(panel.style.top);
+      if (h) panel.style.height = (h + 34) + 'px';
+      if (!isNaN(tp)) panel.style.top = (tp - 34) + 'px';
+    }
+  }
   const toMap = () => st.key === 5 || st.key === 7 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar(from);
   if (scene) on(card, scene, toMap);
   if (btn) on(card, btn, toMap);
@@ -653,6 +684,16 @@ register('teodoro', {
     quitarCorona(root);
     juntarAvatares(root);
     const tCard = root.querySelector('a[aria-label="Ver el camino"]')?.parentElement;
+    // la pieza del camino es la misma que la de Hoy: igual de alta (402), y lo que va debajo baja lo mismo
+    if (tCard && fase() !== 'antes') {
+      const h0 = parseFloat(tCard.style.height), t0 = parseFloat(tCard.style.top), dh = 402 - h0;
+      if (h0 && dh > 0) {
+        [...tCard.parentElement.children].forEach(el => { const t = parseFloat(el.style.top); if (el !== tCard && !isNaN(t) && t > t0) el.style.top = (t + dh) + 'px'; });
+        tCard.style.height = '402px';
+        const pa = tCard.parentElement, ph = parseFloat(pa.style.height); if (ph) pa.style.height = (ph + dh) + 'px';
+        const sc = tCard.querySelector('a[aria-label="Ver el camino"]'); if (sc && parseFloat(sc.style.height)) sc.style.height = (parseFloat(sc.style.height) + dh) + 'px';
+      }
+    }
     const { st, toMap } = tCard && fase() !== 'antes' ? paintCaminoCard(tCard, 'teodoro') : { st: cardState(), toMap: () => entrar('teodoro') };
     replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
     paintEnergy(root);
