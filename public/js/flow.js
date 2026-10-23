@@ -404,10 +404,12 @@ register('hoy', {
  *  Con pila: paso = 5 − pila (0–4); con la pila en 0: los días sin caminar (5–10). «Reactivado» la primera vez que la pila sube.
  *  Una imagen cuadrada por paso, de día y de noche; cada pieza recorta su parte (Teodoro arriba, sobre el panel). */
 const ESCENA_ALT = ['feliz a reventar', 'en marcha hacia la aventura', 'listo para salir', 'tomando café, serio, esperándote', 'impaciente, mirando el reloj',
-  'desesperado buscándote', 'envuelto en telarañas de tanto esperar', 'cubierto de musgo de tanto esperar', 'atrapado en una ventisca', 'lleno de carámbanos', 'congelado en un bloque de hielo'];
+  'apagado en el suelo, sin energía', 'envuelto en telarañas de tanto esperar', 'cubierto de musgo de tanto esperar', 'atrapado en una ventisca', 'lleno de carámbanos', 'congelado en un bloque de hielo'];
 export const pasoTeodoro = () => S.bateria > 0 ? 5 - S.bateria : Math.max(5, Math.min(10, S.sinCaminar || 0));
 // solo los pasos con imagen aprobada por César; el resto conserva la ilustración original de Teodoro
-const APROBADAS = new Set([]);
+// en revisión: se ven en local; en la versión publicada siguen apagadas hasta el OK de César
+const EN_REVISION = ['localhost', '127.0.0.1'].includes(location.hostname);
+const APROBADAS = new Set(EN_REVISION ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'R'] : []);
 let pilaRecarga = null; // se decide una vez por pantalla: las dos piezas de Hoy muestran lo mismo
 function escenaPila(card, scene) {
   const imgs = $$(scene, 'img'), land = imgs.find(i => !/^Teodoro/i.test(i.alt || ''));
@@ -1041,7 +1043,10 @@ register('cerrado', {
 });
 
 // ---------- Ruleta (días 4, 11, 18 y 24) ----------
-const SEGMENTS = ['panes', 'manzana', 'panes', 'panes', 'prenda', 'panes', 'panes', 'panes', 'panes', 'cuarto'];
+// 8 casillas (45° cada una), desde arriba en el sentido del reloj: el «?» dorado es el fondo nuevo para Teodoro (cuarto);
+// el regalo trae una prenda al azar; «prenda» es la de la semana; «otra» da un segundo giro. Panes alternados para que quede simétrica.
+const SEGMENTS = ['cuarto', 'panes', 'regalo', 'panes', 'prenda', 'panes', 'otra', 'panes'];
+const SEG = 360 / SEGMENTS.length;
 register('ruletaPop', {
   files: F('S-05b-Ruleta-pop', 'S-05b-Ruleta-pop-oscuro'),
   mount(root, p, layer) {
@@ -1053,9 +1058,28 @@ register('ruletaPop', {
     const wheel = root.querySelector('[role=img][aria-label^="Ruleta"] > div');
     wheel?.parentElement.classList.add('a-pop');
     const pointer = $$(root, 'img').find(i => i.src.includes('3fdb655b'));
-    let spun = false;
+    // la rueda de 8 casillas y sus iconos (la del lienzo trae 10)
+    const week0 = RULES.ruleta.indexOf(n);
+    if (wheel) {
+      const base = wheel.querySelector(':scope > img'); if (base) base.src = 'assets/ruleta/rueda8.webp';
+      [...wheel.children].filter(c => c.tagName === 'DIV').forEach(c => c.remove());
+      const ico = { cuarto: 'assets/ruleta/sorpresa.webp', panes: A(IMG.pan), regalo: A(IMG.regalo), prenda: A(PRENDAS[week0]?.img || IMG.regalo), otra: 'assets/ruleta/otra-vez.webp' };
+      const box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2, r = box * .262, s = box * .14;
+      SEGMENTS.forEach((id, i) => {
+        const d = document.createElement('div');
+        d.style.cssText = `position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)`;
+        const k = id === 'cuarto' ? 1.3 : 1, z = s * k; // el premio especial, el más grande
+        const sombra = id === 'cuarto' ? 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
+        d.innerHTML = `<img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-r - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}">`;
+        wheel.appendChild(d);
+      });
+      wheel.style.transformOrigin = `${cx}px ${cx}px`;
+      wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: sorpresa dorada, panes, regalo, panes, prenda de la semana, panes, gira otra vez, panes');
+    }
+    let spun = false, giro = 0; // giro: dónde quedó la rueda (para volver a girar)
     on(root, '¡Girar!', async (ev, btn) => {
       if (spun) return; spun = true;
+      root.querySelector('.gira-otra')?.remove();
       btn.style.opacity = '.6'; btn.style.pointerEvents = 'none';
       const tarde = find(root, 'Más tarde'); if (tarde) tarde.style.visibility = 'hidden'; layer.querySelector('.pop-x')?.remove();
       // premio: el forzado en el panel o al azar (todas las casillas ganan)
@@ -1064,13 +1088,15 @@ register('ruletaPop', {
       const pick = () => {
         if (weekId && !S.prendas.includes(weekId) && Math.random() < .35) return SEGMENTS.indexOf('prenda');
         let i = Math.floor(Math.random() * SEGMENTS.length);
-        if (SEGMENTS[i] === 'cuarto' && S.cuartoNuevo) i = SEGMENTS.indexOf('prenda');
+        if (SEGMENTS[i] === 'cuarto' && S.cuartoNuevo) i = SEGMENTS.indexOf('regalo');
         return i;
       };
       let idx = forced ? SEGMENTS.indexOf(forced) : pick();
       if (idx < 0) idx = 0;
-      const premio = SEGMENTS[idx];
-      const target = 360 * 6 + (360 - idx * 36) + (Math.random() * 16 - 8);
+      let premio = SEGMENTS[idx];
+      const vuelta = ((360 - idx * SEG - giro) % 360 + 360) % 360;
+      const target = giro + 360 * 6 + vuelta + (Math.random() * 20 - 10);
+      giro = target;
       if (wheel) {
         // anticipación: la rueda se echa un poquito atrás antes de salir
         if (!reduced()) await wheel.animate([{ rotate: '0deg' }, { rotate: '-10deg' }], { duration: 180, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'forwards' }).finished;
@@ -1078,7 +1104,7 @@ register('ruletaPop', {
         if (reduced()) wheel.style.transition = 'transform .3s';
         wheel.getAnimations().forEach(a => a.cancel());
         wheel.style.transform = `rotate(${target}deg)`;
-        // el puntero golpea cada vez que pasa una casilla (36°), al ritmo real de la rueda
+        // el puntero golpea cada vez que pasa una casilla, al ritmo real de la rueda
         if (pointer && !reduced()) {
           let lastSeg = 0, lastT = performance.now(), turns = 0, prevA = 0;
           const tickP = now => {
@@ -1086,7 +1112,7 @@ register('ruletaPop', {
             const m = new DOMMatrix(getComputedStyle(wheel).transform);
             let ang = Math.atan2(m.b, m.a) * 180 / Math.PI; if (ang < 0) ang += 360;
             if (ang < prevA - 180) turns++; prevA = ang;
-            const seg = Math.floor((turns * 360 + ang) / 36);
+            const seg = Math.floor((turns * 360 + ang) / SEG);
             if (seg !== lastSeg) { pointer.animate([{ rotate: '0deg' }, { rotate: '-16deg' }, { rotate: '0deg' }], { duration: Math.min(160, now - lastT), easing: 'cubic-bezier(.23,1,.32,1)' }); lastSeg = seg; lastT = now; }
             requestAnimationFrame(tickP);
           };
@@ -1097,7 +1123,23 @@ register('ruletaPop', {
         if (!layer.isConnected) return;
       }
       const week = RULES.ruleta.indexOf(n);
-      const prize = premio === 'prenda' ? PRENDAS[week].id : premio;
+      // «¡Gira otra vez!»: un segundo giro, sin premio todavía
+      if (premio === 'otra') {
+        navigator.vibrate?.(20);
+        const zona = wheel.parentElement.parentElement;
+        zona.querySelector('.gira-otra')?.remove();
+        const cartel = document.createElement('div'); cartel.className = 'gira-otra'; cartel.setAttribute('role', 'status');
+        cartel.innerHTML = '<b>¡Gira otra vez!</b><span>Tienes otro giro</span>';
+        zona.appendChild(cartel);
+        spun = false; btn.style.opacity = ''; btn.style.pointerEvents = ''; animate(btn, 'a-pop');
+        return;
+      }
+      // el regalo trae una prenda al azar que aún no tiene (no la de la semana); si ya las tiene todas, panes
+      const libres = PRENDAS.filter(x => x.id !== PRENDAS[week]?.id && !S.prendas.includes(x.id));
+      const sorpresa = premio === 'regalo' ? libres[Math.floor(Math.random() * libres.length)] || null : null;
+      if (premio === 'regalo' && !sorpresa) premio = 'panes';
+      const prize = premio === 'prenda' ? PRENDAS[week].id : sorpresa ? sorpresa.id : premio;
+      if (sorpresa) S.prendas.push(sorpresa.id);
       S.ruletas[n] = prize;
       if (premio === 'panes') addPanes(RULES.panes.ruleta);
       if (premio === 'prenda') S.prendas.push(PRENDAS[week].id);

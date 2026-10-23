@@ -530,3 +530,9 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 :root[data-theme="dark"] .layer img[src*="13d1bc33"], :root[data-theme="dark"] .layer img[src*="dfafe8f7"] { -webkit-mask-image: linear-gradient(180deg, transparent 0, transparent 44px, #000 104px); mask-image: linear-gradient(180deg, transparent 0, transparent 44px, #000 104px); }
 /* adivinanza en oscuro: «¡La adivinaron!» en espera se ve en espera, no roto */
 :root[data-theme="dark"] .adv-wait.adv-cta { opacity: 1; background: #3A4F6E !important; color: #A9B8CC !important; box-shadow: none !important; }
+/* Ruleta: letrero grande de «¡Gira otra vez!» sobre la rueda */
+.gira-otra { position: absolute; left: 50%; top: 50%; z-index: 5; width: max-content; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 26px; border-radius: 22px; background: #F5DB78; color: #02254F; box-shadow: 0 10px 28px rgba(2,37,79,.35), 0 0 0 4px #FFFFFF; text-align: center; white-space: nowrap; animation: giraOtra .45s cubic-bezier(.2,.9,.3,1.3) both; pointer-events: none; }
+.gira-otra b { font: 800 26px/1.1 'Neue Montreal', Mulish, sans-serif; }
+.gira-otra span { font: 600 15px/1.2 Mulish, sans-serif; opacity: .85; }
+@keyframes giraOtra { from { transform: translate(-50%, -50%) scale(.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .gira-otra { animation: none; } }

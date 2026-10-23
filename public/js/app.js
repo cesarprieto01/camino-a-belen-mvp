@@ -144,6 +144,8 @@ const PENDIENTES_LIENZO = [
 ];
 
 function advance(k) {
+  // se guarda cómo estaba Teodoro este día: si luego se vuelve atrás en el panel, vuelve igual
+  S.diaGuardado = { ...(S.diaGuardado || {}), [S.hoy]: { bateria: S.bateria, sinCaminar: S.sinCaminar || 0, manzana: !!S.manzana, ultimoJugado: S.ultimoJugado } };
   // Teodoro se cansa por los días sin caminar del 29 nov al 6 ene (también en la gracia, si falta algo); antes del 29 y en el recuerdo no cuenta
   let baja = 0;
   for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= GRACIA_FIN && (d <= 26 || vistos() < 26) && (d > 26 || puedeDia(d)) && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
@@ -156,6 +158,22 @@ function advance(k) {
   if (k >= RULES.regresoDias && S.inscrito && S.hoy >= 1) S.regreso = true;
   save();
   nota(antes === 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy === 27 ? 'Ya es Navidad' : S.hoy > GRACIA_FIN ? 'El camino quedó como recuerdo' : S.hoy > 27 ? cuentaGracia() : `Hoy es el día ${S.hoy}`);
+  go('hoy', {}, 'fade');
+}
+
+/** Volver un día atrás en el panel: Teodoro (escena y batería) vuelve a como estaba ese día. */
+function retroceder() {
+  if (S.hoy <= 0) return;
+  const dia = S.hoy - 1, g = S.diaGuardado?.[dia];
+  if (g) Object.assign(S, g);
+  else if (S.inscrito && dia >= 1 && S.ultimoJugado !== dia && (S.sinCaminar || 0) > 0) {
+    // sin registro de ese día (escenario cargado a mitad de camino): se deshace un día sin caminar
+    S.sinCaminar -= 1; S.bateria = Math.min(5, S.bateria + 1);
+  }
+  S.hoy = dia;
+  S.pilaVista = S.bateria; // volver atrás no es una recarga: sin «reactivado»
+  save();
+  nota('Un día atrás', S.hoy <= 0 ? 'Antes del 29 de noviembre' : `Hoy es el día ${S.hoy} · energía ${S.bateria} de 5`);
   go('hoy', {}, 'fade');
 }
 
@@ -293,7 +311,7 @@ panel.addEventListener('click', e => {
   if (a === 'mid') advance(1);
   if (a === 'week') advance(7);
   if (a === 'dayPlus') advance(1);
-  if (a === 'dayMinus') { S.hoy = Math.max(0, S.hoy - 1); save(); go('hoy', {}, 'fade'); }
+  if (a === 'dayMinus') retroceder();
   if (a === 'panMinus' || a === 'panPlus') { S.panes = Math.max(0, S.panes + (a === 'panPlus' ? 10 : -10)); save(); }
   if (a === 'reset') { reset({}); go('hoy', {}, 'fade', { tab: true }); }
   if (a === 'share') { navigator.clipboard?.writeText(shareURL()).then(() => nota('Enlace copiado', 'Abre la app en este mismo estado')); }
