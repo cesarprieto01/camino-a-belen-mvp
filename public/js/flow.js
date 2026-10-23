@@ -406,13 +406,16 @@ register('hoy', {
 const ESCENA_ALT = ['feliz a reventar', 'en marcha hacia la aventura', 'listo para salir', 'tomando café, serio, esperándote', 'impaciente, mirando el reloj',
   'desesperado buscándote', 'envuelto en telarañas de tanto esperar', 'cubierto de musgo de tanto esperar', 'atrapado en una ventisca', 'lleno de carámbanos', 'congelado en un bloque de hielo'];
 export const pasoTeodoro = () => S.bateria > 0 ? 5 - S.bateria : Math.max(5, Math.min(10, S.sinCaminar || 0));
+// solo los pasos con imagen aprobada por César; el resto conserva la ilustración original de Teodoro
+const APROBADAS = new Set([]);
 let pilaRecarga = null; // se decide una vez por pantalla: las dos piezas de Hoy muestran lo mismo
 function escenaPila(card, scene) {
   const imgs = $$(scene, 'img'), land = imgs.find(i => !/^Teodoro/i.test(i.alt || ''));
   if (!land) return;
   if (pilaRecarga == null) { pilaRecarga = S.pilaVista != null && S.bateria > S.pilaVista; setTimeout(() => { S.pilaVista = S.bateria; save(); pilaRecarga = null; }, 0); }
   const tema = dark() ? 'noche' : 'dia';
-  const paso = pasoTeodoro();
+  const paso = pilaRecarga ? 'R' : pasoTeodoro();
+  if (!APROBADAS.has(paso)) return;
   const antes = { src: land.getAttribute('src'), style: land.getAttribute('style'), alt: land.alt };
   const otros = [...imgs.filter(i => i !== land), ...$$(scene, ':scope > span')];
   // si la imagen no carga, la ilustración de siempre
