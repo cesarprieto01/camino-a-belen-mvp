@@ -1074,22 +1074,24 @@ register('ruletaPop', {
       wheel.style.transformOrigin = `${cx}px ${cx}px`;
       wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: sorpresa dorada, panes, regalo, panes, prenda de la semana, panes, gira otra vez, panes');
     }
-    let spun = false, giro = 0; // giro: dónde quedó la rueda (para volver a girar)
+    let spun = false, giro = 0, giros = 0; // giros: el premio elegido en el panel solo decide el primero // giro: dónde quedó la rueda (para volver a girar)
     on(root, '¡Girar!', async (ev, btn) => {
       if (spun) return; spun = true;
       root.querySelector('.gira-otra')?.remove();
       btn.style.opacity = '.6'; btn.style.pointerEvents = 'none';
       const tarde = find(root, 'Más tarde'); if (tarde) tarde.style.visibility = 'hidden'; layer.querySelector('.pop-x')?.remove();
       // premio: el forzado en el panel o al azar (todas las casillas ganan)
-      const forced = S.forzarPremio;
+      const forced = giros === 0 ? S.forzarPremio : ''; // el giro extra de «otra oportunidad» siempre es al azar
       const weekId = PRENDAS[RULES.ruleta.indexOf(n)]?.id;
       const pick = () => {
         if (weekId && !S.prendas.includes(weekId) && Math.random() < .35) return SEGMENTS.indexOf('prenda');
         let i = Math.floor(Math.random() * SEGMENTS.length);
+        if (giros > 0) while (SEGMENTS[i] === 'otra') i = Math.floor(Math.random() * SEGMENTS.length); // la segunda vuelta no repite «otra oportunidad»
         if (SEGMENTS[i] === 'cuarto' && S.cuartoNuevo) i = SEGMENTS.indexOf('regalo');
         return i;
       };
       let idx = forced ? SEGMENTS.indexOf(forced) : pick();
+      giros++;
       if (idx < 0) idx = 0;
       let premio = SEGMENTS[idx];
       const vuelta = ((360 - idx * SEG - giro) % 360 + 360) % 360;

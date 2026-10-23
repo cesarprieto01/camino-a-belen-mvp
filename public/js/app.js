@@ -251,7 +251,7 @@ function render() {
     </section>
     <section class="p-group"><h2>Ruleta</h2>
       <p class="p-help">Qué sale al girar:</p>
-      <div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', '¡Gira otra vez!']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div>
+      <div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div>
       <div class="p-btns"><button class="p-btn main" data-act="ruletaOtraVez">Girar la ruleta otra vez</button></div>
       <p class="p-help">Vuelve a abrir la ruleta de esta semana sin cambiar de día (días 4, 11, 18 y 24).</p>
     </section>
