@@ -272,7 +272,7 @@ function heroeNuevo(root) {
   const flecha = unirse ? '' : '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   const destello = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24"><path fill="#F5DB78" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
   capa.innerHTML = (escena
-      ? `<img class="hp-fondo hp-relleno" src="${escena}" alt="" aria-hidden="true"><img class="hp-fondo hp-escena" src="${escena}" alt="${sinEmpezar ? 'Teodoro salta de alegría' : `Teodoro ${recarga ? 'recargándose de golpe' : ESCENA_ALT[pasoTeodoro()]}`}">`
+      ? `<img class="hp-fondo hp-escena${!sinEmpezar && !recarga && [6, 7, 8, 9].includes(pasoTeodoro()) ? ' hp-baja' : ''}" src="${escena}" alt="${sinEmpezar ? 'Teodoro salta de alegría' : `Teodoro ${recarga ? 'recargándose de golpe' : ESCENA_ALT[pasoTeodoro()]}`}">`
       : `<img class="hp-fondo" src="assets/inicio/card-superior-noche.webp" alt=""><img class="hp-teo" src="${A('c0b753e9a2d8d857108e5116baf8e8cc')}" alt="Teodoro con su farol">`)
     + (sinEmpezar ? '' : `<img class="hp-bateria" src="${A(BATTERY_IDS[S.bateria])}" alt="Energía de Teodoro: ${S.bateria} de 5">`) + `
     <span class="hp-degradado" aria-hidden="true"></span>

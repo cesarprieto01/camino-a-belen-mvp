@@ -546,8 +546,8 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .heroe-pre .hp-titulo { display: block; margin-top: 4px; color: #FFFFFF; font: 700 28px/32px 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.01em; }
 .heroe-pre .hp-boton { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 48px; border-radius: 16px; background: #F5DB78; color: #06325A; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 16px/1 'Neue Montreal', Mulish, sans-serif; text-decoration: none; }
 .heroe-pre .hp-boton:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
-.heroe-pre .hp-escena { top: 30px; height: 100%; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 26px); mask-image: linear-gradient(180deg, transparent 0, #000 26px); } /* baja: Teodoro centrado en su zona */
-.heroe-pre .hp-relleno { transform: scale(1.15); transform-origin: 50% 0; filter: blur(10px); } /* llena la franja de arriba con el mismo fondo */
+.heroe-pre .hp-escena { top: -22px; height: calc(100% + 22px); } /* la escena sube un poco: el panel no tapa a Teodoro */
+.heroe-pre .hp-escena.hp-baja { top: 0; height: 120%; } /* telaraña, musgo, ventisca y carámbanos: la imagen se amplía desde arriba y Teodoro baja a su zona */
 .heroe-pre .hp-bateria { position: absolute; top: 12px; right: 12px; width: 44px; height: auto; z-index: 2; filter: drop-shadow(0 2px 4px rgba(2,37,79,.25)); }
 /* pieza grande de Hoy: «Camino a Belén · Día N de 26» sobre la barra */
 .card-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
