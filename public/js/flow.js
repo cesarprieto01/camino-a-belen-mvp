@@ -1131,6 +1131,7 @@ register('ruletaPop', {
         cartel.innerHTML = '<b>¡Otra oportunidad!</b><span>Gira de nuevo</span>';
         zona.appendChild(cartel);
         spun = false; btn.style.opacity = ''; btn.style.pointerEvents = ''; animate(btn, 'a-pop');
+        const masTarde = find(root, 'Más tarde'); if (masTarde) masTarde.style.visibility = ''; // pueden girar ahora o dejarlo para después
         return;
       }
       // el regalo trae una prenda al azar que aún no tiene (no la de la semana); si ya las tiene todas, panes
