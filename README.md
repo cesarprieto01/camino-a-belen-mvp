@@ -21,7 +21,7 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   js/data.js       el contenido y las reglas: los 26 días, la trivia, premios, ruleta, días gratis
   js/core.js       estado, fechas y fases (antes · camino · gracia · recuerdo), navegación, pop-ups y hojas
   js/flow.js       Hoy, destacado y pósters de temporada, tab Teodoro, Mundos, reproductor, retos, premios, ruleta
-  js/map.js        el mapa del camino y la hoja de cada día
+  js/map.js        el mapa del camino (diseño «Mapa Diozen» del Figma) y la hoja de cada día
   js/games.js      trivia, memorama, adivinanza, desafío en familia y calificación
   js/tabbar.js     la barra de pestañas de Theo
   js/musica.js     la música del mapa y la trivia
@@ -29,6 +29,8 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   js/app.js        SOLO PROTOTIPO: arranque y panel de controles del equipo
   screens/         las pantallas del lienzo de diseño, ya convertidas a HTML; la app las usa de base y las completa con JS
   assets/          las imágenes que usa la app
+    mapa/          el paisaje del mapa en 6 tiras de 600 px (día y noche) y las dos ruletas del camino
+    dia-icono/     el ícono de cada día (los del Figma; el mismo de día y de noche)
     pila/          las 12 escenas de Teodoro según la energía (días sin caminar), en día y noche
     poster/        los 7 pósters de temporada del destacado del inicio
     ruleta/ inicio/ tabbar/   ruleta de 8 casillas, fondos del destacado y pestañas
@@ -45,6 +47,10 @@ Todo lo que está en `public/` lo usa la app o el panel del prototipo (`raw.html
 - Las compras: Theo Premium y el Pase de Adviento están simulados.
 - El conteo de «pantallas vistas» del panel (`seen(...)` en el código).
 - Algunas pantallas de `screens/` solo se abren desde el panel: son el diseño de estados que la app arma con JS (reintento de la trivia, pasar en la adivinanza, segunda carta del desafío, Teodoro cansado, modo sin mascota) o tableros de reglas (Datos, Estados, Simple-Flujo, Simple-Reglas).
+
+### El mapa
+
+El mapa es el «Mapa Diozen» del Figma *Theo · Mapa completo (oscuro)*: el paisaje (cielo, sendero, casas, árboles) es una imagen de fondo en `assets/mapa/`, y encima se pintan en vivo los 26 días, Teodoro, las ruletas y sus etiquetas, en las mismas posiciones del Figma (`CENTRO` y `RULETAS` en `js/map.js`). Los días que aún no se abren llevan candado. Si cambia el dibujo del paisaje en el Figma, hay que volver a exportar las tiras; si solo cambian los días o los textos, basta con el código. `tools/mapa-medidas.mjs` compara caja por caja el mapa del MVP con el Figma.
 
 ## Reglas principales
 

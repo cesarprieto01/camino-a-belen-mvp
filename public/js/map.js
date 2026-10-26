@@ -1,14 +1,34 @@
-// Mapa del camino: se pinta en vivo sobre la pantalla «Camino completo» del lienzo.
+// Mapa del camino (diseño «Mapa Diozen» del Figma): el paisaje ilustrado va de fondo y encima se pintan en vivo los 26 días, Teodoro y las ruletas.
 import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia, puedeDia } from './core.js';
 import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, usaHub } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
 
+// de la pantalla del lienzo salen la cabecera, la píldora «Tu día» y la hoja; el mapa se dibuja aquí
 const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
-// solo algunos días tienen trivia (isDone ya lo sabe): los demás no llevan estrellas
-const badgeOf = n => hasTrivia(n) ? (tpl.badges[stars(n)] || '') : '';
-const F0 = { claro: 'V2-Mapa-dia0-claro', oscuro: 'V2-Mapa-dia0' };
+const ALTO = 3600; // alto del mapa en el Figma; el paisaje va en 6 tiras de 600
+const FONDO = { claro: ['#67C7FC', '#94907F'], oscuro: ['#013880', '#607F77'] }; // color del borde de arriba y de abajo del paisaje
+// centro de cada día en el mapa del Figma (390 de ancho)
+const CENTRO = { 1: [142.1, 3094], 2: [224.9, 2984], 3: [151.3, 2874], 4: [220.3, 2764], 5: [142.1, 2654], 6: [197.3, 2544], 7: [218, 2434], 8: [137.5, 2329],
+  9: [218, 2201], 10: [160.5, 2089], 11: [229.5, 1989], 12: [155.9, 1881], 13: [220.3, 1773], 14: [174.3, 1665], 15: [137.5, 1557], 16: [211.1, 1449],
+  17: [151.3, 1341], 18: [229.5, 1233], 19: [160.5, 1125], 20: [215.7, 1017], 21: [142.1, 909], 22: [174.3, 801], 23: [206.5, 691], 24: [149, 581], 25: [218, 471], 26: [137.5, 351] };
+// ruletas de los días 4, 11, 18 y 24: dibujo, caja y etiqueta (centro y arriba) como en el Figma
+const RULETAS = [
+  { img: 'ruleta-pie', x: 256, y: 2507, w: 135, h: 189, lx: 322, ly: 2690 },
+  { img: 'ruleta-dibujada', x: 270, y: 1755, w: 119, h: 166, lx: 324.5, ly: 1915 },
+  { img: 'ruleta-pie', x: 265, y: 971, w: 135, h: 189, lx: 323.5, ly: 1160 },
+  { img: 'ruleta-dibujada', x: -8, y: 320, w: 119, h: 166, lx: 60.5, ly: 507 },
+];
+const CHECK = '<svg class="dz-check" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M6.25 15.625 11.875 21.25 23.75 9.375" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ESTRELLA = 'M7.5 1.1875 9.4125 5.25 13.8125 5.7875 10.5625 8.83125 11.4188 13.225 7.5 11.0438 3.58125 13.225 4.4375 8.83125 1.1875 5.7875 5.5875 5.25Z';
+const estrella = (llena, px) => `<svg width="${px}" height="${px}" viewBox="0 0 15 15" aria-hidden="true">${llena
+  ? `<path d="${ESTRELLA}" fill="#F7C948" stroke="#E0A63A" stroke-width=".56" stroke-linejoin="round"/><path d="M7.5 2.875 8.6875 5.4375 10.3125 5.625 8.25 6.3125Z" fill="#FFF3C4" opacity=".85"/>`
+  : `<path d="${ESTRELLA}" class="dz-vacia"/>`}</svg>`;
+// solo los días con trivia llevan estrellas; vacías = la trivia sigue abierta
+const pildoraEstrellas = n => hasTrivia(n) ? `<span class="dz-estrellas">${[15, 17, 15].map((px, i) => estrella(i < stars(n), px)).join('')}</span>` : '';
+const DESTELLO = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 .58 8.52 5.48 13.42 7 8.52 8.52 7 13.42 5.48 8.52.58 7 5.48 5.48Z" fill="#E9B949"/></svg>';
+const CHECK_VERDE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.92 7.29 5.54 9.92 11.08 4.38" stroke="#7FD69B" stroke-width="1.98" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 let tpl = null; // piezas sacadas de las plantillas, por tema
 let mapOrigin = null; // pantalla desde la que se entró al camino
@@ -16,7 +36,6 @@ async function templates() {
   const key = dark() ? 'oscuro' : 'claro';
   if (tpl?.key === key) return tpl;
   const full = await frag(F[key]);
-  const zero = await frag(F0[key]);
   const triv = await frag(key === 'claro' ? 'S-03b-Mapa-trivia' : 'S-03b-Mapa-trivia-oscuro');
   const d26 = await frag(key === 'claro' ? 'V2-Mapa-d24-claro' : 'V2-Mapa-oscuro');
   const past = await frag(key === 'claro' ? 'S-03c-Mapa-dia-pasado' : 'S-03c-Mapa-dia-pasado-oscuro');
@@ -29,25 +48,10 @@ async function templates() {
   const trivSheet = [...triv.children].find(el => el.style.bottom === '10px');
   const trivRows = [...trivSheet.children].filter(el => isRow(el));
   const sheet26 = [...d26.children].find(el => el.style.bottom === '10px' || /Llegamos a Belén/.test(el.textContent || '') && el.style.position === 'absolute' && parseFloat(el.style.left) <= 20);
-  const node = n => full.querySelector(`a[aria-label^="Día ${n},"]`);
-  const badge = n => { const s = node(n).querySelector(':scope > span[aria-hidden]'); return s ? s.outerHTML : ''; };
-  const icons = {};
-  for (let n = 1; n <= 26; n++) { const i = zero.querySelector(`a[aria-label^="Día ${n},"] img`); if (i) icons[n] = i.getAttribute('src'); }
-  const houses = $$(full, '[aria-label^="Ruleta sorpresa"]').map(a => a.innerHTML);
   const sheet = [...full.children].find(el => el.style.bottom === '10px');
   const rows = [...sheet.children].filter(el => isRow(el));
   tpl = {
     key,
-    done: node(1).getAttribute('style'),
-    doneInner: [...node(1).childNodes].filter(c => !(c.tagName === 'SPAN' && c.getAttribute('aria-hidden'))).map(c => c.outerHTML || '').join(''),
-    badges: { 3: badge(1), 2: badge(2), 1: badge(4), 0: badge(1).replace(/fill="#(?!fff|FFF)[0-9A-Fa-f]{3,6}"/g, key === 'oscuro' ? 'fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.8" stroke-linejoin="round"' : 'fill="#FFFFFF" stroke="#9DB3BD" stroke-width="1.8" stroke-linejoin="round"').replace(/fill: ?#(?!fff|FFF)[0-9A-Fa-f]{3,6}/g, key === 'oscuro' ? 'fill: none' : 'fill: #FFFFFF') },
-    today: node(9).getAttribute('style'),
-    todayInner: node(9).innerHTML,
-    locked: node(10).getAttribute('style'),
-    lockedInner: node(10).innerHTML,
-    last: node(26).getAttribute('style'),
-    icons,
-    houseOpen: houses[0], houseNext: houses[1], houseFuture: houses[2],
     rowOn: rows[0].outerHTML, rowOff: rows[1].outerHTML, printRow: rows.find(r => r.tagName === 'A')?.outerHTML,
     doneBadge: trivRows[0].lastElementChild.outerHTML,
     trivIcon: rows[1].querySelector('img')?.getAttribute('src'),
@@ -59,15 +63,28 @@ async function templates() {
   return tpl;
 }
 
-/** Historia vista, trivia sin terminar: el día NO se ve hecho (ni azul ni ✓). Aspecto de pendiente: su ícono, borde punteado y 0 estrellas en contorno. */
-const triviaPend = (el, n, p) => {
-  // ya vio el cuento: el día queda con su check; las estrellas vacías dicen que la trivia sigue abierta
-  const T = tpl;
-  restyle(el, T.done, p, 64);
-  el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + (T.badges[0] || '');
+/** Pinta un día en su estado: hecho (✓ y estrellas), trivia (✓ con la trivia pendiente), hoy (dorado, Teodoro encima), abierto, cerrado o recuerdo. */
+function pintarDia(el, n, estado) {
+  const d = DAYS[n], [cx, cy] = CENTRO[n];
+  const t = n === 26 ? 104 : estado === 'hoy' ? 96 : 76;
+  el.className = `dz-dia dz-${estado}${n === 26 ? ' dz-26' : ''}`;
+  el.style.cssText = `left:${cx - t / 2}px;top:${cy - t / 2}px;width:${t}px;height:${t}px`;
   delete el.dataset.today;
-  el.setAttribute('aria-label', `Día ${n}: cuento visto, falta la trivia`);
-};
+  if (estado === 'hecho' || estado === 'trivia') {
+    el.innerHTML = CHECK + `<b class="dz-num">${n}</b>` + pildoraEstrellas(n);
+    el.setAttribute('aria-label', estado === 'trivia' ? `Día ${n}: cuento visto, falta la trivia`
+      : `Día ${n}, ${d.title}, completado${hasTrivia(n) && stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
+  } else if (estado === 'hoy') {
+    el.innerHTML = '';
+    el.dataset.today = '1';
+    el.setAttribute('aria-label', `Día ${n}, hoy: ${d.title}`);
+  } else {
+    const ic = iconOf(n, dark());
+    // lo que aún no se abre lleva candado
+    el.innerHTML = (ic ? `<img class="dz-ico" src="${A(ic)}" alt="">` : '') + `<b class="dz-num">${n}</b>` + (estado === 'cerrado' ? '<img class="node-lock" src="assets/candado.webp" alt="">' : '');
+    el.setAttribute('aria-label', `Día ${n}, ${d.title}${estado === 'abierto' ? ', pendiente' : estado === 'cerrado' ? ', cerrado' : ''}`);
+  }
+}
 // filas de la hoja (el lienzo las dibuja de 52 o 58 px); el botón principal mide 56
 const isRow = el => el.style.height === '52px' || el.style.height === '58px';
 /** Lo que salió en la ruleta, dicho corto. */
@@ -78,19 +95,16 @@ const premioTxt = id => {
   const p = PRENDAS.find(x => x.id === id);
   return p ? `Te tocó ${p.nombre} para Teodoro` : '¡Ya tienes tu premio!';
 };
-const pos = el => ({ x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: parseFloat(el.style.width) });
-const restyle = (el, style, p, size) => {
-  el.setAttribute('style', style);
-  const off = (size - p.w) / 2;
-  el.style.left = (p.x - off) + 'px'; el.style.top = (p.y - off) + 'px';
-};
+
+// de la pantalla del lienzo solo se quedan la cabecera, la píldora «Volver a hoy» y la hoja
+const fija = el => { const s = el.style; return (s.top === '0px' && (s.height === '112px' || s.height === '50px')) || s.top === '52px' || s.bottom === '10px' || el.getAttribute('aria-label') === 'Volver a hoy'; };
 
 register('mapa', {
   files: [F.claro, F.oscuro],
   noScroll: true,
+  limpiar: root => [...root.children].filter(el => !fija(el)).forEach(el => el.remove()),
   async mount(root, params, layer) {
     const T = await templates();
-    const trivAct = activeDay();          // primera trivia pendiente
     const act = walkDay();                // el día que propone la hoja
     const teoN = teoDay();                // donde está Teodoro: siempre el día del calendario
     const focus = teoN ?? 0;
@@ -100,63 +114,41 @@ register('mapa', {
     // 1) La vista: el mapa largo va en un scroller; cabecera y hoja quedan fijas
     const scroller = document.createElement('div');
     scroller.style.cssText = 'position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;overscroll-behavior:contain';
-    const fixed = [...root.children].filter(el => {
-      const s = el.style;
-      return (s.top === '0px' && (s.height === '112px' || s.height === '50px')) || s.top === '52px' || s.bottom === '10px' || el.getAttribute('aria-label') === 'Volver a hoy';
-    });
+    const fixed = [...root.children].filter(fija);
     root.parentElement.replaceWith(scroller);
-    const pad = document.createElement('div'); pad.style.height = '0';
     scroller.append(root);
-    root.style.marginBottom = '0';
     fixed.forEach(el => layer.appendChild(el));
     // cabecera por encima de Teodoro y los nodos, con un velo suave debajo
     fixed.filter(el => el.style.top === '0px' || el.style.top === '52px').forEach(el => el.classList.add(el.style.height === '112px' ? 'map-velo' : 'map-head'));
-    // el final del mapa sigue el color del mapa (nunca se ve el fondo negro al hacer scroll)
-    const mapBg = getComputedStyle(root).backgroundColor;
-    scroller.style.background = mapBg && mapBg !== 'rgba(0, 0, 0, 0)' ? mapBg : (dark() ? '#0A2340' : '#F3EEE3');
-    const extra = document.createElement('div'); extra.style.height = '230px';
-    scroller.appendChild(extra);
 
-    // 1b) Camino más curvo: mismos puntos de paso (los días no se mueven), cada tramo como un arco que se abre a los lados
-    // 2) Nodos de cada día
+    // 1b) El paisaje del Figma; lo demás de la pantalla del lienzo se cambia por el mapa nuevo
+    const tema = dark() ? 'oscuro' : 'claro';
+    root.replaceChildren();
+    root.className = 'dz-mapa';
+    root.setAttribute('style', `height:${ALTO}px`);
+    // al estirar el scroll se ve el color del borde, nunca negro
+    scroller.style.background = `linear-gradient(${FONDO[tema][0]} 50%, ${FONDO[tema][1]} 50%)`;
+    const yFoco = CENTRO[Math.max(focus, 1)][1];
+    root.innerHTML = Array.from({ length: 6 }, (_, i) => `<img class="dz-tira" src="assets/mapa/${dark() ? 'noche' : 'dia'}-${i}.webp" alt="" style="top:${i * 600}px" decoding="async"${Math.abs(i * 600 + 300 - yFoco) > 1000 ? ' loading="lazy"' : ''}>`).join('');
+    // la casa de abajo es donde sale el camino
+    const casa = document.createElement('button'); casa.type = 'button'; casa.className = 'dz-casa'; casa.setAttribute('aria-label', 'Aquí empieza el camino');
+    root.appendChild(casa);
+    on(root, casa, () => toast('Aquí empieza el camino', 'El 29 de noviembre salimos hacia Belén'));
+
+    // 2) Los 26 días
     const nodes = {};
     for (let n = 1; n <= 26; n++) {
-      const el = root.querySelector(`a[aria-label^="Día ${n},"]`);
-      if (!el) continue;
-      const p = pos(el); nodes[n] = { el, p };
-      const d = DAYS[n];
-      const icon = T.icons[n] ? `<img src="${T.icons[n]}" alt="" style="width: 40px; height: 34px; object-fit: contain; opacity: .55">` : '';
-      if (isDone(n) && !(S.pasoAnimado === n && !reduced())) {
-        restyle(el, T.done, p, 64);
-        el.innerHTML = T.doneInner.replace(/>\d+</, `>${n}<`) + badgeOf(n);
-        el.setAttribute('aria-label', `Día ${n}, ${d.title}, completado${hasTrivia(n) && stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
-      } else if (contentDone(n) && !(S.pasoAnimado === n && !reduced())) {
-        // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
-        triviaPend(el, n, p);
-      } else if (n === teoN || (S.pasoAnimado && n === S.pasoAnimado)) {
-        restyle(el, T.today, p, 84);
-        el.innerHTML = T.todayInner.replace(/>\d+</, `>${n}<`);
-        el.setAttribute('aria-label', `Día ${n}, hoy: ${d.title}`);
-        el.dataset.today = '1';
-      } else if (n <= lastDay() && fase() === 'recuerdo') {
-        restyle(el, n === 26 ? T.last : T.locked, p, n === 26 ? 88 : 64);
-        el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon).replace(/>\d+</, `>${n}<`);
-        [...el.children].filter(c => c.tagName !== 'IMG' && /absolute/.test(c.style.position || '')).forEach(c => c.remove());
-        el.style.opacity = '.6';
-        el.setAttribute('aria-label', `Día ${n}, ${d.title}`);
-      } else if (n <= lastDay()) {
-        restyle(el, n === 26 ? T.last : T.locked, p, n === 26 ? 88 : 64);
-        el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon.replace('opacity: .55', 'opacity: 1')).replace(/>\d+</, `>${n}<`);
-        el.style.outline = '3px dashed #F5DB78'; el.style.outlineOffset = '3px';
-        el.setAttribute('aria-label', `Día ${n}, ${d.title}, pendiente`);
-      } else {
-        restyle(el, n === 26 ? T.last : T.locked, p, n === 26 ? 88 : 64);
-        el.innerHTML = T.lockedInner.replace(/<img[^>]*>/, icon).replace(/>\d+</, `>${n}<`);
-        // candado abajo a la derecha (en lugar de la estrella del lienzo)
-        [...el.children].filter(c => c.tagName !== 'IMG' && /absolute/.test(c.style.position || '')).forEach(c => c.remove());
-        el.insertAdjacentHTML('beforeend', '<img class="node-lock" src="assets/candado.webp" alt="">');
-        el.setAttribute('aria-label', `Día ${n}, ${d.title}, cerrado`);
-      }
+      const el = document.createElement('button'); el.type = 'button';
+      const animado = S.pasoAnimado === n && !reduced();
+      pintarDia(el, n, isDone(n) && !animado ? 'hecho'
+        : contentDone(n) && !animado ? 'trivia' // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
+        : n === teoN || (S.pasoAnimado && n === S.pasoAnimado) ? 'hoy'
+        : n <= lastDay() ? (fase() === 'recuerdo' ? 'recuerdo' : 'abierto')
+        : 'cerrado');
+      // los días que vienen se ven por encima de Teodoro (como en el Figma)
+      if (n > (teoN ?? 0)) el.classList.add('dz-arriba');
+      root.appendChild(el);
+      nodes[n] = { el };
       on(root, el, () => tapNode(n, el, layer));
     }
 
@@ -169,59 +161,53 @@ register('mapa', {
       t.el.setAttribute('aria-label', `${t.el.getAttribute('aria-label')}, con Premium o el Pase de Adviento`);
     });
 
-    // 3) Teodoro y la burbuja de curiosidad
-    const teo = $$(root, 'img').find(i => (i.alt || '').startsWith('Teodoro'));
-    const bubble = root.querySelector('[data-curiosidad]');
+    // 3) Teodoro de pie sobre su día, con el número del día en una píldora a sus pies
+    const teo = document.createElement('img'); teo.className = 'dz-teo'; teo.alt = '';
+    const pildora = document.createElement('span'); pildora.className = 'dz-hoy-num'; pildora.setAttribute('aria-hidden', 'true');
+    root.append(teo, pildora);
     const place = n => {
-      const t = nodes[n]; if (!t || !teo) return;
+      const t = nodes[n]; if (!t) return;
       S.teoMapa = n; // dónde lo vio la familia la última vez
-      const size = t.el.dataset.today ? 84 : 64;
-      const cx = parseFloat(t.el.style.left) + size / 2, cy = parseFloat(t.el.style.top);
-      // Teodoro protagonista: grande, centrado y parado sobre su día
-      teo.style.left = (cx - 46) + 'px'; teo.style.top = (cy + size * .82 - 118) + 'px';
+      const [cx, cy] = CENTRO[n], hoy = !!t.el.dataset.today;
+      // en el Figma el dibujo mide 104 de alto con los pies 29 bajo el centro de su día dorado (96);
+      // en un día de 76, en la misma proporción y con los pies encima de las estrellas
+      const k = hoy ? 1 : 76 / 96, w = 108 * k, h = 104 * k;
+      teo.style.width = w + 'px'; teo.style.height = h + 'px';
+      teo.style.left = (cx - w / 2) + 'px'; teo.style.top = (cy + (hoy ? 29 : 28) - h) + 'px';
+      pildora.hidden = !hoy; pildora.textContent = n;
+      pildora.style.left = (cx - 15) + 'px'; pildora.style.top = (cy + (n === 26 ? 38 : 32)) + 'px';
     };
-    if (teo) {
-      teo.src = teodoroImg();
-      teo.style.width = '92px'; teo.style.height = '118px'; teo.style.objectFit = 'contain'; teo.style.objectPosition = '50% 100%'; teo.style.zIndex = '2'; teo.style.pointerEvents = 'none';
-      teo.style.filter = 'drop-shadow(0 6px 8px rgba(8,93,111,.25))';
-      teo.classList.add('a-bob');
-      // los días que vienen se ven por encima de Teodoro (antes su cabeza tapaba el número o el candado del siguiente)
-      Object.entries(nodes).forEach(([k, t]) => { if (t?.el && +k > (teoN ?? 0)) t.el.style.zIndex = '3'; });
-      if (focus >= 1) place(desde ?? focus); else teo.style.display = 'none';
-      // volvió tras días sin caminar: Teodoro despierta al verlos
-      if (params.despierta && !reduced()) { teo.classList.remove('a-bob'); setTimeout(() => { teo.src = teodoroImg(Math.max(S.bateria, 3)); animate(teo, 'a-hop'); }, 500); }
-    }
-    // el globo de curiosidad tapaba nodos, candados o la ruleta: los candados ya dicen qué viene
-    bubble?.remove();
-    if (false) {
-      const nx = (act ?? focus) + 1;
-      if (nodes[nx]) {
-        bubble.style.top = Math.max(150, nodes[nx].p.y + 14) + 'px'; bubble.style.zIndex = '1';
-        replaceText(bubble, /¿Qué habrá.*\?/, S.hoy <= 0 ? '¡Nos vemos el 29!' : nx > lastDay() ? '¿Qué habrá mañana?' : '¡Sigue el camino!');
-        // al lado del nodo, sin tapar su candado: a la derecha si cabe; si no, a la izquierda
-        const w = bubble.offsetWidth || 162, nw = nodes[nx].el.offsetWidth || 76;
-        const der = nodes[nx].p.x + nw + 22;
-        bubble.style.left = (der + w <= 380 ? der : Math.max(10, nodes[nx].p.x - w - 14)) + 'px';
-        bubble.style.top = Math.max(150, nodes[nx].p.y + nw / 2 - 17) + 'px';
-        bubble.classList.add('a-rise');
-      } else bubble.remove();
+    teo.src = teodoroImg();
+    teo.classList.add('a-bob');
+    if (focus >= 1) place(desde ?? focus); else { teo.hidden = true; pildora.hidden = true; }
+    // volvió tras días sin caminar: Teodoro despierta al verlos
+    if (params.despierta && !reduced()) { teo.classList.remove('a-bob'); setTimeout(() => { teo.src = teodoroImg(Math.max(S.bateria, 3)); animate(teo, 'a-hop'); }, 500); }
+
+    // 3b) «¿Qué habrá aquí?» junto al día que viene, sin tapar una ruleta ni a Teodoro (si no cabe, no sale)
+    const sig = teoN != null ? teoN + 1 : null;
+    if (sig && sig <= 26 && sig > lastDay() && fase() === 'camino') {
+      const [cx, cy] = CENTRO[sig], w = 144;
+      const cajas = [...RULETAS.map(R => ({ x: R.x, y: R.y, w: R.w, h: R.ly + 26 - R.y })),
+        { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top), w: parseFloat(teo.style.width), h: parseFloat(teo.style.height) }];
+      const choca = x => cajas.some(c => x < c.x + c.w && x + w > c.x && cy + 17 > c.y && cy - 17 < c.y + c.h);
+      const x = [cx + 46, cx - 46 - w].find(x => x >= 8 && x + w <= 382 && !choca(x));
+      if (x != null) root.insertAdjacentHTML('beforeend', `<span class="dz-que" aria-hidden="true" style="left:${x}px;top:${cy - 17}px"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 .5 7.3 4.7 11.5 6 7.3 7.3 6 11.5 4.7 7.3.5 6 4.7 4.7Z" fill="#F5DB78"/></svg>¿Qué habrá aquí?</span>`);
     }
 
     // 4) Ruletas del camino (días 4, 11, 18 y 24): solo se juegan tocándolas aquí
-    $$(root, '[aria-label^="Ruleta sorpresa"]').forEach((a, i) => {
-      const d = RULES.ruleta[i];
-      const img = a.querySelector('img').getAttribute('src');
+    const proxima = RULES.ruleta.find(d => d > lastDay());
+    RULES.ruleta.forEach((d, i) => {
+      const R = RULETAS[i];
       const opened = !!S.ruletas[d];
       const lista = !opened && S.hoy > 0 && d <= lastDay(); // ya llegó su día y no la ha girado
       const f = dateOf(d), mes = f.mes.toLowerCase();
-      a.innerHTML = (opened ? T.houseOpen : lista ? T.houseNext : T.houseFuture).replace(/src="[^"]*"/, `src="${img}"`);
-      const label = opened ? '¡Ya la giraste!' : lista ? '¡Gírala!' : `Día ${d}`;
-      replaceText(a, /Abierta|Faltan \d+ días|Día \d+/, label);
-      // el candado solo en lo que aún no llega
-      if (lista || opened) a.querySelectorAll('span svg').forEach(s => s.remove());
-      if (lista) { a.classList.add('rul-gira'); a.querySelector('img').classList.add('rul-pulso'); }
-      a.removeAttribute('href'); a.style.minWidth = '44px'; a.style.minHeight = '44px';
+      const faltan = d - S.hoy;
+      const label = opened ? '¡Ya la giraste!' : lista ? '¡Gírala!' : S.hoy > 0 && d === proxima ? (faltan === 1 ? 'Mañana' : `Faltan ${faltan} días`) : `Día ${d}`;
+      const a = document.createElement('button'); a.type = 'button'; a.className = 'dz-ruleta';
+      a.style.cssText = `left:${R.x}px;top:${R.y}px;width:${R.w}px;height:${R.h}px`;
+      a.innerHTML = `<img src="assets/mapa/${R.img}.webp" alt=""${lista ? ' class="rul-pulso"' : ''}><span class="dz-etiqueta" style="left:${R.lx - R.x}px;top:${R.ly - R.y}px">${opened ? CHECK_VERDE : DESTELLO}${label}</span>`;
       a.setAttribute('aria-label', opened ? `Ruleta de la semana ${i + 1}: ya la giraste` : lista ? `Ruleta de la semana ${i + 1}: ¡gírala!` : `Ruleta de la semana ${i + 1}: se abre el ${f.dd} de ${mes}`);
+      root.appendChild(a);
       on(root, a, () => {
         animate(a, 'a-pop');
         if (lista) go('ruletaPop', { day: d, from: 'mapa' }, 'modal');
@@ -230,29 +216,9 @@ register('mapa', {
       });
     });
 
-    // Casa del día 0
-    const zeroBlock = [...root.children].find(el => /Día 0/.test(el.textContent || ''));
-    if (zeroBlock) {
-      replaceText(zeroBlock, /Día 0 · ¿Qué es el Adviento\?/, 'Aquí empieza el camino');
-      const sub = [...zeroBlock.querySelectorAll('*')].find(el => el.childElementCount === 0 && /No esperamos algo/.test(el.textContent));
-      if (sub) { if (S.hoy <= 0) sub.remove(); else sub.textContent = '¡Ya vamos en camino!'; }
-      on(root, zeroBlock, () => toast('Aquí empieza el camino', 'El 29 de noviembre salimos hacia Belén'));
-      // sin espacio vacío debajo: la casa del inicio queda justo encima de la hoja
-      const fin = zeroBlock.offsetTop + zeroBlock.offsetHeight + 110;
-      if (fin < root.offsetHeight) { root.style.height = fin + 'px'; root.style.minHeight = '0'; root.style.overflow = 'hidden'; }
-    }
-
-    // Letreros del camino: al tocarlos dicen qué significa su palabra
-    const LETREROS = { Maranatha: ['Maranatha', '«Ven, Señor Jesús». La oración del Adviento'], Shemá: ['Shemá', '«Escucha». Así empieza la gran oración de Israel'],
-      Jaire: ['Jaire', '«Alégrate». El saludo del ángel a María'], Acogida: ['Acogida', 'Abrir la puerta y el corazón a Jesús'] };
-    $$(root, 'div, span, text').filter(el => LETREROS[el.textContent.trim()] && el.children.length === 0).forEach(el => {
-      const [t, s] = LETREROS[el.textContent.trim()]; const box = el.closest('svg')?.parentElement === root ? el.closest('svg') : (el.parentElement || el);
-      box.style.cursor = 'pointer'; box.setAttribute('role', 'button'); box.setAttribute('aria-label', `${t}: ${s}`);
-      on(root, box, () => { animate(box, 'a-pop'); toast(t, s); });
-    });
-
     // 5) Cabecera fija
     const chip = layer.querySelector('[aria-label^="Día 9 de 26"]');
+    chip?.classList.add('map-chip');
     if (chip) replaceText(chip, /^(\s*)9(\s*)$/, `$1${Math.max(focus, 0)}$2`);
     chip?.setAttribute('aria-label', `Día ${focus} de 26`);
     // Teodoro va atrasado: la píldora dice su día y el de hoy
@@ -268,25 +234,29 @@ register('mapa', {
     volver?.setAttribute('aria-label', 'Atrás');
     const bat = layer.querySelector('[aria-label^="Energía de Teodoro"]');
     if (bat) on(layer, bat, () => showEnergy(layer));
-    const backHoy = layer.querySelector('[aria-label="Volver a hoy"]');
+    // la píldora del lienzo es un enlace; dentro de la hoja va como botón (el enlace de la hoja es solo el botón principal)
+    const pildoraLienzo = layer.querySelector('[aria-label="Volver a hoy"]');
+    const backHoy = pildoraLienzo && document.createElement('button');
     if (backHoy) {
+      backHoy.type = 'button'; backHoy.setAttribute('aria-label', 'Volver a hoy');
+      backHoy.setAttribute('style', pildoraLienzo.getAttribute('style') + '; border: 0; font-family: inherit; cursor: pointer');
+      backHoy.innerHTML = pildoraLienzo.innerHTML; pildoraLienzo.remove();
       // píldora flotante encima de la hoja: aparece cuando tu día sale de la vista
       replaceText(backHoy, /Hoy · día \d+/, `Tu día ${focus}`);
-      layer.appendChild(backHoy);
       backHoy.classList.add('back-hoy');
       backHoy.querySelectorAll('svg').forEach(s => s.remove());
       const arrow = document.createElement('span'); arrow.className = 'bh-arrow'; arrow.setAttribute('aria-hidden', 'true'); backHoy.prepend(arrow);
+      backHoy.addEventListener('pointerdown', ev => ev.stopPropagation()); // tocarla no arrastra la hoja
       on(layer, backHoy, () => scrollToNode(focus, true));
       const sync = () => {
         const t = nodes[focus]; if (!t) return;
-        const y = parseFloat(t.el.style.top) - scroller.scrollTop;
         const sh = layer.querySelector('[data-sheet]');
-        const k = layer.getBoundingClientRect().height / layer.offsetHeight || 1;
-        const limit = sh ? Math.min(sh.offsetTop, (sh.getBoundingClientRect().top - layer.getBoundingClientRect().top) / k) : 700; // sin contar la animación de entrada
-        const out = (y < 60 || y + 40 > limit) && layer.dataset.dia == null; // con un día elegido ya está «Volver a tu día»
+        // va dentro de la hoja, justo encima: se mueve con ella al abrirla, minimizarla o arrastrarla (nunca se queda atrás)
+        if (sh && backHoy.parentElement !== sh) sh.appendChild(backHoy);
+        const y = parseFloat(t.el.style.top) - scroller.scrollTop;
+        const out = (y < 60 || y + 40 > (sh ? sh.offsetTop : 700)) && layer.dataset.dia == null; // con un día elegido ya está «Volver a tu día»
         backHoy.classList.toggle('on', out);
         arrow.textContent = y < 60 ? '↑' : '↓';
-        backHoy.style.top = Math.max(110, limit - 58) + 'px';
       };
       scroller.addEventListener('scroll', sync, { passive: true });
       layer._syncBackHoy = sync;
@@ -319,14 +289,8 @@ register('mapa', {
       S.pasoAnimado = null; save();
       await wait(450);
       const n = paso && nodes[paso];
-      if (n && isDone(paso)) {
-        restyle(n.el, T.done, n.p, 64);
-        n.el.innerHTML = T.doneInner.replace(/>\d+</, `>${paso}<`) + badgeOf(paso);
-        delete n.el.dataset.today;
-        n.el.setAttribute('aria-label', `Día ${paso}, ${DAYS[paso].title}, completado${hasTrivia(paso) && stars(paso) ? `, ${stars(paso)} de 3 estrellas` : ''}`);
-        n.el.classList.add('a-pop');
-      } else if (n) {
-        triviaPend(n.el, paso, n.p); // vio el cuento: check, con la trivia aún abierta
+      if (n) {
+        pintarDia(n.el, paso, isDone(paso) ? 'hecho' : 'trivia'); // vio el cuento: check, con la trivia aún abierta si falta
         n.el.classList.add('a-pop');
       }
       if (paso === teoN && teo) { place(teoN); teo.classList.remove('a-bob'); animate(teo, 'a-hop'); } // a-hop sigue con el vaivén // terminó el día de hoy: celebra donde está
@@ -681,7 +645,7 @@ function sheetDrag(layer) {
     bar.addEventListener('click', ev => { if (!ev.target.closest('.mb-cta')) setMini(s, false); });
   };
   build(layer.querySelector('[data-sheet]'));
-  new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s && !s.querySelector('.sheet-min')) { mini = false; build(s); } }).observe(layer, { childList: true });
+  new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s && !s.querySelector('.sheet-min')) { mini = false; build(s); layer._syncBackHoy?.(); } }).observe(layer, { childList: true });
   // arrastrar desde la parte de arriba (o desde la barra compacta)
   layer.addEventListener('pointerdown', ev => {
     sheet = ev.target.closest('[data-sheet]'); if (!sheet) return;
@@ -705,20 +669,5 @@ function sheetDrag(layer) {
     else { sheet.style.transition = 'transform .3s cubic-bezier(.32,.72,0,1)'; sheet.style.transform = ''; }
   };
   layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
-}
-function curvar(root) {
-  const roads = $$(root, 'svg path').filter(p => /^M\s*\d/.test(p.getAttribute('d') || '') && !p.dataset.side && (p.getAttribute('d').match(/C/g) || []).length > 6);
-  if (!roads.length) return;
-  const d0 = roads[0].getAttribute('d');
-  const nums = d0.replace(/[MC]/g, ' ').trim().split(/[\s,]+/).map(Number);
-  const pts = [[nums[0], nums[1]]];
-  for (let i = 2; i + 5 < nums.length + 0; i += 6) pts.push([nums[i + 4], nums[i + 5]]);
-  let d = `M${pts[0][0]} ${pts[0][1]}`;
-  for (let i = 1; i < pts.length; i++) {
-    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
-    const dy = y1 - y0, sway = (i % 2 ? 1 : -1) * Math.min(70, Math.abs(dy) * .5);
-    d += ` C${(x0 + sway).toFixed(1)} ${(y0 + dy * .35).toFixed(1)} ${(x1 + sway).toFixed(1)} ${(y1 - dy * .35).toFixed(1)} ${x1} ${y1}`;
-  }
-  roads.filter(p => p.getAttribute('d') === d0 || p.getAttribute('d').startsWith(d0.slice(0, 18))).forEach(p => p.setAttribute('d', d));
 }
 function leaveMap() { back(mapOrigin || 'hoy', 'back'); }

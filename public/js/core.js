@@ -269,7 +269,9 @@ async function _go(name, params, anim, opts = {}) {
     closeOverlay(prev, true); cur = prev.base; history.replaceState(null, '', '#pantalla=' + name); emit(); return;
   }
   const file = typeof def.file === 'function' ? def.file(params) : def.files[dark() ? 1 : 0];
-  const markup = await html(file);
+  let markup = await html(file);
+  // una pantalla que redibuja su contenido quita antes lo que no usa (en una plantilla inerte: así no se piden sus imágenes)
+  if (def.limpiar) { const t = document.createElement('template'); t.innerHTML = markup; def.limpiar(t.content.firstElementChild); markup = t.innerHTML; }
   const layer = document.createElement('div');
   layer.className = 'layer';
   layer.dataset.screen = name;
@@ -295,7 +297,8 @@ async function _go(name, params, anim, opts = {}) {
     if (m?.then) await Promise.race([m.catch(e => { console.error(e); nota('Error en ' + name, e.message); }), new Promise(r => setTimeout(r, 120))]);
   } catch (e) { console.error(e); nota('Error en ' + name, e.message); }
   // algunas mesas del lienzo miden menos que su contenido: la altura real sale del contenido
-  if (!isOv && (h > 844 || def.scrollAuto)) {
+  // (las que llevan su propio scroll, como el mapa, ya traen su alto exacto: sin aire extra abajo)
+  if (!isOv && !def.noScroll && (h > 844 || def.scrollAuto)) {
     const bottom = Math.max(...[...root.children].filter(el => !el.matches('nav, [data-home]') && getComputedStyle(el).position === 'absolute')
       .map(el => (parseFloat(el.style.top) || 0) + el.offsetHeight));
     if (bottom + 110 > h) { h = bottom + 110; root.style.height = h + 'px'; root.style.minHeight = h + 'px'; }
