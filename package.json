@@ -3,8 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "convert": "python3 tools/convert.py",
-    "dev": "npx --yes serve public -l 5190",
+    "dev": "npx --yes serve@14.2.4 public -l 5190",
     "shots": "node tools/shots.mjs"
   },
   "devDependencies": {
