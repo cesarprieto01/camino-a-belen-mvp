@@ -194,12 +194,12 @@ const flows = {
     await expect('teaser', 'teaser automático'); await tap('Ahora no'); await expect('hoy', 'teaser Ahora no');
     await tap('Teodoro'); await expect('teodoro', 'tab Teodoro'); await shot('teodoro-sin');
     // la card del tab Teodoro es la misma del inicio: vidrio empañado y «Únete al reto»
-    if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[src*="ffc14384"]')))) errs.push('la card del tab Teodoro no es la del inicio (vidrio empañado)');
+    if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child :is(img[src*="ffc14384"], canvas.vidrio-dedo)')))) errs.push('la card del tab Teodoro no es la del inicio (vidrio empañado)');
     await tap('Únete al reto'); await p.waitForTimeout(1600); await expect('listo', 'inscribirme desde Teodoro'); await shot('listo');
     await tap('Invitar a la familia'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Únete al reto'); await expect('invitacion', 'vista previa vuelve');
     await tap('Volver'); await expect('listo', 'volver de invitación');
-    await p.goBack(); await expect('teodoro', 'atrás de «¡Ya estás dentro!» vuelve a Teodoro'); await shot('teodoro-dentro');
+    await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'unido desde el cuarto, «¡Ya estás dentro!» vuelve al cuarto'); await shot('teodoro-dentro');
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[alt*="de espaldas"]')))) errs.push('ya dentro, la card del tab Teodoro no es la del inicio (Teodoro de espaldas)');
     await tap('Seguir la aventura'); await expect('mundos', '«Seguir la aventura» abre los mundos antes del 29'); await shot('mundos-antes');
     await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'de los mundos a Teodoro');
@@ -508,6 +508,56 @@ const flows = {
         if (cruza(u.tit, u.card)) errs.push(`hub día ${n}: el título se monta sobre los pasos`);
         if (u.over) errs.push(`hub día ${n}: los pasos no caben en la tarjeta`);
       }
+    }
+  },
+  // antes de unirse: limpiar el vidrio con el dedo deja ver a Teodoro, une a la familia y abre «¡Ya estás dentro!» (inicio y tab Teodoro)
+  async vidrio() {
+    const inscrito = () => p.evaluate(async () => (await import('/js/core.js')).S.inscrito);
+    const caja = () => p.evaluate(() => { const cv = document.querySelector('#viewport .layer:last-child canvas.vidrio-dedo'); if (!cv) return null; cv.scrollIntoView({ block: 'center' }); const r = cv.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+    for (const tab of ['hoy', 'teodoro']) {
+      await p.evaluate(async t => { const c = await import('/js/core.js'); c.reset({ hoy: 0, inscrito: false, teaserVisto: true }); c.S.completos = {}; c.save(); c.clearHistory(); c.go(t, {}, 'none', { tab: true }); }, tab);
+      await p.waitForTimeout(1500);
+      let r = await caja(); await p.waitForTimeout(400); r = await caja();
+      if (!r) { errs.push(`${tab}: la card antes de unirse no tiene el vidrio para limpiar con el dedo`); continue; }
+      // un toque sin arrastrar sigue abriendo el teaser
+      if (tab === 'hoy') {
+        await p.mouse.click(r.x + r.w / 2, r.y + r.h / 2); await p.waitForTimeout(900);
+        if ((await screen()) !== 'teaser') errs.push('tocar el vidrio sin arrastrar no abre el teaser: ' + await screen());
+        await p.evaluate(async () => (await import('/js/core.js')).back('hoy', 'none')); await p.waitForTimeout(1500); r = await caja();
+      }
+      const pasada = async fila => { await p.mouse.move(r.x + 14, r.y + r.h * fila); await p.mouse.down(); await p.mouse.move(r.x + r.w - 14, r.y + r.h * fila, { steps: 14 }); await p.mouse.up(); };
+      // libre: con el dedo, de derecha a izquierda, arrancando en el borde de la pantalla y sobre el degradado de abajo
+      const cdp = await ctx.newCDPSession(p), borde = await p.evaluate(() => document.querySelector('#viewport .layer:last-child').getBoundingClientRect().right - 1), y = r.y + r.h * .9;
+      const dedo = (type, x) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+      await dedo('touchStart', borde); for (let i = 1; i <= 16; i++) { await dedo('touchMove', borde + (r.x + 14 - borde) * i / 16); await p.waitForTimeout(12); } await dedo('touchEnd');
+      await p.waitForTimeout(300); await shot(tab + '-vidrio-a-medias');
+      const alfa = await p.evaluate(() => { const cv = document.querySelector('#viewport .layer:last-child canvas.vidrio-dedo'); return cv ? cv.getContext('2d').getImageData(cv.width * .5, cv.height * .9, 1, 1).data[3] : -1; });
+      if (!(alfa >= 0 && alfa < 100)) errs.push(`${tab}: el dedo de derecha a izquierda desde el borde no limpia el vidrio (alfa ${alfa})`);
+      if (await inscrito()) errs.push(`${tab}: una sola pasada ya une al reto (debería pedir más)`);
+      if ((await screen()) !== tab) errs.push(`${tab}: arrastrar sobre el vidrio abrió otra pantalla: ${await screen()}`);
+      for (const fila of [.2, .45, .7]) if (!(await inscrito())) await pasada(fila);
+      await p.waitForTimeout(1600); await shot(tab + '-vidrio-listo');
+      if (!(await inscrito())) errs.push(`${tab}: limpiar el vidrio no une al reto`);
+      // revelado todo: la misma pantalla que «Únete al reto»
+      if ((await screen()) !== 'listo') errs.push(`${tab}: al revelar todo no abre «¡Ya estás dentro!»: ${await screen()}`);
+      await tap(tab === 'teodoro' ? 'Volver al cuarto de Teodoro' : 'Volver al inicio'); await p.waitForTimeout(1200); await shot(tab + '-vidrio-limpio');
+      if ((await screen()) !== tab) errs.push(`${tab}: «¡Ya estás dentro!» no vuelve a donde se limpió el vidrio: ${await screen()}`);
+      if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child [aria-label^="Camino a Belén: ya estás dentro"] img[src*="ffc14384"]'))) errs.push(`${tab}: al volver el vidrio se empaña otra vez (ya lo limpiaron con el dedo)`);
+      if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[alt*="de espaldas"]')))) errs.push(`${tab}: tras limpiar no queda Teodoro de espaldas en la card`);
+      if (!(await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].some(a => /Seguir la aventura/.test(a.textContent))))) errs.push(`${tab}: tras unirse con el dedo la card no dice «Seguir la aventura»`);
+    }
+  },
+  // el póster del evento («El Adviento más grande del mundo», con su logo) es la publicidad del reto: se queda hasta que la familia lo empieza
+  async poster() {
+    const hecho = { contenido: true, trivia: true, estrellas: 2 };
+    const casos = [['antes sin unirse', { hoy: 0, inscrito: false }, {}, true], ['antes ya dentro', { hoy: 0, inscrito: true }, {}, true], ['dia 1 sin unirse', { hoy: 1, inscrito: false, tardeVisto: true }, {}, true],
+      ['dia 1 unida sin ver nada', { hoy: 1, inscrito: true }, {}, true], ['dia 3 ya empezo', { hoy: 3, inscrito: true }, { 1: hecho }, false], ['gracia sin unirse', { hoy: 30, inscrito: false, tardeVisto: true }, {}, true]];
+    for (const [n, st, comp, evento] of casos) {
+      await p.evaluate(async ([st, comp]) => { const c = await import('/js/core.js'); c.reset({ teaserVisto: true, ...st }); c.S.completos = comp; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }, [st, comp]);
+      await p.waitForTimeout(1500);
+      const logo = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child img[src*="3ce248aa"]')].some(i => i.getBoundingClientRect().width > 0));
+      if (logo !== evento) errs.push(`${n}: ${evento ? 'falta' : 'sobra'} el póster del evento en el destacado`);
+      await shot('poster-' + n.replace(/ /g, '-'));
     }
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },

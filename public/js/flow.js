@@ -109,7 +109,8 @@ export function cardState() {
   return { key: 3, done: act == null };
 }
 /** Inscribirse antes del 29: el botón se vuelve ✓ «¡Listo!» y se abre «¡Ya estás dentro!» (flujo 1 del pre registro). */
-export function inscribir(btn) {
+/** from: desde dónde se une (hoy o teodoro); «¡Ya estás dentro!» vuelve allá. */
+export function inscribir(btn, from = 'hoy') {
   if (S.inscrito) return go('listo', {}, 'push');
   S.inscrito = true; save();
   navigator.vibrate?.(20);
@@ -119,7 +120,7 @@ export function inscribir(btn) {
     btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center'; btn.style.gap = '8px';
     btn.style.pointerEvents = 'none'; animate(btn, 'a-pop');
   }
-  setTimeout(() => go('listo', { nueva: true }, 'fade'), 750);
+  setTimeout(() => go('listo', { nueva: true, from }, 'fade'), 750);
 }
 /** Unirse al camino cuando ya empezó (una sola puerta: Hoy, Teodoro y Mundos). */
 export function unirse(from) {
@@ -161,20 +162,128 @@ function startCountdown(layer) {
   const iv = setInterval(() => { if (!layer.isConnected) clearInterval(iv); else tick(); }, 1000);
 }
 
-/** Recién unido: el vidrio empañado de la card se limpia y aparece Teodoro de espaldas mirando el pesebre. */
-function vidrio(root) {
+/** Recién unido: el vidrio empañado de la card se limpia y aparece Teodoro de espaldas mirando el pesebre.
+ *  modo 'dedo': ya lo limpiaron con el dedo; solo se baja a la card y Teodoro aparece. */
+function vidrio(root, modo) {
   const card = root.querySelector('[role=group][aria-label^="Camino a Belén: ya estás dentro, empieza"] a');
   if (!card || reduced()) return;
   const teo = $$(card, 'img').find(i => /de espaldas/.test(i.alt));
+  // la card queda bajo el pliegue: primero se baja hasta ella y ahí se limpia el vidrio
+  const capa = root.closest('.layer');
+  if (capa) setTimeout(() => capa.scrollTo({ top: Math.max(0, card.getBoundingClientRect().top - capa.getBoundingClientRect().top + capa.scrollTop - 160), behavior: 'smooth' }), 250);
+  if (modo === 'dedo') { teo?.animate([{ opacity: .4, transform: 'translateY(10px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 600, easing: 'cubic-bezier(.2,.9,.3,1.1)', fill: 'backwards' }); return; }
   const v = document.createElement('img');
   v.src = A('ffc14384b753c2d8d87872f172d05946'); v.alt = ''; v.setAttribute('aria-hidden', 'true');
   v.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:2';
   card.appendChild(v);
-  // la card queda bajo el pliegue: primero se baja hasta ella y ahí se limpia el vidrio
-  const capa = root.closest('.layer');
-  if (capa) setTimeout(() => capa.scrollTo({ top: Math.max(0, card.getBoundingClientRect().top - capa.getBoundingClientRect().top + capa.scrollTop - 160), behavior: 'smooth' }), 250);
   v.animate([{ opacity: 1, filter: 'blur(0)' }, { opacity: 0, filter: 'blur(6px)' }], { duration: 1400, delay: 1000, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }).finished.then(() => v.remove());
   teo?.animate([{ opacity: .4, transform: 'translateY(10px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 1500, easing: 'cubic-bezier(.2,.9,.3,1.1)', fill: 'backwards' });
+}
+/** Antes de unirse: el vidrio empañado se limpia con el dedo y deja ver la escena de la card «ya dentro».
+ *  Al despejar ~42 % se revela todo, la familia queda unida y se abre «¡Ya estás dentro!» (igual que «Únete al reto»).
+ *  Tocar sin arrastrar sigue abriendo el teaser.
+ *  Referencia nativa para el equipo: ios/VidrioEmpanado.swift (mismos números). */
+async function vidrioConDedo(root, origen) {
+  const a = root.querySelector('a[aria-label="Camino a Belén: se revela al unirte al reto"]');
+  const img = a && $$(a, 'img').find(i => i.src.includes('ffc14384'));
+  if (!img) return;
+  // debajo del vidrio, la misma escena de la card «ya dentro»: fondo + Teodoro de espaldas
+  const f = await frag(F('P-Hoy-despues-d', 'P-Hoy-despues-d-oscuro')[dark() ? 1 : 0]);
+  const escena = [...f.querySelectorAll('a[aria-label="Ver el camino"]')].pop();
+  await img.decode().catch(() => {});
+  if (!a.isConnected || !escena) return;
+  const W = 358, H = 201, R = 24, COLS = 14, FILAS = 8, META = 47; // 47 de 112 celdas ≈ 42 %
+  const dpr = Math.min(devicePixelRatio || 1, 3);
+  const cv = document.createElement('canvas');
+  cv.width = W * dpr; cv.height = H * dpr; cv.className = 'vidrio-dedo'; cv.setAttribute('aria-hidden', 'true');
+  cv.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;pointer-events:none`;
+  const ctx = cv.getContext('2d');
+  ctx.drawImage(img, 0, 0, cv.width, cv.height);
+  $$(escena, 'img').forEach(i => a.insertBefore(i, img));
+  img.replaceWith(cv);
+  // zona de toque libre: el vidrio, el degradado de abajo y los bordes de la pantalla a los lados.
+  // El dedo puede arrancar donde sea (también fuera del vidrio) e ir en cualquier dirección.
+  const grupo = a.closest('[role=group]');
+  const zona = document.createElement('span');
+  zona.className = 'vidrio-zona'; zona.setAttribute('aria-hidden', 'true');
+  grupo.after(zona);
+  const ref = zona.offsetParent || grupo.parentElement, capaV = root.closest('.layer') || ref;
+  const rr = ref.getBoundingClientRect(), rv = cv.getBoundingClientRect(), rl = capaV.getBoundingClientRect(), kz = rr.width / ref.offsetWidth || 1;
+  Object.assign(zona.style, { left: (rl.left - rr.left) / kz + 'px', width: rl.width / kz + 'px', top: (rv.top - rr.top) / kz - 10 + 'px', height: rv.height / kz + 10 + 'px' });
+  // pincel de borde suave: el halo de la sombra también borra
+  ctx.scale(dpr, dpr);
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.lineCap = ctx.lineJoin = 'round'; ctx.lineWidth = R * 1.4;
+  ctx.shadowColor = '#000'; ctx.shadowBlur = R * .9 * dpr;
+  const trazo = (x0, y0, x1, y1, alfa = 1) => { ctx.globalAlpha = alfa; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); };
+  const celdas = new Set();
+  const marcar = (x, y) => {
+    const cw = W / COLS, ch = H / FILAS;
+    for (let cx = 0; cx < COLS; cx++) for (let cy = 0; cy < FILAS; cy++)
+      if (Math.hypot((cx + .5) * cw - x, (cy + .5) * ch - y) <= R) celdas.add(cy * COLS + cx);
+  };
+  const punto = ev => { const r = cv.getBoundingClientRect(); return [(ev.clientX - r.left) * W / r.width, (ev.clientY - r.top) * H / r.height]; };
+  const dentro = ([x, y]) => x >= 0 && x <= W && y >= 0 && y <= H;
+  let ult = null, recorrido = 0, unido = false, pista = null;
+  const sinPista = () => { if (pista) { pista.parar(); pista = null; } };
+  zona.addEventListener('pointerdown', ev => { if (unido) return; ev.preventDefault(); sinPista(); ult = punto(ev); recorrido = 0; zona.setPointerCapture?.(ev.pointerId); });
+  zona.addEventListener('pointermove', ev => {
+    if (!ult || unido) return;
+    const juntos = ev.getCoalescedEvents?.();
+    for (const e of juntos?.length ? juntos : [ev]) {
+      const [x, y] = punto(e), d = Math.hypot(x - ult[0], y - ult[1]);
+      if (d < 1) continue;
+      trazo(ult[0], ult[1], x, y);
+      const antes = celdas.size;
+      for (let s = 0; s <= d; s += 6) marcar(ult[0] + (x - ult[0]) * s / d, ult[1] + (y - ult[1]) * s / d);
+      marcar(x, y);
+      if (Math.floor(celdas.size / 6) > Math.floor(antes / 6)) navigator.vibrate?.(4);
+      recorrido += d; ult = [x, y];
+    }
+    if (celdas.size >= META) completar();
+  });
+  // un toque sin arrastrar sobre el vidrio abre el teaser (como antes); un arrastre no
+  zona.addEventListener('pointerup', ev => { const toque = ult && recorrido < 10 && dentro(punto(ev)); ult = null; if (toque && !unido) a.click(); });
+  zona.addEventListener('pointercancel', () => { ult = null; });
+  function completar() {
+    unido = true; ult = null; sinPista();
+    S.inscrito = true; save();
+    navigator.vibrate?.([12, 40, 18]);
+    const suave = !reduced();
+    cv.animate(suave ? [{ opacity: 1, filter: 'blur(0)' }, { opacity: 0, filter: 'blur(8px)' }] : [{ opacity: 1 }, { opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+    if (suave) $$(a, 'img').find(i => /de espaldas/.test(i.alt))?.animate([{ transform: 'translateY(6px) scale(.97)' }, { transform: 'none' }], { duration: 800, delay: 150, easing: 'cubic-bezier(.2,.9,.3,1.1)', fill: 'backwards' });
+    // revelado todo: la misma pantalla que «Únete al reto» («¡Ya estás dentro!» con confeti)
+    const capa = root.closest('.layer');
+    setTimeout(() => { if (capa?.isConnected) go('listo', { nueva: true, from: origen, conDedo: true }, 'fade'); }, 950);
+  }
+  // pista sin palabras: si nadie lo toca, un dedo fantasma limpia una franja tenue (no cuenta para unirse)
+  if (reduced() || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(([e]) => {
+    if (e.intersectionRatio < .6) return;
+    io.disconnect();
+    const t = setTimeout(() => { if (cv.isConnected && !unido && !recorrido) pista = fantasma(); }, 900);
+    pista = { parar: () => clearTimeout(t) };
+  }, { threshold: [.6] });
+  io.observe(cv);
+  function fantasma() {
+    const dedo = document.createElement('span');
+    dedo.className = 'vidrio-pista'; dedo.setAttribute('aria-hidden', 'true');
+    a.appendChild(dedo);
+    const ruta = t => [70 + 218 * t, 104 + 28 * Math.sin(t * Math.PI * 2)];
+    let t0 = null, prev = ruta(0), raf;
+    const paso = now => {
+      t0 ??= now;
+      const t = Math.min(1, (now - t0) / 1500), e = t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      const [x, y] = ruta(e);
+      trazo(prev[0], prev[1], x, y, .45); prev = [x, y];
+      dedo.style.transform = `translate(${x - 20}px, ${y - 20}px)`;
+      if (t < 1) raf = requestAnimationFrame(paso); else parar();
+    };
+    dedo.animate([{ opacity: 0, scale: .7 }, { opacity: 1, scale: 1 }], { duration: 220, easing: 'ease-out' });
+    raf = requestAnimationFrame(paso);
+    function parar() { cancelAnimationFrame(raf); dedo.animate([{ opacity: 1 }, { opacity: 0, scale: 1.15 }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).finished.then(() => dedo.remove()); }
+    return { parar };
+  }
 }
 /** Antes del 29: «¡Ya casi salimos!» solo en la última semana; antes, «¡Prepárate para salir!». */
 function ánimo(root) {
@@ -282,7 +391,7 @@ const posterDeHoy = () => ['camino', 'gracia'].includes(fase()) ? POSTERS.find(p
 /** Destacado del carrusel (lienzo «Inicio real»): fondo de Belén de noche con degradado abajo, Teodoro con el farol,
  *  «Adviento en familia», «Camino a Belén» y un botón amarillo. Igual en modo claro y oscuro.
  *  Los botones de siempre siguen debajo, ocultos: el nuevo los toca para no cambiar lo que hace cada uno. */
-function heroeNuevo(root) {
+async function heroeNuevo(root) {
   const card = root.querySelector('.theo-heroe [role=group][aria-label^="Camino a Belén"]');
   if (!card || card.querySelector('.heroe-pre')) return;
   const st = cardState(), antes = fase() === 'antes';
@@ -302,7 +411,12 @@ function heroeNuevo(root) {
   const flecha = unirse ? '' : '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   const destello = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24"><path fill="#F5DB78" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
   const poster = posterDeHoy();
-  capa.innerHTML = (poster
+  // hasta que la familia empieza el reto (sin unirse, o unida sin ningún cuento visto) el destacado es el póster del evento:
+  // es su publicidad, con el logo; ya en camino, el póster de la temporada
+  const evento = sinEmpezar && poster ? await posterEvento() : '';
+  const boton = `<a href="#" class="hp-boton"><span>${texto}</span>${flecha}</a>`;
+  if (!card.isConnected || card.querySelector('.heroe-pre')) return;
+  capa.innerHTML = evento ? evento + boton : (poster
       ? `<img class="hp-fondo${poster.abajo ? ' hp-abajo' : ''}" src="assets/poster/${poster.fondo}.webp" alt="${poster.alt}">`
         + (poster.sombra ? `<span class="hp-sombra" style="${poster.sombra}" aria-hidden="true"></span>` : '')
         + `<img class="hp-teo${poster.claro ? ' hp-claro' : ''}" src="${A(poster.teo)}" style="${poster.teoCss || ''}" alt="">`
@@ -312,13 +426,24 @@ function heroeNuevo(root) {
     + (sinEmpezar || poster ? '' : `<img class="hp-bateria" src="${A(BATTERY_IDS[S.bateria])}" alt="Energía de Teodoro: ${S.bateria} de 5">`) + `
     <span class="hp-degradado" aria-hidden="true"></span>
     <div class="hp-texto"><span class="hp-kicker">${destello}<span>${poster ? poster.kicker : 'Adviento en familia'}</span>${destello}</span><b class="hp-titulo">Camino a Belén</b></div>
-    <a href="#" class="hp-boton"><span>${texto}</span>${flecha}</a>`;
+    ${boton}`;
   card.appendChild(capa);
   capa.querySelector('.hp-boton').addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); accion(); });
   capa.addEventListener('click', ev => { if (ev.target.closest('.hp-boton')) return; ev.preventDefault(); accion(); });
-  card.setAttribute('aria-label', `Camino a Belén, ${poster ? poster.kicker : 'Adviento en familia'}:${unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
+  card.setAttribute('aria-label', `Camino a Belén, ${evento ? 'El Adviento más grande del mundo' : poster ? poster.kicker : 'Adviento en familia'}:${unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
 }
 
+/** Póster del evento («El Adviento más grande del mundo», tablero del pre registro) sin su botón: la publicidad del reto. */
+async function posterEvento() {
+  const f = await frag(F('P-Hoy-antes-d', 'P-Hoy-antes-d-oscuro')[dark() ? 1 : 0]);
+  const g = f.querySelector('[role=group][aria-label^="El Adviento más grande del mundo"]');
+  if (!g) return '';
+  const c = g.cloneNode(true);
+  if (c.lastElementChild?.matches('a')) c.lastElementChild.remove(); // el botón lo pone el destacado
+  // los enlaces del tablero quedan como piezas: el destacado entero es el que se toca
+  c.querySelectorAll('a').forEach(a => { const sp = document.createElement('span'); sp.style.cssText = a.style.cssText; sp.append(...a.childNodes); a.replaceWith(sp); });
+  return c.innerHTML;
+}
 /** El destacado dice qué es y en qué va la familia (antes solo había escena y botón). */
 function tituloHeroe(root) {
   const card = root.querySelector('.theo-heroe [role=group][aria-label^="Camino a Belén"]');
@@ -376,8 +501,9 @@ register('hoy', {
     await misionMundos(root);
     carruseles(root);
     const destacados = heroe(root);
-    tituloHeroe(root);
-    heroeNuevo(root);
+    // antes del 29 el destacado es el póster del lienzo («El Adviento más grande del mundo»): sin unirse «Únete al reto»,
+    // ya dentro «Seguir la aventura»; después, heroeNuevo (póster del evento hasta que la familia empieza el reto)
+    if (fase() !== 'antes') { tituloHeroe(root); await heroeNuevo(root); }
     replaceText(root, /^Ces$/, S.nombre);
     root.querySelector('img[alt="Perfil de Ces"]')?.setAttribute('alt', `Perfil de ${S.nombre}`);
     paintEnergy(root);
@@ -413,7 +539,8 @@ register('hoy', {
       on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', {}, 'modal'));
       on(root, 'Camino a Belén: se revela al unirte al reto', () => go('teaser', {}, 'modal'));
       on(root, root.querySelector('a[aria-label^="Mundos"]'), () => go('mundos', {}, 'push'));
-      if (S.inscrito && p.limpiar) vidrio(root);
+      if (S.inscrito && p.limpiar) vidrio(root, p.limpiar);
+      if (!S.inscrito) vidrioConDedo(root, 'hoy');
       if (!S.inscrito && !S.teaserVisto) { S.teaserVisto = true; save(); await wait(900); if (layer.isConnected) go('teaser', {}, 'modal'); }
       return;
     }
@@ -599,7 +726,7 @@ register('teaser', {
     const reg = find(root, 'Únete al reto') || find(root, 'Unirme gratis');
     if (p.preview) on(root, reg, () => { nota('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
     else if (p.tarde) on(root, reg, () => entrar('hoy'));
-    else on(root, reg, (ev, el) => inscribir(el));
+    else on(root, reg, (ev, el) => inscribir(el, p.from));
     // el camino ya salió y la familia no se ha unido: la misma ventana, como invitación a subirse en marcha
     if (p.tarde) {
       const caja = root.querySelector('[role=dialog]') || root.querySelector('[aria-label^="Camino a Belén empieza"]') || root;
@@ -631,8 +758,11 @@ register('listo', {
   mount(root, p, layer) {
     startCountdown(root);
     if (p.nueva) { sparkles(root); confetti(layer, 195, 470, 28); }
-    // al volver recién unido, el vidrio de la card se limpia en el inicio
-    on(root, 'Volver al inicio', () => go('hoy', { limpiar: !!p.nueva }, 'fade', { tab: true }));
+    // vuelve a donde se unió (inicio o cuarto de Teodoro) y ahí el vidrio de la card se limpia
+    const origen = p.from === 'teodoro' ? 'teodoro' : 'hoy';
+    const volver = find(root, 'Volver al inicio');
+    if (volver && origen === 'teodoro') { setText(volver, 'Volver al inicio', 'Volver al cuarto de Teodoro'); volver.setAttribute('aria-label', 'Volver al cuarto de Teodoro'); }
+    on(root, volver, () => go(origen, { limpiar: p.nueva ? (p.conDedo ? 'dedo' : true) : false }, 'fade', { tab: true }));
     on(root, 'Invitar a la familia', () => go('invitacion', {}, 'push'));
   },
 });
@@ -657,7 +787,7 @@ register('teodoro', {
     if (fase() === 'antes') return (S.inscrito ? F('V2-Pre-Teodoro-dentro-claro', 'V2-Pre-Teodoro-dentro') : F('V2-Pre-Teodoro-claro', 'V2-Pre-Teodoro'))[t];
     return (S.cuartoNuevo ? F('V3-Teodoro-nazaret', 'V3-Teodoro-nazaret-oscuro') : F('V3-Teodoro', 'V3-Teodoro-oscuro'))[t];
   },
-  async mount(root) {
+  async mount(root, p = {}) {
     tabs(root);
     const n = walkDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
@@ -710,13 +840,15 @@ register('teodoro', {
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
     if (fase() === 'antes') {
       // los mismos botones que la card del inicio
-      on(root, 'Únete al reto', (ev, el) => inscribir(el));
+      on(root, 'Únete al reto', (ev, el) => inscribir(el, 'teodoro'));
       on(root, 'Seguir la aventura', () => go('mundos', {}, 'push'));
-      on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', {}, 'modal'));
-      on(root, 'Camino a Belén: se revela al unirte al reto', () => go('teaser', {}, 'modal'));
+      on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', { from: 'teodoro' }, 'modal'));
+      on(root, 'Camino a Belén: se revela al unirte al reto', () => go('teaser', { from: 'teodoro' }, 'modal'));
+      if (S.inscrito && p.limpiar) vidrio(root, p.limpiar); // recién unido desde el cuarto: el vidrio se limpia aquí
+      if (!S.inscrito) vidrioConDedo(root, 'teodoro'); // la misma card que el inicio: también se limpia con el dedo
     }
-    on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
-    on(root, 'Inscribirme', (ev, el) => inscribir(el)); on(root, 'Unirme gratis', (ev, el) => inscribir(el));
+    on(root, 'Toca para descubrir', () => go('teaser', { from: 'teodoro' }, 'modal'));
+    on(root, 'Inscribirme', (ev, el) => inscribir(el, 'teodoro')); on(root, 'Unirme gratis', (ev, el) => inscribir(el, 'teodoro'));
     on(root, 'Ver Camino a Belén', () => go('listo', {}, 'push'));
     on(root, 'Invitar', () => go('invitacion', {}, 'push'));
     on(root, 'Entrar', () => entrar('teodoro'));

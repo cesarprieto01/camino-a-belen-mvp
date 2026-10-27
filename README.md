@@ -55,7 +55,7 @@ El mapa es el «Mapa Diozen» del Figma *Theo · Mapa completo (oscuro)*: el pai
 ## Reglas principales
 
 - **Calendario:** 26 días, del domingo 29 de noviembre al 24 de diciembre. Antes del 29 hay invitación y cuenta regresiva.
-- **Pre registro (antes del 29, flujo 1 del lienzo «Pre registro · artes»):** el inicio trae el póster «El Adviento más grande del mundo» y la card de Adviento detrás de un vidrio empañado con «Únete al reto»; al abrir la app sale el pop-up con la cuenta regresiva. Al unirse (desde el pop-up o la card) se abre «¡Ya estás dentro!»; con «Volver al inicio» el vidrio se limpia y aparece Teodoro de espaldas mirando el pesebre. Ya dentro, «Seguir la aventura» abre Mundos con la cuenta regresiva.
+- **Pre registro (antes del 29, flujo 1 del lienzo «Pre registro · artes»):** el inicio trae el póster «El Adviento más grande del mundo» y la card de Adviento detrás de un vidrio empañado con «Únete al reto»; al abrir la app sale el pop-up con la cuenta regresiva. Al unirse (desde el pop-up o la card) se abre «¡Ya estás dentro!»; con «Volver al inicio» (o «Volver al cuarto de Teodoro» si se unió desde el cuarto) vuelve a donde estaba y ahí el vidrio se limpia y aparece Teodoro de espaldas mirando el pesebre. El vidrio también se limpia con el dedo, libre (arranca donde sea, también fuera del vidrio, y en cualquier dirección): lo que se arrastra se despeja; al despejar ~42 % se revela todo y se abre «¡Ya estás dentro!», igual que con «Únete al reto» (al volver, la card ya está limpia). Tocarlo sin arrastrar abre el pop-up. Para iOS hay un componente de referencia en `ios/VidrioEmpanado.swift` (guía en `ios/LEEME.md`). La card del tab Teodoro es siempre la misma del inicio. El destacado del inicio es el póster del evento («El Adviento más grande del mundo», con su logo) hasta que la familia EMPIEZA el reto: es su publicidad. Lo ve quien no se ha unido (también después del 29 y en la gracia, con «Unirme gratis») y quien se unió pero aún no ve ningún día («Seguir la aventura» antes del 29, «Iniciar la aventura» desde el 29). Cuando ya vio su primer día, entra el póster de la temporada. Ya dentro, «Seguir la aventura» abre Mundos con la cuenta regresiva.
 - **Cada día:** un contenido (historia, video o canción). Trivia solo los días 1, 2, 3, 4, 9, 11, 17, 18 y 24 (5 preguntas, 4 respuestas); los demás días no tienen estrellas.
 - **Juego sorpresa** cada 3 días: Memorama, Adivinanza y Desafío en familia.
 - **Ruleta** de 8 casillas los días 4, 11, 18 y 24, solo al tocarla en el mapa: fondo nuevo, prenda al azar, prenda de la semana, otra oportunidad y panes.
@@ -74,7 +74,7 @@ Con `npm run dev` corriendo, cada recorrido en su propio proceso:
 node tools/e2e.mjs dia /tmp/e2e mobile
 ```
 
-Recorridos: `dia ruleta memorama adivinanza desafio antes reto regreso atrasado nochebuena oscuro post nav cerrado inicio paginas hoja volver libre sintrivia titulos teodoro`. Las herramientas buscan Chrome en `~/Library/Caches/ms-playwright/chromium-1243`; en otro computador, cambia esa ruta.
+Recorridos: `dia ruleta memorama adivinanza desafio antes reto regreso atrasado nochebuena oscuro post nav cerrado inicio paginas hoja volver libre sintrivia titulos teodoro vidrio poster`. Las herramientas buscan Chrome en `~/Library/Caches/ms-playwright/chromium-1243`; en otro computador, cambia esa ruta.
 
 ## Dónde está lo demás
 

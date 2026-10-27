@@ -621,3 +621,9 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .card-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .card-titulo b { font: 700 19px/1.15 'Neue Montreal', Mulish, sans-serif; color: #FFFFFF; }
 .card-titulo span { font: 500 15px/1.2 'Neue Montreal', Mulish, sans-serif; color: #F5DB78; white-space: nowrap; }
+
+/* Vidrio empañado de la card antes de unirse: se limpia con el dedo (flow.js vidrioConDedo) */
+.vidrio-zona { position: absolute; z-index: 5; display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: pointer; }
+.vidrio-pista { position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; z-index: 3;
+  background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.95), rgba(255,255,255,.55) 60%, rgba(255,255,255,.25));
+  box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 4px 14px rgba(0,30,60,.28); }
