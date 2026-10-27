@@ -33,7 +33,26 @@ const textCheck = async (name) => {
   });
   bad.forEach(b => errs.push(`TEXTO en ${name}: ${b}`));
 };
-const shot = async (name) => { await p.waitForTimeout(700); await textCheck(name); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
+// INVENTARIO=<archivo.jsonl>: en cada captura anota las imágenes, fondos e íconos vectoriales de la pantalla (para entregar los assets sueltos)
+const inventario = async (name) => {
+  if (!process.env.INVENTARIO) return;
+  const r = await p.evaluate(() => {
+    const vis = el => { const b = el.getBoundingClientRect(); return b.width > 1 && b.height > 1 && getComputedStyle(el).visibility !== 'hidden'; };
+    const rel = u => u.replace(location.origin + '/', '');
+    // qué es: la etiqueta o el texto más cercano
+    const ctx = el => { for (let e = el; e && !e.classList?.contains('layer'); e = e.parentElement) { const a = e.getAttribute?.('aria-label') || e.getAttribute?.('alt'); if (a) return a.slice(0, 60); if (/^(A|BUTTON)$/.test(e.tagName) && e.textContent.trim()) return e.textContent.trim().replace(/\s+/g, ' ').slice(0, 60); } return ''; };
+    const out = { screen: document.querySelector('#viewport .layer:last-child')?.dataset.screen, tema: document.documentElement.dataset.theme || 'claro', imgs: [], bgs: [], svgs: [] };
+    document.querySelectorAll('#viewport .layer').forEach(L => {
+      L.querySelectorAll('img').forEach(i => { if (vis(i) && i.currentSrc) out.imgs.push({ src: rel(i.currentSrc), nw: i.naturalWidth, nh: i.naturalHeight, w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), ctx: ctx(i), capa: L.dataset.screen }); });
+      L.querySelectorAll('*').forEach(e => { const cs = getComputedStyle(e); for (const v of [cs.backgroundImage, cs.maskImage, cs.webkitMaskImage]) (v || '').replace(/url\("?([^")]+)"?\)/g, (_, u) => { if (!u.startsWith('data:') && vis(e)) out.bgs.push({ src: rel(u), ctx: ctx(e), capa: L.dataset.screen }); }); });
+      L.querySelectorAll('svg').forEach(v => { if (v.parentElement.closest('svg') || !vis(v)) return; const c = v.cloneNode(true); const col = getComputedStyle(v).color; c.querySelectorAll('*').forEach(x => { ['fill', 'stroke'].forEach(a => { if (x.getAttribute(a) === 'currentColor') x.setAttribute(a, col); }); }); ['fill', 'stroke'].forEach(a => { if (c.getAttribute(a) === 'currentColor') c.setAttribute(a, col); }); const b = v.getBoundingClientRect(); out.svgs.push({ html: c.outerHTML, w: Math.round(b.width), h: Math.round(b.height), ctx: ctx(v), capa: L.dataset.screen }); });
+    });
+    return out;
+  });
+  fs.appendFileSync(process.env.INVENTARIO, JSON.stringify({ flujo: scenActual, foto: name, ...r }) + '\n');
+};
+let scenActual = '';
+const shot = async (name) => { await p.waitForTimeout(700); await textCheck(name); await inventario(name); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
 const waitScreen = async (want, ms = 10000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if ((await screen()) === want) return true; await p.waitForTimeout(150); } return false; };
 const screen = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.dataset.screen);
 // clic por texto o aria-label dentro de la capa visible
@@ -489,10 +508,14 @@ const flows = {
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };
+// TEMA=oscuro: todos los recorridos en modo oscuro
+const tema = async () => { if (!process.env.TEMA) return; await p.evaluate(t => { const k = 'cab-mvp-v2'; let s = {}; try { s = JSON.parse(localStorage.getItem(k) || '{}'); } catch {} s.tema = t; localStorage.setItem(k, JSON.stringify(s)); }, process.env.TEMA); await p.reload(); await p.waitForTimeout(1200); };
+await tema();
 for (const name of scen.split(',')) {
+  scenActual = name;
   // el panel de controles del prototipo no debe quedar abierto de un recorrido a otro
   await p.evaluate(() => { const b = document.getElementById('panelBtn'); if (b?.getAttribute('aria-expanded') === 'true') b.click(); });
-  try { if (name === 'inicio' || name === 'completo') { await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(1200); } else await base(); await flows[name](); } catch (e) { errs.push(name + ': ' + e.message); }
+  try { if (name === 'inicio' || name === 'completo') { await p.evaluate(t => { localStorage.clear(); if (t) localStorage.setItem('cab-mvp-v2', JSON.stringify({ tema: t })); }, process.env.TEMA || ''); await p.reload(); await p.waitForTimeout(1200); } else await base(); await flows[name](); } catch (e) { errs.push(name + ': ' + e.message); }
 }
 console.log(errs.length ? errs.join('\n') : 'OK sin errores');
 await b.close();
