@@ -108,11 +108,10 @@ export function cardState() {
   if (act == null && RULES.sorpresa[h] && isDone(h) && S.sorpresas[h] !== 'hecha') return { key: 3, sorpresa: true };
   return { key: 3, done: act == null };
 }
-/** Inscribirse antes del 29: el botón se vuelve ✓ «¡Listo!» y se abre la espera (hoja). Sin pantalla intermedia. */
+/** Inscribirse antes del 29: el botón se vuelve ✓ «¡Listo!» y se abre «¡Ya estás dentro!» (flujo 1 del pre registro). */
 export function inscribir(btn) {
-  if (S.inscrito) return go('espera', {}, 'page');
+  if (S.inscrito) return go('listo', {}, 'push');
   S.inscrito = true; save();
-  seen('V2-Confirmacion-claro');
   navigator.vibrate?.(20);
   if (btn) {
     btn.style.transition = 'background .2s, transform .2s cubic-bezier(.23,1,.32,1)';
@@ -120,7 +119,7 @@ export function inscribir(btn) {
     btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center'; btn.style.gap = '8px';
     btn.style.pointerEvents = 'none'; animate(btn, 'a-pop');
   }
-  setTimeout(() => go('espera', { nueva: true }, 'page'), 750);
+  setTimeout(() => go('listo', { nueva: true }, 'fade'), 750);
 }
 /** Unirse al camino cuando ya empezó (una sola puerta: Hoy, Teodoro y Mundos). */
 export function unirse(from) {
@@ -156,12 +155,27 @@ function startCountdown(layer) {
     const v = { días: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, horas: Math.floor(ms / 36e5) % 24, min: Math.floor(ms / 6e4) % 60, minutos: Math.floor(ms / 6e4) % 60 };
     cells.forEach(el => roll(el, String(v[el.dataset.cd]).padStart(+el.dataset.pad, '0')));
     const d = v.días;
-    $$(layer, '[role=img][aria-label^="Empieza en"]').forEach(g => g.setAttribute('aria-label', `Empieza en ${d} días, ${v.h} horas y ${v.min} minutos`));
+    $$(layer, '[role=img][aria-label^="Empieza en"], [role=timer][aria-label^="Empieza en"]').forEach(g => g.setAttribute('aria-label', `Empieza en ${d} días, ${v.h} horas y ${v.min} minutos`));
   };
   tick();
   const iv = setInterval(() => { if (!layer.isConnected) clearInterval(iv); else tick(); }, 1000);
 }
 
+/** Recién unido: el vidrio empañado de la card se limpia y aparece Teodoro de espaldas mirando el pesebre. */
+function vidrio(root) {
+  const card = root.querySelector('[role=group][aria-label^="Camino a Belén: ya estás dentro, empieza"] a');
+  if (!card || reduced()) return;
+  const teo = $$(card, 'img').find(i => /de espaldas/.test(i.alt));
+  const v = document.createElement('img');
+  v.src = A('ffc14384b753c2d8d87872f172d05946'); v.alt = ''; v.setAttribute('aria-hidden', 'true');
+  v.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:2';
+  card.appendChild(v);
+  // la card queda bajo el pliegue: primero se baja hasta ella y ahí se limpia el vidrio
+  const capa = root.closest('.layer');
+  if (capa) setTimeout(() => capa.scrollTo({ top: Math.max(0, card.getBoundingClientRect().top - capa.getBoundingClientRect().top + capa.scrollTop - 160), behavior: 'smooth' }), 250);
+  v.animate([{ opacity: 1, filter: 'blur(0)' }, { opacity: 0, filter: 'blur(6px)' }], { duration: 1400, delay: 1000, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }).finished.then(() => v.remove());
+  teo?.animate([{ opacity: .4, transform: 'translateY(10px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 1500, easing: 'cubic-bezier(.2,.9,.3,1.1)', fill: 'backwards' });
+}
 /** Antes del 29: «¡Ya casi salimos!» solo en la última semana; antes, «¡Prepárate para salir!». */
 function ánimo(root) {
   const dias = Math.ceil((new Date(2026, 10, 29) - new Date()) / 864e5);
@@ -283,7 +297,7 @@ function heroeNuevo(root) {
     : `assets/pila/${recarga ? 'reactivado' : `dias-${pasoTeodoro()}`}-${tema}.webp`;
   const original = antes ? find(card, S.inscrito ? 'Entrar' : 'Unirme gratis') : [...card.querySelectorAll('a')].find(x => x.getAttribute('aria-label') !== 'Ver el camino' && !/Energía/.test(x.getAttribute('aria-label') || ''));
   const ver = card.querySelector('a[aria-label="Ver el camino"]');
-  const accion = () => { if (antes && S.inscrito) { go('espera', {}, 'page'); return; } (original || ver)?.click(); };
+  const accion = () => { if (antes && S.inscrito) { go('listo', {}, 'push'); return; } (original || ver)?.click(); };
   const capa = document.createElement('div'); capa.className = 'heroe-pre';
   const flecha = unirse ? '' : '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   const destello = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24"><path fill="#F5DB78" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
@@ -351,21 +365,14 @@ register('hoy', {
   h1: /^Misiones Diarias$/, // el inicio de Theo no tiene título propio: la primera sección hace de encabezado
   file() {
     const t = dark() ? 1 : 0;
-    if (fase() === 'antes') return F('R-Hoy-completo-pre', 'R-Hoy-completo-pre-oscuro')[t];
+    // antes del 29: flujo 1 del lienzo «Pre registro · artes» (vidrio empañado antes de unirse; limpio después)
+    if (fase() === 'antes') return (S.inscrito ? F('P-Hoy-despues-d', 'P-Hoy-despues-d-oscuro') : F('P-Hoy-antes-d', 'P-Hoy-antes-d-oscuro'))[t];
     if (S.regreso && S.inscrito) return F('V2-10-Regreso', 'V2-10-Regreso-oscuro')[t];
     return F('R-Hoy-completo', 'R-Hoy-completo-oscuro')[t];
   },
   async mount(root, p, layer) {
     tabs(root);
     if (fase() !== 'antes') seen('S-01-Hoy', 'S-01-Energia');
-    // ya unido antes del 29: el destacado trae «Invitar · Entrar» y la tarjeta grande es la de «ya estás dentro»
-    if (fase() === 'antes' && S.inscrito) {
-      const t = dark() ? 1 : 0;
-      const [fd, fg] = await Promise.all([frag(F('R-Hoy-pre-dentro', 'R-Hoy-pre-dentro-oscuro')[t]), frag(F('V2-Pre-Hoy-dentro-claro', 'V2-Pre-Hoy-dentro')[t])]);
-      const swap = (sel, from, top) => { const a = root.querySelector(sel), b = from.querySelector('[role=group][aria-label^="Camino a Belén"]'); if (a && b) { if (top) { b.style.top = top; b.style.left = a.style.left; } a.replaceWith(b); } };
-      swap('[role=group][aria-label^="Camino a Belén:"]', fd);
-      swap('[role=group][aria-label^="Camino a Belén empieza"]', fg, '800px');
-    }
     await misionMundos(root);
     carruseles(root);
     const destacados = heroe(root);
@@ -399,15 +406,14 @@ register('hoy', {
 
     if (fase() === 'antes') {
       startCountdown(root);
-      ánimo(root);
       juntarAvatares(root);
-      on(root, 'Ver el camino', () => S.inscrito ? go('espera', {}, 'page') : go('teaser', {}, 'modal'));
-      on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
-      on(root, 'Inscribirme', (ev, el) => inscribir(el)); on(root, 'Unirme gratis', (ev, el) => inscribir(el));
-      on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
-      on(root, 'Invitar', () => go('invitacion', {}, 'push'));
-      on(root, 'Entrar', () => entrar('hoy'));
+      // sin unirse: «Únete al reto» (póster y card) → «¡Ya estás dentro!»; ya dentro: «Seguir la aventura» abre Mundos con la cuenta regresiva
+      on(root, 'Únete al reto', (ev, el) => inscribir(el));
+      on(root, 'Seguir la aventura', () => go('mundos', {}, 'push'));
+      on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', {}, 'modal'));
+      on(root, 'Camino a Belén: se revela al unirte al reto', () => go('teaser', {}, 'modal'));
       on(root, root.querySelector('a[aria-label^="Mundos"]'), () => go('mundos', {}, 'push'));
+      if (S.inscrito && p.limpiar) vidrio(root);
       if (!S.inscrito && !S.teaserVisto) { S.teaserVisto = true; save(); await wait(900); if (layer.isConnected) go('teaser', {}, 'modal'); }
       return;
     }
@@ -586,17 +592,17 @@ function simplifyCard(card) {
 register('teaser', {
   h1: 'Camino a Belén',
   dismiss: () => back('hoy', 'fade'),
-  files: F('V2-Teaser-claro', 'V2-Teaser'),
+  files: F('P-Teaser-a', 'P-Teaser-a-oscuro'),
   mount(root, p = {}) {
     startCountdown(root);
     // desde la invitación: es la vista de tu amigo; tú ya estás inscrito
-    const reg = find(root, 'Unirme gratis') || find(root, 'Inscribirme');
+    const reg = find(root, 'Únete al reto') || find(root, 'Unirme gratis');
     if (p.preview) on(root, reg, () => { nota('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
     else if (p.tarde) on(root, reg, () => entrar('hoy'));
     else on(root, reg, (ev, el) => inscribir(el));
     // el camino ya salió y la familia no se ha unido: la misma ventana, como invitación a subirse en marcha
     if (p.tarde) {
-      const caja = root.querySelector('[aria-label^="Camino a Belén empieza"]') || root;
+      const caja = root.querySelector('[role=dialog]') || root.querySelector('[aria-label^="Camino a Belén empieza"]') || root;
       const tit = $$(caja, '*').find(el => el.childElementCount === 0 && el.textContent.trim() === 'Camino a Belén');
       if (tit) tit.textContent = S.hoy >= 27 ? '¡Aún llegas a Belén!' : '¡Ya salimos! ¿Vienes?';
       caja.setAttribute('aria-label', 'Camino a Belén ya salió: aún llegas');
@@ -618,60 +624,16 @@ register('teaser', {
     hero?.classList.add('a-bob');
   },
 });
-register('confirmacion', {
-  files: F('V2-Confirmacion-claro', 'V2-Confirmacion'),
-  async mount(root, p, layer) {
-    S.inscrito = true; save();
-    const check = root.querySelector('svg path[d^="M"]');
-    const circle = check?.closest('div');
-    circle?.classList.add('a-pop');
-    if (check) { check.style.strokeDasharray = 40; check.style.strokeDashoffset = 40; check.style.animation = 'drawCheck .5s .35s ease-out forwards'; }
-    sparkles(root);
-    confetti(layer, 195, 330, 28);
-    on(root, '¡Listo, te inscribiste!', () => next());
-    let done = false;
-    const next = () => { if (done) return; done = true; fase() === 'antes' ? go('espera', {}, 'fade', { replace: true }) : go('mapa', {}, 'fade', { replace: true }); };
-    setTimeout(() => { if (layer.isConnected) next(); }, 1600);
-  },
-});
-register('espera', {
-  h1: 'Tu camino ya está listo',
-  files: F('V2-Espera-claro', 'V2-Espera'),
+// «¡Ya estás dentro!» (flujo 1 del pre registro): al unirse y cuando ya está dentro antes del 29
+register('listo', {
+  h1: '¡Ya estás dentro!',
+  files: F('P-Listo-a', 'P-Listo-a-oscuro'),
   mount(root, p, layer) {
     startCountdown(root);
-    // antes del 29 no hay vista previa del camino: la ilustración es solo imagen, sin el día 0
-    const hero = root.querySelector('a[aria-label="Ver tu camino a Belén"]');
-    if (hero) {
-      hero.removeAttribute('href'); hero.removeAttribute('aria-label'); hero.dataset.bound = '1'; hero.tabIndex = -1; hero.style.pointerEvents = 'none';
-      const im = hero.querySelector('img'); if (im) im.alt = 'El camino a Belén con todos los días cerrados: Teodoro espera la salida';
-      // el «0» del nodo de salida está pintado en la imagen: se tapa con el mismo disco y una estrellita
-      const tapa = document.createElement('span'); tapa.className = 'espera-salida'; tapa.setAttribute('aria-hidden', 'true');
-      tapa.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6Z" fill="#E2BE55"/></svg>';
-      if (im) im.after(tapa); else hero.appendChild(tapa); // debajo del degradado del borde, como el resto de la imagen
-    }
-    const salir = () => back('hoy', 'down', ['teaser', 'confirmacion']);
-    // el botón principal vuelve al inicio; «Invitar a un amigo» queda debajo
-    const inv = find(root, 'Invitar a un amigo');
-    if (inv) {
-      on(root, inv, () => go('hoy', {}, 'down', { tab: true }));
-      const ico = inv.querySelector('svg'); if (ico) ico.outerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0B748A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg>';
-      setText(inv, 'Invitar a un amigo', 'Volver al inicio');
-    }
-    const ahoraNo = find(root, 'Ahora no');
-    if (ahoraNo) { setText(ahoraNo, 'Ahora no', 'Invitar a un amigo'); on(root, ahoraNo, () => go('invitacion', {}, 'push')); }
-    on(root, 'Cerrar', salir);
-    juntarAvatares(root);
-    // «2.418 familias ya se unieron»: el número cuenta hasta su valor; la frase se cambia una sola vez
-    const fam = textEl(root, /2\.418 familias/);
-    if (fam) {
-      const tail = [...(fam.parentElement?.childNodes || [])].find(c => c.nodeType === 3 && /ya caminan/.test(c.nodeValue));
-      if (tail) tail.nodeValue = ' ya se unieron';
-      const fmt = v => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      const put = v => { fam.textContent = fmt(v) + ' familias'; };
-      if (reduced()) put(2418);
-      else { let v = 1800; put(v); const iv = setInterval(() => { v = Math.min(2418, v + 37); put(v); if (v >= 2418 || !layer.isConnected) clearInterval(iv); }, 30); }
-    }
-    $$(root, 'img').find(i => i.src.includes(IMG.t5))?.classList.add('a-bob');
+    if (p.nueva) { sparkles(root); confetti(layer, 195, 470, 28); }
+    // al volver recién unido, el vidrio de la card se limpia en el inicio
+    on(root, 'Volver al inicio', () => go('hoy', { limpiar: !!p.nueva }, 'fade', { tab: true }));
+    on(root, 'Invitar a la familia', () => go('invitacion', {}, 'push'));
   },
 });
 register('invitacion', {
@@ -683,7 +645,7 @@ register('invitacion', {
     flecha.type = 'button'; flecha.setAttribute('aria-label', 'Volver');
     flecha.style.cssText = 'position:absolute;left:4px;top:52px;width:48px;height:48px;border:0;background:transparent;cursor:pointer;z-index:5';
     root.appendChild(flecha);
-    on(root, flecha, () => back(fase() === 'antes' ? 'espera' : 'hoy'));
+    on(root, flecha, () => back(fase() === 'antes' ? 'listo' : 'hoy'));
     $$(root, '[style*="border-radius"]').slice(-3).forEach((el, i) => { el.classList.add('a-rise'); el.style.animationDelay = (.25 + i * .25) + 's'; });
   },
 });
@@ -695,7 +657,7 @@ register('teodoro', {
     if (fase() === 'antes') return (S.inscrito ? F('V2-Pre-Teodoro-dentro-claro', 'V2-Pre-Teodoro-dentro') : F('V2-Pre-Teodoro-claro', 'V2-Pre-Teodoro'))[t];
     return (S.cuartoNuevo ? F('V3-Teodoro-nazaret', 'V3-Teodoro-nazaret-oscuro') : F('V3-Teodoro', 'V3-Teodoro-oscuro'))[t];
   },
-  mount(root) {
+  async mount(root) {
     tabs(root);
     const n = walkDay() ?? Math.min(lastDay(), 26);
     replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
@@ -703,6 +665,8 @@ register('teodoro', {
     root.querySelector('a[aria-label^="Adviento:"]')?.remove(); // la isla vieja del cuarto: el lienzo ahora pone el ícono de Mundos
     const isla = S.inscrito ? islaAdviento(root) : null; // la puerta a Mundos aparece al unirse al reto
     quitarCorona(root);
+    // la card de Adviento del tab Teodoro es SIEMPRE la misma del inicio (antes del 29: la del flujo 1 del pre registro)
+    if (fase() === 'antes') await cardDelInicio(root);
     juntarAvatares(root);
     const tCard = root.querySelector('a[aria-label="Ver el camino"]')?.parentElement;
     // la pieza del camino es la misma que la de Hoy: igual de alta (402), y lo que va debajo baja lo mismo
@@ -744,9 +708,16 @@ register('teodoro', {
     // la puerta a Mundos siempre lleva el ícono de Mundos (el planeta), nunca la isla
     $$(root, 'a[aria-label="Ver mis mundos"] img').slice(0, 1).forEach(i => { i.src = 'assets/mundos.webp'; i.style.objectFit = 'contain'; });
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
+    if (fase() === 'antes') {
+      // los mismos botones que la card del inicio
+      on(root, 'Únete al reto', (ev, el) => inscribir(el));
+      on(root, 'Seguir la aventura', () => go('mundos', {}, 'push'));
+      on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', {}, 'modal'));
+      on(root, 'Camino a Belén: se revela al unirte al reto', () => go('teaser', {}, 'modal'));
+    }
     on(root, 'Toca para descubrir', () => go('teaser', {}, 'modal'));
     on(root, 'Inscribirme', (ev, el) => inscribir(el)); on(root, 'Unirme gratis', (ev, el) => inscribir(el));
-    on(root, 'Ver Camino a Belén', () => go('espera', {}, 'page'));
+    on(root, 'Ver Camino a Belén', () => go('listo', {}, 'push'));
     on(root, 'Invitar', () => go('invitacion', {}, 'push'));
     on(root, 'Entrar', () => entrar('teodoro'));
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).slice(0, 1).forEach(i => i.classList.add('a-bob'));
@@ -754,6 +725,24 @@ register('teodoro', {
     if (S.prendas.length > (S.prendasVistas || 0)) { S.prendasVistas = S.prendas.length; save(); toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`); }
   },
 });
+/** Antes del 29 la card del tab Teodoro se trae del tablero del inicio (vidrio empañado sin unirse; Teodoro de espaldas ya dentro) y va en el mismo sitio. */
+async function cardDelInicio(root) {
+  const vieja = root.querySelector('[role=group][aria-label^="Camino a Belén"]');
+  if (!vieja) return;
+  const f = await frag((S.inscrito ? F('P-Hoy-despues-d', 'P-Hoy-despues-d-oscuro') : F('P-Hoy-antes-d', 'P-Hoy-antes-d-oscuro'))[dark() ? 1 : 0]);
+  const nueva = [...f.querySelectorAll('[role=group][aria-label^="Camino a Belén"]')].pop(); // la de abajo: la primera (ya dentro) es el póster
+  if (!nueva) return;
+  const t0 = parseFloat(vieja.style.top), h0 = vieja.offsetHeight || parseFloat(vieja.style.height), h1 = parseFloat(nueva.style.height);
+  nueva.style.top = vieja.style.top; nueva.style.left = vieja.style.left;
+  const pa = vieja.parentElement;
+  vieja.replaceWith(nueva);
+  // si cambia el alto, lo de abajo se corre lo mismo
+  const dh = h1 - h0;
+  if (dh && !isNaN(dh)) {
+    [...pa.children].forEach(el => { const t = parseFloat(el.style.top); if (el !== nueva && !isNaN(t) && t > t0) el.style.top = (t + dh) + 'px'; });
+    for (let el = pa; el && el !== root.parentElement; el = el.parentElement) { const h = parseFloat(el.style.height); if (h) el.style.height = (h + dh) + 'px'; }
+  }
+}
 /** El acceso a Mundos en el cuarto de Teodoro: el mismo ícono de Mundos de Misiones Diarias, junto a la cama (lienzo «Tab Teodoro»). */
 function islaAdviento(root) {
   const cuarto = $$(root, 'img').find(i => /^Tab Teodoro|^Cuarto de Nazaret/.test(i.alt || ''));

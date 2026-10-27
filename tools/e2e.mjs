@@ -166,8 +166,9 @@ const flows = {
   },
   async antes() {
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500); await shot('teaser');
-    await tap('Unirme gratis'); await shot('confirm'); await p.waitForTimeout(1200); await shot('espera');
-    await tap('Invitar a un amigo'); await shot('invitacion');
+    await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('listo');
+    if ((await screen()) !== 'listo') errs.push('«Únete al reto» no abre «¡Ya estás dentro!»: ' + await screen());
+    await tap('Invitar a la familia'); await shot('invitacion');
   },
   async reto() {
     await scenario('Reto en familia'); await tap('Ver el reto'); await shot('hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await shot('completado');
@@ -192,18 +193,20 @@ const flows = {
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500);
     await expect('teaser', 'teaser automático'); await tap('Ahora no'); await expect('hoy', 'teaser Ahora no');
     await tap('Teodoro'); await expect('teodoro', 'tab Teodoro'); await shot('teodoro-sin');
-    await tap('Unirme gratis'); await p.waitForTimeout(2400); await expect('espera', 'inscribirme desde Teodoro'); await shot('espera');
-    await tap('Invitar a un amigo'); await expect('invitacion', 'invitar'); await shot('invitacion');
-    await tap('Volver'); await expect('espera', 'volver de invitación');
-    await tap('Cerrar'); await expect('teodoro', 'espera Cerrar vuelve a Teodoro'); await shot('teodoro-dentro');
-    await tap('Entrar'); await expect('mundos', 'Entrar abre los mundos antes del 29'); await shot('mundos-antes');
+    // la card del tab Teodoro es la misma del inicio: vidrio empañado y «Únete al reto»
+    if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[src*="ffc14384"]')))) errs.push('la card del tab Teodoro no es la del inicio (vidrio empañado)');
+    await tap('Únete al reto'); await p.waitForTimeout(1600); await expect('listo', 'inscribirme desde Teodoro'); await shot('listo');
+    await tap('Invitar a la familia'); await expect('invitacion', 'invitar'); await shot('invitacion');
+    await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Únete al reto'); await expect('invitacion', 'vista previa vuelve');
+    await tap('Volver'); await expect('listo', 'volver de invitación');
+    await p.goBack(); await expect('teodoro', 'atrás de «¡Ya estás dentro!» vuelve a Teodoro'); await shot('teodoro-dentro');
+    if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[alt*="de espaldas"]')))) errs.push('ya dentro, la card del tab Teodoro no es la del inicio (Teodoro de espaldas)');
+    await tap('Seguir la aventura'); await expect('mundos', '«Seguir la aventura» abre los mundos antes del 29'); await shot('mundos-antes');
     await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'de los mundos a Teodoro');
     await tap('Mundos de Teodoro'); await expect('mundos', 'la isla abre los mundos antes del 29'); await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'isla: vuelve a Teodoro');
-    await tap('Ver Camino a Belén'); await expect('espera', 'la ilustración abre la espera'); await tap('Cerrar'); await expect('teodoro', 'espera Cerrar');
-    await tap('Invitar'); await expect('invitacion', 'invitar desde Teodoro'); await tap('Volver'); await expect('teodoro', 'volver a Teodoro');
     await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
-    await tap('Invitar'); await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Unirme gratis'); await expect('invitacion', 'vista previa vuelve');
-    await tap('Volver'); await expect('hoy', 'invitación vuelve a Hoy');
+    await tap('Seguir la aventura'); await expect('mundos', '«Seguir la aventura» del inicio abre los mundos');
+    await p.goBack(); await expect('hoy', 'de los mundos vuelve a Hoy');
     // ya empezó y no está inscrito: «Unirme al camino» entra directo
     await scenario('Hoy, tab Teodoro y Mundos'); await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.inscrito = false; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(900);
     await tap('Unirme gratis'); await expect('mapa', 'unirse tarde'); await tap('Atrás'); await expect('hoy', 'unirse vuelve a Hoy');
@@ -228,12 +231,13 @@ const flows = {
     const s0 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, inscrito: c.S.inscrito }; });
     if (s0.hoy !== 0 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
     if (!(await waitScreen('teaser'))) errs.push('el teaser no sale solo al entrar: ' + await screen());
-    await shot('teaser'); await tap('Unirme gratis'); await p.waitForTimeout(2400); await shot('espera');
-    if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child a[aria-label="Ver tu camino a Belén"]'))) errs.push('la espera todavía abre una vista previa del camino');
-    await tap('Cerrar'); await shot('hoy-dentro');
-    if ((await screen()) !== 'hoy') errs.push('la X de la espera no vuelve a Hoy: ' + await screen());
-    await tap('Entrar'); await p.waitForTimeout(800);
-    if ((await screen()) !== 'mundos') errs.push('antes del 29, «Entrar» no abre los mundos: ' + await screen());
+    await shot('teaser'); await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('listo');
+    if ((await screen()) !== 'listo') errs.push('«Únete al reto» no abre «¡Ya estás dentro!»: ' + await screen());
+    await tap('Volver al inicio'); await p.waitForTimeout(3200); await shot('hoy-dentro');
+    if ((await screen()) !== 'hoy') errs.push('«Volver al inicio» no vuelve a Hoy: ' + await screen());
+    if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[src*="ffc14384"]'))) errs.push('el vidrio no se limpió al volver');
+    await tap('Seguir la aventura'); await p.waitForTimeout(800);
+    if ((await screen()) !== 'mundos') errs.push('antes del 29, «Seguir la aventura» no abre los mundos: ' + await screen());
     await shot('mundos-antes');
     await tap('Adviento'); await p.waitForTimeout(600);
     if ((await screen()) !== 'mundos') errs.push('antes del 29, tocar Adviento ya unido no debe salir de los mundos: ' + await screen());
@@ -246,7 +250,7 @@ const flows = {
     if (s1.hoy !== 1 || s1.bat !== 5) errs.push('día 1 mal: ' + JSON.stringify(s1));
     if (!(await p.evaluate(() => /Iniciar la aventura/.test(document.querySelector('#viewport .layer:last-child').textContent)))) errs.push('el día 1 no dice «Iniciar la aventura»');
   },
-  // hojas de página: free sobre el reto, espera sobre Hoy, calificación sobre el mapa
+  // hojas de página: free sobre el reto, calificación sobre el mapa
   async paginas() {
     const layers = () => p.evaluate(() => [...document.querySelectorAll('#viewport .layer')].map(l => l.dataset.screen + (l.classList.contains('ov-page') ? '(hoja)' : '')).join('>'));
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.plan = 'free'; c.S.hoy = 13; for (let d = 9; d < 13; d++) c.S.completos[d] = { contenido: true, trivia: true }; c.save(); c.go('hub', { day: 13 }, 'none'); });
@@ -255,10 +259,10 @@ const flows = {
     await tap('Ahora no'); await p.waitForTimeout(500);
     if (await layers() !== 'hub') errs.push('al cerrar free no queda el reto: ' + await layers());
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 0, inscrito: true, teaserVisto: true }); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
-    await p.waitForTimeout(900); await tap('Ver el camino'); await p.waitForTimeout(500); await shot('espera-hoja');
-    if (await layers() !== 'hoy>espera(hoja)') errs.push('espera no es hoja sobre Hoy: ' + await layers());
+    await p.waitForTimeout(900); await tap('Seguir la aventura'); await p.waitForTimeout(600); await shot('mundos-antes');
+    if ((await screen()) !== 'mundos') errs.push('«Seguir la aventura» no abre los mundos: ' + await screen());
     await p.goBack(); await p.waitForTimeout(600);
-    if (await layers() !== 'hoy') errs.push('atrás del sistema no cierra la hoja: ' + await layers());
+    if (await layers() !== 'hoy') errs.push('atrás del sistema no vuelve a Hoy: ' + await layers());
   },
   // EL FLUJO ENTERO como una familia: teaser → inscripción → día 0 → los 26 días → Nochebuena → Navidad
   async completo() {
@@ -274,8 +278,8 @@ const flows = {
     // 1) antes del 29
     await p.waitForTimeout(800);
     if (!(await waitScreen('teaser'))) errs.push('no arranca con el teaser');
-    await tap('Unirme gratis'); await p.waitForTimeout(2300); await shot('c-espera');
-    await tap('Cerrar'); await p.waitForTimeout(800); await shot('c-dentro');
+    await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('c-listo');
+    await tap('Volver al inicio'); await p.waitForTimeout(1200); await shot('c-dentro');
     // 2) los 26 días
     const visto = new Set();
     for (let d = 1; d <= 26; d++) {
@@ -357,7 +361,7 @@ const flows = {
   },
   // «volver» nunca regresa a celebraciones, premios ni juegos ya terminados
   async volver() {
-    const PASO = ['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'compartir'];
+    const PASO = ['completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'compartir'];
     const backs = async (tag, n = 5) => {
       const ruta = [await screen()];
       for (let i = 0; i < n; i++) {
@@ -371,9 +375,9 @@ const flows = {
     };
     const st = (o) => p.evaluate(async (o) => { const c = await import('/js/core.js'); c.reset({ inscrito: true, teaserVisto: true, ...o.s }); for (let d = 0; d <= o.upto; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }, o);
     const finishPlayer = () => p.evaluate(() => { const sl = document.querySelector('#viewport .layer:last-child [role=slider]'); if (!sl) return; const r = sl.getBoundingClientRect(); sl.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.right - 1, clientY: r.top + 5 })); });
-    // 1) inscripción → espera
+    // 1) inscripción → «¡Ya estás dentro!»
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({}); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(1600);
-    await tap('Unirme gratis'); await p.waitForTimeout(2400); await backs('inscripción', 3);
+    await tap('Únete al reto'); await p.waitForTimeout(1600); await backs('inscripción', 3);
     // 2) un día completo con trivia (17): historia → ¡Terminaste! → trivia → final de trivia → mapa
     await st({ s: { hoy: 17 }, upto: 16 }); await p.waitForTimeout(900);
     await tap('Continuar la aventura'); await p.waitForTimeout(700);

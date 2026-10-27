@@ -171,7 +171,7 @@ const stack = []; export const _stack = stack;
 const TABS = ['hoy', 'teodoro', 'mundos'];
 /** Ir a una pantalla. opts.replace: no deja la actual en el historial (pasos automáticos). opts.scrollTop: abre en ese punto del scroll. */
 // Pantallas de paso: celebraciones, pasos automáticos y juegos en curso. «Volver» nunca regresa a ellas.
-export const DE_PASO = new Set(['confirmacion', 'completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto',
+export const DE_PASO = new Set(['completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto',
   'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin',
   'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'estatica', 'compartir']);
 const dePaso = name => DE_PASO.has(name) || (name === 'teaser' && S.inscrito);

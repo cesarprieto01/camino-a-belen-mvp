@@ -7,7 +7,7 @@ import './map.js';
 import './games.js';
 
 const NAMES = {
-  hoy: 'Hoy', teaser: 'Teaser', confirmacion: 'Inscripción confirmada', espera: 'Ya estás dentro', invitacion: 'Invitación',
+  hoy: 'Hoy', teaser: 'Teaser', listo: '¡Ya estás dentro!', invitacion: 'Invitación',
   teodoro: 'Tab Teodoro', mundos: 'Mundos', mapa: 'Mapa del camino', reproductor: 'Reproductor', hub: 'Reto en familia',
   completado: '¿Jugamos a la trivia?', trivia: 'Trivia', triviaFin: 'Resultado de la trivia', cerrado: 'Mañana seguimos',
   calificacion: '¿Te gustó?', free: 'Free · descargables', ruletaPop: 'Ruleta', ruletaPremio: 'Premio de la ruleta', premioCuarto: 'Cuarto nuevo',
@@ -17,7 +17,7 @@ const NAMES = {
 };
 // Sección del lienzo de cada pantalla (para «Dónde estás»)
 const SECTION_OF = name => {
-  if (['teaser', 'confirmacion', 'espera', 'invitacion'].includes(name)) return 1;
+  if (['teaser', 'listo', 'invitacion'].includes(name)) return 1;
   if (name === 'hoy') return fase() === 'antes' ? 1 : S.regreso || (activeDay() ?? 99) < lastDay() ? 5 : 6;
   if (['teodoro', 'mundos'].includes(name)) return fase() === 'antes' ? 1 : 6;
   if (['ruletaPop', 'ruletaPremio', 'premioCuarto'].includes(name)) return 3;
@@ -61,8 +61,8 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teas
 
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
-  { sec: 1, t: 'Sin inscribirse', mira: 'Tarjeta en Hoy → teaser → inscripción → espera', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['R-Hoy-completo-pre', 'V2-Teaser-claro', 'V2-Confirmacion-claro', 'V2-Espera-claro'] },
-  { sec: 1, t: 'Ya inscrito', mira: '«Entrar» abre los Mundos con Adviento cerrado y la cuenta regresiva · la ilustración abre la espera · invitar a un amigo', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['R-Hoy-pre-dentro', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Sin inscribirse', mira: 'Inicio con vidrio empañado → teaser → «Únete al reto» → «¡Ya estás dentro!» → el vidrio se limpia', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-antes-d', 'P-Teaser-a', 'P-Listo-a'] },
+  { sec: 1, t: 'Ya inscrito', mira: 'Teodoro de espaldas mirando el pesebre · «Seguir la aventura» abre los Mundos con la cuenta regresiva', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-despues-d', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
   { sec: 2, t: 'Un día con trivia', mira: 'Día 17 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(17, 16), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Un día sin trivia', mira: 'Día 10 · mapa → historia → un paso más hacia Belén → mañana seguimos', run: day(10, 9), go: 'hoy', covers: [] },
@@ -118,7 +118,7 @@ const DECISIONES = [
   'La historia del reproductor dura 9 segundos para poder probar rápido.',
   'Ruleta: la manzana le da +1 de energía a Teodoro; la prenda de la semana sale más seguido si aún no la tiene; el cuarto no se repite.',
   'Pop-ups sobre la pantalla real: teaser, final de trivia, ruleta y premios, «Se acabó el tiempo» y «Mañana seguimos».',
-  'Hojas de página (se cierran deslizando): free sobre el reto, calificación sobre el mapa, espera sobre Hoy.',
+  'Hojas de página (se cierran deslizando): free sobre el reto y calificación sobre el mapa.',
   'Pantalla completa a propósito: el reto en familia (es un destino con contenido, extras y un juego dentro: en hoja quedaría apretado y se perdería al deslizar) y la invitación (simula salir a WhatsApp/iMessage; en la app real es la hoja de compartir del sistema).',
   'Pantalla completa también: la llegada a Belén y la confirmación de inscripción (1,6 s y sigue sola). Todos los premios de la ruleta, también el cuarto nuevo, son pop-ups sobre el mapa con «Volver al camino».',
   'Calificar: al terminar cada video o canción, en «¡Terminaste!» (5 estrellas opcionales y Compartir); el día ya no se califica al cerrarlo.',
