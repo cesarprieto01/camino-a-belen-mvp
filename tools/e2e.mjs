@@ -3,7 +3,8 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 const [scen = '0', dir = 'tmp/e2e', mobile] = process.argv.slice(2);
 fs.mkdirSync(dir, { recursive: true });
-const b = await chromium.launch({ executablePath: '/Users/ces/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' });
+// sin --hide-scrollbars: las barras de scroll se ven como en un Mac con mouse (para detectarlas)
+const b = await chromium.launch({ executablePath: '/Users/ces/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing', ignoreDefaultArgs: ['--hide-scrollbars'] });
 const ctx = await b.newContext(mobile ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } });
 const p = await ctx.newPage();
 const errs = [];
@@ -52,7 +53,12 @@ const inventario = async (name) => {
   fs.appendFileSync(process.env.INVENTARIO, JSON.stringify({ flujo: scenActual, foto: name, ...r }) + '\n');
 };
 let scenActual = '';
-const shot = async (name) => { await p.waitForTimeout(700); await textCheck(name); await inventario(name); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
+// ninguna zona con scroll de la pantalla del teléfono muestra barra (en un celular no se ven)
+const barras = async (name) => {
+  const v = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer, #viewport .layer *')].filter(el => { const cs = getComputedStyle(el); return (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth && el.offsetHeight - el.clientHeight > 2) || (/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight && el.offsetWidth - el.clientWidth > 2); }).map(el => (el.getAttribute('aria-label') || el.className || el.tagName).toString().slice(0, 50)));
+  v.forEach(x => errs.push(`BARRA DE SCROLL visible en ${name}: ${x}`));
+};
+const shot = async (name) => { await p.waitForTimeout(700); await textCheck(name); await barras(name); await inventario(name); await p.locator('#viewport').screenshot({ path: `${dir}/${String(++k).padStart(2, '0')}-${name}.png` }); };
 const waitScreen = async (want, ms = 10000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if ((await screen()) === want) return true; await p.waitForTimeout(150); } return false; };
 const screen = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.dataset.screen);
 // clic por texto o aria-label dentro de la capa visible
