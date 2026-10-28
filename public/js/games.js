@@ -1,8 +1,8 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
 import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
-  floaty, confetti, addPanes, dark, stars, _stack, cur, fase } from './core.js';
-import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, hasTrivia, TYPES } from './data.js';
-import { finishTrivia, finishContent, openSorpresa } from './flow.js';
+  floaty, confetti, addPanes, dark, stars, _stack, cur, fase, conTodo } from './core.js';
+import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, JUEGOS, hasTrivia, TYPES } from './data.js';
+import { finishTrivia, finishContent, openSorpresa, panesContenido, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
 // botón de música de la cabecera (trivia y su resultado)
 const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
@@ -754,5 +754,195 @@ register('compartir', {
       else nota('Compartir', 'Este navegador no tiene el menú de compartir');
     });
     ['Mensajes', 'Instagram', 'WhatsApp', 'Facebook'].forEach(k => on(root, k, () => nota('Prototipo', `Abriría ${k}`)));
+  },
+});
+
+// ================= JUEGOS EN FAMILIA (días 7, 14 y 21) =================
+// Portada → «Así se juega» en 3 pasos → el mazo → «¡Ganaron todos!». Pantallas del lienzo «Juegos en familia · plantilla».
+const JF = (n, pant) => F(`J-${JUEGOS[n].id}-${pant}`, `J-${JUEGOS[n].id}-${pant}-oscuro`);
+const alMapa = () => go('mapa', {}, 'down', { replace: true });
+const explicar = () => nota('Teodoro explica el juego', 'Audio por grabar');
+const barajar = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const k = Math.floor(Math.random() * (i + 1)); [b[i], b[k]] = [b[k], b[i]]; } return b; };
+// piezas fijas de las pantallas del mazo
+const esCarta = el => el.style.top === '240px' && el.style.width === '342px';
+const esCabeza = el => el.style.top === '132px' && el.style.left === '87px';
+const esPista = el => el.style.top === '632px';
+
+register('juegoIntro', {
+  file: p => JF(p.day, 'intro'),
+  mount(root, p) {
+    const n = p.day;
+    replaceText(root, /\+\d+ panes/, `+${panesContenido()} panes`);
+    $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-bob'));
+    const titulo = [...root.children].find(el => el.style.transform === 'rotate(-4deg)');
+    titulo?.animate([{ scale: '.6', opacity: 0 }, { scale: '1.06', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 520, delay: 120, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
+    on(root, 'Volver', alMapa);
+    on(root, 'Escuchar a Teodoro', explicar);
+    on(root, '¡A jugar!', () => go('juegoPasos', { day: n, i: 1, replay: p.replay }, 'push', { replace: true }));
+    // «También hoy»: el imprimible y la canción del día (con free piden Premium)
+    const imp = textEl(root, 'Imprimible'), can = textEl(root, 'Canción');
+    if (imp) on(root, imp, () => abrirDescargable(n, 'juegoIntro'));
+    if (can) on(root, can, () => conTodo() ? go('reproductor', { day: n, extra: 'cancion' }, 'up') : go('free', { back: 'juegoIntro', day: n }, 'page'));
+  },
+});
+
+register('juegoPasos', {
+  file: p => JF(p.day, 'paso' + p.i),
+  mount(root, p) {
+    const n = p.day, i = p.i;
+    const jugar = () => go('juegoCarta', { day: n, replay: p.replay }, 'fade', { replace: true });
+    const ir = k => k < 1 ? go('juegoIntro', { day: n, replay: p.replay }, 'back', { replace: true }) : k > 3 ? jugar() : go('juegoPasos', { ...p, i: k }, k > i ? 'push' : 'back', { replace: true });
+    on(root, 'Volver', alMapa);
+    on(root, 'Escuchar a Teodoro', explicar);
+    on(root, 'Atrás', () => ir(i - 1));
+    on(root, 'Siguiente', () => ir(i + 1));
+    on(root, '¡Listos, a jugar!', jugar);
+    // también se pasa deslizando la tarjeta, como un libro
+    let x0 = null;
+    root.addEventListener('pointerdown', e => { x0 = e.clientX; });
+    root.addEventListener('pointerup', e => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 60) ir(dx < 0 ? i + 1 : i - 1); });
+    $$(root, 'img').filter(im => /Teodoro/.test(im.alt || '')).forEach(im => im.classList.add('a-hop'));
+    // el letrero del paso («¡A SALTAR!», «¡BAJITO!»…) cae con un golpe
+    const letrero = [...root.children].find(el => /rotate\(-?\d+deg\)/.test(el.style.transform) && el.style.zIndex === '5');
+    letrero?.animate([{ scale: '1.8', opacity: 0 }, { scale: '.94', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 420, delay: 260, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'backwards' });
+  },
+});
+
+register('juegoCarta', {
+  file: p => JF(p.day, 'carta'),
+  async mount(root, p, layer) {
+    const n = p.day, j = JUEGOS[n], tapada = j.id !== 'teodoro';
+    // variantes de la carta y de la cabecera, sacadas de las otras pantallas del lienzo
+    const pieza = async pant => { const f = await frag(JF(n, pant)); return { carta: [...f.children].find(esCarta), cabeza: [...f.children].find(esCabeza), pista: [...f.children].find(esPista) }; };
+    const base = { carta: [...root.children].find(esCarta).cloneNode(true), cabeza: [...root.children].find(esCabeza).cloneNode(true) };
+    const otras = { teodoro: ['especial'], telefono: ['ver'], estrella: ['ver', 'especial'] }[j.id];
+    const v = {}; for (const k of otras) v[k] = await pieza(k);
+    if (!root.isConnected) return;
+    let carta = [...root.children].find(esCarta), cabeza = [...root.children].find(esCabeza), pista = null;
+    const poner = (nueva, nuevaCabeza) => {
+      const c = nueva.cloneNode(true); carta.replaceWith(c); carta = c;
+      if (nuevaCabeza) { const h = nuevaCabeza.cloneNode(true); cabeza.replaceWith(h); cabeza = h; }
+      return c;
+    };
+    const grande = c => $$(c, 'div').find(el => el.style.top === '196px');
+    // el mazo: en «Teodoro dice» empieza con una orden normal y luego sale una con truco cada tres
+    let mazo;
+    if (j.id === 'teodoro') {
+      const normales = barajar(j.cartas.filter(c => !c.truco)), trucos = barajar(j.cartas.filter(c => c.truco));
+      mazo = []; while (normales.length || trucos.length) { mazo.push(...normales.splice(0, 2)); if (trucos.length) mazo.push(trucos.shift()); }
+    } else mazo = barajar(j.cartas);
+    let k = 0, ronda = 0;
+    const actual = () => mazo[k % mazo.length];
+
+    // ---- Teodoro dice: la carta se ve; «Otra orden» la gira y sale la siguiente ----
+    const pintarOrden = () => {
+      const c = actual();
+      const cc = poner(c.truco ? v.especial.carta : base.carta, c.truco ? v.especial.cabeza : base.cabeza);
+      const t = grande(cc); if (t) t.textContent = c.t.toUpperCase();
+      cc.setAttribute('aria-label', (c.truco ? 'Carta con truco: ' : 'Teodoro dice: ') + c.t);
+    };
+    // ---- Teléfono roto y Busquen la estrella: carta tapada; se mantiene presionada para verla ----
+    const cara = () => {
+      const c = actual();
+      if (j.id === 'telefono') {
+        const cc = poner(v.ver.carta);
+        const t = grande(cc); if (t) t.textContent = `«${c.t}»`;
+        const ic = $$(cc, 'span').find(s => s.style.top === '52px');
+        if (ic) ic.innerHTML = `<img src="${A(IMG[c.icon])}" alt="" style="width:100%;height:100%;object-fit:contain">`;
+        const cita = $$(cc, 'span').find(s => /^[A-ZÁÉÍÓÚ][a-záéíóú]+ \d+, \d+$/.test(s.textContent.trim())); if (cita) cita.textContent = c.cita;
+        cc.setAttribute('aria-label', `Palabra de la Biblia: ${c.t}, está en ${c.cita}`);
+      } else {
+        const cc = poner(v.ver.carta);
+        const t = grande(cc); if (t) t.textContent = `ESCÓNDELA ${c.t.toUpperCase()}`;
+        cc.setAttribute('aria-label', `Escóndela ${c.t}`);
+      }
+      return carta;
+    };
+    let viendo = false;
+    const ver = () => {
+      if (viendo || !tapada || estado !== 'tapada') return; viendo = true;
+      navigator.vibrate?.(12);
+      const c = cara(); c.style.userSelect = 'none';
+      const h = v.ver.cabeza.cloneNode(true); cabeza.replaceWith(h); cabeza = h; // la instrucción de esta ronda queda aunque se tape
+      if (!pista && v.ver.pista) { pista = v.ver.pista.cloneNode(true); carta.after(pista); }
+      if (!reduced()) c.animate([{ transform: 'rotateY(-90deg) scale(.96)' }, { transform: 'none' }], { duration: 160, easing: 'ease-out' });
+      c.tabIndex = 0; c.setAttribute('role', 'button');
+      c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tapar(); } });
+    };
+    const tapar = () => {
+      if (!viendo) return; viendo = false;
+      const d = poner(base.carta); armarDorso(d);
+      pista?.remove(); pista = null;
+      if (!reduced()) d.animate([{ transform: 'rotateY(90deg) scale(.96)' }, { transform: 'none' }], { duration: 160, easing: 'ease-out' });
+    };
+    const armarDorso = d => {
+      Object.assign(d.style, { userSelect: 'none', webkitUserSelect: 'none', webkitTouchCallout: 'none', touchAction: 'none', cursor: 'pointer' });
+      d.tabIndex = 0;
+      d.addEventListener('pointerdown', e => { e.preventDefault(); ver(); });
+      d.addEventListener('contextmenu', e => e.preventDefault());
+      d.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ver(); } });
+    };
+    if (tapada) {
+      addEventListener('pointerup', tapar); addEventListener('pointercancel', tapar);
+      const quitar = () => { removeEventListener('pointerup', tapar); removeEventListener('pointercancel', tapar); };
+      new MutationObserver((_, o) => { if (!layer.isConnected) { quitar(); o.disconnect(); } }).observe(layer.parentElement || document.body, { childList: true });
+    }
+
+    // ---- botones ----
+    const principal = find(root, j.otra);
+    const etiqueta = t => { const s = principal && $$(principal, 'span').pop(); if (s) s.textContent = t; };
+    let estado = tapada ? 'tapada' : 'orden'; // estrella: 'tapada' → 'encontrada'
+    const girar = async cambiar => {
+      if (!reduced()) await carta.animate([{ transform: 'none' }, { transform: 'rotateY(90deg) scale(.92)' }], { duration: 180, easing: 'ease-in', fill: 'forwards' }).finished;
+      cambiar();
+      if (!reduced()) carta.animate([{ transform: 'rotateY(-90deg) scale(.92)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+    };
+    const siguiente = () => girar(() => {
+      k++; ronda++; navigator.vibrate?.(15);
+      if (!tapada) { pintarOrden(); return; }
+      viendo = false; pista?.remove(); pista = null;
+      armarDorso(poner(base.carta, base.cabeza)); estado = 'tapada';
+      if (j.id === 'estrella') etiqueta('¡La encontraron!');
+    });
+    // Busquen la estrella: al encontrarla se celebra y se cuenta algo bonito; después, otro escondite
+    const encontrada = () => girar(() => {
+      viendo = false; pista?.remove(); pista = null;
+      const cc = poner(v.especial.carta, v.especial.cabeza);
+      const t = grande(cc); if (t) t.textContent = j.encontrada[ronda % j.encontrada.length].toUpperCase();
+      const pie = $$(cc, 'span').find(s => /pesebre/.test(s.textContent)); if (pie) pie.innerHTML = 'Al terminar, la ponen junto al <b style="font-weight: 700">pesebre</b>';
+      estado = 'encontrada'; etiqueta(j.otra);
+      navigator.vibrate?.(30); confetti(layer, 195, 400, 40);
+      $$(cc, 'img').forEach(im => im.classList.add('a-hop'));
+    });
+    if (principal) on(root, principal, () => j.id === 'estrella' && estado === 'tapada' ? encontrada() : siguiente());
+    if (j.id === 'estrella') etiqueta('¡La encontraron!');
+    on(root, 'Terminamos', () => {
+      const first = !p.replay && finishContent(n);
+      go('juegoFin', { day: n, first, replay: p.replay }, 'fade', { replace: true });
+    });
+    on(root, 'Volver', alMapa);
+    on(root, 'Escuchar a Teodoro', explicar);
+
+    if (tapada) armarDorso(carta); else pintarOrden();
+    carta.animate([{ transform: 'translateY(30px) scale(.94)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
+  },
+});
+
+register('juegoFin', {
+  file: p => JF(p.day, 'fin'),
+  mount(root, p, layer) {
+    const n = p.day, j = JUEGOS[n];
+    const panes = textEl(root, /panes para Teodoro/);
+    if (panes) panes.textContent = p.first ? `+${panesContenido()} panes para Teodoro` : 'Ya ganaste estos panes';
+    if (p.first) floaty(layer, `+${panesContenido()}`, 250, 560);
+    $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-hop'));
+    const titulo = [...root.children].find(el => el.style.transform === 'rotate(-4deg)');
+    titulo?.animate([{ scale: '.5', opacity: 0 }, { scale: '1.08', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 560, delay: 150, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
+    confetti(layer, 195, 300, 60);
+    setTimeout(() => navigator.vibrate?.([20, 60, 20]), 300);
+    // si el día trae juego sorpresa (el 21), sigue ahí; si no, al camino
+    const seguir = () => !p.replay && RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha' ? openSorpresa(n) : go('mapa', { thenCerrado: !p.replay }, 'down', { replace: true });
+    const btn = find(root, j.fin); if (btn) { btn.dataset.back = '1'; on(root, btn, seguir); }
+    on(root, 'Jugar otra vez', () => go('juegoCarta', { day: n, replay: true }, 'fade', { replace: true }));
   },
 });

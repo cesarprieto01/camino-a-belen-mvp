@@ -1,7 +1,7 @@
 // Mapa del camino (diseño «Mapa Diozen» del Figma): el paisaje ilustrado va de fondo y encima se pintan en vivo los 26 días, Teodoro y las ruletas.
 import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia, puedeDia } from './core.js';
-import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, usaHub } from './data.js';
+import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, pantallaDia } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
 
@@ -408,7 +408,7 @@ function showPast(layer, n, el) {
   const C = contOf(d.type);
   const ic = iconOf(n, dark()); if (ic) r1.querySelector('img').src = A(ic);
   const [t1, s1] = r1.querySelector(':scope > div').children; t1.textContent = C[0]; s1.textContent = C[1];
-  const verOtra = () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up');
+  const verOtra = () => go(pantallaDia(n), { day: n, replay: true }, 'up');
   const a1 = r1.querySelector('a'); if (a1 && a1 !== r1) on(layer, a1, verOtra); else on(layer, r1, verOtra);
   r1.style.cursor = 'pointer';
   const st = stars(n);
@@ -418,7 +418,7 @@ function showPast(layer, n, el) {
     r2.remove();
     const tn = [...cta.querySelectorAll('*'), cta].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && c.nodeValue.trim());
     if (tn) tn.nodeValue = { cancion: 'Escuchar otra vez', reto: 'Ver el reto', juego: 'Jugar otra vez' }[d.type] || 'Ver otra vez';
-    on(layer, cta, () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
+    on(layer, cta, () => go(pantallaDia(n), { day: n, replay: true }, 'up'));
   } else {
   r2.querySelectorAll('[role=img] svg path').forEach((p, i) => p.setAttribute('fill', i < st ? '#F7C948' : (dark() ? 'rgba(255,255,255,.28)' : '#D3DDE5')));
   r2.querySelector('[role=img]')?.setAttribute('aria-label', `${st} de 3 estrellas`);
@@ -585,7 +585,7 @@ function paintSheet(layer, T, dia) {
   on(layer, cta, label.go);
   // la hoja abierta se usa tocando la actividad que se quiere hacer; el botón amarillo queda solo en la barra minimizada
   const tocar = (r, fn) => { if (!r || r.dataset.lock) return; r.style.cursor = 'pointer'; r.setAttribute('role', 'button'); r.tabIndex = 0; on(layer, r, fn); };
-  tocar(filaCont, contentDone(n) ? () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up') : () => startDay(n));
+  tocar(filaCont, contentDone(n) ? () => go(pantallaDia(n), { day: n, replay: true }, 'up') : () => startDay(n));
   tocar(filaTriv, isDone(n) ? () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push') : () => startDay(n));
   tocar(filaSorpresa, () => openSorpresa(n));
   // sin actividad que tocar (día de pago con free, o todo hecho: «Seguir al día N», «Hasta mañana»), el botón se queda

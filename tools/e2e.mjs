@@ -349,6 +349,10 @@ const flows = {
           case 'ruletaPremio': case 'premioCuarto': if (!(await clickYellow())) errs.push(`día ${d}: premio sin botón`); break;
           case 'reproductor': await finishPlayer(); await p.waitForTimeout(900); break;
           case 'hub': await tap('¡Lo hicimos!'); await p.waitForTimeout(600); break;
+          case 'juegoIntro': await tap('¡A jugar!'); break;
+          case 'juegoPasos': if (!(await tap('¡Listos, a jugar!'))) { errs.pop(); await tap('Siguiente'); } break;
+          case 'juegoCarta': await tap('Terminamos'); break;
+          case 'juegoFin': await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-back]')?.click()); await p.waitForTimeout(1200); break;
           case 'completado': { if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rate-row'))) await rate(`día ${d}`); const t = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].map(a => a.textContent.trim()).find(x => /^(¡A jugar!|Ir al juego sorpresa|Volver al camino)$/.test(x))); await tap(t || '¡A jugar!'); break; }
           case 'trivia': await answerTrivia(); break;
           case 'triviaFin': if (!(await tap('Ir al juego sorpresa'))) { errs.pop(); await tap('Volver al camino'); } break;
@@ -404,7 +408,7 @@ const flows = {
   },
   // «volver» nunca regresa a celebraciones, premios ni juegos ya terminados
   async volver() {
-    const PASO = ['completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'cerrado', 'calificacion', 'compartir'];
+    const PASO = ['completado', 'triviaFin', 'trivia', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'juegoPasos', 'juegoCarta', 'juegoFin', 'cerrado', 'calificacion', 'compartir'];
     const backs = async (tag, n = 5) => {
       const ruta = [await screen()];
       for (let i = 0; i < n; i++) {
@@ -602,6 +606,51 @@ const flows = {
       const logo = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child img[src*="3ce248aa"]')].some(i => i.getBoundingClientRect().width > 0));
       if (logo !== evento) errs.push(`${n}: ${evento ? 'falta' : 'sobra'} el póster del evento en el destacado`);
       await shot('poster-' + n.replace(/ /g, '-'));
+    }
+  },
+  async juegos() {
+    const cara = () => p.evaluate(() => { const c = [...document.querySelectorAll('#viewport .layer:last-child [aria-label]')].find(e => /^(Palabra de la Biblia|Escóndela)/.test(e.getAttribute('aria-label'))); return c ? c.getAttribute('aria-label') : null; });
+    const centro = () => p.evaluate(() => { const c = document.querySelector('#viewport .layer:last-child [aria-label^="Mantén presionado"]'); if (!c) return null; const r = c.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    for (const tema of ['claro', 'oscuro']) for (const [n, nombre] of [[7, 'Teodoro dice'], [14, 'Teléfono roto'], [21, 'Busquen la estrella']]) {
+      const t = `${n}${tema === 'oscuro' ? '-oscuro' : ''}`;
+      await scenario(nombre);
+      if (tema === 'oscuro') {
+        // el tema se elige en el panel; después el panel se cierra para que no tape la pantalla
+        const abierto = () => p.evaluate(() => document.getElementById('panel')?.classList.contains('open'));
+        if (!(await abierto())) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); }
+        await p.evaluate(() => document.querySelector('[data-tema="oscuro"]')?.click()); await p.waitForTimeout(500);
+        if (await abierto()) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(400); }
+      }
+      const panes0 = await p.evaluate(async () => (await import('/js/core.js')).S.panes);
+      await p.evaluate(async (n) => { (await import('/js/flow.js')).startDay(n); }, n); await p.waitForTimeout(1000);
+      if ((await screen()) !== 'juegoIntro') { errs.push(`día ${n}: no abre la portada del juego (${await screen()})`); continue; }
+      await shot(`${t}-intro`); await tap('¡A jugar!'); await shot(`${t}-paso1`);
+      await tap('Siguiente'); await tap('Atrás'); if ((await p.evaluate(() => document.querySelector('#viewport .layer:last-child').textContent)).indexOf('PASO 1 DE 3') < 0) errs.push(`día ${n}: «Atrás» no vuelve al paso 1`);
+      await tap('Siguiente'); await shot(`${t}-paso2`); await tap('Siguiente'); await shot(`${t}-paso3`); await tap('¡Listos, a jugar!'); await shot(`${t}-carta`);
+      if ((await screen()) !== 'juegoCarta') errs.push(`día ${n}: no llega al mazo (${await screen()})`);
+      if (n === 7) {
+        const ordenes = [];
+        for (let i = 0; i < 4; i++) { ordenes.push(await p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label^="Teodoro dice:"], #viewport .layer:last-child [aria-label^="Carta con truco"]')?.getAttribute('aria-label'))); await tap('Otra orden'); }
+        await shot(`${t}-orden`);
+        if (new Set(ordenes).size < 4 || ordenes.some(o => !o)) errs.push('Teodoro dice: las órdenes no cambian ' + JSON.stringify(ordenes));
+        if (!ordenes.slice(0, 3).some(o => /truco/.test(o))) errs.push('Teodoro dice: no sale una con truco en las 3 primeras ' + JSON.stringify(ordenes));
+      } else {
+        const c = await centro(); if (!c) { errs.push(`día ${n}: sin carta tapada`); continue; }
+        if (await cara()) errs.push(`día ${n}: la carta se ve sin mantenerla`);
+        await p.mouse.move(c.x, c.y); await p.mouse.down(); await p.waitForTimeout(350);
+        const vista = await cara(); await shot(`${t}-ver`);
+        if (!vista) errs.push(`día ${n}: al mantener no se ve la carta`);
+        await p.mouse.up(); await p.waitForTimeout(350);
+        if (await cara()) errs.push(`día ${n}: al soltar no se tapa`);
+        if (n === 21) { await tap('¡La encontraron!'); await p.waitForTimeout(400); await shot(`${t}-encontrada`); await tap('Otro escondite'); await p.waitForTimeout(400); if (!(await centro())) errs.push('estrella: «Otro escondite» no vuelve a la carta tapada'); }
+        else { await tap('Otra palabra'); await p.waitForTimeout(300); const c2 = await centro(); await p.mouse.move(c2.x, c2.y); await p.mouse.down(); await p.waitForTimeout(350); const v2 = await cara(); await p.mouse.up(); if (v2 === vista) errs.push('teléfono: «Otra palabra» repite la palabra'); }
+      }
+      await tap('Terminamos'); await p.waitForTimeout(500); await shot(`${t}-fin`);
+      const st = await p.evaluate(async (n) => { const c = await import('/js/core.js'); return { hecho: !!c.S.completos[n]?.contenido, panes: c.S.panes }; }, n);
+      if (!st.hecho) errs.push(`día ${n}: «Terminamos» no completa el día`);
+      if (st.panes <= panes0) errs.push(`día ${n}: no sumó panes (${panes0} → ${st.panes})`);
+      await tap(n === 7 ? '¡Nos abrazamos!' : '¡Lo hicimos!'); await p.waitForTimeout(1400);
+      const fin = await screen(); if (n === 21 ? fin !== 'memoramaReglas' : !['mapa', 'cerrado'].includes(fin)) errs.push(`día ${n}: tras «¡Ganaron todos!» va a ${fin}`);
     }
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },

@@ -114,6 +114,8 @@ export const DAYS = [
 DAYS.forEach(d => { d.descarga ||= DESCARGA; });
 /** El día se hace en el hub (pasos + «¡Lo hicimos!») y no en el reproductor: retos y juegos en familia. */
 export const usaHub = n => DAYS[n]?.type === 'reto' || !!DAYS[n]?.pasos;
+// la pantalla que abre el contenido del día: el juego en familia (7, 14 y 21), el reto o el reproductor
+export const pantallaDia = n => JUEGOS[n] ? 'juegoIntro' : usaHub(n) ? 'hub' : 'reproductor';
 
 // Reglas acordadas con César (20-oct-2026)
 export const RULES = {
@@ -348,6 +350,37 @@ export const DESAFIOS = [
   { t: 'Cuenten una historia de cuando nacieron', sub: 'Como en Belén, todo nacimiento es una fiesta', icon: 'nino' },
 ];
 export const SORPRESA_NOMBRE = { memorama: 'Memorama', adivinanza: 'Adivinanza en familia', desafio: 'Desafío en familia' };
+
+// Juegos en familia (días 7, 14 y 21): portada, 3 pasos de «Así se juega», el mazo y «¡Ganaron todos!».
+// Son para niños pequeños: órdenes cortas para moverse y reírse, palabras que ya conocen y escondites de casa.
+export const JUEGOS = {
+  7: { id: 'teodoro', otra: 'Otra orden', fin: '¡Nos abrazamos!',
+    // «truco»: se dice sin «Teodoro dice» y nadie debe moverse
+    cartas: [
+      { t: '¡Aplaudan tres veces!' }, { t: '¡Caminen como burrito!' }, { t: '¡Tóquense la nariz!', truco: true },
+      { t: '¡Salten como ovejitas!' }, { t: '¡Rebuznen como Teodoro!' }, { t: '¡Siéntense en el piso!', truco: true },
+      { t: '¡Brillen como estrellas!' }, { t: '¡Arrullen al Niño Jesús!' }, { t: '¡Den una vuelta!', truco: true },
+      { t: '¡Vuelen como ángeles!' }, { t: '¡Soplen una velita!' }, { t: '¡Saquen la lengua!', truco: true },
+      { t: '¡Den un abrazo de oso!' }, { t: '¡Pónganse de puntitas!' },
+    ] },
+  14: { id: 'telefono', otra: 'Otra palabra', fin: '¡Lo hicimos!',
+    cartas: [
+      { t: 'PESEBRE', cita: 'Lucas 2, 7', icon: 'pesebre' }, { t: 'ESTRELLA', cita: 'Mateo 2, 2', icon: 'estrella' },
+      { t: 'BURRITO', cita: 'Isaías 1, 3', icon: 'teodoro' }, { t: 'ÁNGEL', cita: 'Lucas 2, 10', icon: 'gabriel' },
+      { t: 'PASTORES', cita: 'Lucas 2, 8', icon: 'pastor' }, { t: 'MARÍA', cita: 'Lucas 1, 27', icon: 'maria' },
+      { t: 'JOSÉ', cita: 'Mateo 1, 20', icon: 'jose' }, { t: 'BELÉN', cita: 'Mateo 2, 1', icon: 'nacimiento' },
+      { t: 'REGALOS', cita: 'Mateo 2, 11', icon: 'regalo' }, { t: 'LUZ', cita: 'Juan 8, 12', icon: 'farol' },
+      { t: 'PAN', cita: 'Juan 6, 35', icon: 'pan' },
+    ] },
+  21: { id: 'estrella', otra: 'Otro escondite', fin: '¡Lo hicimos!',
+    cartas: [
+      { t: 'Cerca de algo azul' }, { t: 'Debajo de un cojín' }, { t: 'Adentro de un zapato' }, { t: 'Detrás de una puerta' },
+      { t: 'Entre los juguetes' }, { t: 'Junto a una planta' }, { t: 'Debajo de la mesa' }, { t: 'Cerca de algo verde' },
+      { t: 'Arriba de una silla' }, { t: 'Junto a la cama' },
+    ],
+    // al encontrarla: una cosa bonita que contar antes de volver a esconderla
+    encontrada: ['Cuenta algo bonito de tu día', 'Di qué te gusta de tu familia', '¿Qué le regalarías al Niño Jesús?', 'Canten juntos un villancico', 'Den un aplauso al que la encontró'] },
+};
 
 // Todas las preguntas de opción múltiple con 4 respuestas: a las de imagen (3) se les suma una alternativa
 // claramente incorrecta, elegida a mano para que no haya otra respuesta válida.

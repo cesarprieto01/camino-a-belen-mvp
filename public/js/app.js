@@ -13,7 +13,7 @@ const NAMES = {
   calificacion: '¿Te gustó?', free: 'Free · descargables', ruletaPop: 'Ruleta', ruletaPremio: 'Premio de la ruleta', premioCuarto: 'Cuarto nuevo',
   memoramaReglas: 'Memorama · antes de jugar', memorama: 'Memorama', memoramaFin: 'Memorama · fin', adivinanzaIntro: 'Adivinanza · antes de jugar',
   adivinanza: 'Adivinanza', adivinanzaTiempo: 'Adivinanza · se acabó el tiempo', adivinanzaFin: 'Adivinanza · fin', desafioIntro: 'Desafío · antes de empezar',
-  desafio: 'Desafío en familia', desafioFin: 'Desafío · cumplido', final: 'Nochebuena', estatica: 'Vista del lienzo',
+  desafio: 'Desafío en familia', desafioFin: 'Desafío · cumplido', juegoIntro: 'Juego en familia', juegoPasos: 'Juego · así se juega', juegoCarta: 'Juego · a jugar', juegoFin: 'Juego · ¡ganaron todos!', final: 'Nochebuena', estatica: 'Vista del lienzo',
 };
 // Sección del lienzo de cada pantalla (para «Dónde estás»)
 const SECTION_OF = name => {
@@ -75,6 +75,9 @@ const REC = [
   { sec: 4, t: 'Memorama', mira: 'Día 3 · tras la trivia: «Hoy toca Memorama»', run: day(3, 2), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-claro', 'V2-Memorama-reglas-claro', 'V2-Memorama-claro', 'V2-Memorama-fin-claro'] },
   { sec: 4, t: 'Adivinanza', mira: 'Día 6 (sin trivia) · tras la historia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
   { sec: 4, t: 'Desafío en familia', mira: 'Día 9 · «Hoy toca Desafío» · sacar otra carta (Avemaría) · ¡lo hicimos!', run: day(9, 8), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Desafio-intro-claro', 'V2-Desafio-claro', 'V2-Desafio-carta2-claro', 'V2-Desafio-fin-claro'] },
+  { sec: 4, t: 'Teodoro dice', mira: 'Día 7 · juego en familia: portada, 3 pasos, órdenes (una de cada tres con truco) y «¡Ganaron todos!»', run: day(7, 6), go: 'mapa', covers: ['J-teodoro-intro', 'J-teodoro-paso1', 'J-teodoro-paso2', 'J-teodoro-paso3', 'J-teodoro-carta', 'J-teodoro-especial', 'J-teodoro-fin'] },
+  { sec: 4, t: 'Teléfono roto', mira: 'Día 14 · mantén la carta para ver la palabra de la Biblia; suéltala para taparla', run: day(14, 13), go: 'mapa', covers: ['J-telefono-intro', 'J-telefono-paso1', 'J-telefono-paso2', 'J-telefono-paso3', 'J-telefono-carta', 'J-telefono-ver', 'J-telefono-fin'] },
+  { sec: 4, t: 'Busquen la estrella', mira: 'Día 21 · mantén la carta para ver el escondite · «¡La encontraron!» · luego el Memorama', run: day(21, 20), go: 'mapa', covers: ['J-estrella-intro', 'J-estrella-paso1', 'J-estrella-paso2', 'J-estrella-paso3', 'J-estrella-carta', 'J-estrella-ver', 'J-estrella-especial', 'J-estrella-fin'] },
   { sec: 5, t: 'Va atrasado', mira: 'En el día 9, hoy es el 11: puede ponerse al día', run: day(11, 8, { bateria: 3 }), go: 'hoy', covers: ['R-Hoy-completo'] },
   { sec: 5, t: 'Regreso tras una semana', mira: 'Teodoro le guardó el camino · batería en 0', run: day(16, 8, { bateria: 0, regreso: true, sinCaminar: 7 }), go: 'hoy', covers: ['V2-10-Regreso'] },
   { sec: 5, t: 'Pila en 0', mira: '5 días sin caminar: Teodoro desesperado buscándote', run: day(14, 8, { bateria: 0, sinCaminar: 5 }), go: 'hoy', covers: [] },

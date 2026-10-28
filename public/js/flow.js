@@ -2,7 +2,7 @@
 import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo } from './core.js';
-import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, BATTERY_IDS } from './data.js';
+import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
 import './musica.js'; // música de fondo del mapa y la trivia
 import { rateRow } from './games.js';
 
@@ -19,7 +19,7 @@ export function startDay(n) {
   if (!puedeDia(n)) { go('free', { back: 'mapa', dia: n }, 'page'); return; }
   if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, nacimiento: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; }
   if (!contentDone(n)) {
-    go(usaHub(n) ? 'hub' : 'reproductor', { day: n }, 'up');
+    go(pantallaDia(n), { day: n }, 'up');
     return;
   }
   if (!isDone(n)) { go('trivia', { day: n, ...(S.triviaProgreso?.[n] || {}) }, 'push'); return; }
@@ -1030,7 +1030,7 @@ register('reproductor', {
     const end = () => {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
       if (p.nacimiento) { if (p.replay) back('hoy', 'down'); else go('final', { day: 26 }, 'fade', { replace: true }); return; }
-      if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go('hub', { day: n }, 'down', { replace: true }); return; }
+      if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go(JUEGOS[n] ? 'juegoIntro' : 'hub', { day: n }, 'down', { replace: true }); return; }
       if (p.replay) { const suma = fase() !== 'recuerdo'; if (suma) { setBateria(5); S.sinCaminar = 0; S.regresoAvisado = false; S.ultimoJugado = S.hoy; save(); } toast('¡Otra vez con Teodoro!', suma ? 'Teodoro quedó al 100%' : ''); go('mapa', {}, 'down', { replace: true }); return; }
       finishContent(n);
       if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', {}, 'down', { replace: true }); return; }
