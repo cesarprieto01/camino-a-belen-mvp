@@ -18,7 +18,7 @@ const NAMES = {
 // Sección del lienzo de cada pantalla (para «Dónde estás»)
 const SECTION_OF = name => {
   if (['teaser', 'listo', 'invitacion'].includes(name)) return 1;
-  if (name === 'hoy') return fase() === 'antes' ? 1 : S.regreso || (activeDay() ?? 99) < lastDay() ? 5 : 6;
+  if (name === 'hoy') return fase() === 'antes' ? 1 : (S.regreso && fase() !== 'recuerdo') || (activeDay() ?? 99) < lastDay() ? 5 : 6;
   if (['teodoro', 'mundos'].includes(name)) return fase() === 'antes' ? 1 : 6;
   if (['ruletaPop', 'ruletaPremio', 'premioCuarto'].includes(name)) return 3;
   if (/^(memorama|adivinanza|desafio)/.test(name)) return 4;
@@ -162,7 +162,8 @@ function advance(k) {
   S.bateria = Math.max(0, S.bateria - baja);
   const antes = S.hoy;
   S.hoy = Math.min(GRACIA_FIN + 1, S.hoy + k);
-  if (k >= RULES.regresoDias && S.inscrito && S.hoy >= 1) S.regreso = true;
+  // «¡Te guardé el camino!»: 5 días o más sin caminar, una vez por ausencia, en el camino y la gracia (no en el recuerdo)
+  if (S.inscrito && S.hoy >= 1 && S.hoy <= GRACIA_FIN && (S.sinCaminar || 0) >= RULES.regresoDias && !S.regresoAvisado) { S.regreso = true; S.regresoAvisado = true; }
   save();
   nota(antes === 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy === 27 ? 'Ya es Navidad' : S.hoy > GRACIA_FIN ? 'El camino quedó como recuerdo' : S.hoy > 27 ? cuentaGracia() : `Hoy es el día ${S.hoy}`);
   repintar();
@@ -250,7 +251,7 @@ function render() {
     const maxDone = Math.max(0, ...Object.keys(S.completos).filter(k => isDone(+k)).map(Number));
     body = `<section class="p-group"><h2>Tiempo</h2>
       <div class="p-row"><label for="pSel">Completó hasta</label><select id="pSel">${Array.from({ length: 27 }, (_, n) => `<option value="${n}" ${n === maxDone ? 'selected' : ''}>${n ? 'Día ' + n : 'Ninguno'}</option>`).join('')}</select></div>
-      <div class="p-btns"><button class="p-btn" data-act="week">7 días sin abrir (regreso)</button></div>
+      <div class="p-btns"><button class="p-btn" data-act="week">Saltar 7 días (regreso)</button></div>
     </section>
     <section class="p-group"><h2>Familia</h2>
       <div class="p-row"><label>Plan</label><span class="seg">${[['premium', 'Premium'], ['pase', 'Pase'], ['free', 'Free']].map(([v, l]) => `<button data-plan="${v}" aria-pressed="${S.plan === v}">${l}</button>`).join('')}</span></div>
@@ -271,7 +272,7 @@ function render() {
       <li><b>Batería</b><small>Terminar un cuento la llena · cada día sin caminar baja una rayita · nunca bloquea</small></li>
       <li><b>Ruleta</b><small>Días ${RULES.ruleta.join(', ')} · al tocarla en el mapa</small></li>
       <li><b>Sorpresa</b><small>${Object.entries(RULES.sorpresa).map(([d, g]) => `día ${d} ${g}`).join(' · ')} · nunca el mismo día que la ruleta</small></li>
-      <li><b>Atrasado y regreso</b><small>Puede hacer varios días seguidos hasta alcanzar hoy · regreso tras ${RULES.regresoDias}+ días sin abrir</small></li>
+      <li><b>Atrasado y regreso</b><small>Puede hacer varios días seguidos hasta alcanzar hoy · regreso tras ${RULES.regresoDias}+ días sin caminar</small></li>
     </ul></details>`;
   } else if (tab === 'pant') {
     const groups = {};

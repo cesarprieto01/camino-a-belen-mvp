@@ -85,7 +85,8 @@ export const DAYS = [
   D(5, 'cancion', 'Maranatha', { sub: 'Ven, Señor Jesús' }),
   D(6, 'reto', 'Es hora de preparar el corazón', { sub: '«Les daré un corazón nuevo» (Ez 36,26)', reto: 'Ordenen algo por fuera y algo por dentro', descarga: ACCION,
     pasos: ['Ordenen juntos el cuarto: cada cosa en su lugar.', 'Piensen en alguien a quien perdonar y díganselo con cariño.', 'Recen juntos: «Jesús, dame un corazón nuevo».'] }),
-  D(7, 'juego', 'Juego con Teodoro', { sub: 'Un rato para jugar juntos con Teodoro' }),
+  D(7, 'juego', 'Teodoro dice', { sub: 'Hagan solo lo que manda «Teodoro dice»',
+    pasos: ['Uno hace de Teodoro y da las órdenes; los demás obedecen solo si empiezan con «Teodoro dice».', 'Usen órdenes de Adviento: «Teodoro dice: caminen como burrito hasta Belén», «Teodoro dice: hagan como que encienden una velita».', 'Quien se equivoque pasa a ser Teodoro. Terminen con un abrazo de familia.'] }),
   D(8, 'domingo', 'Domingo de la Fe', { cita: 'Mc 1,1-8 · 2.ª velita', vela: 2, sub: '«Preparen el camino del Señor»' }),
   D(9, 'meditacion', 'Meditación de la Escucha', { sub: 'Dios nos pide escuchar: Shemá' }),
   D(10, 'cuento', 'Orejas de Shemá', { sub: 'Isaías escucha y responde: «Aquí estoy»' }),
@@ -102,12 +103,13 @@ export const DAYS = [
   D(19, 'reto', 'Prende tu luz', { sub: '«Tú eres la luz del mundo»', reto: '«Tú eres la luz del mundo»', descarga: ACCION,
     pasos: ['Con papá o mamá, apaguen las luces y prendan una velita o una linterna.', 'Miren cómo la oscuridad desaparece.', 'Pregúntense: ¿a quién puedo iluminar hoy? ¿Cómo puedo ser luz?'] }),
   D(20, 'cancion', 'Talita', { sub: 'Hay alegría en el cielo' }),
-  D(21, 'juego', 'Juego con Teodoro', { sub: 'Un rato para jugar juntos con Teodoro' }),
+  D(21, 'juego', 'Busquen la estrella', { sub: 'Como los Magos, sigan la estrella hasta encontrarla',
+    pasos: ['Recorten una estrella de papel.', 'Uno la esconde en la casa y los demás la buscan; ayuden con «frío», «tibio» y «caliente».', 'Quien la encuentre la pone junto al pesebre o en la ventana y cuenta algo bonito de su día.'] }),
   D(22, 'domingo', 'Domingo del Amor', { cita: 'Lc 1,26-38 · 4.ª velita', vela: 4, sub: 'María le dice sí a Jesús' }),
   D(23, 'cuento', 'Un burro de Navidad', { sub: 'Un cuento de Navidad con Teodoro' }),
   D(24, 'amigos', 'Especial de Navidad', { sub: 'Los Amigos de la Biblia esperan la Navidad' }),
   D(25, 'video', 'Navidad de Canela', { sub: 'Un cuento de Navidad' }),
-  D(26, 'nochebuena', 'El Tamborilero', { cita: 'Actividad final', sub: 'Llegamos a Belén: hoy nace Jesús' }),
+  D(26, 'nochebuena', 'El nacimiento de Jesús', { cita: 'Actividad final', sub: 'Llegamos a Belén: hoy nace Jesús' }),
 ];
 DAYS.forEach(d => { d.descarga ||= DESCARGA; });
 /** El día se hace en el hub (pasos + «¡Lo hicimos!») y no en el reproductor: retos y juegos en familia. */
@@ -121,7 +123,7 @@ export const RULES = {
   panes: { contenidoPremium: 15, contenidoFree: 7, trivia: 10, sorpresa: 15, ruleta: 20 },
   // terminar un cuento la llena (5/5); cada día completo sin hacer nada baja una rayita
   bateria: { contenido: 5, diaSinAdviento: -1 },
-  regresoDias: 7,
+  regresoDias: 5, // días seguidos sin caminar para «¡Te guardé el camino!»
   // días con trivia según el cronograma de contenido (Adviento 2026, columna ACTIVIDAD = TRIVIA).
   // Los demás días no tienen trivia ni estrellas: el día se completa con la historia.
   trivia: [1, 2, 3, 4, 9, 11, 17, 18, 24],

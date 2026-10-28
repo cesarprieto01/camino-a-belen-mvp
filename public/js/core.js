@@ -23,7 +23,7 @@ export const DEFAULT = () => ({
   ruletaPendiente: {}, // día -> true si dijo «Más tarde»
   sorpresas: {},       // día -> 'hecha' | 'luego'
   prendas: [], cuartoNuevo: false,
-  regreso: false, teaserVisto: false, sinCaminar: 0, diaGuardado: {}, // diaGuardado: cómo estaba Teodoro cada día (para volver atrás en el panel)
+  regreso: false, regresoAvisado: false, teaserVisto: false, sinCaminar: 0, diaGuardado: {}, // diaGuardado: cómo estaba Teodoro cada día (para volver atrás en el panel)
   ultimoJugado: null, // día del calendario en que terminó un contenido
   pasoAnimado: null,   // día recién completado (animación en el mapa)
   forzarPremio: '',    // panel: forzar casilla de la ruleta

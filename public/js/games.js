@@ -1,6 +1,6 @@
 // Trivia y juegos sorpresa, armados sobre las pantallas del lienzo.
 import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, seen, wait, reduced, animate, replaceText, setText, textEl,
-  floaty, confetti, addPanes, dark, stars, _stack, cur } from './core.js';
+  floaty, confetti, addPanes, dark, stars, _stack, cur, fase } from './core.js';
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, hasTrivia, TYPES } from './data.js';
 import { finishTrivia, finishContent, openSorpresa } from './flow.js';
 import { bindMute } from './musica.js';
@@ -344,7 +344,7 @@ register('triviaFin', {
 
 // Final común de los juegos sorpresa: +15 panes, una sola vez
 function sorpresaHecha(n, layer) {
-  const first = S.sorpresas[n] !== 'hecha';
+  const first = S.sorpresas[n] !== 'hecha' && fase() !== 'recuerdo'; // en el recuerdo se juega, pero nada suma
   if (first) { S.sorpresas[n] = 'hecha'; addPanes(RULES.panes.sorpresa); save(); }
   return first;
 }

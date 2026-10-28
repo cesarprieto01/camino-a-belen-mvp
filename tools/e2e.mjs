@@ -42,12 +42,38 @@ const inventario = async (name) => {
     const rel = u => u.replace(location.origin + '/', '');
     // qué es: la etiqueta o el texto más cercano
     const ctx = el => { for (let e = el; e && !e.classList?.contains('layer'); e = e.parentElement) { const a = e.getAttribute?.('aria-label') || e.getAttribute?.('alt'); if (a) return a.slice(0, 60); if (/^(A|BUTTON)$/.test(e.tagName) && e.textContent.trim()) return e.textContent.trim().replace(/\s+/g, ' ').slice(0, 60); } return ''; };
+    // ¿la ve el usuario? la lleva a la vista y mira 9 puntos: «tapada» si en todos hay algo opaco encima (imagen, canvas o fondo sólido)
+    const pe = document.createElement('style'); pe.textContent = '*{pointer-events:auto !important}'; document.head.appendChild(pe);
+    const visto = el => {
+      const sc = []; for (let e = el.parentElement; e; e = e.parentElement) if (e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1) sc.push([e, e.scrollTop, e.scrollLeft]);
+      el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+      const opac = x => { let o = 1; for (let e = x; e && e !== document.body; e = e.parentElement) o *= parseFloat(getComputedStyle(e).opacity || 1); return o; };
+      const op = opac(el);
+      let res = 'fuera';
+      if (op < 0.05) res = 'invisible';
+      else {
+        const b = el.getBoundingClientRect(); let pts = 0, libres = 0;
+        for (const fx of [.2, .5, .8]) for (const fy of [.2, .5, .8]) {
+          const x = b.left + b.width * fx, y = b.top + b.height * fy;
+          if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+          pts++;
+          const st = document.elementsFromPoint(x, y), k = st.indexOf(el);
+          if (k < 0) continue;
+          const tapa = st.slice(0, k).filter(e => !e.contains(el) && !e.closest('#panel, #panelBtn') && opac(e) >= 0.5).some(e => { if (/^(IMG|CANVAS|VIDEO)$/.test(e.tagName)) return true; const cs = getComputedStyle(e); const m = cs.backgroundColor.match(/rgba?\(([^)]+)\)/); const a = m ? (m[1].split(',')[3] === undefined ? 1 : parseFloat(m[1].split(',')[3])) : 0; return a >= 0.9 || /url\(/.test(cs.backgroundImage); });
+          if (!tapa) libres++;
+        }
+        res = pts === 0 ? 'fuera' : libres > 0 ? 'si' : 'tapada';
+      }
+      sc.forEach(([e, t, l]) => e.scrollTo({ top: t, left: l, behavior: 'instant' }));
+      return res;
+    };
     const out = { screen: document.querySelector('#viewport .layer:last-child')?.dataset.screen, tema: document.documentElement.dataset.theme || 'claro', imgs: [], bgs: [], svgs: [] };
     document.querySelectorAll('#viewport .layer').forEach(L => {
-      L.querySelectorAll('img').forEach(i => { if (vis(i) && i.currentSrc) out.imgs.push({ src: rel(i.currentSrc), nw: i.naturalWidth, nh: i.naturalHeight, w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), ctx: ctx(i), capa: L.dataset.screen }); });
-      L.querySelectorAll('*').forEach(e => { const cs = getComputedStyle(e); for (const v of [cs.backgroundImage, cs.maskImage, cs.webkitMaskImage]) (v || '').replace(/url\("?([^")]+)"?\)/g, (_, u) => { if (!u.startsWith('data:') && vis(e)) out.bgs.push({ src: rel(u), ctx: ctx(e), capa: L.dataset.screen }); }); });
-      L.querySelectorAll('svg').forEach(v => { if (v.parentElement.closest('svg') || !vis(v)) return; const c = v.cloneNode(true); const col = getComputedStyle(v).color; c.querySelectorAll('*').forEach(x => { ['fill', 'stroke'].forEach(a => { if (x.getAttribute(a) === 'currentColor') x.setAttribute(a, col); }); }); ['fill', 'stroke'].forEach(a => { if (c.getAttribute(a) === 'currentColor') c.setAttribute(a, col); }); const b = v.getBoundingClientRect(); out.svgs.push({ html: c.outerHTML, w: Math.round(b.width), h: Math.round(b.height), ctx: ctx(v), capa: L.dataset.screen }); });
+      L.querySelectorAll('img').forEach(i => { if (vis(i) && i.currentSrc) out.imgs.push({ visto: visto(i), src: rel(i.currentSrc), nw: i.naturalWidth, nh: i.naturalHeight, w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), ctx: ctx(i), capa: L.dataset.screen }); });
+      L.querySelectorAll('*').forEach(e => { const cs = getComputedStyle(e); for (const v of [cs.backgroundImage, cs.maskImage, cs.webkitMaskImage]) (v || '').replace(/url\("?([^")]+)"?\)/g, (_, u) => { if (!u.startsWith('data:') && vis(e)) out.bgs.push({ visto: visto(e), src: rel(u), ctx: ctx(e), capa: L.dataset.screen }); }); });
+      L.querySelectorAll('svg').forEach(v => { if (v.parentElement.closest('svg') || !vis(v)) return; const c = v.cloneNode(true); const col = getComputedStyle(v).color; c.querySelectorAll('*').forEach(x => { ['fill', 'stroke'].forEach(a => { if (x.getAttribute(a) === 'currentColor') x.setAttribute(a, col); }); }); ['fill', 'stroke'].forEach(a => { if (c.getAttribute(a) === 'currentColor') c.setAttribute(a, col); }); const b = v.getBoundingClientRect(); out.svgs.push({ visto: visto(v), html: c.outerHTML, w: Math.round(b.width), h: Math.round(b.height), ctx: ctx(v), capa: L.dataset.screen }); });
     });
+    pe.remove();
     return out;
   });
   fs.appendFileSync(process.env.INVENTARIO, JSON.stringify({ flujo: scenActual, foto: name, ...r }) + '\n');
@@ -119,7 +145,7 @@ const flows = {
   },
   // la ruleta solo se juega tocándola en el mapa: día 11 → tocar la ruleta → girar → premio → vuelve al mapa
   async ruleta() {
-    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 11, inscrito: true, teaserVisto: true, forzarPremio: 'panes' }); for (let d = 0; d <= 10; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('mapa', {}, 'none', { tab: true }); });
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 11, inscrito: true, teaserVisto: true, forzarPremio: 'panes' }); for (let d = 0; d <= 11; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); c.go('mapa', {}, 'none', { tab: true }); });
     await p.waitForTimeout(1500); await shot('mapa');
     const hoja = await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet]')?.textContent || '');
     if (/Ruleta/.test(hoja)) errs.push('la hoja del día todavía habla de la ruleta: ' + hoja.replace(/\s+/g, ' ').slice(0, 140));
@@ -184,7 +210,7 @@ const flows = {
     const h13 = await hubDe(13); if (!/Pesebre para colorear/.test(h13.txt)) errs.push('el hub del día 13 no ofrece el pesebre para colorear');
     await shot('hub-pasos');
   },
-  async regreso() { await scenario('Regreso tras una semana'); await shot('regreso'); await tap('Empezar por el día'); await shot('mapa'); },
+  async regreso() { await scenario('Regreso tras una semana'); await shot('regreso'); await tap('Empezar por hoy'); await shot('mapa'); },
   async atrasado() { await scenario('Va atrasado'); await shot('hoy-atrasado'); await tap('Continuar la aventura'); await shot('mapa'); },
   async nochebuena() { await scenario('Nochebuena'); await shot('mapa'); await tap('Comenzar'); await p.waitForTimeout(800); await shot('final'); },
   async oscuro() {
@@ -293,9 +319,10 @@ const flows = {
       if (await screen() !== 'hoy') errs.push(`día ${d}: no abre en Hoy`);
       await textCheck('hoy-' + d);
       await tap(d === 1 ? 'Iniciar la aventura' : 'Continuar la aventura');
-      // días de ruleta: se gira tocándola en el mapa (ya no sale sola)
+      // días de ruleta: se gana viendo el cuento del día; después se gira tocándola en el mapa (no sale sola)
       const rw = [4, 11, 18, 24].indexOf(d);
-      if (rw >= 0) { await p.waitForTimeout(1200); await tap('Ruleta de la semana ' + (rw + 1)); }
+      let girada = false;
+      const toca = () => p.evaluate(async d => { const c = await import('/js/core.js'); return !!c.S.completos[d]?.contenido && !c.S.ruletas[d]; }, d);
       let steps = 0, done = false;
       while (!done && steps++ < 45) {
         await p.waitForTimeout(650);
@@ -303,6 +330,7 @@ const flows = {
         await textCheck(`d${d}-${c.s}`);
         switch (c.s) {
           case 'mapa': {
+            if (rw >= 0 && !girada && await toca()) { girada = true; await p.waitForTimeout(800); await tap('Ruleta de la semana ' + (rw + 1)); break; }
             const t = await sheetCta();
             if (t && /Hasta mañana/.test(t)) done = true;
             if (!t) errs.push(`día ${d}: mapa sin botón`);
@@ -322,7 +350,7 @@ const flows = {
           case 'desafioIntro': await tap('¡Vamos!'); break;
           case 'desafio': await tap('¡Lo hicimos!'); await p.waitForTimeout(500); break;
           case 'adivinanzaFin': case 'memoramaFin': case 'desafioFin': await tap('Volver al camino'); break;
-          case 'cerrado': await tap('Hasta mañana'); done = true; break;
+          case 'cerrado': if (rw >= 0 && !girada && await toca()) { await p.goBack(); await p.waitForTimeout(900); break; } await tap('Hasta mañana'); done = true; break;
           case 'final': await shot('c-belen'); done = true; break;
           case 'hoy': await tap('Continuar la aventura'); break;
           default: errs.push(`día ${d}: pantalla inesperada ${c.s}`); done = true;
@@ -391,17 +419,17 @@ const flows = {
     await finishPlayer(); await p.waitForTimeout(1300); await rate('volver'); await tap('¡A jugar!'); await answerTrivia(); await p.waitForTimeout(500);
     await tap('Volver al camino'); await p.waitForTimeout(3500);
     await backs('día completo', 4);
-    // 3) ruleta (se toca en el mapa) → premio → mapa; la historia se abre sin ruleta
+    // 3) día de ruleta: el video (la ruleta se gana con el cuento del día) → ruleta en el mapa → premio → atrás al mapa
     await st({ s: { hoy: 11, forzarPremio: 'panes' }, upto: 10 }); await p.waitForTimeout(900);
     await tap('Continuar la aventura'); await p.waitForTimeout(900);
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
+    if ((await screen()) !== 'reproductor') errs.push('«Ver video» en día de ruleta no abre el video: ' + await screen());
+    await finishPlayer(); await p.waitForTimeout(1300); await rate('volver'); await tap('Ahora no'); await p.waitForTimeout(1500);
     await tap('Ruleta de la semana 2'); await p.waitForTimeout(900);
     await tap('¡Girar!'); await p.waitForTimeout(5300);
     // en el premio, el «atrás» del sistema hace lo mismo que «Volver al camino» (al mapa)
     await p.goBack(); await p.waitForTimeout(1000);
     if ((await screen()) !== 'mapa') errs.push('atrás en el premio de la ruleta no vuelve al mapa: ' + await screen());
-    await p.evaluate(() => document.querySelector('#viewport .layer:last-child [data-sheet] a').click()); await p.waitForTimeout(900);
-    if ((await screen()) !== 'reproductor') errs.push('«Ver video» en día de ruleta no abre el video: ' + await screen());
-    await finishPlayer(); await p.waitForTimeout(1300); await rate('volver'); await tap('Ahora no'); await p.waitForTimeout(900);
     await backs('ruleta', 4);
     // 4) sorpresa (desafío) → final → mapa
     await st({ s: { hoy: 9 }, upto: 9 }); await p.waitForTimeout(900);
@@ -430,7 +458,8 @@ const flows = {
     // día 2 (historia vista, trivia pendiente): hoja con «Jugar la trivia», sin saltar directo
     await tapNodo(2); await p.waitForTimeout(1200); s = await st(); await shot('dia2');
     if (s.s !== 'mapa' || s.dia !== 2 || !/Jugar la trivia/.test(s.cta || '')) errs.push('tocar el día 2 no muestra su hoja con la trivia: ' + JSON.stringify(s));
-    // ruleta del día 4: X cierra y queda pendiente; luego se puede girar desde la hoja
+    // ruleta del día 4 (se gana viendo el cuento del día 4): X cierra y queda pendiente; luego se gira tocándola en el mapa
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.completos[4] = { contenido: true, trivia: true, estrellas: 2 }; c.save(); c.clearHistory(); await c.go('mapa', {}, 'none'); }); await p.waitForTimeout(1300);
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('ruletaPop', { day: 4, from: 'mapa' }, 'modal'); }); await p.waitForTimeout(900); await shot('ruleta-x');
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child .pop-x')?.click()); await p.waitForTimeout(1200);
     s = await st(); if (s.s !== 'mapa') errs.push('la X de la ruleta no cierra: ' + s.s);

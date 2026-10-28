@@ -199,19 +199,24 @@ register('mapa', {
     RULES.ruleta.forEach((d, i) => {
       const R = RULETAS[i];
       const opened = !!S.ruletas[d];
-      const lista = !opened && S.hoy > 0 && d <= lastDay(); // ya llegó su día y no la ha girado
+      const llego = S.hoy > 0 && d <= lastDay(); // ya llegó su día
+      const cerrada = !opened && llego && fase() === 'recuerdo'; // el camino terminó: ya no se gira
+      const lista = !opened && llego && !cerrada && contentDone(d); // se gana: se abre al ver el cuento de su día
+      const falta = !opened && llego && !cerrada && !lista;
       const f = dateOf(d), mes = f.mes.toLowerCase();
       const faltan = d - S.hoy;
-      const label = opened ? '¡Ya la giraste!' : lista ? '¡Gírala!' : S.hoy > 0 && d === proxima ? (faltan === 1 ? 'Mañana' : `Faltan ${faltan} días`) : `Día ${d}`;
+      const label = opened ? '¡Ya la giraste!' : lista ? '¡Gírala!' : cerrada ? 'Cerrada' : falta ? `Termina el día ${d}` : S.hoy > 0 && d === proxima ? (faltan === 1 ? 'Mañana' : `Faltan ${faltan} días`) : `Día ${d}`;
       const a = document.createElement('button'); a.type = 'button'; a.className = 'dz-ruleta';
       a.style.cssText = `left:${R.x}px;top:${R.y}px;width:${R.w}px;height:${R.h}px`;
       a.innerHTML = `<img src="assets/mapa/${R.img}.webp" alt=""${lista ? ' class="rul-pulso"' : ''}><span class="dz-etiqueta" style="left:${R.lx - R.x}px;top:${R.ly - R.y}px">${opened ? CHECK_VERDE : DESTELLO}${label}</span>`;
-      a.setAttribute('aria-label', opened ? `Ruleta de la semana ${i + 1}: ya la giraste` : lista ? `Ruleta de la semana ${i + 1}: ¡gírala!` : `Ruleta de la semana ${i + 1}: se abre el ${f.dd} de ${mes}`);
+      a.setAttribute('aria-label', opened ? `Ruleta de la semana ${i + 1}: ya la giraste` : lista ? `Ruleta de la semana ${i + 1}: ¡gírala!` : cerrada ? `Ruleta de la semana ${i + 1}: cerrada` : falta ? `Ruleta de la semana ${i + 1}: se abre al terminar el día ${d}` : `Ruleta de la semana ${i + 1}: se abre el ${f.dd} de ${mes}`);
       root.appendChild(a);
       on(root, a, () => {
         animate(a, 'a-pop');
         if (lista) go('ruletaPop', { day: d, from: 'mapa' }, 'modal');
         else if (opened) toast('Ya la giraste', premioTxt(S.ruletas[d]));
+        else if (cerrada) toast('El camino de este año terminó', 'Nos vemos en Adviento');
+        else if (falta) toast(`Termina el día ${d}`, 'Después la giras aquí');
         else toast(`Se abre el ${f.dd} de ${mes}`, 'Ese día la giras aquí');
       });
     });
