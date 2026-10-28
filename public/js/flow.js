@@ -192,7 +192,7 @@ async function vidrioConDedo(root, origen) {
   const f = await frag(F('P-Hoy-despues-d', 'P-Hoy-despues-d-oscuro')[dark() ? 1 : 0]);
   const escena = [...f.querySelectorAll('a[aria-label="Ver el camino"]')].pop();
   await img.decode().catch(() => {});
-  if (!a.isConnected || !escena) return;
+  if (!a.isConnected || !escena || !img.naturalWidth) return; // imagen rota (red mala): la card queda como está
   const W = 358, H = 201, R = 24, COLS = 14, FILAS = 8, META = 47; // 47 de 112 celdas ≈ 42 %
   const dpr = Math.min(devicePixelRatio || 1, 3);
   const cv = document.createElement('canvas');
