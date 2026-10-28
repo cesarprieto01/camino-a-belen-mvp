@@ -593,23 +593,62 @@ register('desafio', {
       scroll.animate([{ transform: 'rotateY(-90deg) scale(.9)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
     });
     const otra = find(root, 'Sacar otra carta');
+    let luego = null;
     if (otra) {
       // «Sacar otra carta» pegado a la carta, para que se vea que el mazo tiene más; «Más tarde» queda solo abajo
-      const luego = document.createElement('a'); luego.href = '#'; luego.setAttribute('style', otra.getAttribute('style'));
+      luego = document.createElement('a'); luego.href = '#'; luego.setAttribute('style', otra.getAttribute('style'));
       Object.assign(luego.style, { left: '20px', right: '20px', top: '770px' }); luego.textContent = 'Más tarde';
       Object.assign(otra.style, { left: '0', right: '0', width: 'fit-content', margin: '0 auto', padding: '0 18px', top: '650px', height: '42px' });
       const hicimos = find(root, '¡Lo hicimos!'); if (hicimos) hicimos.style.top = '704px';
       otra.after(luego); on(root, luego, p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day));
     }
-    on(root, '¡Lo hicimos!', (ev, el) => {
+    // «¡Lo hicimos!» se celebra aquí mismo: el sello «HECHO EN FAMILIA» cae sobre la carta, salta confeti y Teodoro festeja.
+    // Después sigue solo (o al tocar la pantalla); el final ya muestra la carta sellada.
+    const celebrar = (el, seguir) => {
+      if (root.dataset.hecho) return; root.dataset.hecho = '1';
       animate(el, 'a-pop'); navigator.vibrate?.(20);
-      if (!p.fromHub) { setTimeout(() => go('desafioFin', { day: p.day, c }, 'fade'), 260); return; }
+      [otra, luego].forEach(b => { if (!b) return; b.style.pointerEvents = 'none'; b.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' }); });
+      const tinta = dark() ? '#02254F' : '#0B748A';
+      const sello = document.createElement('span'); sello.setAttribute('aria-hidden', 'true');
+      sello.style.cssText = `position:absolute;right:16px;top:-6px;width:104px;height:104px;box-sizing:border-box;border-radius:50%;background:linear-gradient(160deg,#F5D46A 0%,#F5DB78 55%,${dark() ? '#E2BE55' : '#D9A93A'} 100%);box-shadow:0 0 0 5px ${dark() ? '#02254F' : '#FFFFFF'},0 12px 24px rgba(217,169,58,.45);rotate:10deg;display:flex;flex-direction:column;align-items:center;justify-content:center;color:${tinta};pointer-events:none;z-index:2`;
+      sello.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="${tinta}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span style="font-family:'Neue Montreal',Mulish,sans-serif;font-size:12px;font-weight:600;letter-spacing:.08em;line-height:1.15;margin-top:3px;text-align:center">HECHO EN<br>FAMILIA</span>`;
+      scroll.appendChild(sello);
+      const GOLPE = 120 + 375; // cuando el sello toca la carta
+      if (reduced()) sello.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, fill: 'backwards' });
+      else {
+        sello.animate([{ scale: '2.8', opacity: 0 }, { scale: '2.8', opacity: 0, offset: .01 }, { scale: '.9', opacity: 1, offset: .72 }, { scale: '1.05', offset: .86 }, { scale: '1', opacity: 1 }],
+          { duration: 520, delay: 120, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'backwards' });
+        scroll.animate([{ translate: '0 0' }, { translate: '0 6px' }, { translate: '0 -2px' }, { translate: '0 0' }], { duration: 260, delay: GOLPE, easing: 'ease-out' });
+        // onda de tinta alrededor del sello
+        const onda = document.createElement('span'); onda.setAttribute('aria-hidden', 'true');
+        onda.style.cssText = 'position:absolute;right:16px;top:-6px;width:104px;height:104px;box-sizing:border-box;border-radius:50%;border:4px solid #F5D46A;pointer-events:none;opacity:0';
+        scroll.appendChild(onda);
+        onda.animate([{ scale: '1', opacity: .9 }, { scale: '1.9', opacity: 0 }], { duration: 560, delay: GOLPE, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      }
+      setTimeout(() => {
+        navigator.vibrate?.(30);
+        confetti(layer, 322, 406, 60);
+        // Teodoro deja el mapa y festeja
+        const teo = $$(root, 'img').find(i => /Teodoro/.test(i.alt || ''));
+        if (teo) {
+          const fiesta = teo.cloneNode(); fiesta.src = A(IMG.tCelebra); fiesta.alt = ''; fiesta.style.objectFit = 'contain'; fiesta.classList.remove('a-bob');
+          teo.after(fiesta); teo.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' });
+          fiesta.animate([{ opacity: 0, scale: '.9' }, { opacity: 1, scale: '1' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1.3)', fill: 'backwards' });
+          fiesta.classList.add('a-hop');
+        }
+      }, reduced() ? 0 : GOLPE);
+      let ido = false; const ir = () => { if (!ido) { ido = true; seguir(); } };
+      setTimeout(ir, reduced() ? 900 : 1600);
+      setTimeout(() => root.addEventListener('pointerdown', ir, { once: true }), 300); // tocar la pantalla adelanta el final
+    };
+    on(root, '¡Lo hicimos!', (ev, el) => celebrar(el, () => {
+      if (!p.fromHub) { go('desafioFin', { day: p.day, c, sellado: true }, 'fade'); return; }
       // abierto desde el reto: este «¡Lo hicimos!» cierra el reto (sin volver a confirmarlo en el hub)
       if (_stack.at(-1)?.name === 'hub') _stack.pop();
-      if (p.replay) { toast('¡Otra vez en familia!'); setTimeout(() => go('mapa', {}, 'down', { replace: true }), 260); return; }
+      if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; }
       finishContent(p.day);
-      setTimeout(() => go('completado', { day: p.day }, 'fade', { replace: true }), 260);
-    });
+      go('completado', { day: p.day }, 'fade', { replace: true });
+    }));
     on(root, 'Salir', p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day));
   },
 });
@@ -618,10 +657,15 @@ register('desafioFin', {
   mount(root, p, layer) {
     const d = DESAFIOS[p.c ?? 0];
     setText(root, 'Ayuda a alguien en casa hoy', d.t);
+    // el mismo ícono de la carta que acaban de sellar
+    const icoFin = $$(root, 'img').find(i => i.src.includes('c75692c2770a124c81efef3b4c6f3ae9'));
+    if (icoFin && d.icon && IMG[d.icon]) icoFin.src = A(IMG[d.icon]);
 
     setText(root, /^Como María, que fue de prisa a ayudar a Isabel\.?$/, d.sub + '.');
     const stamp = $$(root, '*').find(el => /HECHO EN/.test(el.textContent) && el.childElementCount <= 3 && el.style.borderRadius === '50%');
-    if (stamp && reduced()) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';
+    // ya se estampó en la carta grande: aquí solo se asienta, sin volver a caer
+    if (stamp && p.sellado) stamp.animate([{ scale: '1.12', opacity: .6 }, { scale: '1', opacity: 1 }], { duration: 320, delay: 120, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
+    else if (stamp && reduced()) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';
     else if (stamp) {
       stamp.animate([{ scale: '2.6', opacity: 0 }, { scale: '2.6', opacity: 0, offset: .01 }, { scale: '.9', opacity: 1, offset: .72 }, { scale: '1.04', offset: .86 }, { scale: '1', opacity: 1 }],
         { duration: 560, delay: 450, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'backwards' });

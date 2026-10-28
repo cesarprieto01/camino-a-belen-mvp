@@ -1,6 +1,6 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
 import { S, save, A, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
-  lastDay, pendientes, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
+  lastDay, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, BATTERY_IDS } from './data.js';
 import './musica.js'; // música de fondo del mapa y la trivia
@@ -576,9 +576,11 @@ register('hoy', {
       const nums = [...root.children].filter(el => el.style.top === '528px');
       const boxes = [...root.children].filter(el => el.style.top === '482px' && el.querySelector('img'));
       const more = [...root.children].find(el => /^\+\d+$/.test(el.textContent.trim()));
-      const pend = pendientes();
-      nums.forEach((el, i) => { el.textContent = String(n + i); el.style.visibility = n + i <= lastDay() ? '' : 'hidden'; });
-      boxes.forEach((el, i) => { const ic = iconOf(n + i, dark()); const im = el.querySelector('img'); if (ic && im) im.src = A(ic); el.style.visibility = n + i <= lastDay() ? '' : 'hidden'; el.style.animation = `pop .45s ${.3 + i * .15}s cubic-bezier(.2,.9,.3,1.3) both`; });
+      // los días que le esperan: primero el que toca (hoy) y después los que quedaron atrás, del más antiguo al más nuevo
+      const dias = [n, ...Array.from({ length: lastDay() }, (_, i) => i + 1).filter(d => d !== n && !isDone(d))];
+      const pend = dias.length;
+      nums.forEach((el, i) => { el.textContent = String(dias[i] ?? ''); el.style.visibility = dias[i] ? '' : 'hidden'; });
+      boxes.forEach((el, i) => { const ic = dias[i] && iconOf(dias[i], dark()); const im = el.querySelector('img'); if (ic && im) im.src = A(ic); el.style.visibility = dias[i] ? '' : 'hidden'; el.style.animation = `pop .45s ${.3 + i * .15}s cubic-bezier(.2,.9,.3,1.3) both`; });
       if (more) { if (pend > 3) { more.textContent = `+${pend - 3}`; more.setAttribute('aria-label', `y ${pend - 3} días más`); } else more.style.visibility = 'hidden'; }
       root.querySelector('[role=dialog]')?.setAttribute('aria-label', `Volviste. Te guardé el camino: te esperan ${pend} días`);
       const close = () => { S.regreso = false; save(); };

@@ -194,7 +194,16 @@ const flows = {
   },
   async desafio() {
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('desafioIntro', { day: 9 }); });
-    await shot('intro'); await tap('¡Vamos!'); await shot('carta'); await tap('Sacar otra carta'); await shot('otra'); await tap('¡Lo hicimos!'); await p.waitForTimeout(800); await shot('fin');
+    await shot('intro'); await tap('¡Vamos!'); await shot('carta'); await tap('Sacar otra carta'); await shot('otra'); await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].find(a => a.textContent.trim().startsWith('¡Lo hicimos'))?.click()); await p.waitForTimeout(200);
+    if ((await screen()) !== 'desafio') errs.push('«¡Lo hicimos!» no celebra en la carta: pasó directo a ' + await screen());
+    await shot('sello');
+    if (!(await waitScreen('desafioFin', 4000))) errs.push('tras la celebración no llega «¡Desafío cumplido!»'); await p.waitForTimeout(700); await shot('fin');
+    // en oscuro (día 18): el sello lleva el borde azul noche
+    if (!(await p.evaluate(() => document.querySelectorAll('[data-tema]').length))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); }
+    await p.evaluate(() => document.querySelector('[data-tema="oscuro"]')?.click()); await p.waitForTimeout(600); await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500);
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('desafioIntro', { day: 18 }); }); await p.waitForTimeout(900); await tap('¡Vamos!');
+    await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].find(a => a.textContent.trim().startsWith('¡Lo hicimos'))?.click()); await p.waitForTimeout(200); await shot('sello-oscuro');
+    if (!(await waitScreen('desafioFin', 4000))) errs.push('en oscuro no llega «¡Desafío cumplido!»'); await p.waitForTimeout(700); await shot('fin-oscuro');
   },
   async antes() {
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500); await shot('teaser');
@@ -348,7 +357,7 @@ const flows = {
           case 'adivinanzaIntro': await clickYellow(); break;
           case 'adivinanza': await tap('¿Listos?'); await tap('¡La adivinaron!'); await p.waitForTimeout(400); break;
           case 'desafioIntro': await tap('¡Vamos!'); break;
-          case 'desafio': await tap('¡Lo hicimos!'); await p.waitForTimeout(500); break;
+          case 'desafio': await tap('¡Lo hicimos!'); await p.waitForTimeout(1900); break;
           case 'adivinanzaFin': case 'memoramaFin': case 'desafioFin': await tap('Volver al camino'); break;
           case 'cerrado': if (rw >= 0 && !girada && await toca()) { await p.goBack(); await p.waitForTimeout(900); break; } await tap('Hasta mañana'); done = true; break;
           case 'final': await shot('c-belen'); done = true; break;
@@ -435,7 +444,7 @@ const flows = {
     await st({ s: { hoy: 9 }, upto: 9 }); await p.waitForTimeout(900);
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('mapa', {}, 'none'); }); await p.waitForTimeout(900);
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('desafioIntro', { day: 9 }, 'fade'); }); await p.waitForTimeout(800);
-    await tap('¡Vamos!'); await tap('¡Lo hicimos!'); await p.waitForTimeout(900); await tap('Volver al camino'); await p.waitForTimeout(1500);
+    await tap('¡Vamos!'); await tap('¡Lo hicimos!'); await p.waitForTimeout(2000); await tap('Volver al camino'); await p.waitForTimeout(1500);
     await backs('sorpresa', 4);
     // 5) reto en familia → ¡Lo hicimos! → ¡Terminaste! → mapa
     await st({ s: { hoy: 13 }, upto: 12 }); await p.waitForTimeout(900);
