@@ -13,12 +13,13 @@ const FONDO = { claro: ['#67C7FC', '#94907F'], oscuro: ['#013880', '#607F77'] };
 const CENTRO = { 1: [142.1, 3094], 2: [224.9, 2984], 3: [151.3, 2874], 4: [220.3, 2764], 5: [142.1, 2654], 6: [197.3, 2544], 7: [218, 2434], 8: [137.5, 2329],
   9: [218, 2201], 10: [160.5, 2089], 11: [229.5, 1989], 12: [155.9, 1881], 13: [220.3, 1773], 14: [174.3, 1665], 15: [137.5, 1557], 16: [211.1, 1449],
   17: [151.3, 1341], 18: [229.5, 1233], 19: [160.5, 1125], 20: [215.7, 1017], 21: [142.1, 909], 22: [174.3, 801], 23: [206.5, 691], 24: [149, 581], 25: [218, 471], 26: [137.5, 351] };
-// ruletas de los días 4, 11, 18 y 24: dibujo, caja y etiqueta (centro y arriba) como en el Figma
+// ruletas de los días 4, 11, 18 y 24: dibujo, caja y etiqueta (centro y arriba). Al 90 % del Figma y ancladas hacia afuera,
+// lejos del sendero (los adornos del paisaje también se achicaron y apartaron)
 const RULETAS = [
-  { img: 'ruleta-pie', x: 256, y: 2507, w: 135, h: 189, lx: 322, ly: 2690 },
-  { img: 'ruleta-dibujada', x: 270, y: 1755, w: 119, h: 166, lx: 324.5, ly: 1915 },
-  { img: 'ruleta-pie', x: 265, y: 971, w: 135, h: 189, lx: 323.5, ly: 1160 },
-  { img: 'ruleta-dibujada', x: -8, y: 320, w: 119, h: 166, lx: 60.5, ly: 507 },
+  { img: 'ruleta-pie', x: 269.5, y: 2525.9, w: 121.5, h: 170.1, lx: 328.9, ly: 2690.6 },
+  { img: 'ruleta-dibujada', x: 281.9, y: 1771.6, w: 107.1, h: 149.4, lx: 330.9, ly: 1915.6 },
+  { img: 'ruleta-pie', x: 278.5, y: 989.9, w: 121.5, h: 170.1, lx: 331.1, ly: 1160.0 },
+  { img: 'ruleta-dibujada', x: -19.7, y: 336.6, w: 107.1, h: 149.4, lx: 41.9, ly: 504.9 },
 ];
 const CHECK = '<svg class="dz-check" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true"><path d="M6.25 15.625 11.875 21.25 23.75 9.375" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ESTRELLA = 'M7.5 1.1875 9.4125 5.25 13.8125 5.7875 10.5625 8.83125 11.4188 13.225 7.5 11.0438 3.58125 13.225 4.4375 8.83125 1.1875 5.7875 5.5875 5.25Z';
@@ -28,7 +29,6 @@ const estrella = (llena, px) => `<svg width="${px}" height="${px}" viewBox="0 0 
 // solo los días con trivia llevan estrellas; vacías = la trivia sigue abierta
 const pildoraEstrellas = n => hasTrivia(n) ? `<span class="dz-estrellas">${[15, 17, 15].map((px, i) => estrella(i < stars(n), px)).join('')}</span>` : '';
 const DESTELLO = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 .58 8.52 5.48 13.42 7 8.52 8.52 7 13.42 5.48 8.52.58 7 5.48 5.48Z" fill="#E9B949"/></svg>';
-const CHECK_VERDE = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.92 7.29 5.54 9.92 11.08 4.38" stroke="#7FD69B" stroke-width="1.98" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 let tpl = null; // piezas sacadas de las plantillas, por tema
 let mapOrigin = null; // pantalla desde la que se entró al camino
@@ -129,7 +129,7 @@ register('mapa', {
     // al estirar el scroll se ve el color del borde, nunca negro
     scroller.style.background = `linear-gradient(${FONDO[tema][0]} 50%, ${FONDO[tema][1]} 50%)`;
     const yFoco = CENTRO[Math.max(focus, 1)][1];
-    root.innerHTML = Array.from({ length: 6 }, (_, i) => `<img class="dz-tira" src="assets/mapa/${dark() ? 'noche' : 'dia'}-${i}.webp" alt="" style="top:${i * 600}px" decoding="async"${Math.abs(i * 600 + 300 - yFoco) > 1000 ? ' loading="lazy"' : ''}>`).join('');
+    root.innerHTML = Array.from({ length: 6 }, (_, i) => `<img class="dz-tira" src="assets/mapa/${dark() ? 'noche' : 'dia'}-${i}.webp?v=2" alt="" style="top:${i * 600}px" decoding="async"${Math.abs(i * 600 + 300 - yFoco) > 1000 ? ' loading="lazy"' : ''}>`).join('');
     // la casa de abajo es donde sale el camino
     const casa = document.createElement('button'); casa.type = 'button'; casa.className = 'dz-casa'; casa.setAttribute('aria-label', 'Aquí empieza el camino');
     root.appendChild(casa);
@@ -206,9 +206,15 @@ register('mapa', {
       const f = dateOf(d), mes = f.mes.toLowerCase();
       const faltan = d - S.hoy;
       const label = opened ? '¡Ya la giraste!' : lista ? '¡Gírala!' : cerrada ? 'Cerrada' : falta ? `Termina el día ${d}` : S.hoy > 0 && d === proxima ? (faltan === 1 ? 'Mañana' : `Faltan ${faltan} días`) : `Día ${d}`;
-      const a = document.createElement('button'); a.type = 'button'; a.className = 'dz-ruleta';
+      const bloqueada = !opened && !lista; // aún no se puede girar: apagada y con candado, como los días cerrados
+      const a = document.createElement('button'); a.type = 'button'; a.className = 'dz-ruleta' + (bloqueada ? ' rul-bloq' : '');
       a.style.cssText = `left:${R.x}px;top:${R.y}px;width:${R.w}px;height:${R.h}px`;
-      a.innerHTML = `<img src="assets/mapa/${R.img}.webp" alt=""${lista ? ' class="rul-pulso"' : ''}><span class="dz-etiqueta" style="left:${R.lx - R.x}px;top:${R.ly - R.y}px">${opened ? CHECK_VERDE : DESTELLO}${label}</span>`;
+      const centro = R.img === 'ruleta-pie' ? 36 : 44; // centro de la rueda, en % del alto
+      a.innerHTML = `<img src="assets/mapa/${R.img}.webp" alt=""${lista ? ' class="rul-pulso"' : ''}${bloqueada ? ' style="opacity:.55;filter:saturate(.35)"' : ''}>`
+        + (bloqueada ? `<img class="rul-candado" src="assets/candado.webp" alt="" style="position:absolute;left:50%;top:${centro}%;width:34px;height:auto;transform:translate(-50%,-50%);pointer-events:none">` : '')
+        // ya girada: insignia de vidrio como la de los días hechos, en el borde de arriba de la rueda, del lado del sendero (nunca se corta con la pantalla)
+        + (opened ? `<span class="rul-hecha" aria-hidden="true" style="position:absolute;left:${R.x > 195 ? 18 : 82}%;top:${R.img === 'ruleta-pie' ? 13 : 21}%;width:40px;height:40px;box-sizing:border-box;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(180deg,rgba(71,198,218,.95),rgba(11,116,138,.97));box-shadow:0 0 0 2.5px rgba(255,255,255,.96),0 6px 14px rgba(6,80,95,.38),inset 0 2px 3px rgba(255,255,255,.45),inset 0 -3px 5px rgba(6,80,95,.25);display:flex;align-items:center;justify-content:center;pointer-events:none"><svg width="20" height="20" viewBox="0 0 30 30" fill="none"><path d="M6.25 15.625 11.875 21.25 23.75 9.375" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
+          : `<span class="dz-etiqueta" style="left:${R.lx - R.x}px;top:${R.ly - R.y}px">${lista ? DESTELLO + label : label}</span>`);
       a.setAttribute('aria-label', opened ? `Ruleta de la semana ${i + 1}: ya la giraste` : lista ? `Ruleta de la semana ${i + 1}: ¡gírala!` : cerrada ? `Ruleta de la semana ${i + 1}: cerrada` : falta ? `Ruleta de la semana ${i + 1}: se abre al terminar el día ${d}` : `Ruleta de la semana ${i + 1}: se abre el ${f.dd} de ${mes}`);
       root.appendChild(a);
       on(root, a, () => {
@@ -402,7 +408,9 @@ function showPast(layer, n, el) {
   const C = contOf(d.type);
   const ic = iconOf(n, dark()); if (ic) r1.querySelector('img').src = A(ic);
   const [t1, s1] = r1.querySelector(':scope > div').children; t1.textContent = C[0]; s1.textContent = C[1];
-  on(layer, r1.querySelector('a'), () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up'));
+  const verOtra = () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up');
+  const a1 = r1.querySelector('a'); if (a1 && a1 !== r1) on(layer, a1, verOtra); else on(layer, r1, verOtra);
+  r1.style.cursor = 'pointer';
   const st = stars(n);
   const cta = [...sheet.children].find(x => x.tagName === 'A' && !isRow(x));
   if (!hasTrivia(n)) {
@@ -416,7 +424,9 @@ function showPast(layer, n, el) {
   r2.querySelector('[role=img]')?.setAttribute('aria-label', `${st} de 3 estrellas`);
   const s2 = r2.querySelector(':scope > div').children[1]; s2.textContent = st === 3 ? '¡Ya tienes las 3 estrellas!' : `+${RULES.panes.trivia} panes si mejoras tus estrellas`;
   on(layer, cta, () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push'));
+  r2.style.cursor = 'pointer'; r2.setAttribute('role', 'button'); r2.tabIndex = 0; on(layer, r2, () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push'));
   }
+  cta.classList.add('cta-mini'); // se toca la fila; el botón queda en la barra minimizada
   if (t1.textContent.trim() === head.children[1].textContent.trim()) t1.textContent = C[0] === d.title ? 'Actividad' : C[0];
   const pr = [...sheet.children].find(x => x.tagName === 'A' && isRow(x));
   if (pr) {
@@ -533,15 +543,18 @@ function paintSheet(layer, T, dia) {
   const ty = TYPES[d.type];
   const rowIcon = iconOf(n, dark()) ? A(iconOf(n, dark())) : n === 0 ? A(IMG.pergamino) : null;
   const list = [];
+  let filaSorpresa = null; // va al final, justo encima del botón principal
   const pago = !puedeDia(n) && !contentDone(n); // free en un día de pago: todo con candado y la hoja lleva al pago
-  list.push(build(!contentDone(n) && !pago, CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : pago ? 'lock' : 'now', rowIcon));
+  const filaCont = build(!contentDone(n) && !pago, CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : pago ? 'lock' : 'now', rowIcon);
+  list.push(filaCont);
+  let filaTriv = null;
   if (n !== 0 && n !== 26) {
     if (hasTrivia(n)) {
       const trivOn = contentDone(n) && !isDone(n);
-      list.push(build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Después de ${CONT[2]}`.replace('de el ', 'del '), isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
+      list.push(filaTriv = build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Después de ${CONT[2]}`.replace('de el ', 'del '), isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
     }
     const sorp = RULES.sorpresa[n];
-    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') list.push(build(true, '¡Hoy hay juego sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));
+    if (sorp && isDone(n) && S.sorpresas[n] !== 'hecha') filaSorpresa = (build(true, '¡Hoy hay juego sorpresa!', `Hoy toca ${SORPRESA_NOMBRE[sorp]}`, 'now', A(IMG.regalo)));
   }
   // imprimible del día (lienzo): una fila tocable
   if (n >= 1 && T.printRow) {
@@ -555,6 +568,7 @@ function paintSheet(layer, T, dia) {
     else on(layer, r, () => abrirDescargable(n, 'mapa'));
     list.push(r);
   }
+  if (filaSorpresa) list.push(filaSorpresa);
   list.forEach(r => cta.before(r));
   list.filter(r => r.dataset.lock).forEach(r => {
     r.style.cursor = 'pointer'; r.setAttribute('role', 'button');
@@ -569,6 +583,13 @@ function paintSheet(layer, T, dia) {
   const icon = cta.querySelector('svg');
   if (icon && !label.play) icon.style.display = 'none';
   on(layer, cta, label.go);
+  // la hoja abierta se usa tocando la actividad que se quiere hacer; el botón amarillo queda solo en la barra minimizada
+  const tocar = (r, fn) => { if (!r || r.dataset.lock) return; r.style.cursor = 'pointer'; r.setAttribute('role', 'button'); r.tabIndex = 0; on(layer, r, fn); };
+  tocar(filaCont, contentDone(n) ? () => go(usaHub(n) ? 'hub' : 'reproductor', { day: n, replay: true }, 'up') : () => startDay(n));
+  tocar(filaTriv, isDone(n) ? () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'push') : () => startDay(n));
+  tocar(filaSorpresa, () => openSorpresa(n));
+  // sin actividad que tocar (día de pago con free, o todo hecho: «Seguir al día N», «Hasta mañana»), el botón se queda
+  if (!pago && (!contentDone(n) || (filaTriv && !isDone(n)) || filaSorpresa)) cta.classList.add('cta-mini');
   // trivias que quedaron pendientes al seguir con las historias: a un toque
   const trivAct = activeDay();
   const pendTriv = Array.from({ length: Math.min(lastDay(), 26) }, (_, i) => i + 1).filter(d => triviaPendiente(d) && d !== n);

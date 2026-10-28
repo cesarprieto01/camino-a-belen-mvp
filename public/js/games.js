@@ -594,9 +594,11 @@ register('desafio', {
     });
     const otra = find(root, 'Sacar otra carta');
     if (otra) {
-      otra.style.right = 'calc(50% + 4px)';
+      // «Sacar otra carta» pegado a la carta, para que se vea que el mazo tiene más; «Más tarde» queda solo abajo
       const luego = document.createElement('a'); luego.href = '#'; luego.setAttribute('style', otra.getAttribute('style'));
-      Object.assign(luego.style, { left: 'calc(50% + 4px)', right: '20px' }); luego.textContent = 'Más tarde';
+      Object.assign(luego.style, { left: '20px', right: '20px', top: '770px' }); luego.textContent = 'Más tarde';
+      Object.assign(otra.style, { left: '0', right: '0', width: 'fit-content', margin: '0 auto', padding: '0 18px', top: '650px', height: '42px' });
+      const hicimos = find(root, '¡Lo hicimos!'); if (hicimos) hicimos.style.top = '704px';
       otra.after(luego); on(root, luego, p.fromHub ? () => go('hub', { day: p.day }, 'back') : later(p.day));
     }
     on(root, '¡Lo hicimos!', (ev, el) => {
@@ -619,7 +621,14 @@ register('desafioFin', {
 
     setText(root, /^Como María, que fue de prisa a ayudar a Isabel\.?$/, d.sub + '.');
     const stamp = $$(root, '*').find(el => /HECHO EN/.test(el.textContent) && el.childElementCount <= 3 && el.style.borderRadius === '50%');
-    if (stamp) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';
+    if (stamp && reduced()) stamp.style.animation = 'popRot .6s .4s cubic-bezier(.2,.9,.3,1.4) both';
+    else if (stamp) {
+      stamp.animate([{ scale: '2.6', opacity: 0 }, { scale: '2.6', opacity: 0, offset: .01 }, { scale: '.9', opacity: 1, offset: .72 }, { scale: '1.04', offset: .86 }, { scale: '1', opacity: 1 }],
+        { duration: 560, delay: 450, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'backwards' });
+      const carta = stamp.parentElement;
+      carta?.animate([{ translate: '0 0' }, { translate: '0 4px' }, { translate: '0 -2px' }, { translate: '0 0' }], { duration: 240, delay: 450 + 400, easing: 'ease-out' });
+      setTimeout(() => navigator.vibrate?.(30), 850);
+    }
     $$(root, 'img').forEach(i => { i.addEventListener('error', () => { i.src = A(IMG.corona); }, { once: true }); if (i.complete && !i.naturalWidth) i.src = A(IMG.corona); });
     const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
     const first = sorpresaHecha(p.day, layer);

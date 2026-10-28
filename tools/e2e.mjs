@@ -157,7 +157,7 @@ const flows = {
     if (!['ruletaPremio', 'premioCuarto'].includes(await screen())) errs.push('girar no lleva al premio: ' + await screen());
     await tap('Volver al camino'); await p.waitForTimeout(1500);
     if ((await screen()) !== 'mapa') errs.push('el premio no vuelve al mapa: ' + await screen());
-    if (!/¡Ya la giraste!/.test(await lbl() || '')) errs.push('la ruleta girada no dice «¡Ya la giraste!»: ' + await lbl());
+    if (!/ya la giraste/.test(await p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label^="Ruleta de la semana 2"]')?.getAttribute('aria-label') || ''))) errs.push('la ruleta girada no queda como «ya la giraste»');
     // ya girada: un aviso con el premio, no otra ruleta
     await tap('Ruleta de la semana 2'); await p.waitForTimeout(600);
     if ((await screen()) !== 'mapa') errs.push('tocar una ruleta girada no se queda en el mapa: ' + await screen());
