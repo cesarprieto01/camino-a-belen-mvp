@@ -12,7 +12,7 @@ const card = s => `<figure><div class="card"><div class="heroe-pre">
   ${s.sombra ? `<span style="position:absolute;${s.sombra};border-radius:50%;background:radial-gradient(closest-side,rgba(4,10,30,.55),transparent)"></span>` : ''}
   ${s.teo ? `<img class="hp-teo" src="${b64(s.teo)}" style="${s.teoCss || ''}" alt="">` : ''}
   <span class="hp-degradado"></span>
-  <div class="hp-texto"><span class="hp-kicker">${destello}<span>${s.kicker}</span>${destello}</span><b class="hp-titulo">Camino a Belén</b></div>
+  <div class="hp-texto"><span class="hp-kicker">${destello}<span>${s.kicker}</span>${destello}</span><b class="hp-titulo">Adviento</b></div>
   <a class="hp-boton"><span>Continuar la aventura</span>${flecha}</a></div></div><figcaption>${s.etiqueta}</figcaption></figure>`;
 const html = `<html><head><link rel="stylesheet" href="http://localhost:5190/app.css"><style>
 body{margin:0;background:#EEF2F7;display:flex;flex-wrap:wrap;gap:28px;padding:24px;font:600 13px/1.3 Mulish,sans-serif;color:#06325A;align-items:flex-start}

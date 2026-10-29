@@ -26,6 +26,7 @@ export const DEFAULT = () => ({
   regreso: false, regresoAvisado: false, teaserVisto: false, sinCaminar: 0, diaGuardado: {}, // diaGuardado: cómo estaba Teodoro cada día (para volver atrás en el panel)
   ultimoJugado: null, // día del calendario en que terminó un contenido
   pasoAnimado: null,   // día recién completado (animación en el mapa)
+  recarga: null,       // batería antes de recargarse al terminar el día: el mapa la anima al volver
   forzarPremio: '',    // panel: forzar casilla de la ruleta
   musica: true,        // música de fondo del mapa y la trivia (on/off)
   notas: {}, huecos: [], vistas: {},
@@ -97,6 +98,8 @@ export const stars = n => hasTrivia(n) ? S.completos[n]?.estrellas || 0 : 0; // 
 
 export function addPanes(n) { S.panes += n; }
 export function setBateria(v) { S.bateria = Math.max(0, Math.min(5, v)); }
+/** Terminar el día deja a Teodoro al 100 %; si estaba más abajo, el mapa anima la recarga al volver. */
+export function recargar() { if (S.bateria < 5) S.recarga = Math.min(S.recarga ?? 5, S.bateria); setBateria(5); }
 
 // ---------- Pantallas del lienzo ----------
 let MAN = {};

@@ -57,7 +57,9 @@ function fill(upto, opts = {}) {
   Object.assign(S, opts);
 }
 // escenarios del camino: familia ya inscrita (el estado inicial de la app es «sin inscribirse»)
-const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teaserVisto: true, ...extra }); fill(done); Object.assign(S, extra); };
+// la mañana del día: cada noche Teodoro bajó una rayita (con el día de hoy hecho, ya se recargó)
+const pilaDe = (hoy, done) => hoy < 1 || hoy > 26 || done >= hoy ? 5 : Math.max(0, 4 - Math.max(0, hoy - 1 - done));
+const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teaserVisto: true, bateria: pilaDe(hoy, done), ...extra }); fill(done); Object.assign(S, extra); };
 
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
@@ -101,7 +103,7 @@ const REC = [
 ];
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
-  'Inicio real de Theo (lienzo «Inicio real», 21 oct): el destacado de Camino a Belén va primero en el héroe, que se desliza entre tres destacados; Misiones Diarias y las filas de cuentos se deslizan de lado.',
+  'Inicio real de Theo (lienzo «Inicio real», 21 oct): el destacado de Adviento va primero en el héroe, que se desliza entre tres destacados; Misiones Diarias y las filas de cuentos se deslizan de lado.',
   'Misiones Diarias: «Mundos» va primera del 29 nov al 26 dic y queda «✓ Hecha» al terminar el día. Abre Mundos desde Hoy; atrás vuelve a Hoy.',
   'Sin mascota (panel: «Sin mascota»): la barra no trae la pestaña Teodoro y todo lo que llevaba a Teodoro lleva a Hoy.',
   'La barra de pestañas es siempre la del design system de Theo (tabbar.js): clara, ilustrada y la misma en todas las pantallas, también en modo oscuro.',
@@ -156,13 +158,19 @@ function repintar(anim = 'fade') {
 function advance(k) {
   // se guarda cómo estaba Teodoro este día: si luego se vuelve atrás en el panel, vuelve igual
   S.diaGuardado = { ...(S.diaGuardado || {}), [S.hoy]: { bateria: S.bateria, sinCaminar: S.sinCaminar || 0, manzana: !!S.manzana, ultimoJugado: S.ultimoJugado } };
-  // Teodoro se cansa por los días sin caminar del 29 nov al 6 ene (también en la gracia, si falta algo); antes del 29 y en el recuerdo no cuenta
-  let baja = 0;
-  for (let i = 0; i < k; i++) { const d = S.hoy + i; if (S.inscrito && d >= 1 && d <= GRACIA_FIN && (d <= 26 || vistos() < 26) && (d > 26 || puedeDia(d)) && !(i === 0 && S.ultimoJugado === S.hoy)) baja++; }
-  // la manzana guardada de la ruleta le ahorra a Teodoro un día de cansancio
+  // Teodoro se cansa cada noche del 29 nov al 6 ene (también en la gracia, si falta algo): amanece con una rayita menos y terminar el día lo recarga.
+  // Los días sin caminar se cuentan aparte para su escena. Antes del 29 y en el recuerdo no cuenta.
+  let baja = 0, noches = 0;
+  for (let i = 0; i < k; i++) {
+    const d = S.hoy + i, m = d + 1; // m: el día que amanece
+    if (S.inscrito && d >= 1 && d <= GRACIA_FIN && (d <= 26 || vistos() < 26) && (d > 26 || puedeDia(d)) && !(i === 0 && S.ultimoJugado === S.hoy)) baja++;
+    if (S.inscrito && m >= 1 && m <= GRACIA_FIN && (m <= 26 || vistos() < 26) && (m > 26 || puedeDia(m))) noches++;
+  }
   S.sinCaminar = (S.sinCaminar || 0) + baja; // días seguidos sin caminar: la escena de Teodoro sigue exagerándose hasta 10
-  if (baja && S.manzana) { baja--; S.manzana = false; }
-  S.bateria = Math.max(0, S.bateria - baja);
+  // la manzana guardada de la ruleta le ahorra a Teodoro un día de cansancio (solo si se saltó un día)
+  if (baja && S.manzana) { noches--; S.manzana = false; }
+  S.bateria = Math.max(0, S.bateria - Math.max(0, noches));
+  S.recarga = null; // la recarga de ayer ya no se anima
   const antes = S.hoy;
   S.hoy = Math.min(GRACIA_FIN + 1, S.hoy + k);
   // «¡Te guardé el camino!»: 5 días o más sin caminar, una vez por ausencia, en el camino y la gracia (no en el recuerdo)
@@ -182,7 +190,7 @@ function retroceder() {
     S.sinCaminar -= 1; S.bateria = Math.min(5, S.bateria + 1);
   }
   S.hoy = dia;
-  S.pilaVista = S.bateria; // volver atrás no es una recarga: sin «reactivado»
+  S.pilaVista = S.bateria; S.recarga = null; // volver atrás no es una recarga: sin «reactivado»
   save();
   nota('Un día atrás', S.hoy <= 0 ? 'Antes del 29 de noviembre' : `Hoy es el día ${S.hoy} · energía ${S.bateria} de 5`);
   repintar();
@@ -234,7 +242,7 @@ function render() {
     <div class="p-row p-panes"><label for="nPan"><img src="${A(IMG.pan)}" alt="">Panes</label><span class="p-step"><button data-act="panMinus" aria-label="Quitar 10 panes">−</button><input id="nPan" type="number" min="0" step="5" value="${S.panes}"><button data-act="panPlus" aria-label="Sumar 10 panes">+</button></span></div>
     <button class="p-link p-reset" data-act="reset">Empezar de cero</button>
   </section>`;
-  const head = `<div class="p-head"><div class="p-title"><h1>Camino a Belén</h1><span class="p-tag">MVP</span></div><small class="p-now-screen">Estás en: <b>${esc(name)}</b></small></div>`;
+  const head = `<div class="p-head"><div class="p-title"><h1>Adviento</h1><span class="p-tag">MVP</span></div><small class="p-now-screen">Estás en: <b>${esc(name)}</b></small></div>`;
   const tabsHtml = `<div class="p-tabs" role="tablist">${[['rec', 'Recorridos'], ['aj', 'Avanzado'], ['pant', `Pantallas · ${cov.seenN}/${cov.total}`], ['notas', `Notas${S.huecos.length ? ' · ' + S.huecos.length : ''}`]].map(([k, l]) => `<button class="p-tab" role="tab" aria-selected="${tab === k}" data-tab="${k}">${l}</button>`).join('')}</div>`;
 
   let body = '';
@@ -272,7 +280,7 @@ function render() {
     </section>
     <details class="p-group p-rules"><summary>Reglas que usa el MVP</summary><ul class="p-list">
       <li><b>Panes</b><small>Contenido +${RULES.panes.contenidoPremium} premium / +${RULES.panes.contenidoFree} free · trivia +${RULES.panes.trivia} · sorpresa +${RULES.panes.sorpresa} · ruleta ${RULES.panes.ruleta}</small></li>
-      <li><b>Batería</b><small>Terminar un cuento la llena · cada día sin caminar baja una rayita · nunca bloquea</small></li>
+      <li><b>Batería</b><small>Cada noche baja una rayita · terminar el día la llena · nunca bloquea</small></li>
       <li><b>Ruleta</b><small>Días ${RULES.ruleta.join(', ')} · al tocarla en el mapa</small></li>
       <li><b>Sorpresa</b><small>${Object.entries(RULES.sorpresa).map(([d, g]) => `día ${d} ${g}`).join(' · ')} · nunca el mismo día que la ruleta</small></li>
       <li><b>Atrasado y regreso</b><small>Puede hacer varios días seguidos hasta alcanzar hoy · regreso tras ${RULES.regresoDias}+ días sin caminar</small></li>
@@ -355,7 +363,7 @@ panel.addEventListener('input', e => { if (e.target.id === 'note') { S.notas[cur
 function closeMobile() { if (innerWidth <= 1100) { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.classList.remove('panel-open'); } }
 function notesMarkdown() {
   const cov = coverage();
-  const lines = ['# Camino a Belén · notas del MVP', '', `_${new Date().toLocaleString('es')} · ${cov.seenN} de ${cov.total} pantallas del lienzo recorridas_`, '', '## Notas por pantalla', ''];
+  const lines = ['# Adviento · notas del MVP', '', `_${new Date().toLocaleString('es')} · ${cov.seenN} de ${cov.total} pantallas del lienzo recorridas_`, '', '## Notas por pantalla', ''];
   const notes = Object.entries(S.notas).filter(([, v]) => v.trim());
   if (!notes.length) lines.push('_Sin notas_');
   notes.forEach(([k, v]) => lines.push(`- **${NAMES[k] || k}:** ${v.trim()}`));

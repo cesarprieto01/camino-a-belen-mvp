@@ -1,6 +1,6 @@
-# Camino a Belén · MVP
+# Adviento · MVP
 
-Prototipo navegable de **Theo Quest · Camino a Belén**: un camino de Adviento de 26 días con Teodoro, el burrito de la app Theo, para familias católicas.
+Prototipo navegable de **Adviento** («El Adviento más grande del mundo»): 26 días de camino hasta Belén con Teodoro, el burrito de la app Theo, para familias católicas. Antes se llamó «Camino a Belén»; el repositorio y la URL conservan ese nombre.
 
 - En vivo: https://camino-a-belen-mvp.vercel.app
 - La rama `main` es siempre lo que está publicado.

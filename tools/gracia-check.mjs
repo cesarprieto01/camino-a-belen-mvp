@@ -12,7 +12,7 @@ const set = (o) => p.evaluate(async (o) => {
   c.reset({ hoy: o.hoy, tema: o.tema || 'claro', inscrito: o.inscrito ?? true, teaserVisto: true, tardeVisto: o.tardeVisto ?? true, panes: 80 });
   c.S.completos = { 0: { contenido: true } };
   for (let n = 1; n <= (o.upto || 0); n++) c.S.completos[n] = { contenido: true, trivia: true, estrellas: 2 };
-  c.save(); c.clearHistory(); c.go(o.scr || 'hoy', {}, 'none', { tab: true }); if (o.abajo) setTimeout(() => { const L = [...document.querySelectorAll('#viewport .layer')].pop(); const k = L?.querySelectorAll('[role=group][aria-label^="Camino a Belén"]'); k?.[k.length - 1]?.scrollIntoView({ block: 'center' }); }, 900);
+  c.save(); c.clearHistory(); c.go(o.scr || 'hoy', {}, 'none', { tab: true }); if (o.abajo) setTimeout(() => { const L = [...document.querySelectorAll('#viewport .layer')].pop(); const k = L?.querySelectorAll('[role=group][aria-label^="Adviento"]'); k?.[k.length - 1]?.scrollIntoView({ block: 'center' }); }, 900);
 }, o);
 const info = () => p.evaluate(() => {
   const L = [...document.querySelectorAll('#viewport .layer')].pop();

@@ -1,7 +1,7 @@
 // Mapa del camino (diseño «Mapa Diozen» del Figma): el paisaje ilustrado va de fondo y encima se pintan en vivo los 26 días, Teodoro y las ruletas.
-import { S, save, A, $, $$, on, frag, go, back, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
+import { S, save, A, $, $$, on, frag, go, back, cur, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia, puedeDia } from './core.js';
-import { DAYS, TYPES, RULES, IMG, PRENDAS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, pantallaDia } from './data.js';
+import { DAYS, TYPES, RULES, IMG, PRENDAS, BATTERY_IDS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, pantallaDia } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
 
@@ -54,6 +54,7 @@ async function templates() {
     key,
     rowOn: rows[0].outerHTML, rowOff: rows[1].outerHTML, printRow: rows.find(r => r.tagName === 'A')?.outerHTML,
     doneBadge: trivRows[0].lastElementChild.outerHTML,
+    otraVez: [...(pastSheet?.children || [])].find(isRow)?.querySelector('a')?.getAttribute('style'), // píldora «Ver otra vez» de un día hecho
     trivIcon: rows[1].querySelector('img')?.getAttribute('src'),
     sheet26: sheet26 ? sheet26.outerHTML : null,
     pastSheet: pastSheet?.outerHTML, selShadow: pastNode?.style.boxShadow,
@@ -177,7 +178,10 @@ register('mapa', {
       pildora.hidden = !hoy; pildora.textContent = n;
       pildora.style.left = (cx - 15) + 'px'; pildora.style.top = (cy + (n === 26 ? 38 : 32)) + 'px';
     };
-    teo.src = teodoroImg();
+    // terminó el día con Teodoro cansado: se ve como estaba y la recarga se anima después
+    const recargaDe = S.recarga != null && S.recarga < S.bateria && !reduced() ? S.recarga : null;
+    if (S.recarga != null) { S.recarga = null; save(); }
+    teo.src = teodoroImg(recargaDe ?? S.bateria);
     teo.classList.add('a-bob');
     if (focus >= 1) place(desde ?? focus); else { teo.hidden = true; pildora.hidden = true; }
     // volvió tras días sin caminar: Teodoro despierta al verlos
@@ -221,7 +225,7 @@ register('mapa', {
         animate(a, 'a-pop');
         if (lista) go('ruletaPop', { day: d, from: 'mapa' }, 'modal');
         else if (opened) toast('Ya la giraste', premioTxt(S.ruletas[d]));
-        else if (cerrada) toast('El camino de este año terminó', 'Nos vemos en Adviento');
+        else if (cerrada) toast('El camino de este año terminó', 'Nos vemos el próximo año');
         else if (falta) toast(`Termina el día ${d}`, 'Después la giras aquí');
         else toast(`Se abre el ${f.dd} de ${mes}`, 'Ese día la giras aquí');
       });
@@ -238,6 +242,7 @@ register('mapa', {
     if (chip && fase() === 'gracia' && S.inscrito && vistos() < 26) { chip.textContent = cuentaGracia(true); chip.style.whiteSpace = 'nowrap'; chip.style.fontSize = '16px'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', cuentaGracia()); }
     if (chip && S.hoy <= 0) { chip.textContent = 'Sale el 29'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', 'El camino sale el 29 de noviembre'); }
     paintEnergy(layer);
+    if (recargaDe != null) layer.querySelectorAll(`img[src*="${BATTERY_IDS[S.bateria]}"]`).forEach(i => { i.src = A(BATTERY_IDS[recargaDe]); });
     bindMute(layer.querySelector('.map-head button[aria-label^="Música"]'));
     // el mapa recuerda desde dónde se entró al camino (Hoy, Teodoro, Mundos o la espera)
     if (params.from) mapOrigin = params.from;
@@ -319,9 +324,11 @@ register('mapa', {
         teo.classList.add('a-bob');
         nodes[teoN].el.classList.add('a-pop');
       }
-      if (params.thenCerrado && activeDay() == null && S.hoy < 27) { await wait(600); if (layer.isConnected) go('cerrado', {}, 'sheet'); }
-    } else if (params.thenCerrado && activeDay() == null && S.hoy < 27) {
-      await wait(700); if (layer.isConnected) go('cerrado', {}, 'sheet');
+    } else if (recargaDe != null) await wait(450);
+    if (recargaDe != null && layer.isConnected) await recargarPila(layer, (paso && nodes[paso]?.el) || teo, teo, recargaDe);
+    if (params.thenCerrado && activeDay() == null && S.hoy < 27) {
+      await wait(paso || desde != null || recargaDe != null ? 600 : 700);
+      if (layer.isConnected && cur?.layer === layer) go('cerrado', {}, 'sheet'); // si ya se fue del mapa (p. ej. tocó «Hasta mañana»), no
     }
 
     // anillo que respira en el día de hoy
@@ -336,7 +343,7 @@ function tapNode(n, el, layer) {
   const enHoja = layer.dataset.dia != null ? +layer.dataset.dia : walkDay();
   if (n === enHoja) { startDay(n); return; } // el día que ya muestra la hoja: empezar
   if (isDone(n)) { showPast(layer, n, el); return; }
-  if (fase() === 'recuerdo' && !contentDone(n) && n < 26) { animate(el, 'a-pop'); toast('El camino de este año terminó', 'Nos vemos en Adviento'); return; }
+  if (fase() === 'recuerdo' && !contentDone(n) && n < 26) { animate(el, 'a-pop'); toast('El camino de este año terminó', 'Nos vemos el próximo año'); return; }
   // cualquier día ya desbloqueado (atrasado o con la trivia pendiente): su hoja, sin saltar directo
   if (n <= lastDay()) { animate(el, 'a-pop'); go('mapa', { dia: n }, 'none', { replace: true }); return; }
   showBubble(layer, n, el);
@@ -362,6 +369,53 @@ function showBubble(layer, n, el) {
   seen('S-03d-Mapa-dia-cerrado');
   clearTimeout(showBubble.t);
   showBubble.t = setTimeout(() => [b, arrow].forEach(x => x?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }).finished.then(() => x.remove())), 2600);
+}
+
+/** Terminó el día: una chispa sale del día hacia la batería de la cabecera, la batería se llena rayita a rayita
+ *  y Teodoro pasa de cansado a feliz. Nada se bloquea mientras tanto. */
+async function recargarPila(layer, desde, teo, de) {
+  const bat = layer.querySelector('[aria-label^="Energía de Teodoro"]');
+  const img = bat?.querySelector('img');
+  const fin = () => { paintEnergy(layer); if (teo) teo.src = teodoroImg(); };
+  if (!img || !desde) return fin();
+  await Promise.all(BATTERY_IDS.slice(de + 1).map(id => { const i = new Image(); i.src = A(id); return i.decode().catch(() => {}); }));
+  if (!layer.isConnected) return;
+  // el teléfono puede estar escalado en el escritorio: las medidas se pasan a las de la pantalla
+  const L = layer.getBoundingClientRect(), k = L.width / layer.offsetWidth || 1;
+  const centro = r => [(r.left + r.width / 2 - L.left) / k, (r.top + r.height / 2 - L.top) / k];
+  const [x0, y0] = centro(desde.getBoundingClientRect()), [x1, y1] = centro(img.getBoundingClientRect());
+  const cx = (x0 + x1) / 2 - 40, cy = Math.min(y0, y1) - 70; // arco hacia arriba
+  const pasos = Array.from({ length: 13 }, (_, i) => {
+    const t = i / 12, u = 1 - t, x = u * u * x0 + 2 * u * t * cx + t * t * x1, y = u * u * y0 + 2 * u * t * cy + t * t * y1;
+    return { transform: `translate(${x - 14}px,${y - 14}px) scale(${1.1 - t * .5}) rotate(${t * 180}deg)`, opacity: i === 12 ? .4 : 1 };
+  });
+  const vuelos = [0, 1, 2].map(i => {
+    const c = document.createElement('span'); c.className = 'pila-chispa'; c.setAttribute('aria-hidden', 'true');
+    c.innerHTML = '<svg width="28" height="28" viewBox="0 0 14 14"><path d="M7 .58 8.52 5.48 13.42 7 8.52 8.52 7 13.42 5.48 8.52.58 7 5.48 5.48Z" fill="#FFD54A" stroke="#FFF7D6" stroke-width=".7" stroke-linejoin="round"/></svg>';
+    layer.appendChild(c);
+    return c.animate(pasos, { duration: 680, delay: i * 90, easing: 'cubic-bezier(.45,0,.75,.35)', fill: 'both' }).finished.finally(() => c.remove());
+  });
+  await vuelos[0];
+  if (!layer.isConnected) return;
+  // llega: la batería brilla y se llena una rayita cada vez
+  bat.animate([{ filter: 'drop-shadow(0 0 0 rgba(71,198,218,0))' }, { filter: 'drop-shadow(0 0 9px rgba(71,198,218,.95))', offset: .35 }, { filter: 'drop-shadow(0 0 0 rgba(71,198,218,0))' }], { duration: 300 + (5 - de) * 170 + 500 });
+  for (let n = de + 1; n <= 5; n++) {
+    img.src = A(BATTERY_IDS[n]);
+    img.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
+    await wait(170);
+  }
+  fin();
+  navigator.vibrate?.(20);
+  if (teo) { teo.classList.remove('a-bob'); animate(teo, 'a-hop'); }
+  // «¡Al 100 %!» bajo la batería, alineado a su borde derecho (nunca se sale de la pantalla)
+  const r = img.getBoundingClientRect();
+  const chip = document.createElement('span'); chip.className = 'pila-llena'; chip.setAttribute('role', 'status');
+  chip.textContent = '¡Al 100 %!';
+  chip.style.top = `${(r.bottom - L.top) / k + 8}px`;
+  chip.style.right = `${Math.max(8, layer.offsetWidth - (r.right - L.left) / k - 4)}px`;
+  layer.appendChild(chip);
+  chip.animate([{ opacity: 0, transform: 'translateY(-6px) scale(.9)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+  setTimeout(() => chip.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }).finished.then(() => chip.remove()), 1500);
 }
 
 const ENERGY_TITLE = ['Teodoro se quedó dormido', 'Teodoro se está durmiendo', 'Teodoro está cansadito', 'Teodoro está tranquilo', 'Teodoro está travieso y con ganas', 'Teodoro está feliz y con ganas'];
@@ -410,6 +464,7 @@ function showPast(layer, n, el) {
   const [t1, s1] = r1.querySelector(':scope > div').children; t1.textContent = C[0]; s1.textContent = C[1];
   const verOtra = () => go(pantallaDia(n), { day: n, replay: true }, 'up');
   const a1 = r1.querySelector('a'); if (a1 && a1 !== r1) on(layer, a1, verOtra); else on(layer, r1, verOtra);
+  if (a1 && d.type === 'juego') a1.textContent = 'Jugar otra vez';
   r1.style.cursor = 'pointer';
   const st = stars(n);
   const cta = [...sheet.children].find(x => x.tagName === 'A' && !isRow(x));
@@ -546,6 +601,11 @@ function paintSheet(layer, T, dia) {
   let filaSorpresa = null; // va al final, justo encima del botón principal
   const pago = !puedeDia(n) && !contentDone(n); // free en un día de pago: todo con candado y la hoja lleva al pago
   const filaCont = build(!contentDone(n) && !pago, CONT[0], contentDone(n) ? CONT[1] : `${ty.min} min`, contentDone(n) ? 'ok' : pago ? 'lock' : 'now', rowIcon);
+  // juego ya jugado (días 7, 14 y 21): en vez del check, la píldora para jugarlo otra vez
+  if (d.type === 'juego' && contentDone(n) && T.otraVez) {
+    const pill = document.createElement('span'); pill.setAttribute('style', T.otraVez); pill.textContent = 'Jugar otra vez';
+    filaCont.lastElementChild.replaceWith(pill);
+  }
   list.push(filaCont);
   let filaTriv = null;
   if (n !== 0 && n !== 26) {

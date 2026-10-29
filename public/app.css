@@ -1,4 +1,4 @@
-/* Camino a Belén · MVP navegable. Las pantallas son las del lienzo; aquí solo
+/* Adviento · MVP navegable. Las pantallas son las del lienzo; aquí solo
    vive el marco (teléfono + panel) y las animaciones. */
 :root {
   --ease-out: cubic-bezier(.23,1,.32,1); --ease-sheet: cubic-bezier(.32,.72,0,1); --ease-move: cubic-bezier(.65,0,.35,1); --ease-spring: cubic-bezier(.34,1.56,.64,1);
@@ -628,7 +628,7 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .heroe-pre .hp-teo.hp-claro { filter: brightness(.9) drop-shadow(0 6px 10px rgba(2,37,79,.35)); } /* recorte claro en una escena de noche */
 .heroe-pre .hp-sombra { position: absolute; width: 28%; height: 3.2%; border-radius: 50%; background: radial-gradient(closest-side, rgba(4,10,30,.55), transparent); pointer-events: none; }
 .heroe-pre .hp-bateria { position: absolute; top: 12px; right: 12px; width: 44px; height: auto; z-index: 2; filter: drop-shadow(0 2px 4px rgba(2,37,79,.25)); }
-/* pieza grande de Hoy: «Camino a Belén · Día N de 26» sobre la barra */
+/* pieza grande de Hoy: «Adviento · Día N de 26» sobre la barra */
 .card-titulo { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .card-titulo b { font: 700 19px/1.15 'Neue Montreal', Mulish, sans-serif; color: #FFFFFF; }
 .card-titulo span { font: 500 15px/1.2 'Neue Montreal', Mulish, sans-serif; color: #F5DB78; white-space: nowrap; }
@@ -638,3 +638,8 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .vidrio-pista { position: absolute; left: 0; top: 0; width: 40px; height: 40px; border-radius: 50%; pointer-events: none; z-index: 3;
   background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.95), rgba(255,255,255,.55) 60%, rgba(255,255,255,.25));
   box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 4px 14px rgba(0,30,60,.28); }
+
+/* Recarga de Teodoro al volver al mapa: chispas que vuelan del día a la batería y «¡Al 100 %!» debajo */
+.pila-chispa { position: absolute; left: 0; top: 0; width: 28px; height: 28px; z-index: 40; pointer-events: none; filter: drop-shadow(0 0 3px rgba(224,166,58,.9)) drop-shadow(0 0 8px rgba(255,213,74,.85)); will-change: transform; }
+.pila-chispa svg { display: block; }
+.pila-llena { position: absolute; z-index: 40; pointer-events: none; padding: 4px 10px; border-radius: 12px; background: #F5DB78; color: #06325A; font: 800 13px/1.2 'Neue Montreal', Mulish, system-ui, sans-serif; white-space: nowrap; box-shadow: 0 4px 12px rgba(4,14,36,.22); }

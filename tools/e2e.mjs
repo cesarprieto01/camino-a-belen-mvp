@@ -288,7 +288,7 @@ const flows = {
     if (!(await p.evaluate(() => !!document.querySelector('[data-act="dayPlus"]')))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); }
     await p.evaluate(() => document.querySelector('[data-act="dayPlus"]')?.click()); await p.waitForTimeout(1200); await shot('dia1');
     const s1 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, bat: c.S.bateria }; });
-    if (s1.hoy !== 1 || s1.bat !== 5) errs.push('día 1 mal: ' + JSON.stringify(s1));
+    if (s1.hoy !== 1 || s1.bat !== 4) errs.push('día 1 mal: ' + JSON.stringify(s1)); // cada noche baja una rayita: el día 1 amanece en 4
     if (!(await p.evaluate(() => /Iniciar la aventura/.test(document.querySelector('#viewport .layer:last-child').textContent)))) errs.push('el día 1 no dice «Iniciar la aventura»');
   },
   // hojas de página: free sobre el reto, calificación sobre el mapa
@@ -339,7 +339,7 @@ const flows = {
         await textCheck(`d${d}-${c.s}`);
         switch (c.s) {
           case 'mapa': {
-            if (rw >= 0 && !girada && await toca()) { girada = true; await p.waitForTimeout(800); await tap('Ruleta de la semana ' + (rw + 1)); break; }
+            if (rw >= 0 && !girada && await toca()) { girada = true; await p.waitForTimeout(2600); if (await screen() === 'cerrado') { await p.goBack(); await p.waitForTimeout(900); } await tap('Ruleta de la semana ' + (rw + 1)); break; } // tras la recarga de la batería puede salir «Mañana seguimos»
             const t = await sheetCta();
             if (t && /Hasta mañana/.test(t)) done = true;
             if (!t) errs.push(`día ${d}: mapa sin botón`);
@@ -590,7 +590,7 @@ const flows = {
       if ((await screen()) !== 'listo') errs.push(`${tab}: al revelar todo no abre «¡Ya estás dentro!»: ${await screen()}`);
       await tap(tab === 'teodoro' ? 'Volver al cuarto de Teodoro' : 'Volver al inicio'); await p.waitForTimeout(1200); await shot(tab + '-vidrio-limpio');
       if ((await screen()) !== tab) errs.push(`${tab}: «¡Ya estás dentro!» no vuelve a donde se limpió el vidrio: ${await screen()}`);
-      if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child [aria-label^="Camino a Belén: ya estás dentro"] img[src*="ffc14384"]'))) errs.push(`${tab}: al volver el vidrio se empaña otra vez (ya lo limpiaron con el dedo)`);
+      if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child [aria-label^="Adviento: ya estás dentro"] img[src*="ffc14384"]'))) errs.push(`${tab}: al volver el vidrio se empaña otra vez (ya lo limpiaron con el dedo)`);
       if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[alt*="de espaldas"]')))) errs.push(`${tab}: tras limpiar no queda Teodoro de espaldas en la card`);
       if (!(await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].some(a => /Seguir la aventura/.test(a.textContent))))) errs.push(`${tab}: tras unirse con el dedo la card no dice «Seguir la aventura»`);
     }

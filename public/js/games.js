@@ -750,7 +750,7 @@ register('compartir', {
     on(root, 'Copiar link', () => { navigator.clipboard?.writeText(LINK).catch(() => {}); toast('Link copiado'); });
     on(root, 'Más', async () => {
       const d = DAYS[p.day];
-      if (navigator.share) { try { await navigator.share({ title: d.title, text: `${d.title} · Camino a Belén con Teodoro`, url: LINK }); } catch { /* lo cerraron */ } }
+      if (navigator.share) { try { await navigator.share({ title: d.title, text: `${d.title} · Adviento con Teodoro`, url: LINK }); } catch { /* lo cerraron */ } }
       else nota('Compartir', 'Este navegador no tiene el menú de compartir');
     });
     ['Mensajes', 'Instagram', 'WhatsApp', 'Facebook'].forEach(k => on(root, k, () => nota('Prototipo', `Abriría ${k}`)));
