@@ -2,8 +2,8 @@
 // Suena en el mapa y en la trivia; en lo demás se apaga con fundido.
 import { S, save, cur, onChange } from './core.js';
 
-// el master suena 2,7 dB más fuerte que el piano de antes (-10,6 frente a -13,3 LUFS); se igualó en 0,275 y César la pidió a la mitad (sonaba muy dura)
-const VOL = 0.1375;
+// el master suena 2,7 dB más fuerte que el piano de antes (-10,6 frente a -13,3 LUFS); se igualó en 0,275, César la pidió a la mitad (sonaba muy dura) y luego un 25 % menos
+const VOL = 0.103;
 // recortada a 1,8–143,0 s del master: quedan ~0,35 s de silencio en cada punta, así al repetirse hay una pausa corta y el relleno del AAC cae en silencio (sin clic)
 const ARCHIVO = 'audio/burrito-sabanero-eduardo.m4a';
 // dónde suena: el mapa, la trivia y los pop-ups que salen sobre ellos
