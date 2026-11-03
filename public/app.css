@@ -489,14 +489,14 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .mundos-pre a[aria-label^="Adviento:"] > span > :first-child { font-size: 22px !important; }
 .mundos-pre a[aria-label^="Adviento:"] > span > :last-child > span > :first-child { font-size: 20px !important; }
 .mundos-pre a[aria-label^="Adviento:"] > span > :last-child > [aria-hidden] { height: 22px !important; }
-.mundos-volver { position: absolute; left: 50%; top: 546px; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 22px 0 18px; border-radius: 24px; border: 2px solid #CFE8EE; background: #FFFFFF; color: #0B748A; font: 700 16px 'Neue Montreal', Mulish, sans-serif; white-space: nowrap; cursor: pointer; box-shadow: 0 8px 20px rgba(4,14,36,.14); }
-:root[data-theme="dark"] .mundos-volver { background: rgba(39,78,124,.94); border-color: rgba(159,224,238,.35); color: #FFFFFF; }
-.mundos-volver.mundos-volver-texto { top: 610px; height: 40px; border: 0; background: transparent; box-shadow: none; } /* ya dentro: queda como texto bajo «Invitar a la familia» */
-:root[data-theme="dark"] .mundos-volver.mundos-volver-texto { background: transparent; }
-/* Mundos antes del 29, ya dentro: invitar en el amarillo principal, bajo Adviento */
-.mundos-invitar { position: absolute; left: 50%; top: 546px; transform: translateX(-50%); z-index: 3; width: 276px; height: 56px; border: 0; border-radius: 18px; background: #F5DB78; color: #06325A; font: 700 18px 'Neue Montreal', Mulish, system-ui, sans-serif; cursor: pointer; box-shadow: 0 8px 20px rgba(4,14,36,.16); }
-.mundos-invitar:active { transform: translateX(-50%) scale(.97); }
-/* «Ya estás dentro» sobre la tarjeta blanca de Adviento */
+/* antes del 29: bajo la tarjeta de Adviento, la acción principal con sus mismos bordes (left/right 78px) y 10px debajo */
+.mundos-accion { position: absolute; left: 78px; right: 78px; top: 542px; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 8px; height: 54px; padding: 0 14px; border: 0; border-radius: 18px; background: #F5DB78; color: #06325A; font: 700 18px 'Neue Montreal', Mulish, system-ui, sans-serif; white-space: nowrap; cursor: pointer; box-shadow: 0 8px 20px rgba(4,14,36,.16); transition: transform 100ms ease-out; touch-action: manipulation; }
+/* «Volver al inicio»: secundario, centrado 12px bajo el amarillo; píldora con el fondo de la tarjeta para que se lea sobre las rocas */
+.mundos-volver { position: absolute; left: 50%; top: 608px; z-index: 3; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 18px 0 15px; border: 0; border-radius: 22px; background: rgba(255,255,255,.94); color: #0B748A; font: 700 15px 'Neue Montreal', Mulish, sans-serif; white-space: nowrap; cursor: pointer; box-shadow: 0 6px 16px rgba(4,14,36,.14); transform: translateX(-50%); transition: transform 100ms ease-out; touch-action: manipulation; }
+:root[data-theme="dark"] .mundos-volver { background: rgba(39,78,124,.94); color: #FFFFFF; box-shadow: 0 6px 16px rgba(4,14,36,.32); }
+.mundos-accion:active { transform: scale(.97); }
+.mundos-volver:active { transform: translateX(-50%) scale(.97); }
+
 .mundos-dentro { position: absolute; left: 50%; top: 158px; transform: translateX(-50%); z-index: 2; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px 0 9px; border-radius: 13px; background: #1F7F95; color: #FFFFFF; font: 800 12px/1 Mulish, system-ui, sans-serif; white-space: nowrap; box-shadow: 0 3px 8px rgba(0,8,43,.18); }
 /* Enero bloqueado: globo bajo el candado (el mismo lenguaje del día cerrado en el mapa) */
 .mundos-globo { position: absolute; z-index: 6; transform: translateX(-50%); width: max-content; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 14px; border-radius: 16px; background: #FFFFFF; color: #0B748A; font: 500 13px/1.25 Mulish, system-ui, sans-serif; white-space: nowrap; box-shadow: 0 8px 20px rgba(8,93,111,.22); pointer-events: none; }

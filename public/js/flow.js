@@ -782,7 +782,8 @@ register('listo', {
     }
     // desde Mundos (ya dentro, tocó Adviento) vuelve a Mundos; recién unida, Mundos es el comienzo de su camino
     on(root, ver, () => p.from === 'mundos' && !p.nueva ? back('mundos') : go('mundos', { nueva: !!p.nueva }, 'fade', { tab: true }));
-    on(root, 'Invitar a la familia', () => go('invitacion', {}, 'push'));
+    setText(root, 'Invitar a la familia', 'Invitar a mi familia'); // igual que en Mundos
+    on(root, 'Invitar a mi familia', () => go('invitacion', {}, 'push'));
   },
 });
 register('invitacion', {
@@ -971,17 +972,17 @@ register('mundos', {
     root.classList.add('mundos-v'); if (fase() === 'antes') root.classList.add('mundos-pre');
     if (fase() === 'antes') {
       startCountdown(root);
-      // debajo del contador: volver al inicio (como en la espera)
+      // bajo la tarjeta de Adviento, la acción principal con su mismo ancho (ya dentro «Invitar a mi familia»; sin unirse «Únete al reto»)
+      // y debajo, centrada y más pequeña, «Volver al inicio» en una píldora con el fondo de la tarjeta (se lee sobre la isla)
+      const cta = document.createElement('button'); cta.type = 'button'; cta.className = 'mundos-accion';
+      cta.innerHTML = S.inscrito
+        ? '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/></svg><span>Invitar a mi familia</span>'
+        : '<span>Únete al reto</span>';
+      root.appendChild(cta); on(root, cta, () => S.inscrito ? go('invitacion', {}, 'push') : go('teaser', { from: 'mundos' }, 'modal'));
       const vuelta = document.createElement('button'); vuelta.type = 'button'; vuelta.className = 'mundos-volver';
-      vuelta.innerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg><span>Volver al inicio</span>';
+      vuelta.innerHTML = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg><span>Volver al inicio</span>';
       root.appendChild(vuelta); on(root, vuelta, () => go('hoy', {}, 'down', { tab: true }));
-      // ya dentro: «Invitar a la familia» en amarillo bajo Adviento y «Volver al inicio» queda como texto debajo
-      if (S.inscrito) {
-        vuelta.classList.add('mundos-volver-texto');
-        const inv = document.createElement('button'); inv.type = 'button'; inv.className = 'mundos-invitar'; inv.textContent = 'Invitar a la familia';
-        root.appendChild(inv); on(root, inv, () => go('invitacion', {}, 'push'));
-        adv?.insertAdjacentHTML('beforeend', '<strong class="mundos-dentro"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Ya estás dentro</strong>');
-      }
+      if (S.inscrito) adv?.insertAdjacentHTML('beforeend', '<strong class="mundos-dentro"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Ya estás dentro</strong>');
       const ms = Math.max(0, new Date(2026, 10, 29) - new Date());
       adv?.setAttribute('aria-label', `Adviento: empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
       // sin unirse abre la invitación al reto; ya dentro, «¡Ya estás dentro!» con la cuenta regresiva

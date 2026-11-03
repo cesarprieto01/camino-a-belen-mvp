@@ -212,8 +212,8 @@ const flows = {
     // el preregistro termina en Mundos: Adviento resaltada con «Ya estás dentro» y el botón amarillo de invitar
     await tap('Ver mi mundo'); await p.waitForTimeout(1500); await shot('mundos');
     if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no lleva a Mundos: ' + await screen());
-    const m = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { dentro: !!L.querySelector('.mundos-dentro'), invitar: !!L.querySelector('.mundos-invitar') }; });
-    if (!m.dentro || !m.invitar) errs.push('Mundos recién unida sin «Ya estás dentro» o sin «Invitar a la familia»: ' + JSON.stringify(m));
+    const m = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { dentro: !!L.querySelector('.mundos-dentro'), invitar: !!L.querySelector('.mundos-accion') }; });
+    if (!m.dentro || !m.invitar) errs.push('Mundos recién unida sin «Ya estás dentro» o sin «Invitar a mi familia»: ' + JSON.stringify(m));
     // Enero bloqueado: globo sobre la isla, sin salir de Mundos
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label^="Mundo Enero"]')?.click()); await p.waitForTimeout(500); await shot('enero');
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .mundos-globo')))) errs.push('tocar Enero no muestra su globo');
@@ -222,8 +222,8 @@ const flows = {
     if ((await screen()) !== 'listo') errs.push('ya dentro, tocar Adviento no abre «¡Ya estás dentro!»: ' + await screen());
     await tap('Ver mi mundo'); await p.waitForTimeout(900);
     if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no vuelve a Mundos: ' + await screen());
-    await tap('Invitar a la familia'); await p.waitForTimeout(900); await shot('invitacion');
-    if ((await screen()) !== 'invitacion') errs.push('«Invitar a la familia» de Mundos no abre la invitación: ' + await screen());
+    await tap('Invitar a mi familia'); await p.waitForTimeout(900); await shot('invitacion');
+    if ((await screen()) !== 'invitacion') errs.push('«Invitar a mi familia» de Mundos no abre la invitación: ' + await screen());
   },
   async reto() {
     await scenario('Reto en familia'); await tap('Ver el reto'); await shot('hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await shot('completado');
@@ -251,7 +251,7 @@ const flows = {
     // la card del tab Teodoro es la misma del inicio: vidrio empañado y «Únete al reto»
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child :is(img[src*="ffc14384"], canvas.vidrio-dedo)')))) errs.push('la card del tab Teodoro no es la del inicio (vidrio empañado)');
     await tap('Únete al reto'); await p.waitForTimeout(1600); await expect('listo', 'inscribirme desde Teodoro'); await shot('listo');
-    await tap('Invitar a la familia'); await expect('invitacion', 'invitar'); await shot('invitacion');
+    await tap('Invitar a mi familia'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Únete al reto'); await expect('invitacion', 'vista previa vuelve');
     await tap('Volver'); await expect('listo', 'volver de invitación');
     await tap('Ver mi mundo'); await expect('mundos', 'unido desde el cuarto, «¡Ya estás dentro!» lleva a Mundos');
