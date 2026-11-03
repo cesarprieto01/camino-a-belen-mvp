@@ -27,6 +27,7 @@ export const DEFAULT = () => ({
   ultimoJugado: null, // día del calendario en que terminó un contenido
   pasoAnimado: null,   // día recién completado (animación en el mapa)
   recarga: null,       // batería antes de recargarse al terminar el día: el mapa la anima al volver
+  vidrioPendiente: null, // recién unida: el vidrio de la card se limpia la primera vez que se ve (true | 'dedo')
   forzarPremio: '',    // panel: forzar casilla de la ruleta
   musica: true,        // música de fondo del mapa y la trivia (on/off)
   notas: {}, huecos: [], vistas: {},

@@ -167,18 +167,26 @@ function startCountdown(layer) {
  *  modo 'dedo': ya lo limpiaron con el dedo; solo se baja a la card y Teodoro aparece. */
 function vidrio(root, modo) {
   const card = root.querySelector('[role=group][aria-label^="Adviento: ya estás dentro, empieza"] a');
-  if (!card || reduced()) return;
+  if (!card) return false;
+  if (reduced()) return true;
   const teo = $$(card, 'img').find(i => /de espaldas/.test(i.alt));
   // la card queda bajo el pliegue: primero se baja hasta ella y ahí se limpia el vidrio
   const capa = root.closest('.layer');
   if (capa) setTimeout(() => capa.scrollTo({ top: Math.max(0, card.getBoundingClientRect().top - capa.getBoundingClientRect().top + capa.scrollTop - 160), behavior: 'smooth' }), 250);
-  if (modo === 'dedo') { teo?.animate([{ opacity: .4, transform: 'translateY(10px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 600, easing: 'cubic-bezier(.2,.9,.3,1.1)', fill: 'backwards' }); return; }
+  if (modo === 'dedo') { teo?.animate([{ opacity: .4, transform: 'translateY(10px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 600, easing: 'cubic-bezier(.2,.9,.3,1.1)', fill: 'backwards' }); return true; }
   const v = document.createElement('img');
   v.src = A('ffc14384b753c2d8d87872f172d05946'); v.alt = ''; v.setAttribute('aria-hidden', 'true');
   v.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:2';
   card.appendChild(v);
   v.animate([{ opacity: 1, filter: 'blur(0)' }, { opacity: 0, filter: 'blur(6px)' }], { duration: 1400, delay: 1000, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }).finished.then(() => v.remove());
   teo?.animate([{ opacity: .4, transform: 'translateY(10px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 1500, easing: 'cubic-bezier(.2,.9,.3,1.1)', fill: 'backwards' });
+  return true;
+}
+/** Recién unida, el vidrio de la card se limpia la primera vez que se ve (Hoy o el cuarto de Teodoro), no antes. */
+function vidrioPendiente(root, p) {
+  const modo = p?.limpiar || S.vidrioPendiente;
+  if (!S.inscrito || !modo) return;
+  if (vidrio(root, modo) && S.vidrioPendiente) { S.vidrioPendiente = null; save(); }
 }
 /** Antes de unirse: el vidrio empañado se limpia con el dedo y deja ver la escena de la card «ya dentro».
  *  Al despejar ~42 % se revela todo, la familia queda unida y se abre «¡Ya estás dentro!» (igual que «Únete al reto»).
@@ -541,7 +549,7 @@ register('hoy', {
       on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', {}, 'modal'));
       on(root, 'Adviento: se revela al unirte al reto', () => go('teaser', {}, 'modal'));
       on(root, root.querySelector('a[aria-label^="Mundos"]'), () => go('mundos', {}, 'push'));
-      if (S.inscrito && p.limpiar) vidrio(root, p.limpiar);
+      vidrioPendiente(root, p);
       if (!S.inscrito) vidrioConDedo(root, 'hoy');
       if (!S.inscrito && !S.teaserVisto) { S.teaserVisto = true; save(); await wait(900); if (layer.isConnected) go('teaser', {}, 'modal'); }
       return;
@@ -765,12 +773,15 @@ register('listo', {
   files: F('P-Listo-a', 'P-Listo-a-oscuro'),
   mount(root, p, layer) {
     startCountdown(root);
-    if (p.nueva) { sparkles(root); confetti(layer, 195, 470, 28); }
-    // vuelve a donde se unió (inicio o cuarto de Teodoro) y ahí el vidrio de la card se limpia
-    const origen = p.from === 'teodoro' ? 'teodoro' : 'hoy';
-    const volver = find(root, 'Volver al inicio');
-    if (volver && origen === 'teodoro') { setText(volver, 'Volver al inicio', 'Volver al cuarto de Teodoro'); volver.setAttribute('aria-label', 'Volver al cuarto de Teodoro'); }
-    on(root, volver, () => go(origen, { limpiar: p.nueva ? (p.conDedo ? 'dedo' : true) : false }, 'fade', { tab: true }));
+    if (p.nueva) { sparkles(root); confetti(layer, 195, 470, 28); S.vidrioPendiente = p.conDedo ? 'dedo' : true; save(); }
+    // termina en Mundos con Adviento resaltada; el vidrio de la card se limpia la próxima vez que se vea (Hoy o el cuarto)
+    const ver = find(root, 'Volver al inicio');
+    if (ver) {
+      setText(ver, 'Volver al inicio', 'Ver mi mundo'); ver.setAttribute('aria-label', 'Ver mi mundo');
+      ver.insertAdjacentHTML('beforeend', '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>');
+    }
+    // desde Mundos (ya dentro, tocó Adviento) vuelve a Mundos; recién unida, Mundos es el comienzo de su camino
+    on(root, ver, () => p.from === 'mundos' && !p.nueva ? back('mundos') : go('mundos', { nueva: !!p.nueva }, 'fade', { tab: true }));
     on(root, 'Invitar a la familia', () => go('invitacion', {}, 'push'));
   },
 });
@@ -852,7 +863,7 @@ register('teodoro', {
       on(root, 'Seguir la aventura', () => go('mundos', {}, 'push'));
       on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', { from: 'teodoro' }, 'modal'));
       on(root, 'Adviento: se revela al unirte al reto', () => go('teaser', { from: 'teodoro' }, 'modal'));
-      if (S.inscrito && p.limpiar) vidrio(root, p.limpiar); // recién unido desde el cuarto: el vidrio se limpia aquí
+      vidrioPendiente(root, p); // recién unida: el vidrio se limpia la primera vez que se ve la card
       if (!S.inscrito) vidrioConDedo(root, 'teodoro'); // la misma card que el inicio: también se limpia con el dedo
     }
     on(root, 'Toca para descubrir', () => go('teaser', { from: 'teodoro' }, 'modal'));
@@ -964,21 +975,64 @@ register('mundos', {
       const vuelta = document.createElement('button'); vuelta.type = 'button'; vuelta.className = 'mundos-volver';
       vuelta.innerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg><span>Volver al inicio</span>';
       root.appendChild(vuelta); on(root, vuelta, () => go('hoy', {}, 'down', { tab: true }));
+      // ya dentro: «Invitar a la familia» en amarillo bajo Adviento y «Volver al inicio» queda como texto debajo
+      if (S.inscrito) {
+        vuelta.classList.add('mundos-volver-texto');
+        const inv = document.createElement('button'); inv.type = 'button'; inv.className = 'mundos-invitar'; inv.textContent = 'Invitar a la familia';
+        root.appendChild(inv); on(root, inv, () => go('invitacion', {}, 'push'));
+        adv?.insertAdjacentHTML('beforeend', '<strong class="mundos-dentro"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Ya estás dentro</strong>');
+      }
       const ms = Math.max(0, new Date(2026, 10, 29) - new Date());
       adv?.setAttribute('aria-label', `Adviento: empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
-      // sin unirse abre la invitación; ya dentro, solo recuerda cuándo se sale
-      on(root, adv, () => S.inscrito ? toast('Empieza el 29 de noviembre') : go('teaser', {}, 'modal'));
+      // sin unirse abre la invitación al reto; ya dentro, «¡Ya estás dentro!» con la cuenta regresiva
+      on(root, adv, () => tocarIsla(adv, () => S.inscrito ? go('listo', { from: 'mundos' }, 'push') : go('teaser', { from: 'mundos' }, 'modal')));
     } else {
       const n = walkDay() ?? Math.min(lastDay(), 26);
       replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
       adv?.setAttribute('aria-label', `Adviento: día ${n} de 26. Entrar al camino`);
-      on(root, adv, () => entrar('mundos'));
+      on(root, adv, () => tocarIsla(adv, () => entrar('mundos')));
       adv?.querySelector('img[alt^="Teodoro"]')?.classList.add('a-bob');
     }
     on(root, 'Volver al cuarto de Teodoro', () => back('teodoro'));
-    on(root, root.querySelector('[aria-label^="Mundo Enero"]'), () => toast('Enero', 'El próximo mundo: pronto'));
+    // Enero aún no se abre: el candado se sacude y un globo lo dice sobre la isla (no un aviso abajo)
+    const enero = root.querySelector('[aria-label^="Mundo Enero"]');
+    on(root, enero, () => tocarIsla(enero, () => globoEnero(root, enero)));
+    if (p.nueva && adv && !reduced()) resaltarIsla(adv); // recién unida: Adviento se resalta al llegar
   },
 });
+/** Tocar una isla: se hunde y rebota, y luego pasa lo que toca (se ve que el toque llegó). */
+function tocarIsla(el, luego) {
+  if (reduced()) return luego();
+  el.animate([{ transform: 'scale(1)' }, { transform: 'scale(.95)', offset: .3 }, { transform: 'scale(1.02)', offset: .7 }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
+  setTimeout(luego, 160);
+}
+/** Recién unida: la isla de Adviento brilla, late una vez y aparece «Ya estás dentro». */
+function resaltarIsla(adv) {
+  const isla = adv.querySelector(':scope > img');
+  setTimeout(() => {
+    if (!adv.isConnected) return;
+    adv.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: .4 }, { transform: 'scale(1)' }], { duration: 700, easing: 'cubic-bezier(.23,1,.32,1)' });
+    const sin = 'drop-shadow(0 0 0 rgba(255,214,90,0)) drop-shadow(0 0 0 rgba(255,255,255,0))';
+    isla?.animate([{ filter: sin }, { filter: 'drop-shadow(0 0 12px rgba(255,214,90,.95)) drop-shadow(0 0 26px rgba(255,255,255,.75))', offset: .35 }, { filter: sin }], { duration: 1800, easing: 'ease-out' });
+    adv.querySelector('.mundos-dentro')?.animate([{ opacity: 0, transform: 'translate(-50%, 6px) scale(.85)' }, { opacity: 1, transform: 'translate(-50%, 0) scale(1)' }], { duration: 320, delay: 250, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
+  }, 350);
+}
+/** Enero bloqueado: globo bajo su candado que se va solo. */
+function globoEnero(root, enero) {
+  const candado = enero.querySelector(':scope > img:nth-child(2)');
+  animate(candado, 'a-shake');
+  clearTimeout(globoEnero.t); root.querySelector('.mundos-globo')?.remove();
+  const g = document.createElement('div'); g.className = 'mundos-globo'; g.setAttribute('role', 'status');
+  g.innerHTML = '<b>Enero</b><span>El próximo mundo: pronto</span>';
+  const x = enero.offsetLeft + (candado ? candado.offsetLeft + candado.offsetWidth / 2 : enero.offsetWidth / 2);
+  g.style.top = (enero.offsetTop + (candado ? candado.offsetTop + candado.offsetHeight : 120) + 12) + 'px';
+  root.appendChild(g);
+  // centrado bajo el candado sin salirse de la pantalla; la flecha sigue apuntando al candado
+  const w = g.offsetWidth, cx = Math.min(Math.max(x, 12 + w / 2), 378 - w / 2);
+  g.style.left = cx + 'px'; g.style.setProperty('--flecha', `${w / 2 + x - cx}px`);
+  g.animate([{ opacity: 0, transform: 'translate(-50%, -4px) scale(.94)' }, { opacity: 1, transform: 'translate(-50%, 0) scale(1)' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+  globoEnero.t = setTimeout(() => g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }).finished.then(() => g.remove()), 2600);
+}
 
 // ---------- Contenido del día ----------
 register('reproductor', {
