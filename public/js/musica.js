@@ -1,13 +1,17 @@
-// Música de fondo del camino: «Burrito Sabanero» con Eduardo (master final V6), la canción entera repetida.
-// Suena en el mapa y en la trivia; en lo demás se apaga con fundido.
+// Música de fondo del camino: «Quiet Snow Village», ambiental, en loop sin pausas.
+// Suena en el mapa, la trivia y las actividades del día; en lo demás se apaga con fundido.
 import { S, save, cur, onChange } from './core.js';
 
-// el master suena 2,7 dB más fuerte que el piano de antes (-10,6 frente a -13,3 LUFS); se igualó en 0,275, César la pidió a la mitad (sonaba muy dura) y luego un 25 % menos
-const VOL = 0.103;
-// recortada a 1,8–143,0 s del master: quedan ~0,35 s de silencio en cada punta, así al repetirse hay una pausa corta y el relleno del AAC cae en silencio (sin clic)
-const ARCHIVO = 'audio/burrito-sabanero-eduardo.m4a';
-// dónde suena: el mapa, la trivia y los pop-ups que salen sobre ellos
-const PANTALLAS = new Set(['mapa', 'trivia', 'triviaFin', 'cerrado', 'ruletaPop', 'ruletaPremio', 'premioCuarto']);
+// suena 4,3 dB más baja que la canción con Eduardo de antes (-15,0 frente a -10,7 LUFS): se igualó al volumen que César aprobó para esa (0,17)
+// y luego César la pidió un 25 % más baja
+const VOL = 0.1275;
+// sin los silencios de las puntas y con la cola final (se apaga en 3,5 s) sonando sobre el comienzo, que entra suave: la vuelta dura LOOP s.
+// El archivo trae 1 s más del comienzo al final, así se repite de DESDE a DESDE + LOOP y el relleno que agrega el AAC en las puntas nunca suena
+const ARCHIVO = 'audio/quiet-snow-village.m4a', LOOP = 6977266 / 48000, DESDE = 0.5;
+// dónde suena: el mapa y sus pop-ups, la trivia y las actividades (no en los videos ni las canciones, que traen su sonido)
+const PANTALLAS = new Set(['mapa', 'cerrado', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'trivia', 'triviaFin', 'completado', 'calificacion', 'hub',
+  'juegoIntro', 'juegoPasos', 'juegoCarta', 'juegoFin', 'memoramaReglas', 'memorama', 'memoramaFin',
+  'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin']);
 
 let ctx = null, master = null, buffer = null, cargando = null, fuente = null, sonando = false, parar = null;
 
@@ -29,8 +33,9 @@ function cargar() {
 
 function sonar() {
   if (fuente || !buffer) return;
-  fuente = ctx.createBufferSource(); fuente.buffer = buffer; fuente.loop = true; // la canción entera, de punta a punta
-  fuente.connect(master); fuente.start(0);
+  fuente = ctx.createBufferSource(); fuente.buffer = buffer;
+  fuente.loop = true; fuente.loopStart = DESDE; fuente.loopEnd = DESDE + LOOP;
+  fuente.connect(master); fuente.start(0, DESDE);
 }
 
 async function arrancar() {
