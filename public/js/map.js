@@ -4,6 +4,29 @@ import { S, save, A, $, $$, on, frag, go, back, cur, clearHistory, walkDay, teoD
 import { DAYS, TYPES, RULES, IMG, PRENDAS, BATTERY_IDS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, pantallaDia } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
+import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
+import { SENDERO } from './sendero.js';
+// dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
+const piesDe = teo => { const l = parseFloat(teo.style.left), t = parseFloat(teo.style.top), w = parseFloat(teo.style.width), h = parseFloat(teo.style.height); return { cx: l + w / 2, pies: t + h, alto: h }; };
+/** Teodoro (Lottie) camina por «ruta» (puntos de sus pies en el mapa) hasta «fin», mirando hacia donde va: el dibujo mira a la derecha y se voltea
+ *  cuando el sendero gira (con 10 de margen, sin titubeos). Crece de lo que medía en el día anterior («desdeK») a su alto de hoy. */
+async function caminar(r, fin, ruta, desdeK) {
+  const largos = ruta.slice(1).map((p, i) => Math.hypot(p[0] - ruta[i][0], p[1] - ruta[i][1]));
+  const total = largos.reduce((x, y) => x + y, 0) || 1;
+  let acc = 0; const offs = [0, ...largos.map(l => (acc += l) / total)];
+  const dur = Math.min(2400, Math.max(1500, total * 11)), easing = 'cubic-bezier(.4,.1,.6,.9)';
+  // hacia dónde mira en cada punto: cambia solo si avanzó 10 o más hacia el otro lado
+  const arranca = ruta.find(([x]) => Math.abs(x - ruta[0][0]) >= 10) ?? ruta.at(-1);
+  let lado = Math.sign(arranca[0] - ruta[0][0]) || 1, ref = ruta[0][0];
+  const mira = ruta.map(([x]) => { if (Math.abs(x - ref) >= 10) { lado = Math.sign(x - ref); ref = x; } return lado; });
+  const svg = r.caja.querySelector('svg');
+  const vuelta = m => (m < 0 ? 'scaleX(-1)' : 'none');
+  svg?.animate(mira.map((m, i) => ({ transform: vuelta(m), offset: offs[i], easing: 'steps(1, end)' })), { duration: dur, easing, fill: 'forwards' });
+  r.caja.style.transformOrigin = '50% 100%';
+  r.caja.animate([{ scale: desdeK }, { scale: 1 }], { duration: dur, easing });
+  r.anim.setSpeed(1.15);
+  await r.caja.animate(ruta.map(([x, y], i) => ({ translate: `${x - fin.cx}px ${y - fin.pies}px`, offset: offs[i] })), { duration: dur, easing }).finished;
+}
 
 // de la pantalla del lienzo salen la cabecera, la píldora «Tu día» y la hoja; el mapa se dibuja aquí
 const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
@@ -111,6 +134,8 @@ register('mapa', {
     const focus = teoN ?? 0;
     // camina solo cuando avanza el calendario, y un paso: del día anterior al de hoy (ponerse al día no lo mueve)
     const desde = params.dia == null && teoN != null && S.teoMapa != null && S.teoMapa < teoN && !reduced() ? Math.max(S.teoMapa, teoN - 1) : null;
+    if (desde != null) precargar(CAMINA);
+    if (S.pasoAnimado && S.pasoAnimado === teoN && !reduced()) precargar(CELEBRA);
 
     // 1) La vista: el mapa largo va en un scroller; cabecera y hoja quedan fijas
     const scroller = document.createElement('div');
@@ -309,7 +334,11 @@ register('mapa', {
         pintarDia(n.el, paso, isDone(paso) ? 'hecho' : 'trivia'); // vio el cuento: check, con la trivia aún abierta si falta
         n.el.classList.add('a-pop');
       }
-      if (paso === teoN && teo) { place(teoN); teo.classList.remove('a-bob'); animate(teo, 'a-hop'); } // a-hop sigue con el vaivén // terminó el día de hoy: celebra donde está
+      if (paso === teoN && teo) { // terminó el día de hoy: celebra donde está, en bucle (sin Lottie, el salto de siempre)
+        place(teoN); teo.classList.remove('a-bob');
+        const r = await teoAnimado(root, CELEBRA, { ...piesDe(teo), clase: 'dz-teo-anim' });
+        if (r) teo.style.visibility = 'hidden'; else animate(teo, 'a-hop'); // a-hop sigue con el vaivén
+      }
       if (desde != null && nodes[teoN] && teo) {
         await wait(350);
         const a = { x: parseFloat(teo.style.left), y: parseFloat(teo.style.top) };
@@ -318,8 +347,16 @@ register('mapa', {
         teo.classList.remove('a-bob');
         scrollToNode(teoN, true);
         const dx = a.x - b.x, dy = a.y - b.y;
-        teo.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 1100, easing: 'cubic-bezier(.65,0,.35,1)' });
-        await teo.animate([{ translate: '0 0' }, { translate: '0 -16px', offset: .25 }, { translate: '0 0', offset: .5 }, { translate: '0 -12px', offset: .75 }, { translate: '0 0' }], { duration: 1100 }).finished;
+        // camina con la animación por el sendero de piedras, del día anterior al de hoy, mirando hacia donde va
+        const r = await teoAnimado(root, CAMINA, { ...piesDe(teo), clase: 'dz-teo-anim' });
+        if (r) {
+          teo.style.visibility = 'hidden';
+          await caminar(r, piesDe(teo), SENDERO[teoN] && desde === teoN - 1 ? SENDERO[teoN] : [[a.x + parseFloat(teo.style.width) / 2, a.y + parseFloat(teo.style.height)], [piesDe(teo).cx, piesDe(teo).pies]], nodes[desde]?.el.dataset.today ? 1 : 76 / 96);
+          r.anim.destroy(); r.caja.remove(); teo.style.visibility = '';
+        } else { // sin Lottie: el paso a saltitos de antes
+          teo.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 1100, easing: 'cubic-bezier(.65,0,.35,1)' });
+          await teo.animate([{ translate: '0 0' }, { translate: '0 -16px', offset: .25 }, { translate: '0 0', offset: .5 }, { translate: '0 -12px', offset: .75 }, { translate: '0 0' }], { duration: 1100 }).finished;
+        }
         teo.animate([{ scale: '1' }, { scale: '1.06 .94' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
         teo.classList.add('a-bob');
         nodes[teoN].el.classList.add('a-pop');

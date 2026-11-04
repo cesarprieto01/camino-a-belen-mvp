@@ -452,6 +452,10 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .dz-26 .node-lock { right: 0; bottom: 2px; width: 34px; }
 .dz-recuerdo { opacity: .6; }
 .dz-teo { position: absolute; z-index: 3; width: 108px; height: 104px; object-fit: contain; object-position: 50% 100%; pointer-events: none; filter: drop-shadow(0 6px 8px rgba(8,93,111,.25)); }
+/* Teodoro animado (Lottie): camina entre días y celebra; ocupa el lugar del dibujo quieto, que se esconde mientras tanto */
+.teo-anim { position: absolute; pointer-events: none; }
+.teo-anim svg { display: block; }
+.dz-teo-anim { z-index: 3; filter: drop-shadow(0 6px 8px rgba(8,93,111,.25)); }
 .dz-ruleta { position: absolute; z-index: 1; padding: 0; border: 0; background: none; }
 .dz-ruleta > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 /* ruleta que aún no se puede girar: apagada y con candado, como los días cerrados; al abrirse se nota el cambio */

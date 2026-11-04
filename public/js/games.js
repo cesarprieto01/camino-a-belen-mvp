@@ -4,6 +4,7 @@ import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, see
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, JUEGOS, hasTrivia, TYPES } from './data.js';
 import { finishTrivia, finishContent, openSorpresa, panesContenido, abrirDescargable } from './flow.js';
 import { bindMute } from './musica.js';
+import { celebrar } from './teo-anim.js';
 // botón de música de la cabecera (trivia y su resultado)
 const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
 
@@ -329,6 +330,7 @@ register('triviaFin', {
     else if (chip) { chip.classList.add('a-pop'); floaty(layer, `+${RULES.panes.trivia}`, 230, 430); }
     const dlg = root.querySelector('[role=dialog]'); dlg?.classList.add('a-rise');
     $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).slice(-1).forEach(i => i.classList.add('a-hop'));
+    requestAnimationFrame(() => celebrar(root)); // Teodoro salta en bucle (Lottie) donde estaba el dibujo quieto
     if (est >= 2) confetti(layer, 195, 300, est === 3 ? 60 : 30);
     on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame(n));
     const vc = find(root, 'Volver al camino'); if (vc) vc.dataset.back = '1';
@@ -361,6 +363,7 @@ function paintFin(root, layer, n, first, bind = true) {
   const br = bread?.parentElement;
   if (first) floaty(layer, `+${RULES.panes.sorpresa}`, br ? br.offsetLeft + br.offsetWidth - 20 : 230, br ? br.offsetTop + 10 : 380); else setText(root, /Ganaste \d+ panes/, 'Ya ganaste estos panes');
   $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).forEach(i => i.classList.add('a-hop'));
+  requestAnimationFrame(() => celebrar(root)); // Teodoro salta en bucle (Lottie) donde estaba el dibujo quieto
   confetti(layer, 195, 260, 44);
   if (bind) { on(root, 'Volver al camino', toMapAfterGame); on(root, 'Cerrar', toMapAfterGame); }
 }
@@ -936,6 +939,7 @@ register('juegoFin', {
     if (panes) panes.textContent = p.first ? `+${panesContenido()} panes para Teodoro` : 'Ya ganaste estos panes';
     if (p.first) floaty(layer, `+${panesContenido()}`, 250, 560);
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-hop'));
+    requestAnimationFrame(() => celebrar(root, i => /Teodoro/.test(i.alt || ''))); // salta en bucle (Lottie)
     const titulo = [...root.children].find(el => el.style.transform === 'rotate(-4deg)');
     titulo?.animate([{ scale: '.5', opacity: 0 }, { scale: '1.08', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 560, delay: 150, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
     confetti(layer, 195, 300, 60);
