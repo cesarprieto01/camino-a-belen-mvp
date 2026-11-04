@@ -3,7 +3,7 @@ import { S, save, A, $, $$, on, frag, go, back, cur, clearHistory, walkDay, teoD
   lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia, puedeDia } from './core.js';
 import { DAYS, TYPES, RULES, IMG, PRENDAS, BATTERY_IDS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, pantallaDia } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
-import { bindMute } from './musica.js';
+import { bindMute, retener, soltarTrasVoz, teoDice, sonido, motivo } from './musica.js';
 import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
 import { SENDERO } from './sendero.js';
 // dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
@@ -15,6 +15,8 @@ async function caminar(r, fin, ruta, desdeK) {
   const total = largos.reduce((x, y) => x + y, 0) || 1;
   let acc = 0; const offs = [0, ...largos.map(l => (acc += l) / total)];
   const dur = Math.min(2400, Math.max(1500, total * 11)), easing = 'cubic-bezier(.4,.1,.6,.9)';
+  // sus cascos: un «toc-toc» por paso (dos por vuelta de la animación, que va a 1,15)
+  const pasos = setInterval(() => sonido('paso'), 705); sonido('paso', 0, 0.2); setTimeout(() => clearInterval(pasos), dur - 250);
   // hacia dónde mira en cada punto: cambia solo si avanzó 10 o más hacia el otro lado
   const arranca = ruta.find(([x]) => Math.abs(x - ruta[0][0]) >= 10) ?? ruta.at(-1);
   let lado = Math.sign(arranca[0] - ruta[0][0]) || 1, ref = ruta[0][0];
@@ -128,6 +130,9 @@ register('mapa', {
   noScroll: true,
   limpiar: root => [...root.children].filter(el => !fija(el)).forEach(el => el.remove()),
   async mount(root, params, layer) {
+    // el ritual del día (celebra, llega caminando o se recarga): la canción espera callada y entra después de que Teodoro habla
+    const ritual = !reduced() && (!!S.pasoAnimado || (S.recarga != null && S.recarga < S.bateria) || (params.dia == null && teoDay() != null && S.teoMapa != null && S.teoMapa < teoDay()));
+    if (ritual) retener(10000);
     const T = await templates();
     const act = walkDay();                // el día que propone la hoja
     const teoN = teoDay();                // donde está Teodoro: siempre el día del calendario
@@ -338,6 +343,7 @@ register('mapa', {
         place(teoN); teo.classList.remove('a-bob');
         const r = await teoAnimado(root, CELEBRA, { ...piesDe(teo), clase: 'dz-teo-anim' });
         if (r) teo.style.visibility = 'hidden'; else animate(teo, 'a-hop'); // a-hop sigue con el vaivén
+        teoDice('celebraDia', { cerca: r?.caja || teo, tras: 0.35 });
       }
       if (desde != null && nodes[teoN] && teo) {
         await wait(350);
@@ -360,9 +366,17 @@ register('mapa', {
         teo.animate([{ scale: '1' }, { scale: '1.06 .94' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
         teo.classList.add('a-bob');
         nodes[teoN].el.classList.add('a-pop');
+        // llegó: el motivo y «¡Vamos a la aventura!» (en Belén, «¡Increíble!»)
+        motivo('corto'); teoDice(teoN === 26 ? 'belen' : 'diaNuevo', { cerca: teo, tras: 1.1 });
       }
     } else if (recargaDe != null) await wait(450);
     if (recargaDe != null && layer.isConnected) await recargarPila(layer, (paso && nodes[paso]?.el) || teo, teo, recargaDe);
+    if (ritual) soltarTrasVoz(600); // terminó el ritual: entra la canción
+    // la primera vez del día sin caminata (o al volver tras días sin caminar): Teodoro invita a la aventura
+    else if (focus >= 1 && params.dia == null && teo && layer.isConnected) {
+      if (params.despierta) teoDice('diaNuevo', { cerca: teo, tras: 0.6 });
+      else if (teoDice('diaNuevo', { cerca: teo, tras: 0.7 })) setTimeout(() => layer.isConnected && animate(teo, 'a-hop'), 700);
+    }
     if (params.thenCerrado && activeDay() == null && S.hoy < 27) {
       await wait(paso || desde != null || recargaDe != null ? 600 : 700);
       if (layer.isConnected && cur?.layer === layer) go('cerrado', {}, 'sheet'); // si ya se fue del mapa (p. ej. tocó «Hasta mañana»), no
@@ -437,11 +451,11 @@ async function recargarPila(layer, desde, teo, de) {
   // llega: la batería brilla y se llena una rayita cada vez
   bat.animate([{ filter: 'drop-shadow(0 0 0 rgba(71,198,218,0))' }, { filter: 'drop-shadow(0 0 9px rgba(71,198,218,.95))', offset: .35 }, { filter: 'drop-shadow(0 0 0 rgba(71,198,218,0))' }], { duration: 300 + (5 - de) * 170 + 500 });
   for (let n = de + 1; n <= 5; n++) {
-    img.src = A(BATTERY_IDS[n]);
+    img.src = A(BATTERY_IDS[n]); sonido('rayita', n);
     img.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'cubic-bezier(.23,1,.32,1)' });
     await wait(170);
   }
-  fin();
+  fin(); sonido('llena');
   navigator.vibrate?.(20);
   if (teo) { teo.classList.remove('a-bob'); animate(teo, 'a-hop'); }
   // «¡Al 100 %!» bajo la batería, alineado a su borde derecho (nunca se sale de la pantalla)

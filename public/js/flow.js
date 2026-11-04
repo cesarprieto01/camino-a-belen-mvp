@@ -3,7 +3,7 @@ import { S, save, A, cur, $, $$, on, find, go, back, register, seen, toast, nota
   lastDay, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, recargar, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
-import './musica.js'; // música de fondo del mapa y la trivia
+import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from './musica.js'; // música, voces de Teodoro y efectos
 import { rateRow } from './games.js';
 import { celebrar } from './teo-anim.js';
 
@@ -128,7 +128,7 @@ export function inscribir(btn, from = 'hoy') {
 export function unirse(from) {
   S.inscrito = true; save();
   toast('¡Ya estás dentro!', 'Empieza por hoy, a tu ritmo');
-  go('mapa', { from }, 'push');
+  go('mapa', { from }, 'push').then(() => teoDice('unirse', { tras: 0.25 }));
 }
 /** Entrar al camino desde Hoy, Teodoro o Mundos. */
 export function entrar(from) {
@@ -913,7 +913,7 @@ register('listo', {
   files: F('P-Listo-a', 'P-Listo-a-oscuro'),
   mount(root, p, layer) {
     startCountdown(root);
-    if (p.nueva) { sparkles(root); confetti(layer, 195, 470, 28); S.vidrioPendiente = p.conDedo ? 'dedo' : true; save(); }
+    if (p.nueva) { sparkles(root); confetti(layer, 195, 470, 28); S.vidrioPendiente = p.conDedo ? 'dedo' : true; save(); motivo('corto'); teoDice('unirse', { tras: 1.1 }); }
     // termina en Mundos con Adviento resaltada; el vidrio de la card se limpia la próxima vez que se vea (Hoy o el cuarto)
     const ver = find(root, 'Volver al inicio');
     if (ver) {
@@ -1293,7 +1293,7 @@ register('hub', {
     on(root, 'Volver al mapa', () => go('mapa', {}, 'down', { replace: true }));
     on(root, 'Escuchar a Teodoro', () => nota('Teodoro explica el reto', 'Audio por grabar'));
     if (!d.pasos) on(root, 'Reto en familia', () => go('desafioIntro', { day: n, fromHub: true, replay: p.replay }, 'fade'));
-    on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); animate(el, 'a-pop'); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 260); });
+    on(root, '¡Lo hicimos!', (ev, el) => { if (p.replay) { toast('¡Otra vez en familia!'); go('mapa', {}, 'down', { replace: true }); return; } finishContent(n); animate(el, 'a-pop'); sonido('acierto'); teoDice('retoHecho'); setTimeout(() => go('completado', { day: n }, 'fade', { replace: true }), 260); });
     // los extras del reto son descargables: con free piden Premium (y lo dicen antes de tocarlos)
     if (!premium()) [d.descarga.t, 'Canción'].forEach(t => { const el = find(root, t); if (!el || el.querySelector('.pill-premium')) return; const pl = document.createElement('span'); pl.className = 'pill-premium'; pl.textContent = 'Premium'; el.style.position ||= 'relative'; el.appendChild(pl); });
     if (imp) on(root, imp, () => abrirDescargable(n, 'hub'));
@@ -1320,7 +1320,7 @@ register('completado', {
     const out = () => go('mapa', {}, 'down', { replace: true });
     on(root, 'Ahora no', out); on(root, 'Cerrar', out);
     // calificar el video o la canción (no el reto): fila discreta sobre el botón
-    if (hasTrivia(n)) { on(root, '¡A jugar!', () => go('trivia', { day: n }, 'push', { replace: true })); if (!usaHub(n)) rateRow(root, n); return; }
+    if (hasTrivia(n)) { on(root, '¡A jugar!', () => { teoDice('empezar'); go('trivia', { day: n }, 'push', { replace: true }); }); if (!usaHub(n)) rateRow(root, n); return; }
     // día sin trivia: el día ya quedó completo; si toca sorpresa se abre aquí, si no, Teodoro camina en el mapa
     const sorpresa = RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha';
     const titulo = textEl(root, /¿Jugamos/);
@@ -1512,6 +1512,7 @@ register('ruletaPop', {
         if (reduced()) wheel.style.transition = 'transform .3s';
         wheel.getAnimations().forEach(a => a.cancel());
         wheel.style.transform = `rotate(${target}deg)`;
+        agacha('ruleta', -10, 0.15); // mientras gira, la canción se aparta
         // el puntero golpea cada vez que pasa una casilla, al ritmo real de la rueda
         if (pointer && !reduced()) {
           let lastSeg = 0, lastT = performance.now(), turns = 0, prevA = 0;
@@ -1521,12 +1522,13 @@ register('ruletaPop', {
             let ang = Math.atan2(m.b, m.a) * 180 / Math.PI; if (ang < 0) ang += 360;
             if (ang < prevA - 180) turns++; prevA = ang;
             const seg = Math.floor((turns * 360 + ang) / SEG);
-            if (seg !== lastSeg) { pointer.animate([{ rotate: '0deg' }, { rotate: '-16deg' }, { rotate: '0deg' }], { duration: Math.max(0, Math.min(160, now - lastT)), easing: 'cubic-bezier(.23,1,.32,1)' }); lastSeg = seg; lastT = now; } // el primer cuadro puede traer una hora anterior a lastT
+            if (seg !== lastSeg) { pointer.animate([{ rotate: '0deg' }, { rotate: '-16deg' }, { rotate: '0deg' }], { duration: Math.max(0, Math.min(160, now - lastT)), easing: 'cubic-bezier(.23,1,.32,1)' }); sonido('tic'); lastSeg = seg; lastT = now; } // el primer cuadro puede traer una hora anterior a lastT
             requestAnimationFrame(tickP);
           };
           requestAnimationFrame(tickP);
         }
         await wait(reduced() ? 400 : 4400);
+        agacha('ruleta', -18, 0.05); // paró: casi silencio antes del premio
         wheel.classList.remove('wheel-spin'); wheel.style.transition = 'none';
         if (!layer.isConnected) return;
       }
@@ -1539,6 +1541,7 @@ register('ruletaPop', {
         const cartel = document.createElement('div'); cartel.className = 'gira-otra'; cartel.setAttribute('role', 'status');
         cartel.innerHTML = '<b>¡Otra oportunidad!</b><span>Gira de nuevo</span>';
         zona.appendChild(cartel);
+        teoDice('otraOportunidad', { tras: 0.2 }); setTimeout(() => levanta('ruleta', 0.5), 2200);
         spun = false; btn.style.opacity = ''; btn.style.pointerEvents = ''; animate(btn, 'a-pop');
         const masTarde = find(root, 'Más tarde'); if (masTarde) masTarde.style.visibility = ''; // pueden girar ahora o dejarlo para después
         return;
@@ -1587,6 +1590,8 @@ register('ruletaPremio', {
     else if (prenda && subEl) subEl.textContent = prenda.sub; // el enlace al cuarto va aparte, no dos veces
     // halo del premio: en oscuro, luz azul clara (el dorado sobre azul se veía color barro)
     if (dark()) $$(root, 'div[aria-hidden="true"]').filter(d => /radial-gradient/.test(d.style.background) && /245,\s*219,\s*120/.test(d.style.background)).forEach(d => { d.style.background = 'radial-gradient(closest-side, rgba(255,246,221,.22), rgba(255,246,221,0))'; });
+    // el motivo largo y Teodoro festeja; la canción vuelve 1,5 s después de su voz
+    setTimeout(() => levanta('ruleta', 0.5), (Math.max(motivo('largo'), teoDice('premio', { tras: 0.9 })) + 1.5) * 1000);
     if (p.premio === 'panes' || prenda) floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
     confetti(layer, 195, 300, 36);
     const alMapa = () => go('mapa', {}, 'down', { replace: true });
@@ -1634,6 +1639,7 @@ register('premioCuarto', {
   mount(root, p, layer) {
     const n = p.day;
     confetti(layer, 195, 300, 50);
+    setTimeout(() => levanta('ruleta', 0.5), (Math.max(motivo('largo'), teoDice('premioGrande', { tras: 0.9 })) + 1.5) * 1000);
     const room = $$(root, 'img').find(i => i.src.includes(IMG.cuarto)) || $$(root, 'img')[1];
     room?.parentElement?.classList.add('a-pop');
     const nextW = RULES.ruleta.find(x => !S.ruletas[x]);
@@ -1686,6 +1692,8 @@ register('final', {
     }
     replaceText(root, /Lucía/g, S.nombre);
     setText(root, /^26$/, String(vistos())); // cuentos vistos: al llegar a Belén siempre son 26
+    // Nochebuena, la primera vez: 1,2 s de silencio, el motivo que se resuelve en «Noche de paz», «¡Gran aventura!» y entra la música
+    if (first && fase() !== 'recuerdo') { retener(12000); teoDice('nochebuena', { tras: motivo('nochebuena', 1.2) + 0.2 }); soltarTrasVoz(800); }
     const scene = $$(root, 'img')[0];
     if (first && !reduced()) {
       scene?.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 1200, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });

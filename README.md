@@ -24,7 +24,7 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   js/map.js        el mapa del camino (diseño «Mapa Diozen» del Figma) y la hoja de cada día
   js/games.js      trivia, memorama, adivinanza, desafío en familia y calificación
   js/tabbar.js     la barra de pestañas de Theo
-  js/musica.js     la música del mapa y la trivia
+  js/musica.js     el sonido: música, voces de Teodoro, efectos y motivo de Adviento
   js/assets.js     índice de imágenes del lienzo (código → archivo)
   js/app.js        SOLO PROTOTIPO: arranque y panel de controles del equipo
   screens/         las pantallas del lienzo de diseño, ya convertidas a HTML; la app las usa de base y las completa con JS
@@ -35,7 +35,7 @@ public/            la app (HTML, CSS y JavaScript sin framework)
     poster/        los 7 pósters de temporada del destacado del inicio
     ruleta/ inicio/ tabbar/   ruleta de 8 casillas, fondos del destacado y pestañas
     *.webp/png     el resto, con el código del lienzo como nombre (el índice con nombres legibles está en Drive)
-  audio/           «Burrito Sabanero» en piano, en loop
+  audio/           «Burrito Sabanero» con Eduardo (mapa), «Quiet Snow Village» (actividades) y teo/ (9 reacciones de voz de Teodoro)
 tools/             SOLO PROTOTIPO: pruebas de recorrido y capturas (Playwright); no van a la app
 ```
 
@@ -64,7 +64,7 @@ El mapa es el «Mapa Diozen» del Figma *Theo · Mapa completo (oscuro)*: el pai
 - **Free y Premium (igual en US y LATAM):** gratis los días 0, 1, 4, 8, 11, 15, 18, 22, 25 y 26; el resto con Theo Premium o el Pase de Adviento (US$19,99, pago único).
 - **Destacado del inicio:** del 29 de noviembre al 6 de enero es el póster de la temporada (Esperanza, Paz, Alegría, Amor, Nochebuena, «¡Feliz Navidad!» solo el 25 y Tiempo de Navidad). La energía de Teodoro se ve en la pieza grande de Hoy y en el tab Teodoro.
 - Al terminar cada video o canción: «¿Te gustó…?» con 5 estrellas y Compartir.
-- Música en el mapa y la trivia al 37,5 % del volumen original.
+- **Sonido** (propuesta de diseño sonoro en Drive «05 MUSICA»): el mapa con «Burrito Sabanero» con Eduardo y las trivias y actividades con «Quiet Snow Village» (panel › Avanzado › «Canción del mapa»: opción 1, 2 o 3). La música se aparta cuando habla Teodoro o gira la ruleta, baja sola si nadie toca y calla donde habla la familia (adivinanza, «Busquen la estrella»). Ritual del día: Teodoro camina en silencio, dice «¡Vamos a la aventura!» y entra la canción; en «Mañana seguimos» se despide con su final. 9 reacciones de voz de Teodoro con globo y reglas (una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma seguida, nunca encima de un diálogo de la canción), 8 efectos sintetizados y el motivo «La estrella de Teodoro». El botón de silencio calla solo la música.
 
 ## Pruebas
 

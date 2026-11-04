@@ -28,7 +28,7 @@ export const DEFAULT = () => ({
   pasoAnimado: null,   // día recién completado (animación en el mapa)
   recarga: null,       // batería antes de recargarse al terminar el día: el mapa la anima al volver
   slidesReto: false,   // slides que explican el reto al inscribirse (versión posterior; por ahora lo envía Braze): se prenden en el panel › Avanzado
-  cancionMapa: 1,      // música del mapa: 1 = la canción original, 2 = la de las actividades (panel › Avanzado, para que el equipo compare)
+  cancionMapa: 1,      // música del mapa: 1 = la canción original, 2 = la de las actividades, 3 = se turnan (panel › Avanzado, para que el equipo compare)
   vidrioPendiente: null, // recién unida: el vidrio de la card se limpia la primera vez que se ve (true | 'dedo')
   forzarPremio: '',    // panel: forzar casilla de la ruleta
   musica: true,        // música de fondo del mapa y la trivia (on/off)

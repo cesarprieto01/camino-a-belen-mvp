@@ -3,7 +3,7 @@ import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, see
   floaty, confetti, addPanes, dark, stars, _stack, cur, fase, conTodo } from './core.js';
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, JUEGOS, hasTrivia, TYPES } from './data.js';
 import { finishTrivia, finishContent, openSorpresa, panesContenido, abrirDescargable } from './flow.js';
-import { bindMute } from './musica.js';
+import { bindMute, teoDice, sonido, motivo, agacha, levanta, restoVoz } from './musica.js';
 import { celebrar } from './teo-anim.js';
 // botón de música de la cabecera (trivia y su resultado)
 const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
@@ -13,12 +13,17 @@ const speak = (text, onEnd) => {
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text); u.lang = 'es-MX'; u.rate = .95;
-    if (onEnd) { u.onend = onEnd; u.onerror = onEnd; }
-    speechSynthesis.speak(u); return true;
+    // mientras lee, la música se aparta; si Teodoro está hablando, espera a que termine
+    u.onstart = () => agacha('tts', -10);
+    const fin = () => { levanta('tts'); onEnd?.(); };
+    u.onend = fin; u.onerror = fin;
+    const espera = restoVoz();
+    if (espera) setTimeout(() => speechSynthesis.speak(u), espera + 150); else speechSynthesis.speak(u);
+    return true;
   } catch { nota('Escuchar', 'Este navegador no lee en voz alta'); return false; }
 };
 let conVoz = false; // la familia pidió escuchar: la pista y el acierto también se leen
-const callar = () => { try { speechSynthesis.cancel(); } catch { /* sin voz */ } };
+const callar = () => { try { speechSynthesis.cancel(); } catch { /* sin voz */ } levanta('tts'); };
 // botón «Escuchar» que, mientras lee, pasa a «Parar» para cortar la lectura
 const ICO_ESCUCHAR = '<path d="M4 9v6h4l5 4V5L8 9z"></path><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path>';
 const ICO_PARAR = '<rect x="6.5" y="6.5" width="11" height="11" rx="2.2" fill="currentColor" stroke="none"></rect>';
@@ -218,6 +223,8 @@ register('trivia', {
       const sp = document.createElement('div'); sp.dataset.spark = '1'; sp.innerHTML = T.sparkles; [...sp.children].forEach((s, k) => { s.classList.add('a-twinkle'); s.style.animationDelay = k * .2 + 's'; });
       root.append(...sp.children);
       setTeo(IMG.tCelebra, 'a-hop');
+      sonido('acierto');
+      teoDice(fallos ? 'aciertoTrasFallo' : i === 0 ? 'aciertoPrimero' : '', { cerca: teo });
       if (conVoz) speak('¡Correcto! ' + q.ok);
       if (fallos === 0) floaty(layer, '¡Bien!', 160, 230, null);
       showNext();
@@ -244,6 +251,8 @@ register('trivia', {
       // el fallo cuenta aunque cierren y vuelvan
       if (!p.replay) keep(n, { i, ok, h: p.h || '', f: fallos });
       setTeo(IMG.tFarol, 'a-bob');
+      sonido('casi');
+      teoDice('fallo', { cerca: teo, tras: 0.15 }); // en cada error: «¡Inténtalo de nuevo!» / «¡Tú puedes!», con el farol y la pista
       if (conVoz) speak('Pista: ' + q.pista);
     };
     // la equivocada: borde rojo, ✕ en el círculo y sin apagarla (se tiene que leer)
@@ -324,6 +333,9 @@ register('triviaFin', {
         s.style.animation = `pop .5s ${.35 + k * .22}s cubic-bezier(.2,.9,.3,1.4) both`;
       });
     }
+    // cada estrella ganada suena al aparecer (sol, si, re: la trivia perfecta completa el acorde); con menos movimiento, una sola nota
+    if (reduced()) { if (est) sonido('estrella', est - 1, 0.35); } else for (let k = 0; k < est; k++) sonido('estrella', k, 0.35 + k * 0.22);
+    if (est && (!p.replay || mejoro)) teoDice(est === 3 ? 'triviaPerfecta' : est === 2 ? 'triviaBien' : 'triviaIntento', { tras: 0.35 + (est - 1) * 0.22 + 0.35 });
     const chip = root.querySelector('[aria-label^="Ganaste 10 panes"]');
     if (mejoro) setTimeout(() => toast('¡Mejoraste tus estrellas!', `+${RULES.panes.trivia} panes`), 600);
     if (!gana && chip) chip.style.display = 'none';
@@ -350,7 +362,7 @@ function sorpresaHecha(n, layer) {
   if (first) { S.sorpresas[n] = 'hecha'; addPanes(RULES.panes.sorpresa); save(); }
   return first;
 }
-function paintFin(root, layer, n, first, bind = true) {
+function paintFin(root, layer, n, first, bind = true, voz = true) {
   // los juegos sorpresa no puntúan: las estrellas de la trivia aquí se leían como nota del juego
   root.querySelector('[role=img][aria-label^="Tus "]')?.remove();
   textEl(root, /estrellas|guardadas en el día/)?.closest('div, span')?.remove();
@@ -365,6 +377,7 @@ function paintFin(root, layer, n, first, bind = true) {
   $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).forEach(i => i.classList.add('a-hop'));
   requestAnimationFrame(() => celebrar(root)); // Teodoro salta en bucle (Lottie) donde estaba el dibujo quieto
   confetti(layer, 195, 260, 44);
+  if (first && voz) teoDice('finJuego', { tras: 0.5 });
   if (bind) { on(root, 'Volver al camino', toMapAfterGame); on(root, 'Cerrar', toMapAfterGame); }
 }
 const later = n => () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(n); };
@@ -373,7 +386,7 @@ const later = n => () => { S.sorpresas[n] = 'luego'; save(); toMapAfterGame(n); 
 register('memoramaReglas', {
   file: () => F('V2-Memorama-reglas-claro', 'V2-Memorama-reglas'),
   mount(root, p) {
-    on(root, '¡A jugar!', () => go('memorama', { day: p.day }, 'fade'));
+    on(root, '¡A jugar!', () => { teoDice('empezar'); go('memorama', { day: p.day }, 'fade'); });
     on(root, 'Ahora no', later(p.day)); on(root, 'Cerrar', later(p.day));
     $$(root, 'img').forEach((i, k) => { if (/Teodoro/.test(i.alt || '') || k === 2) i.classList.add('a-bob'); });
   },
@@ -412,7 +425,7 @@ register('memorama', {
         moves++; paint(); lock = true;
         const [a, c] = open; open = [];
         if (a.k === c.k) {
-          found++; paint(); [a, c].forEach(x => { x.b.classList.add('done'); x.b.setAttribute('aria-label', `${NAMES[k]}, pareja encontrada`); x.b.setAttribute('aria-disabled', 'true'); }); navigator.vibrate?.(20);
+          found++; paint(); [a, c].forEach(x => { x.b.classList.add('done'); x.b.setAttribute('aria-label', `${NAMES[k]}, pareja encontrada`); x.b.setAttribute('aria-disabled', 'true'); }); navigator.vibrate?.(20); sonido('acierto');
           if (hintEl) hintEl.textContent = found === 6 ? '¡Encontraste todas!' : `¡Pareja! ${NAMES[k]}`;
           lock = false;
           if (found === 6) { await wait(700); go('memoramaFin', { day: n, moves }, 'fade'); }
@@ -446,7 +459,7 @@ register('memoramaFin', {
 register('adivinanzaIntro', {
   file: () => F('V2-Adivinanza-intro-claro', 'V2-Adivinanza-intro'),
   mount(root, p) {
-    on(root, '¡A jugar!', () => go('adivinanza', { day: p.day, words: shuffle(ADIVINANZA).slice(0, 5), k: 0, res: [] }, 'fade'));
+    on(root, '¡A jugar!', () => { teoDice('empezar'); go('adivinanza', { day: p.day, words: shuffle(ADIVINANZA).slice(0, 5), k: 0, res: [] }, 'fade'); });
     on(root, 'Ahora no', later(p.day)); on(root, 'Cerrar', later(p.day));
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
   },
@@ -514,7 +527,7 @@ register('adivinanza', {
       const r = [...res, { w: w.w, ok }];
       if (card) card.animate([{ transform: 'none', opacity: 1 }, { transform: `translateX(${ok ? 420 : -420}px) rotate(${ok ? 12 : -12}deg)`, opacity: 0 }], { duration: 320, easing: 'ease-in', fill: 'forwards' });
       seen(ok ? 'V2-Adivinanza-siguiente-claro' : 'V2-Adivinanza-pasar-claro');
-      if (ok) { floaty(layer, '¡Sí!', 170, 300, null); navigator.vibrate?.(20); }
+      if (ok) { floaty(layer, '¡Sí!', 170, 300, null); navigator.vibrate?.(20); sonido('acierto'); }
       setTimeout(() => k < 4 ? go('adivinanza', { ...p, k: k + 1, res: r }, 'none') : go('adivinanzaFin', { day: n, res: r }, 'fade'), 330);
     };
     if (timer) { timer.removeAttribute('role'); timer.style.cursor = 'default'; }
@@ -527,6 +540,7 @@ register('adivinanzaTiempo', {
   file: () => F('V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-tiempo'),
   mount(root, p) {
     softHead(root);
+    sonido('tiempo'); // se acabó el tiempo: una campanita (quien da las pistas no mira la pantalla)
     const w = p.words[p.k];
     setText(root, 'ESTRELLA', w.w);
     const img = $$(root, 'img').find(i => i.src.includes(IMG.estrella)); if (img) img.src = A(IMG[w.img]);
@@ -569,7 +583,7 @@ register('desafioIntro', {
   file: () => F('V2-Desafio-intro-claro', 'V2-Desafio-intro'),
   mount(root, p) {
     const salir = p.fromHub ? () => back('hub') : later(p.day);
-    on(root, '¡Vamos!', () => go('desafio', { day: p.day, fromHub: p.fromHub, replay: p.replay }, 'fade'));
+    on(root, '¡Vamos!', () => { teoDice('empezar'); go('desafio', { day: p.day, fromHub: p.fromHub, replay: p.replay }, 'fade'); });
     on(root, 'Ahora no', salir); on(root, 'Cerrar', salir);
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
   },
@@ -629,7 +643,7 @@ register('desafio', {
         onda.animate([{ scale: '1', opacity: .9 }, { scale: '1.9', opacity: 0 }], { duration: 560, delay: GOLPE, easing: 'cubic-bezier(.2,.8,.3,1)' });
       }
       setTimeout(() => {
-        navigator.vibrate?.(30);
+        navigator.vibrate?.(30); sonido('sello'); teoDice('sello', { tras: 0.15 });
         confetti(layer, 322, 406, 60);
         // Teodoro deja el mapa y festeja
         const teo = $$(root, 'img').find(i => /Teodoro/.test(i.alt || ''));
@@ -679,7 +693,7 @@ register('desafioFin', {
     $$(root, 'img').forEach(i => { i.addEventListener('error', () => { i.src = A(IMG.corona); }, { once: true }); if (i.complete && !i.naturalWidth) i.src = A(IMG.corona); });
     const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
     const first = sorpresaHecha(p.day, layer);
-    paintFin(root, layer, p.day, first);
+    paintFin(root, layer, p.day, first, true, !p.sellado); // ya se selló en la carta grande: Teodoro ya lo dijo ahí
   },
 });
 
@@ -781,7 +795,7 @@ register('juegoIntro', {
     titulo?.animate([{ scale: '.6', opacity: 0 }, { scale: '1.06', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 520, delay: 120, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
     on(root, 'Volver', alMapa);
     on(root, 'Escuchar a Teodoro', explicar);
-    on(root, '¡A jugar!', () => go('juegoPasos', { day: n, i: 1, replay: p.replay }, 'push', { replace: true }));
+    on(root, '¡A jugar!', () => { teoDice('empezar'); go('juegoPasos', { day: n, i: 1, replay: p.replay }, 'push', { replace: true }); });
     // «También hoy»: el imprimible y la canción del día (con free piden Premium)
     const imp = textEl(root, 'Imprimible'), can = textEl(root, 'Canción');
     if (imp) on(root, imp, () => abrirDescargable(n, 'juegoIntro'));
@@ -914,7 +928,7 @@ register('juegoCarta', {
       const t = grande(cc); if (t) t.textContent = j.encontrada[ronda % j.encontrada.length].toUpperCase();
       const pie = $$(cc, 'span').find(s => /pesebre/.test(s.textContent)); if (pie) pie.innerHTML = 'Al terminar, la ponen junto al <b style="font-weight: 700">pesebre</b>';
       estado = 'encontrada'; etiqueta(j.otra);
-      navigator.vibrate?.(30); confetti(layer, 195, 400, 40);
+      navigator.vibrate?.(30); confetti(layer, 195, 400, 40); sonido('acierto'); teoDice('encontrada');
       $$(cc, 'img').forEach(im => im.classList.add('a-hop'));
     });
     if (principal) on(root, principal, () => j.id === 'estrella' && estado === 'tapada' ? encontrada() : siguiente());
@@ -937,7 +951,7 @@ register('juegoFin', {
     const n = p.day, j = JUEGOS[n];
     const panes = textEl(root, /panes para Teodoro/);
     if (panes) panes.textContent = p.first ? `+${panesContenido()} panes para Teodoro` : 'Ya ganaste estos panes';
-    if (p.first) floaty(layer, `+${panesContenido()}`, 250, 560);
+    if (p.first) { floaty(layer, `+${panesContenido()}`, 250, 560); motivo('largo'); teoDice('finSemana', { tras: 0.9 }); } // cierra la semana
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-hop'));
     requestAnimationFrame(() => celebrar(root, i => /Teodoro/.test(i.alt || ''))); // salta en bucle (Lottie)
     const titulo = [...root.children].find(el => el.style.transform === 'rotate(-4deg)');

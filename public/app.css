@@ -772,3 +772,8 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .rs-cerrar:focus-visible, .rs-cta:focus-visible { outline: 3px solid #F5DB78; outline-offset: 3px; }
 .rs-claro .rs-cerrar:focus-visible, .rs-claro .rs-cta:focus-visible { outline-color: #0B748A; }
 @media (prefers-reduced-motion: reduce) { .rs-puntos i { transition: none; } }
+
+/* Lo que dice Teodoro: un globo junto a su cabeza mientras habla (también para quien no oye o tiene el teléfono en silencio) */
+.teo-globo { position: absolute; z-index: 45; pointer-events: none; padding: 8px 14px; border-radius: 18px; background: #FFFFFF; color: #06325A;
+  font: 800 16px/1.2 'Neue Montreal', Mulish, system-ui, sans-serif; white-space: nowrap; box-shadow: 0 8px 20px rgba(4,14,36,.22); transform-origin: var(--cola, 50%) 100%; }
+.teo-globo::after { content: ''; position: absolute; left: calc(var(--cola, 50%) - 7px); bottom: -6px; width: 14px; height: 14px; background: inherit; border-radius: 3px; transform: rotate(45deg); }
