@@ -4,7 +4,7 @@ import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, see
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, JUEGOS, hasTrivia, TYPES } from './data.js';
 import { finishTrivia, finishContent, openSorpresa, panesContenido, abrirDescargable } from './flow.js';
 import { bindMute, teoDice, sonido, motivo, agacha, levanta, restoVoz } from './musica.js';
-import { celebrar, pensar, quieto, pasarA, animadoCon, precargar, MAPA, MAPA_A_FAROL, FAROL } from './teo-anim.js';
+import { celebrar, pensar, quieto, pasarA, animadoCon, precargar, MAPA, MAPA_A_FAROL, FAROL, FAROL_A_MAPA } from './teo-anim.js';
 // botón de música de la cabecera (trivia y su resultado)
 const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
 
@@ -129,11 +129,17 @@ register('trivia', {
     card?.classList.add('a-rise');
     listenButton(root, layer, q.q + '. ' + q.o.map(o => o.t || o).join(', '));
     const teo = $$(root, 'img').find(im => im.src.includes(IMG.tPregunta));
-    // al fallar, Teodoro animado con su mapa lo guarda y saca el farol (transición) y sigue con el farol en bucle; si ya lo tiene, sigue igual.
-    // Al acertar (o si no hay animación) sale el dibujo quieto que toca
+    // al fallar, Teodoro animado con su mapa lo guarda y saca el farol (la pista); tras una vuelta del farol vuelve a pensar con el mapa.
+    // Si ya tiene el farol, sigue igual. Al acertar (o si no hay animación) sale el dibujo quieto que toca
+    const alFarol = async () => {
+      teo.src = A(IMG.tFarol);
+      const farol = await pasarA(teo, MAPA_A_FAROL, FAROL);
+      farol?.anim.addEventListener('loopComplete', () => { if (!animadoCon(teo, FAROL)) return; teo.src = A(IMG.tPregunta); pasarA(teo, FAROL_A_MAPA, MAPA); });
+    };
     const setTeo = (id, cls) => {
       if (!teo) return;
-      if (id === IMG.tFarol && (animadoCon(teo, MAPA) || animadoCon(teo, FAROL))) { if (animadoCon(teo, MAPA)) pasarA(teo, MAPA_A_FAROL, FAROL); teo.src = A(id); return; }
+      if (id === IMG.tFarol && animadoCon(teo, MAPA)) { alFarol(); return; }
+      if (id === IMG.tFarol && animadoCon(teo, FAROL)) return;
       if (id !== IMG.tPregunta) quieto(teo);
       teo.src = A(id); teo.classList.remove('a-hop', 'a-bob', 'a-shake'); void teo.offsetWidth; cls && teo.classList.add(cls);
     };
@@ -141,7 +147,7 @@ register('trivia', {
     // en lista (o con pregunta de 3 líneas), Teodoro un poco más chico y la pregunta más arriba: caben las opciones y el aviso
     if (card && (list || card.offsetHeight > 160)) { card.style.top = '222px'; teo?.classList.add('tv-teo-sm'); }
     requestAnimationFrame(() => pensar(root)); // Teodoro con su mapa se mueve en bucle (Lottie)
-    precargar(MAPA_A_FAROL); precargar(FAROL); // si fallan, la transición al farol sale sin esperar la descarga
+    [MAPA_A_FAROL, FAROL, FAROL_A_MAPA].forEach(precargar); // si fallan, las transiciones salen sin esperar la descarga
 
     const group = root.querySelector('[role=group]');
     const tplOpt = group.children[0].outerHTML;
