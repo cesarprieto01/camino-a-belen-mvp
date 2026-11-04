@@ -8,9 +8,12 @@ const LIB = 'vendor/lottie_light.min.js';
 // el lienzo de cada animación y lo que mide Teodoro de pie dentro de él (los pies tocan el borde de abajo)
 export const CAMINA = { nombre: 'teo-caminando', w: 324, h: 600, pie: 592 }; // mira a la derecha: hacia la izquierda se voltea
 export const CELEBRA = { nombre: 'teo-celebra', w: 875, h: 1522, pie: 1167 }; // recortado a Teodoro con sus saltos, centrado en él de pie
-// con su mapa, pensando: el mismo dibujo que IMG.tPregunta. «reposo»: repite el tramo [0, hasta) (piensa sin alejarse de la pose,
-// ~1 s) unas «vueltas» y después deja correr la actuación completa (lee el mapa); «salidas»: tramos [desde, hasta) con la pose de unión
-export const MAPA = { nombre: 'teo-mapa', w: 292, h: 482, pie: 472, reposo: { hasta: 23, vueltas: 4 }, salidas: [[0, 8], [17, 23], [116, 121]] };
+// con su mapa, pensando: el mismo dibujo que IMG.tPregunta; la actuación completa en bucle (5 s). «salidas»: tramos [desde, hasta)
+// del bucle con la pose de unión, donde puede empezar una transición
+export const MAPA = { nombre: 'teo-mapa', w: 292, h: 482, pie: 472, salidas: [[0, 8], [17, 23], [116, 121]] };
+// en la trivia, donde reacciona con transiciones: repite el tramo [0, hasta) (piensa sin alejarse de la pose, ~1 s) unas «vueltas»
+// y después lee el mapa completo, así casi siempre está listo para reaccionar sin corte
+export const MAPA_PIENSA = { ...MAPA, reposo: { hasta: 23, vueltas: 4 } };
 // encadenadas con el mapa en la trivia: cada una salió con su propio recorte, así que llevan dónde quedan los pies de Teodoro
 // («x», «suelo») y lo que mide de pie, medidos superponiendo los cuadros donde se unen
 export const MAPA_A_FAROL = { nombre: 'teo-mapa-a-farol', w: 434, h: 600, pie: 587.5, x: 271.7, suelo: 593.9 }; // guarda el mapa y saca el farol (1,5 s)
@@ -147,14 +150,15 @@ export function celebrar(root, cual = img => /^Teodoro celebra/.test(img.alt || 
 }
 
 /** Cambia a Teodoro con su mapa, pensando (IMG.tPregunta), por el que se mueve en bucle: trivia, «¿Jugamos?», el juego del teléfono
- *  y el póster de Nochebuena. Copia la sombra, el brillo y la capa del dibujo; el póster lo centra con translateX(-50%). */
-export function pensar(root) {
+ *  y el póster de Nochebuena. Copia la sombra, el brillo y la capa del dibujo; el póster lo centra con translateX(-50%).
+ *  «anim»: la actuación completa (MAPA) o, en la trivia, con reposo (MAPA_PIENSA). */
+export function pensar(root, anim = MAPA) {
   if (reduced()) return;
   const es = img => img.src.includes(IMG.tPregunta);
   $$(root, 'img').filter(i => es(i) && i.offsetParent).forEach(async img => {
     await img.decode().catch(() => {}); // el póster saca el ancho de la imagen
     if (!img.offsetHeight || encima.has(img) || !es(img)) return;
     const cs = getComputedStyle(img);
-    sobreDibujo(img, MAPA, { dx: cs.transform === 'none' ? 0 : new DOMMatrix(cs.transform).e, estilo: { filter: cs.filter, zIndex: cs.zIndex }, sigue: () => es(img) && img.isConnected });
+    sobreDibujo(img, anim, { dx: cs.transform === 'none' ? 0 : new DOMMatrix(cs.transform).e, estilo: { filter: cs.filter, zIndex: cs.zIndex }, sigue: () => es(img) && img.isConnected });
   });
 }
