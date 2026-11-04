@@ -395,7 +395,12 @@ function notesMarkdown() {
 }
 const syncTheme = () => { document.documentElement.dataset.theme = S.tema === 'oscuro' ? 'dark' : 'light'; document.querySelector('meta[name=theme-color]')?.setAttribute('content', S.tema === 'oscuro' ? '#00082B' : '#EAF4F8'); };
 // la isla dinámica y las zonas seguras del iPhone en el teléfono simulado (panel › Avanzado › iPhone)
-const syncIphone = () => { document.body.classList.toggle('con-isla', S.isla !== false); document.body.classList.toggle('con-zonas', !!S.zonas); };
+// (se crean aquí: el MVP se abre tanto desde index.html como desde app.html)
+const syncIphone = () => {
+  const phone = document.getElementById('phone');
+  ['isla', 'zonas'].forEach(id => { if (phone && !document.getElementById(id)) { const d = document.createElement('div'); d.id = id; d.setAttribute('aria-hidden', 'true'); phone.appendChild(d); } });
+  document.body.classList.toggle('con-isla', S.isla !== false); document.body.classList.toggle('con-zonas', !!S.zonas);
+};
 let rT; onChange(() => { syncTheme(); syncIphone(); clearTimeout(rT); rT = setTimeout(() => { if (document.activeElement?.id !== 'note' && document.activeElement?.id !== 'nPan') render(); }, 60); });
 
 // ---------- Arranque ----------
