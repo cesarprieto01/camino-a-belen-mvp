@@ -30,6 +30,17 @@ div, span, a, button, p, b, strong, em, label { text-wrap: pretty; }
 }
 #viewport { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; background: #000; isolation: isolate; }
 
+/* Isla dinámica con sus medidas reales (iPhone 15 y 16: 126 × 37 pt, centrada a 11 pt del borde) y las zonas seguras: arriba 59 pt
+   (barra de estado e isla) y abajo 34 pt (indicador de inicio). Se prenden en el panel › Avanzado › iPhone */
+#isla, #zonas { display: none; position: absolute; z-index: 260; pointer-events: none; }
+.con-isla #isla { display: block; left: 142px; top: 21px; width: 126px; height: 37px; border-radius: 18.5px; background: #000; } /* 10 del marco + 195 − 63; 10 + 11 */
+.con-zonas #zonas { display: block; left: 10px; top: 10px; width: 390px; height: 844px; border-radius: 48px; overflow: hidden; }
+#zonas::before, #zonas::after { position: absolute; left: 0; right: 0; display: flex; justify-content: flex-start; padding: 0 14px; box-sizing: border-box;
+  background: repeating-linear-gradient(-45deg, rgba(255,64,129,.30) 0 6px, rgba(255,64,129,.12) 6px 12px);
+  color: #FFFFFF; font: 800 10px/1 'Neue Montreal', Mulish, system-ui, sans-serif; letter-spacing: .02em; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+#zonas::before { content: 'ZONA SEGURA · 59 pt'; top: 0; height: 59px; align-items: flex-end; padding-bottom: 4px; border-bottom: 1.5px dashed #FF4081; }
+#zonas::after { content: 'INDICADOR DE INICIO · 34 pt'; bottom: 0; height: 34px; align-items: flex-start; padding-top: 4px; border-top: 1.5px dashed #FF4081; }
+
 /* En celular: la app ocupa toda la pantalla, sin marco */
 @media (max-width: 760px) {
   #stage { padding: 0; gap: 0; }
@@ -37,7 +48,11 @@ div, span, a, button, p, b, strong, em, label { text-wrap: pretty; }
   #phone { width: 390px; height: 844px; padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
   #viewport { border-radius: 0; }
   body { background: #000; }
+  .con-isla #isla { left: 132px; top: 11px; }
+  .con-zonas #zonas { left: 0; top: 0; border-radius: 0; }
 }
+/* en un iPhone de verdad ya está la suya */
+@media (max-width: 760px) and (pointer: coarse) { .con-isla #isla { display: none; } }
 
 /* ---------- Capas de pantalla ---------- */
 .layer { position: absolute; inset: 0; overflow: hidden; background: transparent; isolation: isolate; } /* lo de una pantalla nunca se cuela sobre otra */

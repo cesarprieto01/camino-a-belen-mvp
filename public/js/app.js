@@ -272,6 +272,11 @@ function render() {
       <div class="p-row"><label>Slides del reto</label><span class="seg">${[['1', 'Prendidos'], ['0', 'Apagados']].map(([v, l]) => `<button data-slides="${v}" aria-pressed="${!!S.slidesReto === (v === '1')}">${l}</button>`).join('')}</span></div>
       <p class="p-help">Al tocar «Únete al reto», 3 slides cuentan de qué trata antes de «¡Ya estás dentro!». Es para una versión posterior: por ahora lo envía Braze.</p>
     </section>
+    <section class="p-group"><h2>iPhone</h2>
+      <div class="p-row"><label>Isla dinámica</label><span class="seg">${[['1', 'Sí'], ['0', 'No']].map(([v, l]) => `<button data-isla="${v}" aria-pressed="${(S.isla !== false) === (v === '1')}">${l}</button>`).join('')}</span></div>
+      <div class="p-row"><label>Zonas seguras</label><span class="seg">${[['1', 'Mostrar'], ['0', 'Ocultar']].map(([v, l]) => `<button data-zonas="${v}" aria-pressed="${!!S.zonas === (v === '1')}">${l}</button>`).join('')}</span></div>
+      <p class="p-help">Medidas del iPhone 15 y 16: isla de 126 × 37 pt a 11 pt del borde; zona segura de 59 pt arriba y 34 pt abajo.</p>
+    </section>
     <section class="p-group"><h2>Música</h2>
       <div class="p-row"><label>Canción del mapa</label><span class="seg">${[[1, 'Opción 1'], [2, 'Opción 2'], [3, 'Opción 3']].map(([v, l]) => `<button data-cancion="${v}" aria-pressed="${([2, 3].includes(S.cancionMapa) ? S.cancionMapa : 1) === v}">${l}</button>`).join('')}</span></div>
       <p class="p-help">Opción 1: la canción original. Opción 2: la misma música de las trivias y los juegos. Opción 3: se turnan, una vuelta cada una. Para probar cuál acompaña mejor el mapa.</p>
@@ -333,6 +338,8 @@ panel.addEventListener('click', e => {
   if (t.dataset.tema) { S.tema = t.dataset.tema; save(); if (cur?.name === 'estatica') go('hoy', {}, 'fade'); else go(cur?.name || 'hoy', cur?.params || {}, 'fade', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if (t.dataset.ins) { S.inscrito = t.dataset.ins === '1'; save(); go('hoy', {}, 'fade'); return; }
   if (t.dataset.slides) { S.slidesReto = t.dataset.slides === '1'; save(); nota(S.slidesReto ? 'Slides del reto prendidos' : 'Slides del reto apagados', S.slidesReto ? 'Salen al tocar «Únete al reto»' : ''); return; }
+  if (t.dataset.isla) { S.isla = t.dataset.isla === '1'; save(); return; }
+  if (t.dataset.zonas) { S.zonas = t.dataset.zonas === '1'; save(); return; }
   if (t.dataset.cancion) { S.cancionMapa = +t.dataset.cancion; save(); musicaPara(); render(); nota(`Mapa con la opción ${S.cancionMapa}`, ['La canción original', 'La misma música de las trivias y los juegos', 'Las dos, una vuelta cada una'][S.cancionMapa - 1]); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
@@ -387,12 +394,14 @@ function notesMarkdown() {
   return lines.join('\n');
 }
 const syncTheme = () => { document.documentElement.dataset.theme = S.tema === 'oscuro' ? 'dark' : 'light'; document.querySelector('meta[name=theme-color]')?.setAttribute('content', S.tema === 'oscuro' ? '#00082B' : '#EAF4F8'); };
-let rT; onChange(() => { syncTheme(); clearTimeout(rT); rT = setTimeout(() => { if (document.activeElement?.id !== 'note' && document.activeElement?.id !== 'nPan') render(); }, 60); });
+// la isla dinámica y las zonas seguras del iPhone en el teléfono simulado (panel › Avanzado › iPhone)
+const syncIphone = () => { document.body.classList.toggle('con-isla', S.isla !== false); document.body.classList.toggle('con-zonas', !!S.zonas); };
+let rT; onChange(() => { syncTheme(); syncIphone(); clearTimeout(rT); rT = setTimeout(() => { if (document.activeElement?.id !== 'note' && document.activeElement?.id !== 'nPan') render(); }, 60); });
 
 // ---------- Arranque ----------
 (async () => {
   fit();
-  syncTheme();
+  syncTheme(); syncIphone();
   await boot();
   syncSections();
   prefetch(['V2-01-Hoy-completo', 'V2-Mapa-completo-claro', 'V2-Mapa-dia0-claro', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-06c-Trivia-varias-claro', 'V2-07-Correcto-claro', 'V2-08-Pista-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado']);
