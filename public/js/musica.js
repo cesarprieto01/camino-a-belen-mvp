@@ -35,7 +35,11 @@ const REPOSO_PANTALLA = { cerrado: [10, 25], hub: [30, 60], desafio: [30, 60] };
 // al irse a estas pantallas Teodoro deja de hablar enseguida
 const CORTA_VOZ = new Set(['reproductor', 'hoy', 'teodoro', 'mundos']);
 const RULETA = new Set(['ruletaPop', 'ruletaPremio', 'premioCuarto']);
+// en la trivia Teodoro habla sin globo (César: tapaba la escena)
+const SIN_GLOBO = new Set(['trivia', 'triviaFin']);
 const dB = d => 10 ** (d / 20);
+// la voz de Teodoro: César la pidió un 35 % más baja que el -20 LUFS de la propuesta
+const VOZ = 0.65;
 const noche = () => S.tema === 'oscuro' || new Date().getHours() + new Date().getMinutes() / 60 >= 19.5;
 
 let relevo = 'burrito', relevoT0 = 0; // opción 3: se turnan una vuelta cada una
@@ -58,7 +62,7 @@ function montar() {
   hueco = filtro('peaking', { frequency: 2000, Q: 0.8, gain: 0 }); // se abre solo si Teodoro habla sobre la canción con voz
   [gNivel, gEvento, gVozDuck, gReposo, busVoz, busSfx] = [gan(), gan(), gan(), gan(), gan(), gan()];
   lp.connect(gNivel); gNivel.connect(gEvento); gEvento.connect(gVozDuck); gVozDuck.connect(hueco); hueco.connect(gReposo); gReposo.connect(ctx.destination);
-  busVoz.connect(ctx.destination); busSfx.connect(ctx.destination);
+  busVoz.gain.value = VOZ; busVoz.connect(ctx.destination); busSfx.connect(ctx.destination);
   for (const id in PISTAS) {
     const { type, ...o } = PISTAS[id].eq, eq = filtro(type, o), g = gan(0);
     eq.connect(g); g.connect(lp);
@@ -296,7 +300,7 @@ export function teoDice(momento, { tras = 0, cerca = null } = {}) {
     } };
     vozActual = yo; ultimoSonido = performance.now();
     src.onended = () => { if (vozActual === yo) vozActual = null; if (!actual) quizaDormir(); };
-    globo(v.t, cerca, capa, dur);
+    if (!SIN_GLOBO.has(cur?.name)) globo(v.t, cerca, capa, dur);
   };
   tras > 0 ? setTimeout(decir, tras * 1000) : decir();
   return tras + dur;
