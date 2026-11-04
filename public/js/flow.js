@@ -5,7 +5,7 @@ import { S, save, A, cur, $, $$, on, find, go, back, register, seen, toast, nota
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
 import './musica.js'; // música de fondo del mapa y la trivia
 import { rateRow } from './games.js';
-import { teoAnimado, CAMINA, CELEBRA } from './teo-anim.js';
+import { celebrar } from './teo-anim.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = conTodo; // Theo Premium o Pase de Adviento
@@ -772,11 +772,18 @@ register('teaser', {
 });
 // Slides que cuentan de qué trata el reto, al inscribirse y antes de «¡Ya estás dentro!» (pedido de Rodrigo para una versión posterior;
 // mientras tanto lo envía Braze). Se prenden en el panel › Avanzado › «Slides del reto». Usan la misma ventana que la invitación.
+// Diseño aprobado en el lienzo «Slides del reto · Adviento» (dirección A, claro y oscuro): el mapa con Teodoro en el día de hoy,
+// lo que mira y juega (un cuento, el nacimiento de Jesús y una trivia, cada uno con su mazo detrás) y la ruleta con premios de verdad.
 const SLIDES = [
-  { vis: 'camino', t: 'Un camino de 26 días', d: 'Del 29 de noviembre a Nochebuena, cada día das un paso con Teodoro hacia el pesebre.' },
-  { vis: 'pregunta', t: 'Cada día, algo nuevo', d: 'Un cuento, una canción o un video corto, y una trivia para jugar en familia.' },
-  { vis: 'celebra', t: 'Sorpresas en el camino', d: 'Gana panes para Teodoro, gira ruletas con premios y juega en familia.' },
+  { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día en el mapa con Teodoro.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
+  { vis: 'aprende', t: '¡Mira, juega y canta!', d: 'Cuentos, trivias, juegos y canciones de la Navidad, todos los días.', alt: 'Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia' },
+  { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Junta estrellas, panes para Teodoro, prendas y sorpresas.', alt: 'La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes' },
 ];
+// chispas de cuatro puntas: [left, top, tamaño, opacidad]
+const chispas = (l, clase = '') => l.map(([x, y, s, o = 1]) => `<svg class="rs-chispa ${clase}" viewBox="0 0 24 24" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${o}"><path d="M12 1.5 14 10 22.5 12 14 14 12 22.5 10 14 1.5 12 10 10Z"/></svg>`).join('');
+const PLAY = '<svg width="10" height="10" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5Z" fill="#F5DB78"/></svg>';
+const PREGUNTA = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F5DB78" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2.2-2.4 3.6"/></svg>';
+const CONFETI = [[30, 60, 7, 12, 24], [70, 22, 6, 10, -30], [252, 26, 7, 12, -18], [296, 70, 6, 10, 36], [14, 170, 7, 11, -44], [326, 190, 7, 12, 20]];
 register('retoSlides', {
   h1: 'Así es el reto',
   files: F('P-Teaser-a', 'P-Teaser-a-oscuro'),
@@ -785,52 +792,118 @@ register('retoSlides', {
     const listo = () => go('listo', { nueva: true, from: p.from }, 'fade', { replace: true });
     const caja = root.querySelector('[role=dialog]');
     if (!caja) return listo();
-    const tema = dark() ? 'noche' : 'dia', quieto = reduced();
-    caja.setAttribute('aria-label', 'Así es el reto'); caja.classList.add('rs');
-    caja.innerHTML = `<button type="button" class="rs-saltar">Saltar</button>
-      <div class="rs-pista" role="group" aria-roledescription="carrusel" aria-label="Así es el reto">${SLIDES.map((sl, i) => `
-        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="${i + 1} de ${SLIDES.length}: ${sl.t}">
-          <div class="rs-vis rs-${sl.vis}"${sl.vis === 'camino' ? ` style="background-image:url(assets/mapa/${tema}-0.webp?v=2)"` : ''}>
-            ${sl.vis === 'pregunta' ? `<img class="rs-teo" src="${A(IMG.tPregunta)}" alt="">` : ''}
-            ${sl.vis === 'celebra' ? [[34, 64], [278, 104], [48, 248]].map(([x, y], k) => `<img class="rs-pan a-bob" src="${A(IMG.pan)}" alt="" style="left:${x}px;top:${y}px;animation-delay:${k * .4}s">`).join('') : ''}
-          </div>
+    const quieto = reduced(), oscuro = dark(), W = 350, N = SLIDES.length;
+    caja.setAttribute('aria-label', 'Así es el reto'); caja.classList.add('rs'); caja.classList.toggle('rs-claro', !oscuro);
+    const VIS = {
+      camino: `<div class="rs-mundo"><img class="rs-mapa" src="assets/slides/mapa-${oscuro ? 'noche' : 'dia'}.webp" alt=""><div class="rs-aro"></div>
+        <img class="rs-teo-hoy" src="${A('345591e97560d37b84ead12837ff9c75')}" alt="">
+        <span class="rs-pill rs-hoy"><i></i>Hoy</span>
+        <span class="rs-pill rs-hecho"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Hecho</span></div>
+        <div class="rs-mapa-velo"></div>`,
+      aprende: `${chispas([[47, 380, 16], [164, 427, 22], [272, 369, 16]])}<div class="rs-luz"></div>
+        <div class="rs-mazo rs-izq"></div><div class="rs-mazo rs-der"></div>
+        ${chispas([[34, 92, 16], [308, 104, 13, .9], [168, 30, 12, .8], [22, 322, 12, .7], [316, 312, 15]])}
+        <div class="rs-card rs-izq rs-cuento">${oscuro ? '<img class="rs-card-fondo" src="assets/poster/s3-pastores.webp" alt="">' : ''}
+          <img class="rs-oveja" src="${A('183c744879d8ae7dd89b10934cde465c')}" alt=""><span class="rs-chip">${PLAY}Cuento · 5 min</span></div>
+        <div class="rs-card rs-der rs-trivia"><div class="rs-trivia-luz"></div><img class="rs-sorpresa" src="assets/ruleta/sorpresa.webp" alt="">
+          ${chispas([[16, 24, 14], [104, 108, 12, .85]], 'rs-suave')}<span class="rs-chip">${PREGUNTA}Trivia</span></div>
+        <div class="rs-mazo rs-centro"></div>
+        <div class="rs-card rs-centro"><img class="rs-nacimiento" src="assets/poster/navidad.webp" alt="">
+          ${chispas([[84, 108, 12], [150, 96, 10, .85]], 'rs-suave')}<div class="rs-card-velo"></div><span class="rs-chip">${PLAY}El nacimiento de Jesús</span></div>`,
+      gana: `<div class="rs-rayos"></div><div class="rs-brillo"></div>
+        <div class="rs-ruleta"><div class="rs-rueda"><img src="assets/ruleta/rueda8.webp" alt="">${casillas(279, A(IMG.bufanda))}</div></div><img class="rs-puntero" src="${A('3fdb655b7743b5a7a821153429c4d733')}" alt="">
+        <img class="rs-premio rs-izq" src="assets/slides/premio-gorro.webp" alt=""><img class="rs-premio rs-der" src="assets/slides/premio-bufanda.webp" alt="">
+        <img class="rs-premio rs-centro" src="assets/slides/premio-trivia.webp" alt="">
+        ${CONFETI.map(([x, y, w, h, r], k) => `<i class="rs-confeti" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:rotate(${r}deg);background:${(oscuro ? ['#F5DB78', '#5ED3E8', '#FF9AB8', '#FFFFFF', '#5ED3E8', '#F5DB78'] : ['#F0C446', '#1F9DB8', '#F27FA5', '#F0C446', '#1F9DB8', '#F27FA5'])[k]}"></i>`).join('')}`,
+    };
+    caja.innerHTML = `<div class="rs-cielo" aria-hidden="true"></div>
+      <div class="rs-pista">${SLIDES.map((sl, i) => `
+        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="${i + 1} de ${N}">
+          <div class="rs-vis rs-${sl.vis}" role="img" aria-label="${sl.alt}">${VIS[sl.vis]}</div>
           <div class="rs-txt"><h2>${sl.t}</h2><p>${sl.d}</p></div>
         </section>`).join('')}</div>
+      <button type="button" class="rs-cerrar" aria-label="Cerrar"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <div class="rs-puntos" aria-hidden="true">${SLIDES.map(() => '<i></i>').join('')}</div>
       <button type="button" class="rs-cta"></button>`;
     const pista = caja.querySelector('.rs-pista'), slides = [...caja.querySelectorAll('.rs-slide')], puntos = [...caja.querySelectorAll('.rs-puntos i')], cta = caja.querySelector('.rs-cta');
-    // Teodoro en cada slide: camina hacia el pesebre sobre las piedras del día 26 y celebra en el último (quieto si se pidió menos movimiento)
-    const W = 350, k = W / 390; // el mapa mide 390 de ancho; la ventana, 350
-    const vis = i => slides[i].querySelector('.rs-vis');
-    if (quieto) {
-      vis(0).insertAdjacentHTML('beforeend', `<img class="rs-teo-mapa" src="${A('4b563b5c264cac11814acc731db9db86')}" alt="">`);
-      vis(2).insertAdjacentHTML('beforeend', `<img class="rs-teo" src="${A(IMG.tCelebra)}" alt="">`);
-    } else {
-      teoAnimado(vis(0), CAMINA, { cx: 137.5 * k, pies: (380 - 40) * k, alto: 132 });
-      teoAnimado(vis(2), CELEBRA, { cx: W / 2, pies: 352, alto: 236 });
-    }
-    let i = 0;
+    // Teodoro salta de alegría, en bucle, en el día de hoy del mapa (quieto si se pidió menos movimiento)
+    celebrar(slides[0], img => img.classList.contains('rs-teo-hoy'));
+    // la entrada de cada slide, la primera vez que se ve. Se preparan en pausa en su comienzo (al arrastrar ya se ve cómo arranca)
+    // y corren al llegar; con menos movimiento quedan quietas en su lugar
+    const anima = (el, k, o) => el.animate(k, { fill: 'backwards', easing: 'cubic-bezier(.34,1.3,.64,1)', ...o });
+    const en = (n, s) => slides[n].querySelector(s), todos = (n, s) => [...slides[n].querySelectorAll(s)];
+    const brillan = (n, d) => todos(n, '.rs-vis > .rs-chispa').map((el, k) => anima(el, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: el.style.opacity, transform: 'scale(1)' }], { duration: 420, delay: d + k * 70 }));
+    const ENTRADA = [
+      // 1 · subimos por el camino desde el día 9 («Hecho») hasta Teodoro, que salta en el día de hoy: brilla su aro y aparece «Hoy»
+      () => [
+        anima(en(0, '.rs-mundo'), [{ transform: 'translateY(-112px) scale(1.25)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 1500, delay: 250, easing: 'cubic-bezier(.45,0,.2,1)' }),
+        anima(en(0, '.rs-hecho'), [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 380, delay: 500 }),
+        anima(en(0, '.rs-aro'), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 520, delay: 1350 }),
+        anima(en(0, '.rs-hoy'), [{ opacity: 0, transform: 'translateX(-8px) scale(.6)' }, { opacity: 1, transform: 'translateX(0px) scale(1)' }], { duration: 420, delay: 1650 }),
+      ],
+      // 2 · las cartas salen juntas del centro y se abren en abanico, cada una con su mazo detrás
+      () => {
+        const abre = (el, dx, giro, mas, d) => anima(el, [{ transform: `translate(${dx}px, 20px) rotate(0deg) ${mas} scale(.92)` }, { transform: `translate(0px, 0px) rotate(${giro}deg) ${mas} scale(1)` }], { duration: 640, delay: d });
+        return [
+          anima(en(1, '.rs-card.rs-centro'), [{ transform: 'translateY(30px) scale(.92)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 560, delay: 100 }),
+          abre(en(1, '.rs-card.rs-izq'), 93, -9, '', 260), abre(en(1, '.rs-card.rs-der'), -93, 9, '', 260),
+          abre(en(1, '.rs-mazo.rs-izq'), 93, -9, 'translateY(-20px)', 340), abre(en(1, '.rs-mazo.rs-der'), -93, 9, 'translateY(-20px)', 340),
+          anima(en(1, '.rs-mazo.rs-centro'), [{ transform: 'translateY(0px) scale(.92)' }, { transform: 'translateY(-20px) scale(1)' }], { duration: 520, delay: 420 }),
+          ...brillan(1, 520),
+        ];
+      },
+      // 3 · la ruleta gira y frena, el puntero rebota y salen los premios con confeti
+      () => [
+        anima(en(2, '.rs-rayos'), [{ opacity: 0, transform: 'rotate(-40deg)' }, { opacity: 1, transform: 'rotate(0deg)' }], { duration: 1600, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
+        anima(en(2, '.rs-rueda'), [{ transform: 'rotate(-300deg)' }, { transform: 'rotate(0deg)' }], { duration: 1700, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
+        anima(en(2, '.rs-puntero'), [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-16deg)', offset: .3 }, { transform: 'rotate(10deg)', offset: .6 }, { transform: 'rotate(-4deg)', offset: .8 }, { transform: 'rotate(0deg)' }], { duration: 600, delay: 1500, easing: 'ease-out', fill: 'none' }),
+        ...[['.rs-premio.rs-centro', '', 1250], ['.rs-premio.rs-izq', 'rotate(-8deg)', 1350], ['.rs-premio.rs-der', 'rotate(8deg)', 1450]].map(([s, giro, d]) =>
+          anima(en(2, s), [{ opacity: 0, transform: `translateY(36px) ${giro} scale(.8)` }, { opacity: 1, transform: `translateY(0px) ${giro} scale(1)` }], { duration: 520, delay: d })),
+        ...todos(2, '.rs-confeti').map((el, k) => anima(el, [{ opacity: 0, transform: `translateY(-24px) rotate(${CONFETI[k][4] - 120}deg)` }, { opacity: 1, transform: `translateY(0px) rotate(${CONFETI[k][4]}deg)` }], { duration: 700, delay: 1400 + k * 60, easing: 'cubic-bezier(.2,.8,.3,1)' })),
+      ],
+    ];
+    const entradas = ENTRADA.map(f => { if (quieto) return null; const l = f(); l.forEach(a => a.pause()); return l; });
+    const estrenar = n => { entradas[n]?.forEach(a => a.play()); entradas[n] = null; };
+    // pasar de slide: sigue al dedo 1:1, se resiste en los bordes y al soltar decide por la velocidad o por cuánto se corrió
+    let i = 0, x = 0;
+    const poner = (v, ms = 0) => { x = v; pista.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none'; pista.style.transform = `translateX(${v}px)`; };
     const pintar = (anim = true) => {
-      pista.style.transition = anim && !quieto ? 'transform .34s cubic-bezier(.22,1,.36,1)' : 'none';
-      pista.style.transform = `translateX(${-i * W}px)`;
+      if (quieto) { poner(-i * W); if (anim) slides[i].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' }); }
+      else poner(-i * W, anim ? 380 : 0);
       slides.forEach((sl, n) => { sl.inert = n !== i; sl.setAttribute('aria-hidden', String(n !== i)); });
       puntos.forEach((pt, n) => pt.classList.toggle('on', n === i));
-      cta.textContent = i < SLIDES.length - 1 ? 'Siguiente' : '¡Vamos!';
+      cta.textContent = i < N - 1 ? 'Siguiente' : '¡Vamos!';
+      estrenar(i);
     };
-    const ir = n => { i = Math.max(0, Math.min(SLIDES.length - 1, n)); pintar(); };
-    on(root, cta, () => i < SLIDES.length - 1 ? ir(i + 1) : listo());
-    on(root, caja.querySelector('.rs-saltar'), listo);
-    // deslizar: el slide sigue al dedo y al soltar pasa si se movió 50 o más (o si fue un gesto rápido)
-    let x0 = null, t0 = 0;
-    pista.addEventListener('pointerdown', e => { x0 = e.clientX; t0 = performance.now(); pista.setPointerCapture(e.pointerId); pista.style.transition = 'none'; });
-    pista.addEventListener('pointermove', e => { if (x0 == null) return; const k2 = pista.getBoundingClientRect().width / pista.offsetWidth || 1; pista.style.transform = `translateX(${-i * W + (e.clientX - x0) / k2}px)`; });
-    const soltar = e => {
-      if (x0 == null) return;
-      const dx = e.clientX - x0, rapido = Math.abs(dx) > 20 && performance.now() - t0 < 250; x0 = null;
-      if (dx <= -50 || (rapido && dx < 0)) ir(i + 1); else if (dx >= 50 || (rapido && dx > 0)) ir(i - 1); else pintar();
+    const ir = n => { i = Math.max(0, Math.min(N - 1, n)); pintar(); };
+    on(root, cta, () => i < N - 1 ? ir(i + 1) : listo());
+    on(root, caja.querySelector('.rs-cerrar'), listo);
+    caja.addEventListener('keydown', e => { if (e.key === 'ArrowRight') ir(i + 1); if (e.key === 'ArrowLeft') ir(i - 1); });
+    const goma = (d, dim = W, c = .55) => (d * dim * c) / (dim + c * Math.abs(d));
+    let g = null; // el gesto en curso: dónde empezó, desde qué posición y las últimas muestras para la velocidad
+    pista.addEventListener('pointerdown', e => {
+      // se puede agarrar a medio camino: parte de donde se ve, no de donde iba
+      const vista = new DOMMatrix(getComputedStyle(pista).transform).m41;
+      g = { x0: e.clientX, y0: e.clientY, desde: vista, k: pista.getBoundingClientRect().width / pista.offsetWidth || 1, h: [[performance.now(), vista]], activo: false };
+      poner(vista); pista.setPointerCapture(e.pointerId);
+    });
+    pista.addEventListener('pointermove', e => {
+      if (!g) return;
+      const dx = (e.clientX - g.x0) / g.k;
+      if (!g.activo) { if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - g.y0)) return; g.activo = true; }
+      let v = g.desde + dx; const min = -(N - 1) * W;
+      if (v > 0) v = goma(v); else if (v < min) v = min + goma(v - min);
+      poner(v); g.h.push([performance.now(), v]); if (g.h.length > 5) g.h.shift();
+    });
+    const soltar = () => {
+      if (!g) return;
+      const { h } = g; g = null;
+      const vel = h.length > 1 ? (h.at(-1)[1] - h[0][1]) / Math.max(1, h.at(-1)[0] - h[0][0]) * 1000 : 0; // px/s
+      // un gesto rápido decide por su dirección; uno lento pasa si se movió más de un cuarto del ancho
+      const corrido = x + i * W;
+      ir(Math.abs(vel) > 300 ? i + (vel < 0 ? 1 : -1) : corrido < -W / 4 ? i + 1 : corrido > W / 4 ? i - 1 : i);
     };
     pista.addEventListener('pointerup', soltar); pista.addEventListener('pointercancel', soltar);
-    caja.addEventListener('keydown', e => { if (e.key === 'ArrowRight') ir(i + 1); if (e.key === 'ArrowLeft') ir(i - 1); });
     pintar(false);
   },
 });
@@ -1377,6 +1450,16 @@ register('cerrado', {
 // el regalo trae una prenda al azar; «prenda» es la de la semana; «otra» da un segundo giro. Panes alternados para que quede simétrica.
 const SEGMENTS = ['cuarto', 'panes', 'regalo', 'panes', 'prenda', 'panes', 'otra', 'panes'];
 const SEG = 360 / SEGMENTS.length;
+// los íconos de las 8 casillas sobre rueda8.webp (caja = lo que mide la rueda), cada uno mirando hacia afuera
+const casillas = (caja, prenda) => {
+  const ico = { cuarto: 'assets/ruleta/sorpresa.webp', panes: A(IMG.pan), regalo: A(IMG.regalo), prenda, otra: 'assets/ruleta/otra-vez.webp' };
+  const cx = caja / 2, r = caja * .262, s = caja * .14;
+  return SEGMENTS.map((id, i) => {
+    const z = s * (id === 'cuarto' ? 1.3 : 1); // el premio especial, el más grande
+    const sombra = id === 'cuarto' ? 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
+    return `<div style="position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)"><img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-r - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}"></div>`;
+  }).join('');
+};
 register('ruletaPop', {
   files: F('S-05b-Ruleta-pop', 'S-05b-Ruleta-pop-oscuro'),
   mount(root, p, layer) {
@@ -1393,16 +1476,8 @@ register('ruletaPop', {
     if (wheel) {
       const base = wheel.querySelector(':scope > img'); if (base) base.src = 'assets/ruleta/rueda8.webp';
       [...wheel.children].filter(c => c.tagName === 'DIV').forEach(c => c.remove());
-      const ico = { cuarto: 'assets/ruleta/sorpresa.webp', panes: A(IMG.pan), regalo: A(IMG.regalo), prenda: A(PRENDAS[week0]?.img || IMG.regalo), otra: 'assets/ruleta/otra-vez.webp' };
-      const box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2, r = box * .262, s = box * .14;
-      SEGMENTS.forEach((id, i) => {
-        const d = document.createElement('div');
-        d.style.cssText = `position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)`;
-        const k = id === 'cuarto' ? 1.3 : 1, z = s * k; // el premio especial, el más grande
-        const sombra = id === 'cuarto' ? 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
-        d.innerHTML = `<img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-r - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}">`;
-        wheel.appendChild(d);
-      });
+      const box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2;
+      wheel.insertAdjacentHTML('beforeend', casillas(box, A(PRENDAS[week0]?.img || IMG.regalo)));
       wheel.style.transformOrigin = `${cx}px ${cx}px`;
       wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: sorpresa dorada, panes, regalo, panes, prenda de la semana, panes, gira otra vez, panes');
     }
@@ -1446,7 +1521,7 @@ register('ruletaPop', {
             let ang = Math.atan2(m.b, m.a) * 180 / Math.PI; if (ang < 0) ang += 360;
             if (ang < prevA - 180) turns++; prevA = ang;
             const seg = Math.floor((turns * 360 + ang) / SEG);
-            if (seg !== lastSeg) { pointer.animate([{ rotate: '0deg' }, { rotate: '-16deg' }, { rotate: '0deg' }], { duration: Math.min(160, now - lastT), easing: 'cubic-bezier(.23,1,.32,1)' }); lastSeg = seg; lastT = now; }
+            if (seg !== lastSeg) { pointer.animate([{ rotate: '0deg' }, { rotate: '-16deg' }, { rotate: '0deg' }], { duration: Math.max(0, Math.min(160, now - lastT)), easing: 'cubic-bezier(.23,1,.32,1)' }); lastSeg = seg; lastT = now; } // el primer cuadro puede traer una hora anterior a lastT
             requestAnimationFrame(tickP);
           };
           requestAnimationFrame(tickP);
