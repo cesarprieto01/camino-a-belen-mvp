@@ -35,8 +35,6 @@ const REPOSO_PANTALLA = { cerrado: [10, 25], hub: [30, 60], desafio: [30, 60] };
 // al irse a estas pantallas Teodoro deja de hablar enseguida
 const CORTA_VOZ = new Set(['reproductor', 'hoy', 'teodoro', 'mundos']);
 const RULETA = new Set(['ruletaPop', 'ruletaPremio', 'premioCuarto']);
-// en la trivia Teodoro habla sin globo (César: tapaba la escena)
-const SIN_GLOBO = new Set(['trivia', 'triviaFin']);
 const dB = d => 10 ** (d / 20);
 // la voz de Teodoro: César la pidió un 35 % más baja que el -20 LUFS de la propuesta
 const VOZ = 0.65;
@@ -261,7 +259,7 @@ function pisaHablado(seg) {
 export const restoVoz = () => Math.max(0, finVoz - performance.now());
 /** Teodoro reacciona. Devuelve cuánto falta para que termine (s), o 0 si esta vez se calla.
  *  Reglas: una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma dos veces seguidas, nunca encima de un diálogo de la canción. */
-export function teoDice(momento, { tras = 0, cerca = null } = {}) {
+export function teoDice(momento, { tras = 0 } = {}) {
   const m = MOMENTOS[momento]; if (!m || !ctx || !desbloqueado) return 0;
   let e; try { e = JSON.parse(localStorage.getItem('cab-voces')) || {}; } catch { e = {}; }
   if (e.dia !== S.hoy) e = { dia: S.hoy, n: 0, por: {}, rot: {}, ult: e.ult, inc: e.inc };
@@ -300,27 +298,10 @@ export function teoDice(momento, { tras = 0, cerca = null } = {}) {
     } };
     vozActual = yo; ultimoSonido = performance.now();
     src.onended = () => { if (vozActual === yo) vozActual = null; if (!actual) quizaDormir(); };
-    if (!SIN_GLOBO.has(cur?.name)) globo(v.t, cerca, capa, dur);
   };
   tras > 0 ? setTimeout(decir, tras * 1000) : decir();
   return tras + dur;
 }
-// lo que dice, en un globo junto a su cabeza (también para quien no oye o tiene el teléfono en silencio)
-function globo(texto, cerca, capa, dur) {
-  if (!capa?.isConnected) return;
-  const el = cerca?.isConnected && cerca.offsetParent ? cerca
-    : [...capa.querySelectorAll('.dz-teo-anim, .teo-anim, .dz-teo, img[alt^="Teodoro"], img[alt*="Teodoro"]')].find(x => x.offsetParent && x.style.visibility !== 'hidden');
-  const L = capa.getBoundingClientRect(), k = L.width / capa.offsetWidth || 1, r = el?.getBoundingClientRect();
-  const g = document.createElement('div'); g.className = 'teo-globo'; g.setAttribute('aria-hidden', 'true'); g.textContent = texto;
-  capa.appendChild(g);
-  const x = r ? (r.left - L.left) / k + r.width / 2 : capa.offsetWidth / 2, y = (r ? (r.top - L.top) / k : 220) + capa.scrollTop;
-  const izq = Math.max(12, Math.min(capa.offsetWidth - g.offsetWidth - 12, x - g.offsetWidth / 2));
-  g.style.left = izq + 'px'; g.style.top = Math.max(12 + capa.scrollTop, y - g.offsetHeight - 6) + 'px';
-  g.style.setProperty('--cola', Math.max(18, Math.min(g.offsetWidth - 18, x - izq)) + 'px');
-  if (!reduced()) g.animate([{ opacity: 0, scale: '.6' }, { opacity: 1, scale: '1' }], { duration: 220, easing: 'cubic-bezier(.2,.9,.3,1.3)' });
-  setTimeout(() => g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' }).finished.then(() => g.remove()), dur * 1000 + 400);
-}
-
 // ---------- Efectos y motivo (sintetizados, en Sol pentatónico: suenan bien sobre las dos pistas) ----------
 const HZ = { G3: 196, G4: 392, B4: 493.88, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, B5: 987.77, D6: 1174.66, G6: 1567.98 };
 // celesta / caja de música: la nota y dos parciales que se apagan antes

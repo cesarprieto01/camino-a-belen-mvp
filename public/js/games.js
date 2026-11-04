@@ -224,7 +224,7 @@ register('trivia', {
       root.append(...sp.children);
       setTeo(IMG.tCelebra, 'a-hop');
       sonido('acierto');
-      teoDice(fallos ? 'aciertoTrasFallo' : i === 0 ? 'aciertoPrimero' : '', { cerca: teo });
+      teoDice(fallos ? 'aciertoTrasFallo' : i === 0 ? 'aciertoPrimero' : '');
       if (conVoz) speak('¡Correcto! ' + q.ok);
       if (fallos === 0) floaty(layer, '¡Bien!', 160, 230, null);
       showNext();
@@ -252,7 +252,7 @@ register('trivia', {
       if (!p.replay) keep(n, { i, ok, h: p.h || '', f: fallos });
       setTeo(IMG.tFarol, 'a-bob');
       sonido('casi');
-      teoDice('fallo', { cerca: teo, tras: 0.15 }); // en cada error: «¡Inténtalo de nuevo!» / «¡Tú puedes!», con el farol y la pista
+      teoDice('fallo', { tras: 0.15 }); // en cada error: «¡Inténtalo de nuevo!» / «¡Tú puedes!», con el farol y la pista
       if (conVoz) speak('Pista: ' + q.pista);
     };
     // la equivocada: borde rojo, ✕ en el círculo y sin apagarla (se tiene que leer)

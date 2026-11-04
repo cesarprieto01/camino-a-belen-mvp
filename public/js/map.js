@@ -343,7 +343,7 @@ register('mapa', {
         place(teoN); teo.classList.remove('a-bob');
         const r = await teoAnimado(root, CELEBRA, { ...piesDe(teo), clase: 'dz-teo-anim' });
         if (r) teo.style.visibility = 'hidden'; else animate(teo, 'a-hop'); // a-hop sigue con el vaivén
-        teoDice('celebraDia', { cerca: r?.caja || teo, tras: 0.35 });
+        teoDice('celebraDia', { tras: 0.35 });
       }
       if (desde != null && nodes[teoN] && teo) {
         await wait(350);
@@ -367,15 +367,15 @@ register('mapa', {
         teo.classList.add('a-bob');
         nodes[teoN].el.classList.add('a-pop');
         // llegó: el motivo y «¡Vamos a la aventura!» (en Belén, «¡Increíble!»)
-        motivo('corto'); teoDice(teoN === 26 ? 'belen' : 'diaNuevo', { cerca: teo, tras: 1.1 });
+        motivo('corto'); teoDice(teoN === 26 ? 'belen' : 'diaNuevo', { tras: 1.1 });
       }
     } else if (recargaDe != null) await wait(450);
     if (recargaDe != null && layer.isConnected) await recargarPila(layer, (paso && nodes[paso]?.el) || teo, teo, recargaDe);
     if (ritual) soltarTrasVoz(600); // terminó el ritual: entra la canción
     // la primera vez del día sin caminata (o al volver tras días sin caminar): Teodoro invita a la aventura
     else if (focus >= 1 && params.dia == null && teo && layer.isConnected) {
-      if (params.despierta) teoDice('diaNuevo', { cerca: teo, tras: 0.6 });
-      else if (teoDice('diaNuevo', { cerca: teo, tras: 0.7 })) setTimeout(() => layer.isConnected && animate(teo, 'a-hop'), 700);
+      if (params.despierta) teoDice('diaNuevo', { tras: 0.6 });
+      else if (teoDice('diaNuevo', { tras: 0.7 })) setTimeout(() => layer.isConnected && animate(teo, 'a-hop'), 700);
     }
     if (params.thenCerrado && activeDay() == null && S.hoy < 27) {
       await wait(paso || desde != null || recargaDe != null ? 600 : 700);
