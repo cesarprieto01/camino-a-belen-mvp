@@ -597,7 +597,7 @@ function paintSheet(layer, T, dia) {
     r.style.opacity = ''; r.classList.add('sheet-row');
     const [tt, st] = r.querySelector(':scope > div').children; tt.textContent = DAYS[1].title; st.textContent = 'Día 1';
     cta.before(r);
-    const txt = [...cta.childNodes].find(c => c.nodeType === 3 && c.nodeValue.trim()); if (txt) txt.nodeValue = 'Invitar a un amigo';
+    const txt = [...cta.childNodes].find(c => c.nodeType === 3 && c.nodeValue.trim()); if (txt) txt.nodeValue = 'Invitar amigos';
     const icon = cta.querySelector('svg'); if (icon) icon.style.display = 'none';
     on(layer, cta, () => go('invitacion', {}, 'push'));
     const alt = document.createElement('button'); alt.type = 'button'; alt.className = 'sheet-alt';
@@ -751,7 +751,7 @@ function sheetDrag(layer) {
     const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.firstChild?.textContent.trim() || ''; // sin la cita
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
-    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar a un amigo': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
+    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar amigos': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
     const corto = CORTOS[verbo] || (verbo.length > 15 ? verbo.split(' ')[0] : verbo);
     const play = !!cta?.querySelector('svg') && cta.querySelector('svg').style.display !== 'none';
     // imagen, un texto corto y el botón; lo pendiente es un punto, no una frase

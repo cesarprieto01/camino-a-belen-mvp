@@ -213,7 +213,7 @@ const flows = {
     await tap('Ver mi mundo'); await p.waitForTimeout(1500); await shot('mundos');
     if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no lleva a Mundos: ' + await screen());
     const m = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { dentro: !!L.querySelector('.mundos-dentro'), invitar: !!L.querySelector('.mundos-accion') }; });
-    if (!m.dentro || !m.invitar) errs.push('Mundos recién unida sin «Ya estás dentro» o sin «Invitar a mi familia»: ' + JSON.stringify(m));
+    if (!m.dentro || !m.invitar) errs.push('Mundos recién unida sin «Ya estás dentro» o sin «Invitar amigos»: ' + JSON.stringify(m));
     // Enero bloqueado: globo sobre la isla, sin salir de Mundos
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label^="Mundo Enero"]')?.click()); await p.waitForTimeout(500); await shot('enero');
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .mundos-globo')))) errs.push('tocar Enero no muestra su globo');
@@ -222,8 +222,8 @@ const flows = {
     if ((await screen()) !== 'listo') errs.push('ya dentro, tocar Adviento no abre «¡Ya estás dentro!»: ' + await screen());
     await tap('Ver mi mundo'); await p.waitForTimeout(900);
     if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no vuelve a Mundos: ' + await screen());
-    await tap('Invitar a mi familia'); await p.waitForTimeout(900); await shot('invitacion');
-    if ((await screen()) !== 'invitacion') errs.push('«Invitar a mi familia» de Mundos no abre la invitación: ' + await screen());
+    await tap('Invitar amigos'); await p.waitForTimeout(900); await shot('invitacion');
+    if ((await screen()) !== 'invitacion') errs.push('«Invitar amigos» de Mundos no abre la invitación: ' + await screen());
   },
   async reto() {
     await scenario('Reto en familia'); await tap('Ver el reto'); await shot('hub'); await tap('¡Lo hicimos!'); await p.waitForTimeout(1200); await shot('completado');
@@ -251,17 +251,17 @@ const flows = {
     // la card del tab Teodoro es la misma del inicio: vidrio empañado y «Únete al reto»
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child :is(img[src*="ffc14384"], canvas.vidrio-dedo)')))) errs.push('la card del tab Teodoro no es la del inicio (vidrio empañado)');
     await tap('Únete al reto'); await p.waitForTimeout(1600); await expect('listo', 'inscribirme desde Teodoro'); await shot('listo');
-    await tap('Invitar a mi familia'); await expect('invitacion', 'invitar'); await shot('invitacion');
+    await tap('Invitar amigos'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Únete al reto'); await expect('invitacion', 'vista previa vuelve');
     await tap('Volver'); await expect('listo', 'volver de invitación');
     await tap('Ver mi mundo'); await expect('mundos', 'unido desde el cuarto, «¡Ya estás dentro!» lleva a Mundos');
     await tap('Volver al cuarto de Teodoro'); await p.waitForTimeout(1500); await expect('teodoro', 'de Mundos al cuarto'); await shot('teodoro-dentro');
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[alt*="de espaldas"]')))) errs.push('ya dentro, la card del tab Teodoro no es la del inicio (Teodoro de espaldas)');
-    await tap('Seguir la aventura'); await expect('mundos', '«Seguir la aventura» abre los mundos antes del 29'); await shot('mundos-antes');
+    await tap('Saber más'); await expect('mundos', '«Saber más» abre los mundos antes del 29'); await shot('mundos-antes');
     await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'de los mundos a Teodoro');
     await tap('Mundos de Teodoro'); await expect('mundos', 'la isla abre los mundos antes del 29'); await tap('Volver al cuarto de Teodoro'); await expect('teodoro', 'isla: vuelve a Teodoro');
     await tap('Hoy'); await expect('hoy', 'tab Hoy'); await shot('hoy-dentro');
-    await tap('Seguir la aventura'); await expect('mundos', '«Seguir la aventura» del inicio abre los mundos');
+    await tap('Saber más'); await expect('mundos', '«Saber más» del inicio abre los mundos');
     await p.goBack(); await expect('hoy', 'de los mundos vuelve a Hoy');
     // ya empezó y no está inscrito: «Unirme al camino» entra directo
     await scenario('Hoy, tab Teodoro y Mundos'); await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.inscrito = false; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(900);
@@ -294,8 +294,8 @@ const flows = {
     await tap('Volver al inicio'); await p.waitForTimeout(3200); await shot('hoy-dentro');
     if ((await screen()) !== 'hoy') errs.push('«Volver al inicio» de Mundos no vuelve a Hoy: ' + await screen());
     if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[src*="ffc14384"]'))) errs.push('el vidrio no se limpió al volver');
-    await tap('Seguir la aventura'); await p.waitForTimeout(800);
-    if ((await screen()) !== 'mundos') errs.push('antes del 29, «Seguir la aventura» no abre los mundos: ' + await screen());
+    await tap('Saber más'); await p.waitForTimeout(800);
+    if ((await screen()) !== 'mundos') errs.push('antes del 29, «Saber más» no abre los mundos: ' + await screen());
     await shot('mundos-antes');
     await tap('Adviento'); await p.waitForTimeout(900);
     if ((await screen()) !== 'listo') errs.push('antes del 29, tocar Adviento ya unido no abre «¡Ya estás dentro!»: ' + await screen());
@@ -319,8 +319,8 @@ const flows = {
     await tap('Ahora no'); await p.waitForTimeout(500);
     if (await layers() !== 'hub') errs.push('al cerrar free no queda el reto: ' + await layers());
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 0, inscrito: true, teaserVisto: true }); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
-    await p.waitForTimeout(900); await tap('Seguir la aventura'); await p.waitForTimeout(600); await shot('mundos-antes');
-    if ((await screen()) !== 'mundos') errs.push('«Seguir la aventura» no abre los mundos: ' + await screen());
+    await p.waitForTimeout(900); await tap('Saber más'); await p.waitForTimeout(600); await shot('mundos-antes');
+    if ((await screen()) !== 'mundos') errs.push('«Saber más» no abre los mundos: ' + await screen());
     await p.goBack(); await p.waitForTimeout(600);
     if (await layers() !== 'hoy') errs.push('atrás del sistema no vuelve a Hoy: ' + await layers());
   },
@@ -613,7 +613,7 @@ const flows = {
       if ((await screen()) !== tab) errs.push(`${tab}: «¡Ya estás dentro!» no vuelve a donde se limpió el vidrio: ${await screen()}`);
       if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child [aria-label^="Adviento: ya estás dentro"] img[src*="ffc14384"]'))) errs.push(`${tab}: al volver el vidrio se empaña otra vez (ya lo limpiaron con el dedo)`);
       if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child img[alt*="de espaldas"]')))) errs.push(`${tab}: tras limpiar no queda Teodoro de espaldas en la card`);
-      if (!(await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].some(a => /Seguir la aventura/.test(a.textContent))))) errs.push(`${tab}: tras unirse con el dedo la card no dice «Seguir la aventura»`);
+      if (!(await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a')].some(a => /Saber más/.test(a.textContent))))) errs.push(`${tab}: tras unirse con el dedo la card no dice «Saber más»`);
     }
   },
   // el póster del evento («El Adviento más grande del mundo», con su logo) es la publicidad del reto: se queda hasta que la familia lo empieza

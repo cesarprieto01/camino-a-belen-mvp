@@ -7,7 +7,7 @@ import './map.js';
 import './games.js';
 
 const NAMES = {
-  hoy: 'Hoy', teaser: 'Teaser', listo: '¡Ya estás dentro!', invitacion: 'Invitación',
+  hoy: 'Hoy', teaser: 'Teaser', retoSlides: 'Slides del reto', listo: '¡Ya estás dentro!', invitacion: 'Invitación',
   teodoro: 'Tab Teodoro', mundos: 'Mundos', mapa: 'Mapa del camino', reproductor: 'Reproductor', hub: 'Reto en familia',
   completado: '¿Jugamos a la trivia?', trivia: 'Trivia', triviaFin: 'Resultado de la trivia', cerrado: 'Mañana seguimos',
   calificacion: '¿Te gustó?', free: 'Free · descargables', ruletaPop: 'Ruleta', ruletaPremio: 'Premio de la ruleta', premioCuarto: 'Cuarto nuevo',
@@ -64,7 +64,8 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teas
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
   { sec: 1, t: 'Sin inscribirse', mira: 'Inicio con vidrio empañado → teaser → «Únete al reto» → «¡Ya estás dentro!» → el vidrio se limpia', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-antes-d', 'P-Teaser-a', 'P-Listo-a'] },
-  { sec: 1, t: 'Ya inscrito', mira: 'Teodoro de espaldas mirando el pesebre · «Seguir la aventura» abre los Mundos con la cuenta regresiva', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-despues-d', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Slides del reto (versión posterior)', mira: 'Prende los slides y deja la app sin inscribirse: «Únete al reto» → 3 slides → «¡Ya estás dentro!»', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false, slidesReto: true }); S.completos = {}; }, go: 'hoy', covers: [] },
+  { sec: 1, t: 'Ya inscrito', mira: 'Teodoro de espaldas mirando el pesebre · «Saber más» abre los Mundos con la cuenta regresiva', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-despues-d', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
   { sec: 2, t: 'Un día con trivia', mira: 'Día 17 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(17, 16), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Un día sin trivia', mira: 'Día 10 · mapa → historia → un paso más hacia Belén → mañana seguimos', run: day(10, 9), go: 'hoy', covers: [] },
@@ -267,6 +268,8 @@ function render() {
     <section class="p-group"><h2>Familia</h2>
       <div class="p-row"><label>Plan</label><span class="seg">${[['premium', 'Premium'], ['pase', 'Pase'], ['free', 'Free']].map(([v, l]) => `<button data-plan="${v}" aria-pressed="${S.plan === v}">${l}</button>`).join('')}</span></div>
       <div class="p-row"><label>Inscrito</label><span class="seg">${[['1', 'Sí'], ['0', 'No']].map(([v, l]) => `<button data-ins="${v}" aria-pressed="${S.inscrito === (v === '1')}">${l}</button>`).join('')}</span></div>
+      <div class="p-row"><label>Slides del reto</label><span class="seg">${[['1', 'Prendidos'], ['0', 'Apagados']].map(([v, l]) => `<button data-slides="${v}" aria-pressed="${!!S.slidesReto === (v === '1')}">${l}</button>`).join('')}</span></div>
+      <p class="p-help">Al tocar «Únete al reto», 3 slides cuentan de qué trata antes de «¡Ya estás dentro!». Es para una versión posterior: por ahora lo envía Braze.</p>
     </section>
     <section class="p-group"><h2>Ruleta</h2>
       <p class="p-help">Qué sale al girar:</p>
@@ -324,6 +327,7 @@ panel.addEventListener('click', e => {
   if (t.dataset.plan) { S.plan = t.dataset.plan; save(); nota(S.plan === 'free' ? 'Ahora eres free' : S.plan === 'pase' ? 'Ahora tienes el Pase de Adviento' : 'Ahora eres premium'); return; }
   if (t.dataset.tema) { S.tema = t.dataset.tema; save(); if (cur?.name === 'estatica') go('hoy', {}, 'fade'); else go(cur?.name || 'hoy', cur?.params || {}, 'fade', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if (t.dataset.ins) { S.inscrito = t.dataset.ins === '1'; save(); go('hoy', {}, 'fade'); return; }
+  if (t.dataset.slides) { S.slidesReto = t.dataset.slides === '1'; save(); nota(S.slidesReto ? 'Slides del reto prendidos' : 'Slides del reto apagados', S.slidesReto ? 'Salen al tocar «Únete al reto»' : ''); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
   if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
