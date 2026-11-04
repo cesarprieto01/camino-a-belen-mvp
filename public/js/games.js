@@ -4,7 +4,7 @@ import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, see
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, JUEGOS, hasTrivia, TYPES } from './data.js';
 import { finishTrivia, finishContent, openSorpresa, panesContenido, abrirDescargable } from './flow.js';
 import { bindMute, teoDice, sonido, motivo, agacha, levanta, restoVoz } from './musica.js';
-import { celebrar } from './teo-anim.js';
+import { celebrar, pensar, quieto } from './teo-anim.js';
 // botón de música de la cabecera (trivia y su resultado)
 const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
 
@@ -129,10 +129,12 @@ register('trivia', {
     card?.classList.add('a-rise');
     listenButton(root, layer, q.q + '. ' + q.o.map(o => o.t || o).join(', '));
     const teo = $$(root, 'img').find(im => im.src.includes(IMG.tPregunta));
-    const setTeo = (id, cls) => { if (!teo) return; teo.src = A(id); teo.classList.remove('a-hop', 'a-bob', 'a-shake'); void teo.offsetWidth; cls && teo.classList.add(cls); };
+    // al acertar o fallar sale el dibujo quieto que toca (celebra o con el farol) en lugar de Teodoro con su mapa animado
+    const setTeo = (id, cls) => { if (!teo) return; if (id !== IMG.tPregunta) quieto(teo); teo.src = A(id); teo.classList.remove('a-hop', 'a-bob', 'a-shake'); void teo.offsetWidth; cls && teo.classList.add(cls); };
     setTeo(IMG.tPregunta, 'a-bob');
     // en lista (o con pregunta de 3 líneas), Teodoro un poco más chico y la pregunta más arriba: caben las opciones y el aviso
     if (card && (list || card.offsetHeight > 160)) { card.style.top = '222px'; teo?.classList.add('tv-teo-sm'); }
+    requestAnimationFrame(() => pensar(root)); // Teodoro con su mapa se mueve en bucle (Lottie)
 
     const group = root.querySelector('[role=group]');
     const tplOpt = group.children[0].outerHTML;
@@ -791,6 +793,7 @@ register('juegoIntro', {
     const n = p.day;
     replaceText(root, /\+\d+ panes/, `+${panesContenido()} panes`);
     $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).forEach(i => i.classList.add('a-bob'));
+    requestAnimationFrame(() => pensar(root)); // en «Teléfono roto», Teodoro con su mapa se mueve en bucle (Lottie)
     const titulo = [...root.children].find(el => el.style.transform === 'rotate(-4deg)');
     titulo?.animate([{ scale: '.6', opacity: 0 }, { scale: '1.06', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 520, delay: 120, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
     on(root, 'Volver', alMapa);
@@ -819,6 +822,7 @@ register('juegoPasos', {
     root.addEventListener('pointerdown', e => { x0 = e.clientX; });
     root.addEventListener('pointerup', e => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 60) ir(dx < 0 ? i + 1 : i - 1); });
     $$(root, 'img').filter(im => /Teodoro/.test(im.alt || '')).forEach(im => im.classList.add('a-hop'));
+    requestAnimationFrame(() => pensar(root));
     // el letrero del paso («¡A SALTAR!», «¡BAJITO!»…) cae con un golpe
     const letrero = [...root.children].find(el => /rotate\(-?\d+deg\)/.test(el.style.transform) && el.style.zIndex === '5');
     letrero?.animate([{ scale: '1.8', opacity: 0 }, { scale: '.94', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 420, delay: 260, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'backwards' });

@@ -5,7 +5,7 @@ import { S, save, A, cur, $, $$, on, find, go, back, register, seen, toast, nota
 import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
 import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from './musica.js'; // música, voces de Teodoro y efectos
 import { rateRow } from './games.js';
-import { celebrar } from './teo-anim.js';
+import { celebrar, pensar } from './teo-anim.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = conTodo; // Theo Premium o Pase de Adviento
@@ -440,6 +440,7 @@ async function heroeNuevo(root) {
     <div class="hp-texto"><span class="hp-kicker">${destello}<span>${poster ? poster.kicker : recuerdo ? 'Nos vemos el próximo año' : 'En familia con Teodoro'}</span>${destello}</span><b class="hp-titulo">Adviento</b></div>
     ${boton}`;
   card.appendChild(capa);
+  pensar(capa); // póster de Nochebuena: Teodoro con su mapa se mueve en bucle
   capa.querySelector('.hp-boton').addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); accion(); });
   capa.addEventListener('click', ev => { if (ev.target.closest('.hp-boton')) return; ev.preventDefault(); accion(); });
   card.setAttribute('aria-label', `Adviento, ${evento ? 'El Adviento más grande del mundo' : poster ? poster.kicker : 'En familia con Teodoro'}:${recuerdo ? 'ver el nacimiento' : unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
@@ -1314,6 +1315,7 @@ register('completado', {
     const q = textEl(root, '?')?.parentElement; q?.classList.add('a-pop');
     $$(root, '[style*="rotate(-12deg)"], [style*="rotate(12deg)"]').forEach((c, i) => { c.style.setProperty('--r', i ? '12deg' : '-12deg'); c.style.animation = `popRot .55s ${.15 + i * .1}s cubic-bezier(.2,.9,.3,1.3) both`; });
     $$(root, 'img').find(i => i.src.includes(IMG.tPregunta))?.classList.add('a-bob');
+    requestAnimationFrame(() => pensar(root)); // Teodoro con su mapa se mueve en bucle (Lottie), ya en su sitio final
     confetti(layer, 195, 260, 30);
     const cal = find(root, 'Califícanos'); if (cal) cal.style.display = 'none';
     if (chip) { chip.style.pointerEvents = 'none'; chip.removeAttribute('role'); }
