@@ -1,71 +1,102 @@
-// Música de fondo del camino: «Quiet Snow Village», ambiental, en loop sin pausas.
-// Suena en el mapa, la trivia y las actividades del día; en lo demás se apaga con fundido.
+// Música de fondo del reto, en dos pistas que se pasan la una a la otra con fundido y retoman donde iban: la del mapa del camino
+// (y los pop-ups que salen sobre él) y la de las trivias, juegos y actividades del día. En lo demás se apaga con fundido.
 import { S, save, cur, onChange } from './core.js';
 
-// suena 4,3 dB más baja que la canción con Eduardo de antes (-15,0 frente a -10,7 LUFS): se igualó al volumen que César aprobó para esa (0,17)
-// y luego César la pidió un 25 % más baja
-const VOL = 0.1275;
-// sin los silencios de las puntas y con la cola final (se apaga en 3,5 s) sonando sobre el comienzo, que entra suave: la vuelta dura LOOP s.
-// El archivo trae 1 s más del comienzo al final, así se repite de DESDE a DESDE + LOOP y el relleno que agrega el AAC en las puntas nunca suena
-const ARCHIVO = 'audio/quiet-snow-village.m4a', LOOP = 6977266 / 48000, DESDE = 0.5;
-// dónde suena: el mapa y sus pop-ups, la trivia y las actividades (no en los videos ni las canciones, que traen su sonido)
-const PANTALLAS = new Set(['mapa', 'cerrado', 'ruletaPop', 'ruletaPremio', 'premioCuarto', 'trivia', 'triviaFin', 'completado', 'calificacion', 'hub',
-  'juegoIntro', 'juegoPasos', 'juegoCarta', 'juegoFin', 'memoramaReglas', 'memorama', 'memoramaFin',
-  'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin']);
+const PISTAS = {
+  // «Burrito Sabanero» con Eduardo (master final V6), la canción entera repetida. Recortada a 1,8–143,0 s del master: quedan ~0,35 s de silencio
+  // en cada punta, así al repetirse hay una pausa corta y el relleno del AAC cae en silencio (sin clic). Volumen: suena 2,7 dB más fuerte que
+  // el piano de antes (-10,6 frente a -13,3 LUFS); se igualó en 0,275, César la pidió a la mitad (sonaba muy dura) y luego un 25 % menos
+  burrito: { archivo: 'audio/burrito-sabanero-eduardo.m4a', vol: 0.103 },
+  // «Quiet Snow Village», ambiental: sin los silencios de las puntas y con la cola final (se apaga en 3,5 s) sonando sobre el comienzo, que entra
+  // suave; la vuelta dura 6977266 muestras a 48 kHz. El archivo trae 1 s más del comienzo al final, así se repite de 0,5 s a 0,5 s + vuelta y el
+  // relleno que agrega el AAC en las puntas nunca suena. Volumen: se igualó a la canción con Eduardo (0,17) y César la pidió un 25 % más baja
+  nieve: { archivo: 'audio/quiet-snow-village.m4a', vol: 0.1275, desde: 0.5, vuelta: 6977266 / 48000 },
+};
+// el mapa y los pop-ups que salen sobre él: la canción original (opción 1) o, para comparar, la de las actividades (opción 2; panel › Avanzado)
+const CAMINO = new Set(['mapa', 'cerrado', 'ruletaPop', 'ruletaPremio', 'premioCuarto']);
+// trivias, juegos y actividades del día (no los videos ni las canciones, que traen su sonido)
+const ACTIVIDADES = new Set(['trivia', 'triviaFin', 'completado', 'calificacion', 'hub', 'juegoIntro', 'juegoPasos', 'juegoCarta', 'juegoFin',
+  'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin']);
+const delMapa = () => S.cancionMapa === 2 ? 'nieve' : 'burrito';
+const pistaDe = nombre => CAMINO.has(nombre) ? delMapa() : ACTIVIDADES.has(nombre) ? 'nieve' : null;
 
-let ctx = null, master = null, buffer = null, cargando = null, fuente = null, sonando = false, parar = null;
+let ctx = null, actual = null, dormir = null;
+// por pista: su volumen (con fundidos), el audio decodificado, la fuente que suena y dónde iba
+const est = {};
 
 function montar() {
   if (ctx) return;
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
   ctx = new AC();
-  master = ctx.createGain(); master.gain.value = 0;
-  master.connect(ctx.destination);
+  for (const id in PISTAS) {
+    const g = ctx.createGain(); g.gain.value = 0; g.connect(ctx.destination);
+    est[id] = { g, buffer: null, cargando: null, fuente: null, parar: null, pos: PISTAS[id].desde || 0, t0: 0, p0: 0 };
+  }
 }
 
-function cargar() {
-  if (buffer || cargando) return cargando;
-  cargando = fetch(ARCHIVO).then(r => r.arrayBuffer()).then(ab => new Promise((ok, mal) => ctx.decodeAudioData(ab, ok, mal)))
-    .then(b => { buffer = b; }).catch(e => { console.warn('música', e); cargando = null; });
-  return cargando;
+function cargar(id) {
+  const e = est[id];
+  if (e.buffer || e.cargando) return e.cargando;
+  e.cargando = fetch(PISTAS[id].archivo).then(r => r.arrayBuffer()).then(ab => new Promise((ok, mal) => ctx.decodeAudioData(ab, ok, mal)))
+    .then(b => { e.buffer = b; }).catch(err => { console.warn('música', id, err); e.cargando = null; });
+  return e.cargando;
 }
 
-function sonar() {
-  if (fuente || !buffer) return;
-  fuente = ctx.createBufferSource(); fuente.buffer = buffer;
-  fuente.loop = true; fuente.loopStart = DESDE; fuente.loopEnd = DESDE + LOOP;
-  fuente.connect(master); fuente.start(0, DESDE);
+// el tramo que se repite (la canción entera o el loop sin pausas) y dónde va ahora la pista, para retomarla ahí
+const tramo = id => { const p = PISTAS[id], ini = p.desde || 0; return [ini, p.vuelta ? ini + p.vuelta : est[id].buffer.duration]; };
+function donde(id) {
+  const e = est[id], [ini, fin] = tramo(id), largo = fin - ini;
+  return ini + ((e.p0 - ini + ctx.currentTime - e.t0) % largo + largo) % largo;
+}
+const rampa = (g, v, s) => { g.cancelScheduledValues(ctx.currentTime); g.setValueAtTime(g.value, ctx.currentTime); g.linearRampToValueAtTime(v, ctx.currentTime + s); };
+
+async function subir(id) {
+  const e = est[id];
+  if (e.parar) { clearTimeout(e.parar); e.parar = null; } // volvió antes de que se apagara: sigue sonando donde iba
+  await cargar(id);
+  if (actual !== id || !e.buffer) return; // se fue de la pantalla mientras cargaba
+  if (!e.fuente) {
+    const [ini, fin] = tramo(id);
+    e.fuente = ctx.createBufferSource(); e.fuente.buffer = e.buffer;
+    e.fuente.loop = true; e.fuente.loopStart = ini; e.fuente.loopEnd = fin;
+    e.fuente.connect(e.g); e.fuente.start(0, e.pos); e.t0 = ctx.currentTime; e.p0 = e.pos;
+  }
+  rampa(e.g.gain, PISTAS[id].vol, 1.2);
+}
+function bajar(id) {
+  const e = est[id];
+  if (!e?.fuente || e.parar) return;
+  rampa(e.g.gain, 0, 0.6);
+  e.parar = setTimeout(() => { e.pos = donde(id); try { e.fuente.stop(); } catch { /* ya parada */ } e.fuente = null; e.parar = null; }, 700);
 }
 
-async function arrancar() {
+function arrancar(id) {
   montar(); if (!ctx) return;
-  if (parar) { clearTimeout(parar); parar = null; }
-  sonando = true;
+  if (dormir) { clearTimeout(dormir); dormir = null; }
   ctx.resume?.();
-  await cargar();
-  if (!sonando) return; // se fue de la pantalla mientras cargaba
-  sonar();
-  const g = master.gain; g.cancelScheduledValues(ctx.currentTime); g.setValueAtTime(g.value, ctx.currentTime); g.linearRampToValueAtTime(VOL, ctx.currentTime + 1.2);
+  actual = id;
+  for (const otra in PISTAS) if (otra !== id) bajar(otra);
+  subir(id);
 }
 function apagar() {
-  if (!ctx || !sonando) return;
-  sonando = false;
-  const g = master.gain; g.cancelScheduledValues(ctx.currentTime); g.setValueAtTime(g.value, ctx.currentTime); g.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
-  parar = setTimeout(() => { try { fuente?.stop(); } catch { /* ya parada */ } fuente = null; parar = null; ctx.suspend?.(); }, 700);
+  if (!ctx || !actual) return;
+  actual = null;
+  for (const id in PISTAS) bajar(id);
+  dormir = setTimeout(() => { dormir = null; if (!actual) ctx.suspend?.(); }, 800);
 }
 
 let desbloqueado = false;
-/** Suena o no según la pantalla. Lo llama la navegación (onChange de core) cada vez que cambia la pantalla. */
+/** Suena o no, y cuál pista, según la pantalla. Lo llama la navegación (onChange de core) cada vez que cambia la pantalla. */
 export function musicaPara(nombre = cur?.name) {
-  const quiere = S.musica !== false && PANTALLAS.has(nombre) && !document.hidden;
-  if (quiere && desbloqueado) arrancar(); else apagar();
+  const id = S.musica !== false && !document.hidden ? pistaDe(nombre) : null;
+  if (id && desbloqueado) arrancar(id); else apagar();
 }
 
 // el navegador no deja sonar nada hasta el primer toque
 const desbloquear = () => {
   if (desbloqueado) return;
-  desbloqueado = true; montar(); ctx?.resume?.(); if (ctx) cargar();
+  desbloqueado = true; montar(); ctx?.resume?.(); if (ctx) cargar(pistaDe(cur?.name) || delMapa());
   removeEventListener('pointerdown', desbloquear, true); removeEventListener('keydown', desbloquear, true);
   musicaPara();
 };
@@ -101,4 +132,4 @@ export function bindMute(btn) {
   pintar();
 }
 /** Para pruebas: si está sonando y el estado del audio. */
-export const estadoMusica = () => ({ sonando, audio: ctx?.state || 'sin crear', volumen: master ? +master.gain.value.toFixed(3) : 0, cargada: !!buffer, loop: fuente ? [+fuente.loopStart.toFixed(4), +fuente.loopEnd.toFixed(4)] : null });
+export const estadoMusica = () => { const e = actual && est[actual]; return { sonando: !!actual, pista: actual, audio: ctx?.state || 'sin crear', volumen: e ? +e.g.gain.value.toFixed(3) : 0, cargada: !!e?.buffer, loop: e?.fuente ? [+e.fuente.loopStart.toFixed(4), +e.fuente.loopEnd.toFixed(4)] : null, va: e?.fuente ? +donde(actual).toFixed(1) : null }; };

@@ -28,6 +28,7 @@ export const DEFAULT = () => ({
   pasoAnimado: null,   // día recién completado (animación en el mapa)
   recarga: null,       // batería antes de recargarse al terminar el día: el mapa la anima al volver
   slidesReto: false,   // slides que explican el reto al inscribirse (versión posterior; por ahora lo envía Braze): se prenden en el panel › Avanzado
+  cancionMapa: 1,      // música del mapa: 1 = la canción original, 2 = la de las actividades (panel › Avanzado, para que el equipo compare)
   vidrioPendiente: null, // recién unida: el vidrio de la card se limpia la primera vez que se ve (true | 'dedo')
   forzarPremio: '',    // panel: forzar casilla de la ruleta
   musica: true,        // música de fondo del mapa y la trivia (on/off)
@@ -42,7 +43,7 @@ function load() {
   try { return { ...DEFAULT(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULT(); }
 }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* navegador privado */ } emit(); }
-export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, slidesReto: S.slidesReto }; S = Object.assign(DEFAULT(), keep, over); save(); }
+export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, slidesReto: S.slidesReto, cancionMapa: S.cancionMapa }; S = Object.assign(DEFAULT(), keep, over); save(); }
 export function shareURL() {
   const { notas, huecos, ...rest } = S;
   return location.origin + location.pathname + '#estado=' + btoa(unescape(encodeURIComponent(JSON.stringify(rest)))) + '&pantalla=' + (cur?.name || 'hoy');

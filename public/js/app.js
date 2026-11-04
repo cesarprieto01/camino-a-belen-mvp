@@ -2,6 +2,7 @@
 // El panel sigue el orden del lienzo (secciones 1 a 8) para que diseño y prueba hablen el mismo idioma.
 import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, GRACIA_FIN, cuentaGracia, vistos, puedeDia, prefetch, logical, flowScreens, sections } from './core.js';
 import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf, hasTrivia } from './data.js';
+import { musicaPara } from './musica.js';
 import './flow.js';
 import './map.js';
 import './games.js';
@@ -271,6 +272,10 @@ function render() {
       <div class="p-row"><label>Slides del reto</label><span class="seg">${[['1', 'Prendidos'], ['0', 'Apagados']].map(([v, l]) => `<button data-slides="${v}" aria-pressed="${!!S.slidesReto === (v === '1')}">${l}</button>`).join('')}</span></div>
       <p class="p-help">Al tocar «Únete al reto», 3 slides cuentan de qué trata antes de «¡Ya estás dentro!». Es para una versión posterior: por ahora lo envía Braze.</p>
     </section>
+    <section class="p-group"><h2>Música</h2>
+      <div class="p-row"><label>Canción del mapa</label><span class="seg">${[[1, 'Opción 1'], [2, 'Opción 2']].map(([v, l]) => `<button data-cancion="${v}" aria-pressed="${(S.cancionMapa === 2 ? 2 : 1) === v}">${l}</button>`).join('')}</span></div>
+      <p class="p-help">Opción 1: la canción original. Opción 2: la misma música de las trivias y los juegos. Para probar cuál acompaña mejor el mapa.</p>
+    </section>
     <section class="p-group"><h2>Ruleta</h2>
       <p class="p-help">Qué sale al girar:</p>
       <div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div>
@@ -328,6 +333,7 @@ panel.addEventListener('click', e => {
   if (t.dataset.tema) { S.tema = t.dataset.tema; save(); if (cur?.name === 'estatica') go('hoy', {}, 'fade'); else go(cur?.name || 'hoy', cur?.params || {}, 'fade', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if (t.dataset.ins) { S.inscrito = t.dataset.ins === '1'; save(); go('hoy', {}, 'fade'); return; }
   if (t.dataset.slides) { S.slidesReto = t.dataset.slides === '1'; save(); nota(S.slidesReto ? 'Slides del reto prendidos' : 'Slides del reto apagados', S.slidesReto ? 'Salen al tocar «Únete al reto»' : ''); return; }
+  if (t.dataset.cancion) { S.cancionMapa = +t.dataset.cancion; save(); musicaPara(); render(); nota(`Mapa con la opción ${S.cancionMapa}`, S.cancionMapa === 2 ? 'La misma música de las trivias y los juegos' : 'La canción original'); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
   if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
