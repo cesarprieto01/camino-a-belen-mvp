@@ -40,8 +40,7 @@ const dB = d => 10 ** (d / 20);
 const VOZ = 0.65;
 const noche = () => S.tema === 'oscuro' || new Date().getHours() + new Date().getMinutes() / 60 >= 19.5;
 
-let relevo = 'burrito', relevoT0 = 0; // opción 3: se turnan una vuelta cada una
-const delMapa = () => S.cancionMapa === 2 ? 'nieve' : S.cancionMapa === 3 ? relevo : 'burrito';
+const delMapa = () => S.musicaMapa === 'original' ? 'burrito' : 'nieve'; // opción 1: la de las trivias y los juegos · opción 2: la canción original
 // en «Mañana seguimos» la canción se despide con su final («Tuki por aquí… Hasta mañana») y queda en silencio
 const pistaDe = nombre => CAMINO.has(nombre) ? (nombre === 'cerrado' && delMapa() === 'burrito' ? 'cierre' : delMapa()) : ACTIVIDADES.has(nombre) ? 'nieve' : null;
 
@@ -156,7 +155,6 @@ function arrancar(id, nombre) {
   montar(); if (!ctx) return;
   if (dormir) { clearTimeout(dormir); dormir = null; }
   ctx.resume?.();
-  if (CAMINO.has(nombre) && id !== actual && id !== 'cierre') relevoT0 = ctx.currentTime;
   actual = id;
   // nivel de la pantalla; de noche y con menos movimiento, 3 dB más baja (y de noche más opaca)
   ir(gNivel.gain, dB((NIVEL[nombre] ?? 0) + (noche() ? -3 : 0) + (reduced() ? -3 : 0)), 0.15);
@@ -203,10 +201,6 @@ function tocar() {
 ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => addEventListener(ev, tocar, { capture: true, passive: true }));
 setInterval(() => {
   if (!actual || actual === 'cierre') return;
-  // opción 3: después de una vuelta entera, la otra pista toma el mapa
-  if (S.cancionMapa === 3 && CAMINO.has(cur?.name) && ctx.currentTime - relevoT0 > (actual === 'burrito' ? 134 : 145)) {
-    relevo = actual === 'burrito' ? 'nieve' : 'burrito'; musicaPara(); return;
-  }
   const [baja, calla] = REPOSO_PANTALLA[cur?.name] || PISTAS[actual].reposo, s = (performance.now() - ultimo) / 1000;
   if (s > calla && !dormida) { dormida = true; ir(gReposo.gain, 0, 4); setTimeout(() => { if (dormida) apagar(); }, 12000); }
   else if (s > baja && !bajada) { bajada = true; ir(gReposo.gain, dB(-6), 2.7); }
@@ -401,8 +395,8 @@ export function bindMute(btn) {
     const old = btn.querySelector('svg');
     const tpl = document.createElement('template'); tpl.innerHTML = on ? ICO_ON : ICO_OFF;
     const ico = tpl.content.firstElementChild;
-    // conserva el color del ícono del lienzo
-    const color = old && (old.getAttribute('stroke') || old.querySelector('[stroke]:not([stroke=none])')?.getAttribute('stroke') || old.querySelector('[fill]:not([fill=none])')?.getAttribute('fill'));
+    // conserva el color del ícono del lienzo (se lee una vez: al alternar, el ícono ya es el nuestro, en currentColor)
+    const color = btn.dataset.color ??= (old && (old.getAttribute('stroke') || old.querySelector('[stroke]:not([stroke=none])')?.getAttribute('stroke') || old.querySelector('[fill]:not([fill=none])')?.getAttribute('fill'))) || '';
     if (color && color !== 'currentColor') ico.style.color = color;
     if (old) { ico.setAttribute('width', old.getAttribute('width') || '22'); ico.setAttribute('height', old.getAttribute('height') || '22'); old.replaceWith(ico); } else btn.prepend(ico);
   };

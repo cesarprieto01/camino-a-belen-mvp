@@ -280,12 +280,76 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .p-bat i.on { background: #4FD1C5; }
 .p-panes label { display: inline-flex; align-items: center; gap: 8px; }
 .p-panes label img { width: 26px; height: 26px; object-fit: contain; }
-.p-reset { justify-self: center; color: var(--muted); }
-.p-more { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 10px; }
-.p-more > summary { cursor: pointer; font: 700 14px Mulish, sans-serif; color: var(--muted); padding: 8px 0; list-style: none; }
-.p-more > summary::before { content: '›'; display: inline-block; margin-right: 8px; transition: transform .2s; }
-.p-more[open] > summary::before { transform: rotate(90deg); }
-.p-more .p-tabs { padding: 4px 0 8px; border-bottom: 0; }
+/* ---------- Panel ordenado: arriba fijo (título, pantalla, día y pestañas); abajo, lo de cada pestaña ---------- */
+.p-head { flex: none; padding: 16px 18px 10px; border-bottom: 0; gap: 8px; }
+.p-tools { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
+.p-tema button { width: 38px; padding: 0; display: grid; place-items: center; }
+.p-icon { width: 40px; height: 40px; border-radius: 13px; border: 0; background: var(--chip); color: var(--chip-ink); display: grid; place-items: center; cursor: pointer; }
+.p-day { margin-top: 4px; padding: 8px; border-radius: 18px; }
+.p-day b { font-size: 18px; }
+.p-arrow { width: 44px; height: 44px; border-radius: 14px; font-size: 26px; }
+.p-head { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+/* acceso rápido: Estado | Ajustes */
+.p-prim { display: grid; grid-template-columns: 1fr 1fr; margin-top: 4px; }
+.p-prim button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; }
+.p-prim button[aria-selected="true"] { background: var(--seg-on); color: var(--seg-on-ink); box-shadow: 0 2px 6px rgba(0,8,43,.15); }
+/* para el equipo (se usa poco): discreto, al pie */
+.p-foot { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px 10px calc(8px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+.p-foot button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 4px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font: 700 12.5px Mulish, sans-serif; cursor: pointer; transition: background-color .15s, color .15s; }
+.p-foot button:hover { background: var(--chip); }
+.p-foot button[aria-current="page"] { background: var(--chip); color: var(--chip-ink); }
+.p-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--line); color: var(--ink); font: 800 10.5px/18px Mulish, sans-serif; font-style: normal; }
+.p-sub { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.p-sub h2 { margin: 0; font: 700 18px/1.2 'Neue Montreal', Mulish, sans-serif; }
+.p-back { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 10px 0 4px; border: 0; border-radius: 10px; background: var(--chip); color: var(--chip-ink); font: 700 13px Mulish, sans-serif; cursor: pointer; }
+/* una opción entre pocas, con su descripción a la vista (como una lista de Ajustes de iOS con ✓) */
+.p-radio { display: grid; gap: 6px; }
+.p-radio button { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; transition: border-color .15s, background-color .15s; }
+.p-radio button > span { flex: 1; display: grid; gap: 2px; }
+.p-radio b { font: 700 14px Mulish, sans-serif; }
+.p-radio small { font: 500 12px/1.35 Mulish, sans-serif; color: var(--muted); }
+.p-radio svg { flex: none; visibility: hidden; color: #1E8DA5; }
+.p-radio [aria-checked="true"] { border-color: #1E8DA5; background: rgba(30,141,165,.08); }
+.p-radio [aria-checked="true"] svg { visibility: visible; }
+:root[data-theme="dark"] .p-radio [aria-checked="true"] { border-color: #37ABC4; background: rgba(55,171,196,.14); }
+:root[data-theme="dark"] .p-radio svg { color: #F5DB78; }
+.p-body { padding-top: 16px; }
+/* grupos como en Ajustes de iOS: título chico arriba y filas dentro de una tarjeta */
+.p-group > h2 { margin: 0 0 6px 4px; font: 800 13px/1.2 Mulish, sans-serif; color: var(--muted); }
+.p-card { padding: 0 14px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--card); }
+.p-card > .p-row:last-child { border-bottom: 0; }
+.p-row-t { display: grid; gap: 2px; min-width: 0; font-weight: 700; }
+.p-row-t small { font: 500 12px/1.35 Mulish, sans-serif; color: var(--muted); }
+.p-stack { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 0; }
+.p-switch { flex: none; position: relative; width: 50px; height: 30px; padding: 0; border: 0; border-radius: 15px; background: #CBD7E0; cursor: pointer; transition: background-color .2s var(--ease-out); }
+.p-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 2px 6px rgba(0,8,43,.22); transition: transform .25s var(--ease-out); }
+.p-switch[aria-checked="true"] { background: #1E8DA5; }
+.p-switch[aria-checked="true"]::after { transform: translateX(20px); }
+:root[data-theme="dark"] .p-switch { background: rgba(255,255,255,.22); }
+:root[data-theme="dark"] .p-switch[aria-checked="true"] { background: #37ABC4; }
+.p-btn-sm { min-height: 34px; padding: 0 14px; border-radius: 11px; }
+.p-danger { width: 100%; margin-top: 24px; background: transparent; border-color: rgba(200,70,63,.35); color: #C8463F; }
+:root[data-theme="dark"] .p-danger { color: #FF9C93; border-color: rgba(255,156,147,.35); }
+.p-teo { padding: 10px 14px; border-radius: 16px; }
+.p-teo img { width: 46px; height: 60px; }
+.p-cov { margin-bottom: 4px; }
+.p-filter { display: grid; grid-template-columns: repeat(3, 1fr); margin: 12px 0 2px; }
+/* secciones plegables (recorridos, pantallas, pendientes, reglas): se ve la lista entera y se abre la que interesa */
+.p-acc { margin-top: 10px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--card); }
+.p-acc > summary { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 12px; cursor: pointer; list-style: none; font: 700 15px/1.2 'Neue Montreal', Mulish, sans-serif; }
+.p-acc > summary::-webkit-details-marker { display: none; }
+.p-acc > summary > svg { flex: none; color: var(--muted); transition: transform .2s var(--ease-out); }
+.p-acc[open] > summary > svg { transform: rotate(90deg); }
+.p-acc-t { flex: 1; min-width: 0; }
+.p-acc-n { flex: none; font: 700 12px Mulish, sans-serif; color: var(--muted); }
+.p-acc-body { padding: 0 12px 6px; }
+.p-acc .p-rec { margin: 0; padding: 12px 2px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+.p-acc .p-rec:hover { border-top-color: var(--line); background: rgba(30,141,165,.06); }
+.p-acc .p-list li:first-child { border-top: 1px solid var(--line); }
+.p-acc .p-list li:last-child { border-bottom: 0; }
+.p-go { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border-radius: 50%; }
+.p-icon:active, .p-btn:active, .p-tab:active, .seg button:active, .p-arrow:active:not(:disabled), .p-switch:active { transform: scale(.96); }
+@media (max-width: 1100px) { .p-head { padding-top: 22px; } }
 
 /* Respuesta al presionar en toda la app (propiedad scale: convive con los transform del lienzo) */
 .layer a, .layer button, .layer [role=button], .layer [data-bound] { transition: scale var(--d-press) var(--ease-out); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

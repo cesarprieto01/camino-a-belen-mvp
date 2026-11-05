@@ -202,13 +202,43 @@ function retroceder() {
 // ---------- Panel ----------
 const panel = document.getElementById('panel');
 const btn = document.getElementById('panelBtn');
-let tab = 'rec';
-let moreOpen = false;
+// arriba, siempre a la vista: título, pantalla actual, día y las pestañas. Cada pestaña, una sola cosa:
+// lo que se simula (Estado), los recorridos del lienzo, sus pantallas, las notas y los ajustes de prueba
+const svg = (d, s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICON = {
+  estado: '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  rec: '<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/>',
+  pant: '<rect x="4" y="3.5" width="7" height="12" rx="1.8"/><rect x="13" y="8.5" width="7" height="12" rx="1.8"/>',
+  notas: '<path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8h5M9 12.5h7M9 16h5"/>',
+  aj: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  enlace: '<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
+  sol: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  luna: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  play: '<path d="M9 6.5l9 5.5-9 5.5z" fill="currentColor"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>',
+  atras: '<path d="M15 6l-6 6 6 6"/>',
+  ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+};
+// acceso rápido: Estado y Ajustes. Recorridos, Pantallas y Notas se usan poco: van discretas al pie y se vuelve con «‹»
+const PRIMARIAS = [['estado', 'Estado'], ['aj', 'Ajustes']];
+// la canción del mapa (panel › Ajustes): S.musicaMapa
+const MUSICA_MAPA = [['juegos', 'Opción 1', 'La música de las trivias y los juegos'], ['original', 'Opción 2', 'La canción original del mapa']];
+const EQUIPO = [['rec', 'Recorridos'], ['pant', 'Pantallas'], ['notas', 'Notas']];
+let tab = 'estado';
+let ultima = 'estado'; // la última pestaña principal, a la que vuelve «‹»
 let filtro = 'todas';
-try { tab = localStorage.getItem('cab-tab2') || 'rec'; } catch { /* sin storage */ }
+let abiertas = null; // secciones plegables abiertas; la primera vez, la de la pantalla donde se está
+try { tab = localStorage.getItem('cab-tab3') || 'estado'; abiertas = JSON.parse(localStorage.getItem('cab-abiertas') || 'null'); } catch { /* sin storage */ }
+if (![...PRIMARIAS, ...EQUIPO].some(([k]) => k === tab)) tab = 'estado';
+if (PRIMARIAS.some(([k]) => k === tab)) ultima = tab;
 btn.onclick = () => { const o = panel.classList.toggle('open'); btn.setAttribute('aria-expanded', o); document.body.classList.toggle('panel-open', o); if (o) render(); };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const check = on => `<span class="p-check ${on ? 'on' : ''}" aria-label="${on ? 'Visto' : 'Sin ver'}">${on ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : ''}</span>`;
+// piezas del panel: interruptor (sí/no), fila de un grupo, grupo con título y sección plegable
+const sw = (id, on, label) => `<button class="p-switch" role="switch" aria-checked="${!!on}" aria-label="${label}" data-sw="${id}"></button>`;
+const fila = (label, control, sub = '') => `<div class="p-row"><span class="p-row-t">${label}${sub ? `<small>${sub}</small>` : ''}</span>${control}</div>`;
+const grupo = (titulo, filas, pie = '') => `<section class="p-group"><h2>${titulo}</h2><div class="p-card">${filas}</div>${pie ? `<p class="p-help">${pie}</p>` : ''}</section>`;
+const plegable = (id, titulo, cuerpo, { badge = '', n = '' } = {}) => `<details class="p-acc" data-acc="${id}" ${abiertas.includes(id) ? 'open' : ''}><summary>${badge !== '' ? `<span class="p-sec-badge">${badge}</span>` : ''}<span class="p-acc-t">${titulo}</span>${n !== '' ? `<span class="p-acc-n">${n}</span>` : ''}${svg(ICON.chev, 18)}</summary><div class="p-acc-body">${cuerpo}</div></details>`;
 
 function dayLabel(n) { if (n <= 0) return 'Antes del 29 nov'; if (n > GRACIA_FIN) return 'Desde el 7 ene'; if (n >= 27) { const f = dateOf(n); return `Gracia · ${f.dd} ${f.mes.slice(0, 3).toLowerCase()}`; } const f = dateOf(n); return `Día ${n} · ${f.dow.slice(0, 3).toLowerCase()} ${f.dd} ${f.mes.slice(0, 3).toLowerCase()}`; }
 function coverage() {
@@ -227,121 +257,116 @@ function render() {
   const progTxt = act == null ? (fase() === 'antes' ? (S.inscrito ? 'Inscrito' : 'Sin inscribirse') : 'Al día') : act < lastDay() ? `Va en el día ${act}` : `Toca el día ${act}`;
   const dayTitle = S.hoy < 0 ? 'Antes del 28 de noviembre' : S.hoy === 0 ? '28 de noviembre' : S.hoy > GRACIA_FIN ? 'Camino cerrado' : S.hoy >= 27 ? `Gracia · ${cuentaGracia(true)}` : `Día ${S.hoy} de 26`;
   const daySub = S.hoy < 0 ? 'El camino aún no empieza' : S.hoy === 0 ? 'Un día antes · se abre el intro' : S.hoy > GRACIA_FIN ? 'Desde el 7 de enero' : S.hoy >= 27 ? (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })() : (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })();
-  const simple = `<section class="p-simple">
+  const tema = `<span class="seg p-tema" role="group" aria-label="Tema">${[['claro', 'Día', ICON.sol], ['oscuro', 'Noche', ICON.luna]].map(([v, l, d]) => `<button data-tema="${v}" aria-pressed="${S.tema === v}" aria-label="${l}" title="${l}">${svg(d, 18)}</button>`).join('')}</span>`;
+  const head = `<header class="p-head">
+    <div class="p-title"><h1>Adviento</h1><span class="p-tag">MVP</span><span class="p-tools">${tema}<button class="p-icon" data-act="share" aria-label="Copiar enlace a este estado" title="Copiar enlace a este estado">${svg(ICON.enlace)}</button></span></div>
+    <small class="p-now-screen">Estás en: <b>${esc(name)}</b></small>
     <div class="p-day">
       <button class="p-arrow" data-act="dayMinus" aria-label="Día anterior" ${S.hoy <= -1 ? 'disabled' : ''}>‹</button>
       <div><b>${dayTitle}</b><small>${daySub} · ${progTxt}</small></div>
       <button class="p-arrow" data-act="dayPlus" aria-label="Día siguiente" ${S.hoy > GRACIA_FIN ? 'disabled' : ''}>›</button>
     </div>
-    <div class="seg p-wide">${[['claro', 'Día'], ['oscuro', 'Noche']].map(([v, l]) => `<button data-tema="${v}" aria-pressed="${S.tema === v}">${l}</button>`).join('')}</div>
-    <div class="p-teo">
-      <img src="${A(TEODORO_IDS[S.bateria])}" alt="Teodoro ${ENERGY_NAMES[S.bateria].toLowerCase()}">
-      <div>
-        <b>Teodoro · ${ENERGY_NAMES[S.bateria]}</b>
-        <span class="p-bat" role="img" aria-label="Energía ${S.bateria} de 5">${[0, 1, 2, 3, 4].map(i => `<i class="${i < S.bateria ? 'on' : ''}"></i>`).join('')}</span>
-        <small>Un cuento lo llena. Cada día sin caminar baja una rayita.</small>
-      </div>
-    </div>
-    <div class="p-row p-panes"><label for="nPan"><img src="${A(IMG.pan)}" alt="">Panes</label><span class="p-step"><button data-act="panMinus" aria-label="Quitar 10 panes">−</button><input id="nPan" type="number" min="0" step="5" value="${S.panes}"><button data-act="panPlus" aria-label="Sumar 10 panes">+</button></span></div>
-    <button class="p-link p-reset" data-act="reset">Empezar de cero</button>
-  </section>`;
-  const head = `<div class="p-head"><div class="p-title"><h1>Adviento</h1><span class="p-tag">MVP</span></div><small class="p-now-screen">Estás en: <b>${esc(name)}</b></small></div>`;
-  const tabsHtml = `<div class="p-tabs" role="tablist">${[['rec', 'Recorridos'], ['aj', 'Avanzado'], ['pant', `Pantallas · ${cov.seenN}/${cov.total}`], ['notas', `Notas${S.huecos.length ? ' · ' + S.huecos.length : ''}`]].map(([k, l]) => `<button class="p-tab" role="tab" aria-selected="${tab === k}" data-tab="${k}">${l}</button>`).join('')}</div>`;
+    <div class="seg p-prim" role="tablist" aria-label="Panel">${PRIMARIAS.map(([k, l]) => `<button role="tab" id="pt-${k}" aria-controls="pbody" aria-selected="${tab === k}" data-tab="${k}">${svg(ICON[k], 18)}${l}</button>`).join('')}</div>
+  </header>`;
+  const equipo = `<nav class="p-foot" aria-label="Para el equipo">${EQUIPO.map(([k, l]) => `<button id="pt-${k}" data-tab="${k}" ${tab === k ? 'aria-current="page"' : ''}>${svg(ICON[k], 16)}<span>${l}</span>${k === 'notas' && S.huecos.length ? `<i class="p-badge" aria-label="${S.huecos.length} huecos">${S.huecos.length}</i>` : ''}</button>`).join('')}</nav>`;
+  const enEquipo = EQUIPO.find(([k]) => k === tab);
+  const volver = enEquipo ? `<div class="p-sub"><button class="p-back" data-tab="${ultima}">${svg(ICON.atras, 18)}${PRIMARIAS.find(([k]) => k === ultima)[1]}</button><h2>${enEquipo[1]}</h2></div>` : '';
+  abiertas ??= [`rec-${sec?.[0] ?? 2}`, `pant-${sec?.[0] ?? 2}`];
+  const pct = Math.round(cov.seenN / cov.total * 100);
+  const cobertura = link => `<div class="p-cov"><div class="p-cov-top"><b>${cov.seenN} de ${cov.total} pantallas del lienzo vistas</b>${link ? '<button class="p-link" data-tab="pant" data-filtro="faltan">Ver las que faltan</button>' : ''}</div><div class="p-bar"><span style="width:${pct}%"></span></div></div>`;
 
   let body = '';
-  if (tab === 'rec') {
-    const pct = Math.round(cov.seenN / cov.total * 100);
-    body = `<div class="p-cov"><div class="p-cov-top"><b>${cov.seenN} de ${cov.total} pantallas del lienzo vistas</b><button class="p-link" data-tab="pant" data-filtro="faltan">Ver las que faltan</button></div><div class="p-bar"><span style="width:${pct}%"></span></div></div>
-    <p class="p-help">Cada recorrido deja la app en el punto exacto. Tócalo, recórrelo como una familia y anota lo que veas en <b>Notas</b>.</p>
-    ${SECTIONS.map(([n, label]) => {
+  if (tab === 'estado') {
+    const maxDone = Math.max(0, ...Object.keys(S.completos).filter(k => isDone(+k)).map(Number));
+    body = `<div class="p-teo">
+      <img src="${A(TEODORO_IDS[S.bateria])}" alt="Teodoro ${ENERGY_NAMES[S.bateria].toLowerCase()}">
+      <div><b>Teodoro · ${ENERGY_NAMES[S.bateria]}</b><span class="p-bat" role="img" aria-label="Energía ${S.bateria} de 5">${[0, 1, 2, 3, 4].map(i => `<i class="${i < S.bateria ? 'on' : ''}"></i>`).join('')}</span></div>
+    </div>
+    ${grupo('Familia',
+      fila('Plan', `<span class="seg">${[['premium', 'Premium'], ['pase', 'Pase'], ['free', 'Free']].map(([v, l]) => `<button data-plan="${v}" aria-pressed="${S.plan === v}">${l}</button>`).join('')}</span>`)
+      + fila('Inscrito', sw('ins', S.inscrito, 'Inscrito'))
+      + `<div class="p-row p-panes"><label for="nPan"><img src="${A(IMG.pan)}" alt="">Panes</label><span class="p-step"><button data-act="panMinus" aria-label="Quitar 10 panes">−</button><input id="nPan" type="number" min="0" step="5" value="${S.panes}"><button data-act="panPlus" aria-label="Sumar 10 panes">+</button></span></div>`)}
+    ${grupo('Tiempo',
+      `<div class="p-row"><label for="pSel">Completó hasta</label><select id="pSel">${Array.from({ length: 27 }, (_, n) => `<option value="${n}" ${n === maxDone ? 'selected' : ''}>${n ? 'Día ' + n : 'Ninguno'}</option>`).join('')}</select></div>`
+      + fila('Saltar 7 días', '<button class="p-btn p-btn-sm" data-act="week">Saltar</button>', 'Para ver «¡Te guardé el camino!»'))}
+    <button class="p-btn p-danger" data-act="reset">Empezar de cero</button>`;
+  } else if (tab === 'rec') {
+    body = cobertura(true) + SECTIONS.map(([n, label]) => {
       const items = REC.map((r, i) => ({ ...r, i })).filter(r => r.sec === n);
       if (!items.length) return '';
-      return `<section class="p-group"><h2><span class="p-sec-badge">${n}</span>${label}</h2>${items.map(r => {
+      return plegable(`rec-${n}`, label, items.map(r => {
         const done = r.covers.length && r.covers.every(f => S.vistas?.[logical(f)]);
-        return `<button class="p-rec" data-scen="${r.i}">${check(done)}<span><b>${esc(r.t)}</b><small>${esc(r.mira)}</small></span><span class="p-go" aria-hidden="true">Probar</span></button>`;
-      }).join('')}</section>`;
-    }).join('')}`;
-  } else if (tab === 'aj') {
-    const maxDone = Math.max(0, ...Object.keys(S.completos).filter(k => isDone(+k)).map(Number));
-    body = `<section class="p-group"><h2>Tiempo</h2>
-      <div class="p-row"><label for="pSel">Completó hasta</label><select id="pSel">${Array.from({ length: 27 }, (_, n) => `<option value="${n}" ${n === maxDone ? 'selected' : ''}>${n ? 'Día ' + n : 'Ninguno'}</option>`).join('')}</select></div>
-      <div class="p-btns"><button class="p-btn" data-act="week">Saltar 7 días (regreso)</button></div>
-    </section>
-    <section class="p-group"><h2>Familia</h2>
-      <div class="p-row"><label>Plan</label><span class="seg">${[['premium', 'Premium'], ['pase', 'Pase'], ['free', 'Free']].map(([v, l]) => `<button data-plan="${v}" aria-pressed="${S.plan === v}">${l}</button>`).join('')}</span></div>
-      <div class="p-row"><label>Inscrito</label><span class="seg">${[['1', 'Sí'], ['0', 'No']].map(([v, l]) => `<button data-ins="${v}" aria-pressed="${S.inscrito === (v === '1')}">${l}</button>`).join('')}</span></div>
-      <div class="p-row"><label>Slides del reto</label><span class="seg">${[['1', 'Prendidos'], ['0', 'Apagados']].map(([v, l]) => `<button data-slides="${v}" aria-pressed="${!!S.slidesReto === (v === '1')}">${l}</button>`).join('')}</span></div>
-      <p class="p-help">Al tocar «Únete al reto», 3 slides cuentan de qué trata antes de «¡Ya estás dentro!». Es para una versión posterior: por ahora lo envía Braze.</p>
-    </section>
-    <section class="p-group"><h2>iPhone</h2>
-      <div class="p-row"><label>Isla dinámica</label><span class="seg">${[['1', 'Sí'], ['0', 'No']].map(([v, l]) => `<button data-isla="${v}" aria-pressed="${(S.isla !== false) === (v === '1')}">${l}</button>`).join('')}</span></div>
-      <div class="p-row"><label>Zonas seguras</label><span class="seg">${[['1', 'Mostrar'], ['0', 'Ocultar']].map(([v, l]) => `<button data-zonas="${v}" aria-pressed="${!!S.zonas === (v === '1')}">${l}</button>`).join('')}</span></div>
-      <p class="p-help">Medidas del iPhone 15 y 16: isla de 126 × 37 pt a 11 pt del borde; zona segura de 59 pt arriba y 34 pt abajo.</p>
-    </section>
-    <section class="p-group"><h2>Música</h2>
-      <div class="p-row"><label>Canción del mapa</label><span class="seg">${[[1, 'Opción 1'], [2, 'Opción 2'], [3, 'Opción 3']].map(([v, l]) => `<button data-cancion="${v}" aria-pressed="${([2, 3].includes(S.cancionMapa) ? S.cancionMapa : 1) === v}">${l}</button>`).join('')}</span></div>
-      <p class="p-help">Opción 1: la canción original. Opción 2: la misma música de las trivias y los juegos. Opción 3: se turnan, una vuelta cada una. Para probar cuál acompaña mejor el mapa.</p>
-    </section>
-    <section class="p-group"><h2>Ruleta</h2>
-      <p class="p-help">Qué sale al girar:</p>
-      <div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div>
-      <div class="p-btns"><button class="p-btn main" data-act="ruletaOtraVez">Girar la ruleta otra vez</button></div>
-      <p class="p-help">Vuelve a abrir la ruleta de esta semana sin cambiar de día (días 4, 11, 18 y 24).</p>
-    </section>
-    <section class="p-group"><h2>Compartir</h2>
-      <div class="p-btns"><button class="p-btn main" data-act="share">Copiar enlace a este estado</button><button class="p-btn" data-act="reset">Volver al día 9</button></div>
-      <p class="p-help">El enlace abre la app en esta misma pantalla y estado. Sirve para decir «mira esto» por Slack.</p>
-    </section>
-    <details class="p-group p-rules"><summary>Reglas que usa el MVP</summary><ul class="p-list">
-      <li><b>Panes</b><small>Contenido +${RULES.panes.contenidoPremium} premium / +${RULES.panes.contenidoFree} free · trivia +${RULES.panes.trivia} · sorpresa +${RULES.panes.sorpresa} · ruleta ${RULES.panes.ruleta}</small></li>
-      <li><b>Batería</b><small>Cada noche baja una rayita · terminar el día la llena · nunca bloquea</small></li>
-      <li><b>Ruleta</b><small>Días ${RULES.ruleta.join(', ')} · al tocarla en el mapa</small></li>
-      <li><b>Sorpresa</b><small>${Object.entries(RULES.sorpresa).map(([d, g]) => `día ${d} ${g}`).join(' · ')} · nunca el mismo día que la ruleta</small></li>
-      <li><b>Atrasado y regreso</b><small>Puede hacer varios días seguidos hasta alcanzar hoy · regreso tras ${RULES.regresoDias}+ días sin caminar</small></li>
-    </ul></details>`;
+        return `<button class="p-rec" data-scen="${r.i}">${check(done)}<span><b>${esc(r.t)}</b><small>${esc(r.mira)}</small></span><span class="p-go" aria-hidden="true">${svg(ICON.play, 14)}</span></button>`;
+      }).join(''), { badge: n, n: items.length });
+    }).join('');
   } else if (tab === 'pant') {
     const groups = {};
     cov.all.forEach((v, k) => { const s = sectionOfY(v.y); (groups[s[0]] ??= []).push([k, v]); });
     const man = manifest();
     const pair = key => Object.entries(man).filter(([f]) => logical(f) === key).sort((a, b) => a[1].dark - b[1].dark).map(([f, m]) => ({ f, dark: m.dark }));
-    body = `<div class="seg p-filter">${[['todas', 'Todas'], ['faltan', 'Faltan'], ['vistas', 'Vistas']].map(([v, l]) => `<button data-filtro="${v}" aria-pressed="${filtro === v}">${l}</button>`).join('')}</div>
-    <p class="p-help">Las ✓ ya aparecieron al recorrer la app. Toca Claro u Oscuro para verla tal cual está en el lienzo.</p>
-    ${SECTIONS.map(([n, label]) => {
-      const rows = (groups[n] || []).sort((a, b) => a[1].y - b[1].y || a[1].x - b[1].x).filter(([k]) => filtro === 'todas' || (filtro === 'vistas') === !!S.vistas?.[k]);
-      if (!rows.length) return '';
-      return `<section class="p-group"><h2><span class="p-sec-badge">${n}</span>${label}</h2><ul class="p-list">${rows.map(([k]) => `<li class="p-screen">${check(S.vistas?.[k])}<span>${esc(k)}</span><span class="p-mini">${pair(k).map(p => `<button data-file="${p.f}">${p.dark ? 'Oscuro' : 'Claro'}</button>`).join('')}</span></li>`).join('')}</ul></section>`;
-    }).join('')}`;
-  } else {
+    body = cobertura(false) + `<div class="seg p-filter">${[['todas', 'Todas'], ['faltan', 'Faltan'], ['vistas', 'Vistas']].map(([v, l]) => `<button data-filtro="${v}" aria-pressed="${filtro === v}">${l}</button>`).join('')}</div>`
+      + SECTIONS.map(([n, label]) => {
+        const todas = (groups[n] || []).sort((a, b) => a[1].y - b[1].y || a[1].x - b[1].x);
+        const rows = todas.filter(([k]) => filtro === 'todas' || (filtro === 'vistas') === !!S.vistas?.[k]);
+        if (!rows.length) return '';
+        return plegable(`pant-${n}`, label, `<ul class="p-list">${rows.map(([k]) => `<li class="p-screen">${check(S.vistas?.[k])}<span>${esc(k)}</span><span class="p-mini">${pair(k).map(p => `<button data-file="${p.f}">${p.dark ? 'Oscuro' : 'Claro'}</button>`).join('')}</span></li>`).join('')}</ul>`, { badge: n, n: `${todas.filter(([k]) => S.vistas?.[k]).length}/${todas.length}` });
+      }).join('');
+  } else if (tab === 'notas') {
     const key = cur?.name || 'hoy';
     const notes = Object.entries(S.notas).filter(([, v]) => v.trim());
     body = `<section class="p-group"><h2>Nota sobre «${esc(NAMES[key] || key)}»</h2>
       <textarea class="p-note" id="note" placeholder="¿Qué mejorarías aquí? ¿Falta una pantalla? ¿Algo confunde a un niño?">${esc(S.notas[key] || '')}</textarea>
       <div class="p-btns"><button class="p-btn main" data-act="copyNotes">Copiar todo para el equipo</button><button class="p-btn" data-act="dlNotes">Descargar .md</button></div></section>
-    <section class="p-group"><h2>Notas del equipo · ${notes.length}</h2>${notes.length ? `<ul class="p-list">${notes.map(([k, v]) => `<li><b>${esc(NAMES[k] || k)}</b><small>${esc(v)}</small></li>`).join('')}</ul>` : '<p class="p-help">Aún no hay notas. Escribe arriba mientras recorres.</p>'}</section>
-    <section class="p-group"><h2>Huecos encontrados · ${S.huecos.length}</h2><p class="p-help">Se anotan solos cuando alguien toca algo que el lienzo no define.</p>
-      ${S.huecos.length ? `<ul class="p-list">${S.huecos.map(h => `<li><b>${esc(h.label)}</b><small>en ${esc(NAMES[h.where] || h.where)}</small></li>`).join('')}</ul><div class="p-btns"><button class="p-btn" data-act="clearH">Vaciar huecos</button></div>` : ''}</section>
-    <section class="p-group"><h2>Pendientes del lienzo</h2><ul class="p-list">${PENDIENTES_LIENZO.map(t => `<li><small>${esc(t)}</small></li>`).join('')}</ul></section>
-    <section class="p-group"><h2>Decisiones del MVP para revisar</h2><ul class="p-list">${DECISIONES.map(t => `<li><small>${esc(t)}</small></li>`).join('')}</ul></section>`;
+    <section class="p-group"><h2>Notas del equipo · ${notes.length}</h2>${notes.length ? `<ul class="p-list">${notes.map(([k, v]) => `<li><b>${esc(NAMES[k] || k)}</b><small>${esc(v)}</small></li>`).join('')}</ul>` : '<p class="p-help">Aún no hay notas.</p>'}</section>
+    <section class="p-group"><h2>Huecos encontrados · ${S.huecos.length}</h2>${S.huecos.length ? `<ul class="p-list">${S.huecos.map(h => `<li><b>${esc(h.label)}</b><small>en ${esc(NAMES[h.where] || h.where)}</small></li>`).join('')}</ul><div class="p-btns"><button class="p-btn" data-act="clearH">Vaciar huecos</button></div>` : '<p class="p-help">Se anotan solos al tocar algo que el lienzo no define.</p>'}</section>
+    ${plegable('notas-pend', 'Pendientes del lienzo', `<ul class="p-list">${PENDIENTES_LIENZO.map(t => `<li><small>${esc(t)}</small></li>`).join('')}</ul>`, { n: PENDIENTES_LIENZO.length })}
+    ${plegable('notas-dec', 'Decisiones del MVP para revisar', `<ul class="p-list">${DECISIONES.map(t => `<li><small>${esc(t)}</small></li>`).join('')}</ul>`, { n: DECISIONES.length })}`;
+  } else {
+    const mus = S.musicaMapa === 'original' ? 'original' : 'juegos';
+    body = `${grupo('Variantes',
+      fila('Slides del reto', sw('slides', S.slidesReto, 'Slides del reto'), 'Versión posterior · hoy lo envía Braze')
+      + `<div class="p-row p-stack"><span class="p-row-t">Canción del mapa</span><div class="p-radio" role="radiogroup" aria-label="Canción del mapa">${MUSICA_MAPA.map(([v, l, d]) => `<button role="radio" aria-checked="${mus === v}" data-musica="${v}"><span><b>${l}</b><small>${d}</small></span>${svg(ICON.ok, 18)}</button>`).join('')}</div></div>`)}
+    ${grupo('Ruleta',
+      `<div class="p-row p-stack"><span class="p-row-t">Qué sale al girar</span><div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div></div>`
+      + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
+    ${grupo('iPhone',
+      fila('Isla dinámica', sw('isla', S.isla !== false, 'Isla dinámica'))
+      + fila('Zonas seguras', sw('zonas', S.zonas, 'Zonas seguras')),
+      'iPhone 15 y 16: isla de 126 × 37 pt a 11 pt del borde · zona segura de 59 pt arriba y 34 abajo')}
+    ${plegable('aj-reglas', 'Reglas que usa el MVP', `<ul class="p-list">
+      <li><b>Panes</b><small>Contenido +${RULES.panes.contenidoPremium} premium / +${RULES.panes.contenidoFree} free · trivia +${RULES.panes.trivia} · sorpresa +${RULES.panes.sorpresa} · ruleta ${RULES.panes.ruleta}</small></li>
+      <li><b>Batería</b><small>Cada noche baja una rayita · terminar el día la llena · nunca bloquea</small></li>
+      <li><b>Ruleta</b><small>Días ${RULES.ruleta.join(', ')} · al tocarla en el mapa</small></li>
+      <li><b>Sorpresa</b><small>${Object.entries(RULES.sorpresa).map(([d, g]) => `día ${d} ${g}`).join(' · ')} · nunca el mismo día que la ruleta</small></li>
+      <li><b>Atrasado y regreso</b><small>Puede hacer varios días seguidos hasta alcanzar hoy · regreso tras ${RULES.regresoDias}+ días sin caminar</small></li>
+    </ul>`)}`;
   }
   const scroll = panel.querySelector('.p-body')?.scrollTop || 0;
   const sameTab = panel.dataset.tab === tab;
-  panel.innerHTML = head + `<div class="p-body">${simple}<details class="p-more" ${moreOpen ? 'open' : ''}><summary>Más herramientas para el equipo</summary>${tabsHtml}<div class="p-more-body">${body}</div></details></div>`;
+  panel.innerHTML = head + `<div class="p-body" id="pbody" role="tabpanel" aria-labelledby="pt-${tab}">${volver}${body}</div>` + equipo;
   panel.dataset.tab = tab;
   if (sameTab) panel.querySelector('.p-body').scrollTop = scroll;
 }
 
-panel.addEventListener('toggle', e => { if (e.target.matches('.p-more')) moreOpen = e.target.open; }, true);
+// las secciones plegables recuerdan si quedaron abiertas
+panel.addEventListener('toggle', e => {
+  const d = e.target; if (!d.matches?.('details[data-acc]')) return;
+  abiertas = (abiertas || []).filter(x => x !== d.dataset.acc); if (d.open) abiertas.push(d.dataset.acc);
+  try { localStorage.setItem('cab-abiertas', JSON.stringify(abiertas)); } catch { /* sin storage */ }
+}, true);
+
 panel.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
-  if (t.dataset.tab) { tab = t.dataset.tab; if (t.dataset.filtro) filtro = t.dataset.filtro; try { localStorage.setItem('cab-tab2', tab); } catch { /* */ } render(); return; }
+  if (t.dataset.tab) { tab = t.dataset.tab; if (PRIMARIAS.some(([k]) => k === tab)) ultima = tab; if (t.dataset.filtro) filtro = t.dataset.filtro; try { localStorage.setItem('cab-tab3', tab); } catch { /* */ } render(); return; }
   if (t.dataset.filtro) { filtro = t.dataset.filtro; render(); return; }
   if (t.dataset.plan) { S.plan = t.dataset.plan; save(); nota(S.plan === 'free' ? 'Ahora eres free' : S.plan === 'pase' ? 'Ahora tienes el Pase de Adviento' : 'Ahora eres premium'); return; }
   if (t.dataset.tema) { S.tema = t.dataset.tema; save(); if (cur?.name === 'estatica') go('hoy', {}, 'fade'); else go(cur?.name || 'hoy', cur?.params || {}, 'fade', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
-  if (t.dataset.ins) { S.inscrito = t.dataset.ins === '1'; save(); go('hoy', {}, 'fade'); return; }
-  if (t.dataset.slides) { S.slidesReto = t.dataset.slides === '1'; save(); nota(S.slidesReto ? 'Slides del reto prendidos' : 'Slides del reto apagados', S.slidesReto ? 'Salen al tocar «Únete al reto»' : ''); return; }
-  if (t.dataset.isla) { S.isla = t.dataset.isla === '1'; save(); return; }
-  if (t.dataset.zonas) { S.zonas = t.dataset.zonas === '1'; save(); return; }
-  if (t.dataset.cancion) { S.cancionMapa = +t.dataset.cancion; save(); musicaPara(); render(); nota(`Mapa con la opción ${S.cancionMapa}`, ['La canción original', 'La misma música de las trivias y los juegos', 'Las dos, una vuelta cada una'][S.cancionMapa - 1]); return; }
+  // interruptores (sí/no): cambian al tocar
+  if (t.dataset.sw === 'ins') { S.inscrito = !S.inscrito; save(); go('hoy', {}, 'fade'); return; }
+  if (t.dataset.sw === 'slides') { S.slidesReto = !S.slidesReto; save(); nota(S.slidesReto ? 'Slides del reto prendidos' : 'Slides del reto apagados', S.slidesReto ? 'Salen al tocar «Únete al reto»' : ''); return; }
+  if (t.dataset.sw === 'isla') { S.isla = S.isla === false; save(); return; }
+  if (t.dataset.sw === 'zonas') { S.zonas = !S.zonas; save(); return; }
+  if (t.dataset.musica) { S.musicaMapa = t.dataset.musica; save(); musicaPara(); render(); const [, l, d] = MUSICA_MAPA.find(([v]) => v === S.musicaMapa); nota(`Canción del mapa: ${l.toLowerCase()}`, d); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
   if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
