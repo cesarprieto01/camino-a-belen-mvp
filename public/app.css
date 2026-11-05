@@ -339,6 +339,9 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 :root[data-theme="dark"] .sheet-min { background: rgba(255,255,255,.1); color: #FFFFFF; }
 /* con un pop-up encima, la hoja del día y la píldora se apartan (no se mezclan textos) */
 .layer.under [data-sheet], .layer.under .back-hoy { opacity: 0; transition: opacity .2s ease-out; }
+/* el resultado de la trivia: la trivia de abajo queda borrosa y quieta (no compiten dos Teodoros saltando) */
+.layer[data-screen="triviaFin"] .ov-scrim { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.layer.under[data-screen="trivia"] * { animation-play-state: paused !important; }
 
 /* Hoja del día minimizada: barra compacta tipo mini reproductor */
 .mini-bar { display: none; }

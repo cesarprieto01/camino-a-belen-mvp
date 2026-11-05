@@ -607,6 +607,7 @@ register('hoy', {
       on(root, 'Cerrar', () => { close(); go('hoy', {}, 'fade', { replace: true }); });
       const teo = $$(root, 'img').find(i => i.src.includes(IMG.tCelebra));
       teo?.classList.add('a-hop');
+      requestAnimationFrame(() => celebrar(root, i => i === teo)); // salta en bucle (Lottie) donde estaba el dibujo quieto
     }
   },
 });
@@ -1444,6 +1445,7 @@ register('free', {
     ['Ver Theo Premium', 'Hazte Premium'].forEach(t => on(root, t, () => p.dia != null ? comprar('premium', '¡Ya eres Premium!', 'Los 26 días son tuyos') : nota('Paywall de Theo Premium', 'Ya existe en la app')));
     on(root, 'Volver al mapa', volver); on(root, 'Ahora no', volver); on(root, 'Cerrar', volver);
     setText(root, 'Volver al mapa', 'Ahora no');
+    requestAnimationFrame(() => celebrar(root, i => i.src.includes(IMG.tCelebra))); // Teodoro salta en bucle (Lottie) donde estaba el dibujo quieto
     // día de pago del camino: el mismo paywall, con el Pase de Adviento como segunda opción
     if (p.dia != null) {
       const txt = textEl(root, /Imprimibles y más actividades/);

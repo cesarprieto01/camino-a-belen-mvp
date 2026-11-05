@@ -4,7 +4,7 @@ import { S, save, A, $, $$, on, find, go, back, register, toast, nota, frag, see
 import { DAYS, TRIVIA, RULES, IMG, MEMORAMA, ADIVINANZA, DESAFIOS, JUEGOS, hasTrivia, TYPES } from './data.js';
 import { finishTrivia, finishContent, openSorpresa, panesContenido, abrirDescargable } from './flow.js';
 import { bindMute, teoDice, sonido, motivo, agacha, levanta, restoVoz } from './musica.js';
-import { celebrar, pensar, quieto, pasarA, animadoCon, precargar, MAPA_PIENSA, MAPA_A_FAROL, FAROL, FAROL_A_MAPA } from './teo-anim.js';
+import { celebrar, pensar, quieto, pasarA, animadoCon, precargar, pausar, MAPA_PIENSA, MAPA_A_FAROL, FAROL, FAROL_A_MAPA, FESTEJA, MAPA_A_FESTEJA, FAROL_A_FESTEJA, FESTEJA_A_MAPA } from './teo-anim.js';
 // botón de música de la cabecera (trivia y su resultado)
 const muteBtn = root => bindMute(root.querySelector('button[aria-label^="Música de fondo"]'));
 
@@ -129,25 +129,38 @@ register('trivia', {
     card?.classList.add('a-rise');
     listenButton(root, layer, q.q + '. ' + q.o.map(o => o.t || o).join(', '));
     const teo = $$(root, 'img').find(im => im.src.includes(IMG.tPregunta));
-    // al fallar, Teodoro animado con su mapa lo guarda y saca el farol (la pista); tras una vuelta del farol vuelve a pensar con el mapa.
-    // Si ya tiene el farol, sigue igual. Al acertar (o si no hay animación) sale el dibujo quieto que toca
+    // al fallar, Teodoro animado con su mapa lo guarda y saca el farol (la pista); tras dos vueltas del farol (~5,6 s) vuelve a pensar
+    // con el mapa. Si ya tiene el farol, sigue igual. Al acertar, suelta el mapa o el farol y salta de alegría en bucle.
+    // Sin animación sale el dibujo quieto que toca
     const alFarol = async () => {
       teo.src = A(IMG.tFarol);
+      [FAROL_A_FESTEJA, FAROL_A_MAPA].forEach(precargar);
       const farol = await pasarA(teo, MAPA_A_FAROL, FAROL);
-      farol?.anim.addEventListener('loopComplete', () => { if (!animadoCon(teo, FAROL)) return; teo.src = A(IMG.tPregunta); pasarA(teo, FAROL_A_MAPA, MAPA_PIENSA); });
+      let vueltas = 0;
+      farol?.anim.addEventListener('loopComplete', () => { if (++vueltas < 2 || !animadoCon(teo, FAROL)) return; teo.src = A(IMG.tPregunta); pasarA(teo, FAROL_A_MAPA, MAPA_PIENSA); });
+    };
+    const alFestejo = () => {
+      const desde = animadoCon(teo, FAROL) ? FAROL_A_FESTEJA : MAPA_A_FESTEJA;
+      teo.src = A(IMG.tCelebra);
+      precargar(FESTEJA_A_MAPA); // la pregunta siguiente entra con él
+      pasarA(teo, desde, FESTEJA);
     };
     const setTeo = (id, cls) => {
       if (!teo) return;
       if (id === IMG.tFarol && animadoCon(teo, MAPA_PIENSA)) { alFarol(); return; }
       if (id === IMG.tFarol && animadoCon(teo, FAROL)) return;
+      if (id === IMG.tCelebra && (animadoCon(teo, MAPA_PIENSA) || animadoCon(teo, FAROL))) { alFestejo(); return; }
       if (id !== IMG.tPregunta) quieto(teo);
       teo.src = A(id); teo.classList.remove('a-hop', 'a-bob', 'a-shake'); void teo.offsetWidth; cls && teo.classList.add(cls);
     };
     setTeo(IMG.tPregunta, 'a-bob');
+    // viene de acertar la anterior: Teodoro llega celebrando y vuelve al mapa mientras entra la pregunta (sin asomar el dibujo quieto)
+    const festeja = p.teo === 'festeja' && !reduced();
+    if (festeja && teo) teo.style.visibility = 'hidden';
     // en lista (o con pregunta de 3 líneas), Teodoro un poco más chico y la pregunta más arriba: caben las opciones y el aviso
     if (card && (list || card.offsetHeight > 160)) { card.style.top = '222px'; teo?.classList.add('tv-teo-sm'); }
-    requestAnimationFrame(() => pensar(root, MAPA_PIENSA)); // Teodoro con su mapa se mueve en bucle (Lottie), con reposo para reaccionar sin corte
-    [MAPA_A_FAROL, FAROL, FAROL_A_MAPA].forEach(precargar); // si fallan, las transiciones salen sin esperar la descarga
+    requestAnimationFrame(() => pensar(root, MAPA_PIENSA, festeja ? FESTEJA_A_MAPA : null)); // Teodoro con su mapa se mueve en bucle (Lottie), con reposo para reaccionar sin corte
+    [MAPA_A_FAROL, MAPA_A_FESTEJA, FAROL, FESTEJA].forEach(precargar); // al responder, las transiciones salen sin esperar la descarga
 
     const group = root.querySelector('[role=group]');
     const tplOpt = group.children[0].outerHTML;
@@ -201,7 +214,7 @@ register('trivia', {
       root.appendChild(a); a.classList.add('a-rise');
       on(root, a, () => {
         if (!p.replay && i < 4) { (S.triviaProgreso ||= {})[n] = { i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), h: (p.h || '') + (fallos === 0 ? '1' : '0') }; save(); }
-        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), h: (p.h || '') + (fallos === 0 ? '1' : '0'), replay: p.replay }, 'push', { replace: true });
+        if (i < 4) go('trivia', { day: n, i: i + 1, ok: ok + (fallos === 0 ? 1 : 0), h: (p.h || '') + (fallos === 0 ? '1' : '0'), replay: p.replay, teo: teo && animadoCon(teo, FESTEJA) ? 'festeja' : undefined }, 'push', { replace: true });
         else go('triviaFin', { day: n, ok: ok + (fallos === 0 ? 1 : 0), replay: p.replay }, 'modal', { replace: true });
       });
     };
@@ -358,6 +371,8 @@ register('triviaFin', {
     const dlg = root.querySelector('[role=dialog]'); dlg?.classList.add('a-rise');
     $$(root, 'img').filter(i => i.src.includes(IMG.tCelebra)).slice(-1).forEach(i => i.classList.add('a-hop'));
     requestAnimationFrame(() => celebrar(root)); // Teodoro salta en bucle (Lottie) donde estaba el dibujo quieto
+    // la trivia de abajo queda quieta (y borrosa, en el CSS): un solo Teodoro saltando
+    const debajo = layer.previousElementSibling; if (debajo?.dataset.screen === 'trivia') pausar(debajo);
     if (est >= 2) confetti(layer, 195, 300, est === 3 ? 60 : 30);
     on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame(n));
     const vc = find(root, 'Volver al camino'); if (vc) vc.dataset.back = '1';
@@ -601,6 +616,7 @@ register('desafioIntro', {
     on(root, '¡Vamos!', () => { teoDice('empezar'); go('desafio', { day: p.day, fromHub: p.fromHub, replay: p.replay }, 'fade'); });
     on(root, 'Ahora no', salir); on(root, 'Cerrar', salir);
     $$(root, 'img').forEach(i => /Teodoro/.test(i.alt || '') && i.classList.add('a-bob'));
+    requestAnimationFrame(() => celebrar(root, i => i.src.includes(IMG.tCelebra))); // Teodoro salta en bucle (Lottie) donde estaba el dibujo quieto
   },
 });
 register('desafio', {
@@ -835,7 +851,7 @@ register('juegoPasos', {
     root.addEventListener('pointerdown', e => { x0 = e.clientX; });
     root.addEventListener('pointerup', e => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 60) ir(dx < 0 ? i + 1 : i - 1); });
     $$(root, 'img').filter(im => /Teodoro/.test(im.alt || '')).forEach(im => im.classList.add('a-hop'));
-    requestAnimationFrame(() => pensar(root));
+    requestAnimationFrame(() => { pensar(root); celebrar(root, im => im.src.includes(IMG.tCelebra)); }); // con el mapa piensa; con las estrellas salta (Lottie)
     // el letrero del paso («¡A SALTAR!», «¡BAJITO!»…) cae con un golpe
     const letrero = [...root.children].find(el => /rotate\(-?\d+deg\)/.test(el.style.transform) && el.style.zIndex === '5');
     letrero?.animate([{ scale: '1.8', opacity: 0 }, { scale: '.94', opacity: 1, offset: .7 }, { scale: '1' }], { duration: 420, delay: 260, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'backwards' });

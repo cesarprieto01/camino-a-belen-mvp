@@ -1,5 +1,5 @@
 // Teodoro animado con Lottie (secuencias de dibujos): camina por el mapa al llegar un día nuevo, celebra en bucle donde ya celebraba
-// y piensa con su mapa donde estaba ese dibujo; en la trivia, al fallar, pasa del mapa al farol con una transición.
+// y piensa con su mapa donde estaba ese dibujo; en la trivia pasa con transiciones del mapa al farol (fallan) y a celebrar (aciertan).
 // lottie-web 5.12.2 (versión light, solo SVG) se carga la primera vez que hace falta.
 import { $$, reduced } from './core.js';
 import { IMG } from './data.js';
@@ -8,17 +8,28 @@ const LIB = 'vendor/lottie_light.min.js';
 // el lienzo de cada animación y lo que mide Teodoro de pie dentro de él (los pies tocan el borde de abajo)
 export const CAMINA = { nombre: 'teo-caminando', w: 324, h: 600, pie: 592 }; // mira a la derecha: hacia la izquierda se voltea
 export const CELEBRA = { nombre: 'teo-celebra', w: 875, h: 1522, pie: 1167 }; // recortado a Teodoro con sus saltos, centrado en él de pie
-// con su mapa, pensando: el mismo dibujo que IMG.tPregunta; la actuación completa en bucle (5 s). «salidas»: tramos [desde, hasta)
-// del bucle con la pose de unión, donde puede empezar una transición
-export const MAPA = { nombre: 'teo-mapa', w: 292, h: 482, pie: 472, salidas: [[0, 8], [17, 23], [116, 121]] };
+// los clips de la trivia salen del mismo lienzo (426 × 600): Teodoro mide 532 de pie y apoya los pies en (266,6; 591,3) en todos,
+// así que se encadenan sin ajustar nada. «salidas»: tramos [desde, hasta) de cada bucle con la pose de unión, donde puede empezar
+// una transición
+const LIENZO = { w: 426, h: 600, pie: 532, x: 266.6, suelo: 591.3 };
+// con su mapa, pensando: el mismo dibujo que IMG.tPregunta; la actuación completa en bucle (5 s)
+export const MAPA = { nombre: 'teo-trivia-mapa', ...LIENZO, salidas: [[0, 7], [17, 19], [21, 27], [116, 121]] };
 // en la trivia, donde reacciona con transiciones: repite el tramo [0, hasta) (piensa sin alejarse de la pose, ~1 s) unas «vueltas»
 // y después lee el mapa completo, así casi siempre está listo para reaccionar sin corte
-export const MAPA_PIENSA = { ...MAPA, reposo: { hasta: 23, vueltas: 4 } };
-// encadenadas con el mapa en la trivia: cada una salió con su propio recorte, así que llevan dónde quedan los pies de Teodoro
-// («x», «suelo») y lo que mide de pie, medidos superponiendo los cuadros donde se unen
-export const MAPA_A_FAROL = { nombre: 'teo-mapa-a-farol', w: 434, h: 600, pie: 587.5, x: 271.7, suelo: 593.9 }; // guarda el mapa y saca el farol (1,5 s)
-export const FAROL = { nombre: 'teo-farol', w: 294, h: 393, pie: 386.3, x: 190.5, suelo: 389.2 }; // con el farol, animando (bucle de 5 s)
-export const FAROL_A_MAPA = { nombre: 'teo-farol-a-mapa', w: 434, h: 600, pie: 585, x: 271.5, suelo: 593.9 }; // guarda el farol y vuelve al mapa (1,5 s)
+export const MAPA_PIENSA = { ...MAPA, reposo: { hasta: 25, vueltas: 4 } };
+export const FAROL = { nombre: 'teo-trivia-farol', ...LIENZO, salidas: [[0, 4], [33, 39]] }; // con el farol, animando (bucle de 2,8 s)
+// de pie, salta y vuelve (bucle de 1,6 s). «inicio»: el cuadro donde entra después de una transición; los primeros son la pose quieta
+// y en el 2 ya arranca el salto, así el gesto de abrir los brazos sigue de corrido con él
+export const FESTEJA = { nombre: 'teo-trivia-celebra', ...LIENZO, salidas: [[0, 3], [37, 39]], inicio: 2 };
+// transiciones (1,5 s): empiezan en la pose de un bucle y terminan en la del otro. Traen la pose quieta 2 cuadros al principio y 5 al
+// final (casi 0,3 s parado entre el gesto y el bucle), así que se juega solo el «tramo» que se mueve. «vel»: las de celebrar van
+// más rápido, como una reacción (~0,9 s)
+const TRAMO = [2, 31];
+export const MAPA_A_FAROL = { nombre: 'teo-trivia-mapa-a-farol', ...LIENZO, tramo: TRAMO }; // guarda el mapa y saca el farol
+export const FAROL_A_MAPA = { nombre: 'teo-trivia-farol-a-mapa', ...LIENZO, tramo: TRAMO }; // guarda el farol y vuelve al mapa
+export const MAPA_A_FESTEJA = { nombre: 'teo-trivia-mapa-a-celebra', ...LIENZO, tramo: TRAMO, vel: 1.3 }; // suelta el mapa y abre los brazos
+export const FAROL_A_FESTEJA = { nombre: 'teo-trivia-farol-a-celebra', ...LIENZO, tramo: TRAMO, vel: 1.3 }; // suelta el farol y abre los brazos
+export const FESTEJA_A_MAPA = { nombre: 'teo-trivia-celebra-a-mapa', ...LIENZO, tramo: TRAMO, vel: 1.3 }; // aterriza y vuelve al mapa
 
 let lib = null;
 const textos = {};
@@ -65,20 +76,45 @@ function reposar(a, { hasta, vueltas }) {
 // y el bucle en el que está (o al que va), para encadenarlas o quitarlas
 const encima = new WeakMap();
 const fuera = (e, r) => { if (!e.todas.delete(r)) return; r.anim.destroy(); r.caja.remove(); };
+// una transición se juega una vez, solo su tramo con movimiento y a su velocidad; el bucle que la sigue entra en su «inicio».
+// Debajo de un pop-up (capa «under») queda quieta en su primer cuadro
+const debajo = r => r.caja.closest('.layer.under');
+const jugar = r => { const d = r.desc; r.anim.setSpeed(d.vel || 1); if (debajo(r)) r.anim.goToAndStop(d.tramo?.[0] || 0, true); else if (d.tramo) r.anim.playSegments(d.tramo, true); else r.anim.goToAndPlay(0, true); };
+const enBucle = r => debajo(r) ? r.anim.goToAndStop(r.desc.inicio || 0, true) : r.anim.goToAndPlay(r.desc.inicio || 0, true);
+/** Congela las animaciones de Teodoro que hay dentro (la pantalla que queda debajo de un pop-up). */
+export function pausar(dentro) { window.lottie?.getRegisteredAnimations().forEach(a => dentro.contains(a.wrapper) && a.pause()); }
 /** Pone la animación en bucle encima del dibujo quieto (mismos pies y mismo alto de pie) y lo esconde.
- *  El dibujo llena el alto de su caja y apoya los pies abajo. «sigue» dice si el dibujo es el mismo cuando la animación termina de cargar. */
-async function sobreDibujo(img, anim, { alto = 1, dx = 0, estilo = { filter: img.style.filter }, sigue = () => true } = {}) {
+ *  El dibujo llena el alto de su caja y apoya los pies abajo. «sigue» dice si el dibujo es el mismo cuando la animación termina de cargar.
+ *  «entra»: la transición con la que llega (una vez, desde otra pose) antes de quedarse en el bucle. */
+async function sobreDibujo(img, anim, { alto = 1, dx = 0, estilo = { filter: img.style.filter }, sigue = () => true, entra = null } = {}) {
   const P = img.offsetParent; // las medidas offset* son respecto a él
   const donde = { cx: img.offsetLeft + img.offsetWidth / 2 + dx, pies: img.offsetTop + img.offsetHeight, alto: img.offsetHeight * alto };
-  const r = await teoAnimado(P, anim, donde);
+  const primera = entra || anim;
+  const r = await teoAnimado(P, primera, { ...donde, loop: !entra, autoplay: !entra });
   if (!r) return;
   if (!sigue()) { r.anim.destroy(); r.caja.remove(); return; }
   Object.assign(r.caja.style, estilo);
   if (img.alt) { r.caja.setAttribute('role', 'img'); r.caja.setAttribute('aria-label', img.alt); r.caja.removeAttribute('aria-hidden'); }
   if (img.parentElement === P) img.after(r.caja); // queda en el mismo orden que la imagen (lo que la tapaba la sigue tapando)
   img.style.visibility = 'hidden';
-  r.desc = anim;
-  encima.set(img, { actual: r, todas: new Set([r]), donde, estilo, bucle: anim, paso: 0 });
+  r.desc = primera;
+  const e = { actual: r, todas: new Set([r]), donde, estilo, bucle: anim, paso: 0 };
+  encima.set(img, e);
+  if (entra) { r.caja.style.opacity = ''; jugar(r); luegoBucle(img, e, r); }
+}
+/** Cuando termina la transición con la que entró, sigue el bucle desde su cuadro 0 (la misma pose).
+ *  Si mientras tanto empezó otro cambio (pasarA), este ya no hace nada. */
+async function luegoBucle(img, e, t) {
+  const fin = new Promise(ok => t.anim.addEventListener('complete', ok));
+  const sigue = () => encima.get(img) === e && e.paso === 0;
+  const b = await teoAnimado(t.caja.parentElement, e.bucle, { ...e.donde, autoplay: false }); // carga mientras corre la transición
+  if (!b) { if (sigue()) quieto(img); return; }
+  if (!sigue()) { b.anim.destroy(); b.caja.remove(); return; }
+  b.desc = e.bucle; Object.assign(b.caja.style, e.estilo); t.caja.before(b.caja); e.todas.add(b);
+  await fin;
+  if (!sigue()) return;
+  b.caja.style.opacity = ''; enBucle(b);
+  fuera(e, t); e.actual = b;
 }
 /** Quita las animaciones de encima del dibujo y lo vuelve a mostrar (la trivia cambia a Teodoro al acertar). */
 export function quieto(img) {
@@ -130,7 +166,7 @@ export async function pasarA(img, transicion, bucle) {
   const espera = !ya && falta <= .5;
   if (espera) await new Promise(ok => setTimeout(ok, falta * 1000));
   if (!sigue()) return corta();
-  t.caja.style.opacity = ''; t.anim.goToAndPlay(0, true);
+  t.caja.style.opacity = ''; jugar(t);
   const sale = ya || espera ? desde.caja.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 80, easing: 'ease-out', fill: 'forwards' }).finished : respingo(desde, t);
   sale.then(() => fuera(e, desde), () => fuera(e, desde));
   e.actual = t;
@@ -138,7 +174,7 @@ export async function pasarA(img, transicion, bucle) {
   const b = await bP;
   if (!sigue()) return corta();
   if (!b) { quieto(img); return null; }
-  b.caja.style.opacity = ''; b.anim.goToAndPlay(0, true);
+  b.caja.style.opacity = ''; enBucle(b);
   fuera(e, t); e.actual = b;
   return b;
 }
@@ -151,14 +187,17 @@ export function celebrar(root, cual = img => /^Teodoro celebra/.test(img.alt || 
 
 /** Cambia a Teodoro con su mapa, pensando (IMG.tPregunta), por el que se mueve en bucle: trivia, «¿Jugamos?», el juego del teléfono
  *  y el póster de Nochebuena. Copia la sombra, el brillo y la capa del dibujo; el póster lo centra con translateX(-50%).
- *  «anim»: la actuación completa (MAPA) o, en la trivia, con reposo (MAPA_PIENSA). */
-export function pensar(root, anim = MAPA) {
+ *  «anim»: la actuación completa (MAPA) o, en la trivia, con reposo (MAPA_PIENSA). «entra»: la transición con la que llega al mapa
+ *  (en la trivia, la pregunta nueva viene celebrando); quien la pide ya escondió el dibujo quieto, que vuelve si no hay animación. */
+export function pensar(root, anim = MAPA, entra = null) {
   if (reduced()) return;
   const es = img => img.src.includes(IMG.tPregunta);
   $$(root, 'img').filter(i => es(i) && i.offsetParent).forEach(async img => {
     await img.decode().catch(() => {}); // el póster saca el ancho de la imagen
-    if (!img.offsetHeight || encima.has(img) || !es(img)) return;
-    const cs = getComputedStyle(img);
-    sobreDibujo(img, anim, { dx: cs.transform === 'none' ? 0 : new DOMMatrix(cs.transform).e, estilo: { filter: cs.filter, zIndex: cs.zIndex }, sigue: () => es(img) && img.isConnected });
+    if (img.offsetHeight && !encima.has(img) && es(img)) {
+      const cs = getComputedStyle(img);
+      await sobreDibujo(img, anim, { dx: cs.transform === 'none' ? 0 : new DOMMatrix(cs.transform).e, estilo: { filter: cs.filter, zIndex: cs.zIndex }, sigue: () => es(img) && img.isConnected, entra });
+    }
+    if (entra && !encima.has(img)) img.style.visibility = '';
   });
 }
