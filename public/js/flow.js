@@ -1138,20 +1138,22 @@ function patchCuarto(root) {
   add(String(S.panes), 'left:336px;top:520px;width:40px;height:24px;background:rgb(251,242,229);color:#4A2E14;display:grid;place-items:center;font:800 15px Mulish,sans-serif')
     .setAttribute('aria-label', `${S.panes} panes`);
 }
+// antes del 29: Enero y Adviento con candado y la cuenta regresiva sobre Adviento; el 28 (un día antes) ya dentro,
+// Adviento se abre como en el camino: lleva al mapa, donde Teodoro espera en el intro
+const advCerrado = () => fase() === 'antes' && !(S.inscrito && S.hoy >= 0);
 register('mundos', {
-  // antes del 29: Enero y Adviento con candado y la cuenta regresiva sobre Adviento
   // desde Hoy (sin mascota): Mundos con «volver a Hoy» y la pestaña Hoy encendida
   file(p = {}) {
-    if (p.from === 'hoy' && fase() !== 'antes') return F('R-Mundos', 'R-Mundos-oscuro')[dark() ? 1 : 0];
-    return (fase() === 'antes' ? F('V2-02-Mundos-pre-claro', 'V2-02-Mundos-pre') : F('V2-02-Mundos-claro', 'V2-02-Mundos'))[dark() ? 1 : 0];
+    if (p.from === 'hoy' && !advCerrado()) return F('R-Mundos', 'R-Mundos-oscuro')[dark() ? 1 : 0];
+    return (advCerrado() ? F('V2-02-Mundos-pre-claro', 'V2-02-Mundos-pre') : F('V2-02-Mundos-claro', 'V2-02-Mundos'))[dark() ? 1 : 0];
   },
   mount(root, p = {}) {
     tabs(root);
     on(root, 'Volver a Hoy', () => back('hoy'));
     const adv = root.querySelector('a[aria-label^="Adviento:"]');
     // Adviento más grande y centrado; Enero se sigue viendo detrás, con su etiqueta encima (estilos en el bloque «mapa» de app.css)
-    root.classList.add('mundos-v'); if (fase() === 'antes') root.classList.add('mundos-pre');
-    if (fase() === 'antes') {
+    root.classList.add('mundos-v'); if (advCerrado()) root.classList.add('mundos-pre');
+    if (advCerrado()) {
       startCountdown(root);
       // bajo la tarjeta de Adviento, la acción principal con su mismo ancho (ya dentro «Invitar amigos»; sin unirse «Únete al reto»)
       // y debajo, centrada y más pequeña, «Volver al inicio» en una píldora con el fondo de la tarjeta (se lee sobre la isla)
@@ -1167,11 +1169,11 @@ register('mundos', {
       const ms = Math.max(0, new Date(2026, 10, 29) - new Date());
       adv?.setAttribute('aria-label', `Adviento: empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
       // sin unirse abre la invitación al reto; ya dentro, «¡Ya estás dentro!» con la cuenta regresiva
-      on(root, adv, () => tocarIsla(adv, () => S.inscrito ? (S.hoy >= 0 ? entrar('mundos') : go('listo', { from: 'mundos' }, 'push')) : go('teaser', { from: 'mundos' }, 'modal')));
+      on(root, adv, () => tocarIsla(adv, () => S.inscrito ? go('listo', { from: 'mundos' }, 'push') : go('teaser', { from: 'mundos' }, 'modal')));
     } else {
-      const n = walkDay() ?? Math.min(lastDay(), 26);
-      replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);
-      adv?.setAttribute('aria-label', `Adviento: día ${n} de 26. Entrar al camino`);
+      const n = walkDay() ?? Math.max(0, Math.min(lastDay(), 26));
+      replaceText(root, /Día 9 de 26/, n === 0 ? 'Intro' : `Día ${n} de 26`); // el 28: el intro
+      adv?.setAttribute('aria-label', n === 0 ? 'Adviento: el intro. Entrar al camino' : `Adviento: día ${n} de 26. Entrar al camino`);
       on(root, adv, () => tocarIsla(adv, () => entrar('mundos')));
       adv?.querySelector('img[alt^="Teodoro"]')?.classList.add('a-bob');
     }
