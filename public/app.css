@@ -342,9 +342,10 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 
 /* Hoja del día minimizada: barra compacta tipo mini reproductor */
 .mini-bar { display: none; }
-[data-sheet].mini { height: auto !important; padding: 10px 12px 12px !important; gap: 0 !important; }
+[data-sheet].mini { height: auto !important; padding: 16px 12px !important; gap: 0 !important; }
 [data-sheet].mini > *:not(.mini-bar):not(.sheet-min):not(.sheet-grab):not(.back-hoy) { display: none !important; }
-[data-sheet].mini > .sheet-grab { margin-bottom: 8px; }
+/* la rayita flota arriba y no empuja la barra: la barra queda centrada en su caja (16 arriba y abajo, 12 a cada lado) */
+[data-sheet].mini > .sheet-grab { position: absolute; left: 50%; top: 6px; margin-left: -19px; }
 /* hoja abierta: se toca la actividad (la fila); el botón amarillo vive solo en la barra minimizada */
 [data-sheet]:not(.mini) > a.cta-mini { display: none !important; }
 [data-sheet].mini .mini-bar { display: flex; align-items: center; gap: 12px; align-self: stretch; padding-right: 52px; cursor: pointer; animation: mbIn .3s var(--ease-out) both; }
@@ -358,7 +359,7 @@ textarea.p-note::placeholder { color: var(--muted); opacity: .8; }
 .mb-pend { font-style: normal; color: #8A5A0E; }
 :root[data-theme="dark"] .mb-pend { color: #F5C77A; }
 .mb-cta { flex: none; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border: 0; border-radius: 22px; background: #F5DB78; color: #0A6070; font: 800 14px Mulish, sans-serif; cursor: pointer; box-shadow: 0 4px 10px rgba(245,219,120,.45); }
-[data-sheet].mini .sheet-min { top: 50%; margin-top: 4px; transform: translateY(-50%) rotate(180deg); }
+[data-sheet].mini .sheet-min { right: 12px; top: 50%; transform: translateY(-50%) rotate(180deg); }
 :root[data-theme="dark"] .mb-txt, :root[data-theme="dark"] .mb-txt b { color: #FFFFFF; }
 :root[data-theme="dark"] .mb-txt small { color: rgba(255,255,255,.7); }
 :root[data-theme="dark"] .mb-ico { background: rgba(255,255,255,.1); }

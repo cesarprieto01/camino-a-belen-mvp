@@ -28,7 +28,7 @@ export const IMG = {
 };
 
 // Ícono de cada día, el mismo del mapa del Figma («Mapa Diozen»); de noche el Figma usa el mismo dibujo
-const ICONO_DIA = [null, 'luna', 'vela', 'burro', 'pergamino', 'notas', 'casa', 'rompecabezas', 'carta', 'vela', 'burro', 'pergamino', 'notas', 'casa', 'rompecabezas', 'regalo', 'burro', 'vela', 'pergamino', 'casa', 'notas', 'rompecabezas', 'corazon', 'burro', 'pergamino', 'video', 'estrella'];
+const ICONO_DIA = ['estrella', 'luna', 'vela', 'burro', 'pergamino', 'notas', 'casa', 'rompecabezas', 'carta', 'vela', 'burro', 'pergamino', 'notas', 'casa', 'rompecabezas', 'regalo', 'burro', 'vela', 'pergamino', 'casa', 'notas', 'rompecabezas', 'corazon', 'burro', 'pergamino', 'video', 'estrella'];
 const DAY_ICONS = Object.fromEntries(ICONO_DIA.map((x, n) => [n, x ? [`dia-icono/${x}.webp`, `dia-icono/${x}.webp`] : [null, null]]));
 export function iconOf(n, dark) { return DAY_ICONS[n]?.[dark ? 1 : 0] || null; }
 
@@ -128,7 +128,8 @@ export const RULES = {
   regresoDias: 5, // días seguidos sin caminar para «¡Te guardé el camino!»
   // días con trivia según el cronograma de contenido (Adviento 2026, columna ACTIVIDAD = TRIVIA).
   // Los demás días no tienen trivia ni estrellas: el día se completa con la historia.
-  trivia: [1, 2, 3, 4, 9, 11, 17, 18, 24],
+  // El 0 es el intro (video y trivia de presentación del reto): se abre el 28, un día antes del día 1, y da sus 3 estrellas pero no panes.
+  trivia: [0, 1, 2, 3, 4, 9, 11, 17, 18, 24],
 };
 export const hasTrivia = n => RULES.trivia.includes(n);
 
@@ -144,6 +145,14 @@ export const PRENDAS = [
 const P = (q, o, a, pista, ok) => ({ q, o, a, pista, ok });
 const pic = (t, k) => ({ t, img: IMG[k] });
 export const TRIVIA = {
+  // intro: presentación del reto (propuesta del MVP, falta revisión de contenido/pastoral)
+  0: [
+    P('¿Qué preparamos en Adviento?', ['El corazón para recibir a Jesús', 'Las vacaciones', 'Una fiesta de cumpleaños', 'La mochila del colegio'], 0, 'esperamos a Alguien', '¡Preparamos el corazón!'),
+    P('¿Quién te acompaña en el camino a Belén?', [pic('Teodoro', 'teodoro'), pic('Una oveja', 'oveja'), pic('Un pastor', 'pastor')], 0, 'es un burrito', '¡Teodoro va contigo!'),
+    P('¿Cuántos días dura el camino a Belén?', ['26 días', '7 días', '40 días', '12 días'], 0, 'un paso cada día hasta Nochebuena', '26 días con Teodoro'),
+    P('¿A dónde llegamos al final del camino?', ['Al pesebre de Belén', 'A la playa', 'A la montaña', 'Al colegio'], 0, 'donde nace Jesús', '¡Al pesebre, con Jesús!'),
+    P('¿Qué haces cada día del camino?', ['Ver una historia de la Biblia', 'Jugar y cantar en familia', 'Una misión de amor', 'Nada'], [0, 1, 2], 'son tres', '¡Así se camina a Belén!'),
+  ],
   1: [
     P('¿Qué encendemos el primer domingo de Adviento?', ['La primera vela', 'Todas las velas', 'Una fogata', 'El árbol'], 0, 'se enciende una cada domingo', 'La vela de la esperanza'),
     P('¿Cuántas velas tiene la corona de Adviento?', ['Dos', 'Cuatro', 'Siete', 'Diez'], 1, 'una por cada domingo', 'Cuatro velas, cuatro domingos'),

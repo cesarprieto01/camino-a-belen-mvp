@@ -184,7 +184,7 @@ function advance(k) {
 
 /** Volver un día atrás en el panel: Teodoro (escena y batería) vuelve a como estaba ese día. */
 function retroceder() {
-  if (S.hoy <= 0) return;
+  if (S.hoy <= -1) return; // -1: antes del 28 · 0: el 28, un día antes (se abre el intro)
   const dia = S.hoy - 1, g = S.diaGuardado?.[dia];
   if (g) Object.assign(S, g);
   else if (S.inscrito && dia >= 1 && S.ultimoJugado !== dia && (S.sinCaminar || 0) > 0) {
@@ -194,7 +194,7 @@ function retroceder() {
   S.hoy = dia;
   S.pilaVista = S.bateria; S.recarga = null; // volver atrás no es una recarga: sin «reactivado»
   save();
-  nota('Un día atrás', S.hoy <= 0 ? 'Antes del 29 de noviembre' : `Hoy es el día ${S.hoy} · energía ${S.bateria} de 5`);
+  nota('Un día atrás', S.hoy < 0 ? 'Antes del 28 de noviembre' : S.hoy === 0 ? '28 de noviembre: se abre el intro' : `Hoy es el día ${S.hoy} · energía ${S.bateria} de 5`);
   repintar();
 }
 
@@ -222,13 +222,13 @@ function render() {
   const name = cur ? (NAMES[cur.name] || cur.name) : '—';
   const sec = SECTIONS.find(s => s[0] === SECTION_OF(cur?.name || 'hoy'));
   const cov = coverage();
-  const hoyTxt = fase() === 'antes' ? 'Antes del 29 de noviembre' : fase() === 'gracia' ? `Gracia · ${cuentaGracia(true)}` : fase() === 'recuerdo' ? 'Desde el 7 de enero: recuerdo' : `Hoy: día ${S.hoy} de 26`;
+  const hoyTxt = fase() === 'antes' ? (S.hoy === 0 ? '28 de noviembre · un día antes' : 'Antes del 28 de noviembre') : fase() === 'gracia' ? `Gracia · ${cuentaGracia(true)}` : fase() === 'recuerdo' ? 'Desde el 7 de enero: recuerdo' : `Hoy: día ${S.hoy} de 26`;
   const progTxt = act == null ? (fase() === 'antes' ? (S.inscrito ? 'Inscrito' : 'Sin inscribirse') : 'Al día') : act < lastDay() ? `Va en el día ${act}` : `Toca el día ${act}`;
-  const dayTitle = S.hoy <= 0 ? 'Antes del 29 de noviembre' : S.hoy > GRACIA_FIN ? 'Camino cerrado' : S.hoy >= 27 ? `Gracia · ${cuentaGracia(true)}` : `Día ${S.hoy} de 26`;
-  const daySub = S.hoy <= 0 ? 'El camino aún no empieza' : S.hoy > GRACIA_FIN ? 'Desde el 7 de enero' : S.hoy >= 27 ? (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })() : (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })();
+  const dayTitle = S.hoy < 0 ? 'Antes del 28 de noviembre' : S.hoy === 0 ? '28 de noviembre' : S.hoy > GRACIA_FIN ? 'Camino cerrado' : S.hoy >= 27 ? `Gracia · ${cuentaGracia(true)}` : `Día ${S.hoy} de 26`;
+  const daySub = S.hoy < 0 ? 'El camino aún no empieza' : S.hoy === 0 ? 'Un día antes · se abre el intro' : S.hoy > GRACIA_FIN ? 'Desde el 7 de enero' : S.hoy >= 27 ? (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })() : (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })();
   const simple = `<section class="p-simple">
     <div class="p-day">
-      <button class="p-arrow" data-act="dayMinus" aria-label="Día anterior" ${S.hoy <= 0 ? 'disabled' : ''}>‹</button>
+      <button class="p-arrow" data-act="dayMinus" aria-label="Día anterior" ${S.hoy <= -1 ? 'disabled' : ''}>‹</button>
       <div><b>${dayTitle}</b><small>${daySub} · ${progTxt}</small></div>
       <button class="p-arrow" data-act="dayPlus" aria-label="Día siguiente" ${S.hoy > GRACIA_FIN ? 'disabled' : ''}>›</button>
     </div>

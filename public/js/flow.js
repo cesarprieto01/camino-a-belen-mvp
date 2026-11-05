@@ -23,6 +23,7 @@ export function startDay(n) {
     go(pantallaDia(n), { day: n }, 'up');
     return;
   }
+  if (n === 0 && isDone(0)) { go(pantallaDia(0), { day: 0, replay: true }, 'up'); return; } // el intro ya hecho: se vuelve a ver
   if (!isDone(n)) { go('trivia', { day: n, ...(S.triviaProgreso?.[n] || {}) }, 'push'); return; }
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') { openSorpresa(n); return; }
   go('cerrado', {}, 'sheet');
@@ -38,7 +39,6 @@ export function ctaLabel(n) {
   if (!puedeDia(n)) return { text: 'Desbloquear el día', go: () => startDay(n) };
   if (n === 26 && !contentDone(26)) return fase() === 'recuerdo' ? { text: 'Ver el nacimiento', play: true, go: () => go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') } : { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
-  if (n === 0) return { text: 'Invitar amigos', go: () => go('invitacion', {}, 'push') };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Ir al juego sorpresa', go: () => openSorpresa(n) };
   const a = activeDay();
@@ -64,6 +64,8 @@ export function finishTrivia(n, aciertos, replay = false) {
   if (fase() === 'recuerdo') return { est, first: false, gana: false, mejoro: false }; // el camino terminó: se juega, pero nada suma
   const first = !isDone(n);
   const prev = stars(n);
+  // el intro da sus estrellas, pero no panes ni toca a Teodoro (es la presentación del reto)
+  if (n === 0) { S.completos[0] = { ...(S.completos[0] || {}), contenido: true, trivia: true, estrellas: Math.max(est, prev), aciertos }; save(); return { est, first, gana: false, mejoro: replay && est > prev }; }
   S.completos[n] = { ...(S.completos[n] || {}), contenido: true, trivia: true, estrellas: Math.max(est, prev), aciertos };
   // primera vez: llena la batería y suma; al repetir solo suma si mejora las estrellas
   const gana = first || (replay && est > prev);
@@ -1262,9 +1264,8 @@ register('reproductor', {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
       if (p.nacimiento) { if (p.replay) back('hoy', 'down'); else go('final', { day: 26 }, 'fade', { replace: true }); return; }
       if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go(JUEGOS[n] ? 'juegoIntro' : 'hub', { day: n }, 'down', { replace: true }); return; }
-      if (p.replay) { const suma = fase() !== 'recuerdo'; if (suma) { recargar(); S.sinCaminar = 0; S.regresoAvisado = false; S.ultimoJugado = S.hoy; save(); } toast('¡Otra vez con Teodoro!', suma ? 'Teodoro quedó al 100%' : ''); go('mapa', {}, 'down', { replace: true }); return; }
+      if (p.replay) { const suma = fase() !== 'recuerdo' && n > 0; if (suma) { recargar(); S.sinCaminar = 0; S.regresoAvisado = false; S.ultimoJugado = S.hoy; save(); } toast('¡Otra vez con Teodoro!', suma ? 'Teodoro quedó al 100%' : ''); go('mapa', {}, 'down', { replace: true }); return; }
       finishContent(n);
-      if (n === 0) { toast('¡Listo para salir!', 'Te avisamos el 29 de noviembre'); go('mapa', {}, 'down', { replace: true }); return; }
       go('completado', { day: n }, 'fade', { replace: true });
     };
     on(root, play, () => setPlaying(!playing));
@@ -1344,8 +1345,10 @@ register('completado', {
     setText(root, '¡Terminaste el cuento!', que);
     setText(root, /sobre el cuento de hoy/, usaHub(n) ? 'sobre el reto de hoy' : 'sobre el video de hoy');
     const chip = find(root, 'Ganaste 20 panes');
-    if (chip) { replaceText(chip, /\+20/, '+' + panesContenido()); chip.setAttribute('aria-label', `Ganaste ${panesContenido()} panes`); chip.classList.add('a-pop'); }
-    floaty(layer, '+' + panesContenido(), 290, 110);
+    // el intro no da panes: sin la píldora ni el «+»
+    if (chip && n === 0) chip.style.display = 'none';
+    else if (chip) { replaceText(chip, /\+20/, '+' + panesContenido()); chip.setAttribute('aria-label', `Ganaste ${panesContenido()} panes`); chip.classList.add('a-pop'); }
+    if (n > 0) floaty(layer, '+' + panesContenido(), 290, 110);
     const q = textEl(root, '?')?.parentElement; q?.classList.add('a-pop');
     $$(root, '[style*="rotate(-12deg)"], [style*="rotate(12deg)"]').forEach((c, i) => { c.style.setProperty('--r', i ? '12deg' : '-12deg'); c.style.animation = `popRot .55s ${.15 + i * .1}s cubic-bezier(.2,.9,.3,1.3) both`; });
     $$(root, 'img').find(i => i.src.includes(IMG.tPregunta))?.classList.add('a-bob');

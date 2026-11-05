@@ -352,7 +352,7 @@ register('triviaFin', {
     if (reduced()) { if (est) sonido('estrella', est - 1, 0.35); } else for (let k = 0; k < est; k++) sonido('estrella', k, 0.35 + k * 0.22);
     if (est && (!p.replay || mejoro)) teoDice(est === 3 ? 'triviaPerfecta' : est === 2 ? 'triviaBien' : 'triviaIntento', { tras: 0.35 + (est - 1) * 0.22 + 0.35 });
     const chip = root.querySelector('[aria-label^="Ganaste 10 panes"]');
-    if (mejoro) setTimeout(() => toast('¡Mejoraste tus estrellas!', `+${RULES.panes.trivia} panes`), 600);
+    if (mejoro) setTimeout(() => toast('¡Mejoraste tus estrellas!', n === 0 ? '' : `+${RULES.panes.trivia} panes`), 600); // el intro no da panes
     if (!gana && chip) chip.style.display = 'none';
     else if (chip) { chip.classList.add('a-pop'); floaty(layer, `+${RULES.panes.trivia}`, 230, 430); }
     const dlg = root.querySelector('[role=dialog]'); dlg?.classList.add('a-rise');

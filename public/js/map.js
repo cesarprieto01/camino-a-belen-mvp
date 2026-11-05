@@ -34,8 +34,8 @@ async function caminar(r, fin, ruta, desdeK) {
 const F = { claro: 'V2-Mapa-completo-claro', oscuro: 'V2-Mapa-completo' };
 const ALTO = 3600; // alto del mapa en el Figma; el paisaje va en 6 tiras de 600
 const FONDO = { claro: ['#67C7FC', '#94907F'], oscuro: ['#013880', '#607F77'] }; // color del borde de arriba y de abajo del paisaje
-// centro de cada día en el mapa del Figma (390 de ancho)
-const CENTRO = { 1: [142.1, 3094], 2: [224.9, 2984], 3: [151.3, 2874], 4: [220.3, 2764], 5: [142.1, 2654], 6: [197.3, 2544], 7: [218, 2434], 8: [137.5, 2329],
+// centro de cada día en el mapa del Figma (390 de ancho); el 0 es el intro, donde empieza el sendero junto a la casa
+const CENTRO = { 0: [214, 3244], 1: [142.1, 3094], 2: [224.9, 2984], 3: [151.3, 2874], 4: [220.3, 2764], 5: [142.1, 2654], 6: [197.3, 2544], 7: [218, 2434], 8: [137.5, 2329],
   9: [218, 2201], 10: [160.5, 2089], 11: [229.5, 1989], 12: [155.9, 1881], 13: [220.3, 1773], 14: [174.3, 1665], 15: [137.5, 1557], 16: [211.1, 1449],
   17: [151.3, 1341], 18: [229.5, 1233], 19: [160.5, 1125], 20: [215.7, 1017], 21: [142.1, 909], 22: [174.3, 801], 23: [206.5, 691], 24: [149, 581], 25: [218, 471], 26: [137.5, 351] };
 // ruletas de los días 4, 11, 18 y 24: dibujo, caja y etiqueta (centro y arriba). Al 90 % del Figma y ancladas hacia afuera,
@@ -91,15 +91,15 @@ async function templates() {
 
 /** Pinta un día en su estado: hecho (✓ y estrellas), trivia (✓ con la trivia pendiente), hoy (dorado, Teodoro encima), abierto, cerrado o recuerdo. */
 function pintarDia(el, n, estado) {
-  const d = DAYS[n], [cx, cy] = CENTRO[n];
+  const d = DAYS[n], [cx, cy] = CENTRO[n], num = n === 0 ? 'Intro' : n, dia = n === 0 ? 'Intro' : `Día ${n}`;
   const t = n === 26 ? 104 : estado === 'hoy' ? 96 : 76;
   el.className = `dz-dia dz-${estado}${n === 26 ? ' dz-26' : ''}`;
   el.style.cssText = `left:${cx - t / 2}px;top:${cy - t / 2}px;width:${t}px;height:${t}px`;
   delete el.dataset.today;
   if (estado === 'hecho' || estado === 'trivia') {
-    el.innerHTML = CHECK + `<b class="dz-num">${n}</b>` + pildoraEstrellas(n);
-    el.setAttribute('aria-label', estado === 'trivia' ? `Día ${n}: cuento visto, falta la trivia`
-      : `Día ${n}, ${d.title}, completado${hasTrivia(n) && stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
+    el.innerHTML = CHECK + `<b class="dz-num">${num}</b>` + pildoraEstrellas(n);
+    el.setAttribute('aria-label', estado === 'trivia' ? `${dia}: cuento visto, falta la trivia`
+      : `${dia}, ${d.title}, completado${hasTrivia(n) && stars(n) ? `, ${stars(n)} de 3 estrellas` : ''}`);
   } else if (estado === 'hoy') {
     el.innerHTML = '';
     el.dataset.today = '1';
@@ -107,8 +107,8 @@ function pintarDia(el, n, estado) {
   } else {
     const ic = iconOf(n, dark());
     // lo que aún no se abre lleva candado
-    el.innerHTML = (ic ? `<img class="dz-ico" src="${A(ic)}" alt="">` : '') + `<b class="dz-num">${n}</b>` + (estado === 'cerrado' ? '<img class="node-lock" src="assets/candado.webp" alt="">' : '');
-    el.setAttribute('aria-label', `Día ${n}, ${d.title}${estado === 'abierto' ? ', pendiente' : estado === 'cerrado' ? ', cerrado' : ''}`);
+    el.innerHTML = (ic ? `<img class="dz-ico" src="${A(ic)}" alt="">` : '') + `<b class="dz-num">${num}</b>` + (estado === 'cerrado' ? '<img class="node-lock" src="assets/candado.webp" alt="">' : '');
+    el.setAttribute('aria-label', `${dia}, ${d.title}${estado === 'abierto' ? ', pendiente' : estado === 'cerrado' ? ', cerrado' : ''}`);
   }
 }
 // filas de la hoja (el lienzo las dibuja de 52 o 58 px); el botón principal mide 56
@@ -164,17 +164,17 @@ register('mapa', {
     // la casa de abajo es donde sale el camino
     const casa = document.createElement('button'); casa.type = 'button'; casa.className = 'dz-casa'; casa.setAttribute('aria-label', 'Aquí empieza el camino');
     root.appendChild(casa);
-    on(root, casa, () => toast('Aquí empieza el camino', 'El 29 de noviembre salimos hacia Belén'));
+    on(root, casa, () => S.hoy >= 0 && nodes[0] ? tapNode(0, nodes[0].el, layer) : toast('Aquí empieza el camino', 'El 29 de noviembre salimos hacia Belén'));
 
-    // 2) Los 26 días
+    // 2) El intro (en la casa) y los 26 días
     const nodes = {};
-    for (let n = 1; n <= 26; n++) {
+    for (let n = 0; n <= 26; n++) {
       const el = document.createElement('button'); el.type = 'button';
       const animado = S.pasoAnimado === n && !reduced();
       pintarDia(el, n, isDone(n) && !animado ? 'hecho'
         : contentDone(n) && !animado ? 'trivia' // vio la historia pero no jugó la trivia: Teodoro ya pasó, sin estrellas todavía
         : n === teoN || (S.pasoAnimado && n === S.pasoAnimado) ? 'hoy'
-        : n <= lastDay() ? (fase() === 'recuerdo' ? 'recuerdo' : 'abierto')
+        : n <= lastDay() ? (fase() === 'recuerdo' ? 'recuerdo' : 'abierto') // el intro (0) se abre un día antes del día 1
         : 'cerrado');
       // los días que vienen se ven por encima de Teodoro (como en el Figma)
       if (n > (teoN ?? 0)) el.classList.add('dz-arriba');
@@ -288,14 +288,14 @@ register('mapa', {
       backHoy.setAttribute('style', pildoraLienzo.getAttribute('style') + '; border: 0; font-family: inherit; cursor: pointer');
       backHoy.innerHTML = pildoraLienzo.innerHTML; pildoraLienzo.remove();
       // píldora flotante encima de la hoja: aparece cuando tu día sale de la vista
-      replaceText(backHoy, /Hoy · día \d+/, `Tu día ${focus}`);
+      replaceText(backHoy, /Hoy · día \d+/, focus === 0 ? 'Intro' : `Tu día ${focus}`); // antes del día 1, tu día es el intro
       backHoy.classList.add('back-hoy');
       backHoy.querySelectorAll('svg').forEach(s => s.remove());
       const arrow = document.createElement('span'); arrow.className = 'bh-arrow'; arrow.setAttribute('aria-hidden', 'true'); backHoy.prepend(arrow);
       backHoy.addEventListener('pointerdown', ev => ev.stopPropagation()); // tocarla no arrastra la hoja
       on(layer, backHoy, () => scrollToNode(focus, true));
       const sync = () => {
-        const t = nodes[focus]; if (!t) return;
+        const t = S.hoy >= 0 && nodes[focus]; if (!t) return; // antes del 28 el intro aún está cerrado: sin píldora
         const sh = layer.querySelector('[data-sheet]');
         // va dentro de la hoja, justo encima: se mueve con ella al abrirla, minimizarla o arrastrarla (nunca se queda atrás)
         if (sh && backHoy.parentElement !== sh) sh.appendChild(backHoy);
@@ -393,6 +393,8 @@ function tapNode(n, el, layer) {
   const d = DAYS[n];
   const enHoja = layer.dataset.dia != null ? +layer.dataset.dia : walkDay();
   if (n === enHoja) { startDay(n); return; } // el día que ya muestra la hoja: empezar
+  // el intro: antes del 28 dice cuándo se abre; desde el 28 (un día antes del día 1), su hoja (hecho o no)
+  if (n === 0) { if (S.hoy < 0) showBubble(layer, 0, el); else { animate(el, 'a-pop'); go('mapa', { dia: 0 }, 'none', { replace: true }); } return; }
   if (isDone(n)) { showPast(layer, n, el); return; }
   if (fase() === 'recuerdo' && !contentDone(n) && n < 26) { animate(el, 'a-pop'); toast('El camino de este año terminó', 'Nos vemos el próximo año'); return; }
   // cualquier día ya desbloqueado (atrasado o con la trivia pendiente): su hoja, sin saltar directo
@@ -409,7 +411,7 @@ function showBubble(layer, n, el) {
   const [b, arrow] = t.content.children;
   b.dataset.bubble = '1'; if (arrow) arrow.dataset.bubble = '1';
   const strong = b.querySelector('span'); if (strong) strong.textContent = `${f.dd} de ${f.mes.toLowerCase()}`;
-  b.setAttribute('aria-label', `Día ${n}: se abre el ${f.dd} de ${f.mes.toLowerCase()}`);
+  b.setAttribute('aria-label', `${n === 0 ? 'Intro' : `Día ${n}`}: se abre el ${f.dd} de ${f.mes.toLowerCase()}`);
   root.append(b); if (arrow) root.append(arrow);
   const size = parseFloat(el.style.width) || 64, cx = parseFloat(el.style.left) + size / 2, top = parseFloat(el.style.top);
   b.style.left = Math.max(12, Math.min(390 - 12 - b.offsetWidth, cx - b.offsetWidth / 2)) + 'px';
@@ -580,7 +582,7 @@ function paintSheet(layer, T, dia) {
     sheet.classList.add('in-up');
     return;
   }
-  const n = act ?? Math.min(lastDay(), 26);
+  const n = act ?? Math.max(0, Math.min(lastDay(), 26)); // antes del 28 (-1) la hoja es la de «Antes de salir»
   const d = DAYS[n];
   const head = [...sheet.children].find(el => /HOY · DÍA/.test(el.textContent));
   const rows = [...sheet.children].filter(el => isRow(el));
@@ -591,7 +593,7 @@ function paintSheet(layer, T, dia) {
   let kicker = 'HOY';
   if (act != null && act < lastDay()) kicker = `DÍA ${n}`;
   if (act == null) kicker = S.hoy >= 27 ? 'CAMINO TERMINADO' : `DÍA ${n} · LISTO`;
-  if (n === 0) kicker = 'DÍA 0 · ANTES DE SALIR';
+  if (n === 0) kicker = 'INTRO';
   if (dia != null && dia !== walkDay() && n > 0) kicker = contentDone(n) && !isDone(n) ? `DÍA ${n} · TRIVIA PENDIENTE` : `DÍA ${n}`;
   if (n > 0 && S.hoy <= 26 && n === S.hoy && /^(HOY|DÍA \d+)$/.test(kicker)) kicker = `HOY · DÍA ${n}`;
   if (head) {
@@ -602,8 +604,8 @@ function paintSheet(layer, T, dia) {
     if (n > 0 && d.cita) { const c = document.createElement('span'); c.className = 'sheet-cita'; c.textContent = d.cita; head.children[1].appendChild(c); }
   }
 
-  if (S.hoy <= 0) {
-    // antes del 29: no hay día 0; se ve lo que viene y se invita
+  if (S.hoy < 0) {
+    // antes del 28: el intro aún no se abre; se ve lo que viene y se invita
     if (head) { head.children[0].textContent = 'ANTES DE SALIR'; head.children[1].textContent = 'Salimos el 29 de noviembre'; }
     const t = document.createElement('template'); t.innerHTML = T.rowOff;
     const r = t.content.firstElementChild;
@@ -659,7 +661,7 @@ function paintSheet(layer, T, dia) {
   }
   list.push(filaCont);
   let filaTriv = null;
-  if (n !== 0 && n !== 26) {
+  if (n !== 26) {
     if (hasTrivia(n)) {
       const trivOn = contentDone(n) && !isDone(n);
       list.push(filaTriv = build(trivOn, 'Trivia', isDone(n) ? 'Ya la jugaste' : contentDone(n) ? 'Gana hasta 3 estrellas' : `Después de ${CONT[2]}`.replace('de el ', 'del '), isDone(n) ? 'stars' : trivOn ? 'now' : 'lock', T.trivIcon));
@@ -762,7 +764,7 @@ function sheetDrag(layer) {
     const rowImg = [...s.children].find(isRow)?.querySelector('img');
     const pend = s.querySelector('.sheet-alt[data-pend]');
     const bar = document.createElement('div'); bar.className = 'mini-bar';
-    const eyebrow = s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
+    const eyebrow = s.dataset.day === '0' ? 'Intro' : s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.firstChild?.textContent.trim() || ''; // sin la cita
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
     const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar amigos': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
@@ -780,6 +782,11 @@ function sheetDrag(layer) {
     mcta.addEventListener('pointerdown', ev => ev.stopPropagation());
     mcta.addEventListener('click', ev => { ev.stopPropagation(); cta?.click(); });
     bar.addEventListener('click', ev => { if (!ev.target.closest('.mb-cta')) setMini(s, false); });
+    // abajo del mapa (el intro en la casa y el día 1) la hoja sale cerrada, para que no tape la casa
+    if (S.hoy >= 0 && (s.dataset.day === '0' || s.dataset.day === '1')) {
+      s.classList.add('mini'); mini = true; s.setAttribute('aria-expanded', 'false');
+      b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-label', 'Abrir el día');
+    }
   };
   build(layer.querySelector('[data-sheet]'));
   new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s && !s.querySelector('.sheet-min')) { mini = false; build(s); layer._syncBackHoy?.(); } }).observe(layer, { childList: true });
