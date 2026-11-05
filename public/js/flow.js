@@ -136,8 +136,8 @@ export function unirse(from) {
 /** Entrar al camino desde Hoy, Teodoro o Mundos. */
 export function entrar(from) {
   if (!S.inscrito) return fase() === 'antes' ? go('teaser', {}, 'modal') : fase() === 'recuerdo' ? toast('El camino de este año terminó', 'Nos vemos el próximo año') : unirse(from);
-  // antes del 29 nadie ve el mapa: se entra a los mundos, con Adviento cerrado y su cuenta regresiva
-  if (fase() === 'antes') return from === 'mundos' ? toast('Empieza el 29 de noviembre') : go('mundos', {}, 'push');
+  // antes del 28 nadie ve el mapa: se entra a los mundos, con Adviento cerrado y su cuenta regresiva; el 28 ya se ve (el intro)
+  if (S.hoy < 0) return from === 'mundos' ? toast('Empieza el 29 de noviembre') : go('mundos', {}, 'push');
   go('mapa', { from }, 'push');
 }
 const dayLine = n => n === 0 ? 'Día 0 · ¿Qué es el Adviento?' : `Día ${n} · ${DAYS[n].title}`;
@@ -413,7 +413,7 @@ async function heroeNuevo(root) {
   const sinEmpezar = unirse || antes || vistos() === 0;
   const recuerdo = fase() === 'recuerdo' && sinEmpezar; // ya no hay a qué unirse: el regalo es el nacimiento
   // ya dentro y antes del 29: «Saber más» (Learn more), porque aún no hay aventura que seguir
-  const texto = recuerdo ? 'Ver el nacimiento' : unirse ? 'Unirme gratis' : antes ? 'Saber más' : vistos() === 0 ? 'Iniciar la aventura' : (st.cta && !/^Unirme/.test(st.cta)) ? st.cta : 'Seguir la aventura';
+  const texto = recuerdo ? 'Ver el nacimiento' : unirse ? 'Unirme gratis' : antes ? (S.inscrito && S.hoy === 0 ? 'Ver el intro' : 'Saber más') : vistos() === 0 ? 'Iniciar la aventura' : (st.cta && !/^Unirme/.test(st.cta)) ? st.cta : 'Seguir la aventura';
   const tema = dark() ? 'noche' : 'dia';
   const recarga = S.pilaVista != null && S.bateria > S.pilaVista;
   const escena = sinEmpezar
@@ -421,7 +421,7 @@ async function heroeNuevo(root) {
     : `assets/pila/${recarga ? 'reactivado' : `dias-${pasoTeodoro()}`}-${tema}.webp`;
   const original = antes ? find(card, S.inscrito ? 'Entrar' : 'Unirme gratis') : [...card.querySelectorAll('a')].find(x => x.getAttribute('aria-label') !== 'Ver el camino' && !/Energía/.test(x.getAttribute('aria-label') || ''));
   const ver = card.querySelector('a[aria-label="Ver el camino"]');
-  const accion = () => { if (recuerdo) { go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up'); return; } if (antes && S.inscrito) { go('listo', {}, 'push'); return; } (original || ver)?.click(); };
+  const accion = () => { if (recuerdo) { go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up'); return; } if (antes && S.inscrito) { if (S.hoy === 0) entrar('hoy'); else go('listo', {}, 'push'); return; } (original || ver)?.click(); };
   const capa = document.createElement('div'); capa.className = 'heroe-pre';
   const flecha = unirse && !recuerdo ? '' : '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   const destello = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24"><path fill="#F5DB78" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
@@ -549,11 +549,13 @@ register('hoy', {
     if (fase() === 'antes') {
       startCountdown(root);
       juntarAvatares(root);
-      // sin unirse: «Únete al reto» (póster y card) → «¡Ya estás dentro!»; ya dentro: «Saber más» abre Mundos con la cuenta regresiva
-      replaceText(root, /Seguir la aventura/, 'Saber más'); $$(root, '[aria-label="Seguir la aventura"]').forEach(el => el.setAttribute('aria-label', 'Saber más')); // el póster del lienzo lo trae escrito
+      // sin unirse: «Únete al reto» (póster y card) → «¡Ya estás dentro!»; ya dentro: «Saber más» abre Mundos con la cuenta regresiva;
+      // el 28 (un día antes) ya dentro: «Ver el intro» lleva al mapa, donde Teodoro espera en el intro
+      const intro = S.inscrito && S.hoy === 0, saber = intro ? 'Ver el intro' : 'Saber más';
+      replaceText(root, /Seguir la aventura/, saber); $$(root, '[aria-label="Seguir la aventura"]').forEach(el => el.setAttribute('aria-label', saber)); // el póster del lienzo lo trae escrito
       on(root, 'Únete al reto', (ev, el) => inscribir(el));
-      on(root, 'Saber más', () => go('mundos', {}, 'push'));
-      on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', {}, 'modal'));
+      on(root, saber, () => intro ? entrar('hoy') : go('mundos', {}, 'push'));
+      on(root, 'Ver el camino', () => S.inscrito ? (S.hoy >= 0 ? entrar('hoy') : go('mundos', {}, 'push')) : go('teaser', {}, 'modal')); // el 28 ya se ve el mapa (el intro)
       on(root, 'Adviento: se revela al unirte al reto', () => go('teaser', {}, 'modal'));
       on(root, root.querySelector('a[aria-label^="Mundos"]'), () => go('mundos', {}, 'push'));
       vidrioPendiente(root, p);
@@ -1037,10 +1039,11 @@ register('teodoro', {
     on(root, 'Ver mis mundos', () => go('mundos', {}, 'push'));
     if (fase() === 'antes') {
       // los mismos botones que la card del inicio
-      replaceText(root, /Seguir la aventura/, 'Saber más'); $$(root, '[aria-label="Seguir la aventura"]').forEach(el => el.setAttribute('aria-label', 'Saber más')); // el póster del lienzo lo trae escrito
+      const intro = S.inscrito && S.hoy === 0, saber = intro ? 'Ver el intro' : 'Saber más'; // el 28: al mapa, al intro
+      replaceText(root, /Seguir la aventura/, saber); $$(root, '[aria-label="Seguir la aventura"]').forEach(el => el.setAttribute('aria-label', saber)); // el póster del lienzo lo trae escrito
       on(root, 'Únete al reto', (ev, el) => inscribir(el, 'teodoro'));
-      on(root, 'Saber más', () => go('mundos', {}, 'push'));
-      on(root, 'Ver el camino', () => S.inscrito ? go('mundos', {}, 'push') : go('teaser', { from: 'teodoro' }, 'modal'));
+      on(root, saber, () => intro ? entrar('teodoro') : go('mundos', {}, 'push'));
+      on(root, 'Ver el camino', () => S.inscrito ? (S.hoy >= 0 ? entrar('teodoro') : go('mundos', {}, 'push')) : go('teaser', { from: 'teodoro' }, 'modal'));
       on(root, 'Adviento: se revela al unirte al reto', () => go('teaser', { from: 'teodoro' }, 'modal'));
       vidrioPendiente(root, p); // recién unida: el vidrio se limpia la primera vez que se ve la card
       if (!S.inscrito) vidrioConDedo(root, 'teodoro'); // la misma card que el inicio: también se limpia con el dedo
@@ -1164,7 +1167,7 @@ register('mundos', {
       const ms = Math.max(0, new Date(2026, 10, 29) - new Date());
       adv?.setAttribute('aria-label', `Adviento: empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
       // sin unirse abre la invitación al reto; ya dentro, «¡Ya estás dentro!» con la cuenta regresiva
-      on(root, adv, () => tocarIsla(adv, () => S.inscrito ? go('listo', { from: 'mundos' }, 'push') : go('teaser', { from: 'mundos' }, 'modal')));
+      on(root, adv, () => tocarIsla(adv, () => S.inscrito ? (S.hoy >= 0 ? entrar('mundos') : go('listo', { from: 'mundos' }, 'push')) : go('teaser', { from: 'mundos' }, 'modal')));
     } else {
       const n = walkDay() ?? Math.min(lastDay(), 26);
       replaceText(root, /Día 9 de 26/, `Día ${n} de 26`);

@@ -103,7 +103,7 @@ function pintarDia(el, n, estado) {
   } else if (estado === 'hoy') {
     el.innerHTML = '';
     el.dataset.today = '1';
-    el.setAttribute('aria-label', `Día ${n}, hoy: ${d.title}`);
+    el.setAttribute('aria-label', `${dia}, hoy: ${d.title}`);
   } else {
     const ic = iconOf(n, dark());
     // lo que aún no se abre lleva candado
@@ -205,15 +205,15 @@ register('mapa', {
       const k = hoy ? 1 : 76 / 96, w = 108 * k, h = 104 * k;
       teo.style.width = w + 'px'; teo.style.height = h + 'px';
       teo.style.left = (cx - w / 2) + 'px'; teo.style.top = (cy + (hoy ? 29 : 28) - h) + 'px';
-      pildora.hidden = !hoy; pildora.textContent = n;
-      pildora.style.left = (cx - 15) + 'px'; pildora.style.top = (cy + (n === 26 ? 38 : 32)) + 'px';
+      pildora.hidden = !hoy; pildora.textContent = n === 0 ? 'Intro' : n; // el 28 Teodoro espera en el intro
+      pildora.style.width = n === 0 ? '54px' : ''; pildora.style.left = (cx - (n === 0 ? 27 : 15)) + 'px'; pildora.style.top = (cy + (n === 26 ? 38 : 32)) + 'px';
     };
     // terminó el día con Teodoro cansado: se ve como estaba y la recarga se anima después
     const recargaDe = S.recarga != null && S.recarga < S.bateria && !reduced() ? S.recarga : null;
     if (S.recarga != null) { S.recarga = null; save(); }
     teo.src = teodoroImg(recargaDe ?? S.bateria);
     teo.classList.add('a-bob');
-    if (focus >= 1) place(desde ?? focus); else { teo.hidden = true; pildora.hidden = true; }
+    if (teoN != null) place(desde ?? focus); else { teo.hidden = true; pildora.hidden = true; } // el 28 ya espera en el intro
     // volvió tras días sin caminar: Teodoro despierta al verlos
     if (params.despierta && !reduced()) { teo.classList.remove('a-bob'); setTimeout(() => { teo.src = teodoroImg(Math.max(S.bateria, 3)); animate(teo, 'a-hop'); }, 500); }
 
@@ -327,7 +327,7 @@ register('mapa', {
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
     if (params.dia != null && nodes[params.dia]) { const el = nodes[params.dia].el; el.style.boxShadow = (T.selShadow || '0 0 0 6px rgba(245,219,120,.8)'); scrollToNode(params.dia, false); }
-    else if (focus < 1) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(desde ?? focus, false);
+    else if (teoN == null) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(desde ?? focus, false);
 
     // 7) Animación: el día recién hecho se marca; Teodoro solo camina si avanzó el calendario
     const paso = S.pasoAnimado && !reduced() ? S.pasoAnimado : null;
@@ -373,7 +373,7 @@ register('mapa', {
     if (recargaDe != null && layer.isConnected) await recargarPila(layer, (paso && nodes[paso]?.el) || teo, teo, recargaDe);
     if (ritual) soltarTrasVoz(600); // terminó el ritual: entra la canción
     // la primera vez del día sin caminata (o al volver tras días sin caminar): Teodoro invita a la aventura
-    else if (focus >= 1 && params.dia == null && teo && layer.isConnected) {
+    else if (teoN != null && params.dia == null && teo && layer.isConnected) {
       if (params.despierta) teoDice('diaNuevo', { tras: 0.6 });
       else if (teoDice('diaNuevo', { tras: 0.7 })) setTimeout(() => layer.isConnected && animate(teo, 'a-hop'), 700);
     }
@@ -720,7 +720,7 @@ function paintSheet(layer, T, dia) {
     Object.assign(alt.dataset, extra); cta.after(alt); on(layer, alt, fn);
   };
   // prioridad: volver a tu día > trivias pendientes > sorpresa pendiente (la ruleta nunca va en la hoja: se toca en el mapa)
-  if (dia != null && dia !== teoDay() && teoDay() != null) addAlt(`Volver con Teodoro · Día ${teoDay()}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
+  if (dia != null && dia !== teoDay() && teoDay() != null) addAlt(`Volver con Teodoro · ${teoDay() === 0 ? 'Intro' : `Día ${teoDay()}`}`, 'casa', () => go('mapa', {}, 'none', { replace: true }));
   const mas = /trivia/i.test(label.text);
   if (n > 0 && pendTriv.length) addAlt(mas ? `${pendTriv.length} ${pendTriv.length === 1 ? 'trivia más' : 'trivias más'}` : (pendTriv.length === 1 ? 'Trivia pendiente' : `${pendTriv.length} trivias pendientes`), 'trivia', () => startDay(pendTriv[0]), { pend: String(pendTriv.length) }, `Día ${pendTriv[0]}`);
   const sorpPend = Object.keys(RULES.sorpresa).map(Number).filter(d => d < n && d <= lastDay() && isDone(d) && S.sorpresas[d] === 'luego');

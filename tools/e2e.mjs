@@ -285,7 +285,7 @@ const flows = {
   async inicio() {
     await p.waitForTimeout(800);
     const s0 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, inscrito: c.S.inscrito }; });
-    if (s0.hoy !== 0 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
+    if (s0.hoy !== -1 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
     if (!(await waitScreen('teaser'))) errs.push('el teaser no sale solo al entrar: ' + await screen());
     await shot('teaser'); await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('listo');
     if ((await screen()) !== 'listo') errs.push('«Únete al reto» no abre «¡Ya estás dentro!»: ' + await screen());
@@ -303,8 +303,9 @@ const flows = {
     if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no vuelve a los mundos: ' + await screen());
     await tap('Volver al cuarto de Teodoro'); await p.waitForTimeout(800);
     if ((await screen()) !== 'hoy') errs.push('volver de los mundos no regresa a Hoy: ' + await screen());
-    // pasa la medianoche del 28 al 29: empieza el camino
+    // pasan dos medianoches: al 28 (un día antes, se abre el intro) y del 28 al 29 (empieza el camino)
     if (!(await p.evaluate(() => !!document.querySelector('[data-act="dayPlus"]')))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); }
+    await p.evaluate(() => document.querySelector('[data-act="dayPlus"]')?.click()); await p.waitForTimeout(1200); await shot('dia0-intro');
     await p.evaluate(() => document.querySelector('[data-act="dayPlus"]')?.click()); await p.waitForTimeout(1200); await shot('dia1');
     const s1 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, bat: c.S.bateria }; });
     if (s1.hoy !== 1 || s1.bat !== 4) errs.push('día 1 mal: ' + JSON.stringify(s1)); // cada noche baja una rayita: el día 1 amanece en 4
@@ -318,7 +319,7 @@ const flows = {
     if (await layers() !== 'hub>free(hoja)') errs.push('free no es hoja sobre el reto: ' + await layers());
     await tap('Ahora no'); await p.waitForTimeout(500);
     if (await layers() !== 'hub') errs.push('al cerrar free no queda el reto: ' + await layers());
-    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 0, inscrito: true, teaserVisto: true }); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: -1, inscrito: true, teaserVisto: true }); c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
     await p.waitForTimeout(900); await tap('Saber más'); await p.waitForTimeout(600); await shot('mundos-antes');
     if ((await screen()) !== 'mundos') errs.push('«Saber más» no abre los mundos: ' + await screen());
     await p.goBack(); await p.waitForTimeout(600);
@@ -582,7 +583,7 @@ const flows = {
     const inscrito = () => p.evaluate(async () => (await import('/js/core.js')).S.inscrito);
     const caja = () => p.evaluate(() => { const cv = document.querySelector('#viewport .layer:last-child canvas.vidrio-dedo'); if (!cv) return null; cv.scrollIntoView({ block: 'center' }); const r = cv.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
     for (const tab of ['hoy', 'teodoro']) {
-      await p.evaluate(async t => { const c = await import('/js/core.js'); c.reset({ hoy: 0, inscrito: false, teaserVisto: true }); c.S.completos = {}; c.save(); c.clearHistory(); c.go(t, {}, 'none', { tab: true }); }, tab);
+      await p.evaluate(async t => { const c = await import('/js/core.js'); c.reset({ hoy: -1, inscrito: false, teaserVisto: true }); c.S.completos = {}; c.save(); c.clearHistory(); c.go(t, {}, 'none', { tab: true }); }, tab);
       await p.waitForTimeout(1500);
       let r = await caja(); await p.waitForTimeout(400); r = await caja();
       if (!r) { errs.push(`${tab}: la card antes de unirse no tiene el vidrio para limpiar con el dedo`); continue; }
@@ -619,7 +620,7 @@ const flows = {
   // el póster del evento («El Adviento más grande del mundo», con su logo) es la publicidad del reto: se queda hasta que la familia lo empieza
   async poster() {
     const hecho = { contenido: true, trivia: true, estrellas: 2 };
-    const casos = [['antes sin unirse', { hoy: 0, inscrito: false }, {}, true], ['antes ya dentro', { hoy: 0, inscrito: true }, {}, true], ['dia 1 sin unirse', { hoy: 1, inscrito: false, tardeVisto: true }, {}, true],
+    const casos = [['antes sin unirse', { hoy: -1, inscrito: false }, {}, true], ['antes ya dentro', { hoy: -1, inscrito: true }, {}, true], ['dia 1 sin unirse', { hoy: 1, inscrito: false, tardeVisto: true }, {}, true],
       ['dia 1 unida sin ver nada', { hoy: 1, inscrito: true }, {}, true], ['dia 3 ya empezo', { hoy: 3, inscrito: true }, { 1: hecho }, false], ['gracia sin unirse', { hoy: 30, inscrito: false, tardeVisto: true }, {}, true]];
     for (const [n, st, comp, evento] of casos) {
       await p.evaluate(async ([st, comp]) => { const c = await import('/js/core.js'); c.reset({ teaserVisto: true, ...st }); c.S.completos = comp; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }, [st, comp]);

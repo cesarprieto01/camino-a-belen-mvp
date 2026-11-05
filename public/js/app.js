@@ -64,10 +64,11 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teas
 
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
-  { sec: 1, t: 'Sin inscribirse', mira: 'Inicio con vidrio empañado → teaser → «Únete al reto» → «¡Ya estás dentro!» → el vidrio se limpia', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-antes-d', 'P-Teaser-a', 'P-Listo-a'] },
-  { sec: 1, t: 'Slides del reto (versión posterior)', mira: 'Prende los slides y deja la app sin inscribirse: «Únete al reto» → 4 slides → «¡Ya estás dentro!»', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: false, slidesReto: true }); S.completos = {}; }, go: 'hoy', covers: [] },
-  { sec: 1, t: 'Ya inscrito', mira: 'Teodoro de espaldas mirando el pesebre · «Saber más» abre los Mundos con la cuenta regresiva', run: () => { reset({ hoy: 0, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-despues-d', 'V2-Invitacion-claro'] },
-  { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: 0, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
+  { sec: 1, t: 'Sin inscribirse', mira: 'Inicio con vidrio empañado → teaser → «Únete al reto» → «¡Ya estás dentro!» → el vidrio se limpia', run: () => { reset({ hoy: -1, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-antes-d', 'P-Teaser-a', 'P-Listo-a'] },
+  { sec: 1, t: 'Slides del reto (versión posterior)', mira: 'Prende los slides y deja la app sin inscribirse: «Únete al reto» → 4 slides → «¡Ya estás dentro!»', run: () => { reset({ hoy: -1, inscrito: false, teaserVisto: false, slidesReto: true }); S.completos = {}; }, go: 'hoy', covers: [] },
+  { sec: 1, t: 'Ya inscrito', mira: 'Teodoro de espaldas mirando el pesebre · «Saber más» abre los Mundos con la cuenta regresiva', run: () => { reset({ hoy: -1, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-despues-d', 'V2-Invitacion-claro'] },
+  { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: -1, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
+  { sec: 1, t: 'El intro (28 de noviembre)', mira: 'Un día antes del día 1: el mapa ya se ve y Teodoro espera en el intro (la casa) · video y trivia de presentación con sus 3 estrellas · al día siguiente camina al día 1', run: () => { reset({ hoy: 0, inscrito: true, teaserVisto: true }); S.completos = {}; }, go: 'mapa', covers: [] },
   { sec: 2, t: 'Un día con trivia', mira: 'Día 17 · mapa → historia → ¿jugamos? → 5 preguntas → mañana seguimos', run: day(17, 16), go: 'hoy', covers: ['S-03-Mapa', 'S-05-Reproductor', 'S-06-Completado', 'V2-06a-Trivia-sin-elegir-claro', 'V2-Trivia-fin-claro', 'V2-Cerrado'] },
   { sec: 2, t: 'Un día sin trivia', mira: 'Día 10 · mapa → historia → un paso más hacia Belén → mañana seguimos', run: day(10, 9), go: 'hoy', covers: [] },
   { sec: 2, t: 'Equivocarse en la trivia', mira: 'Toca una respuesta mala: pista sutil y reintento', run: day(17, 16), go: 'mapa', covers: ['V2-08-Pista-claro', 'V2-08b-Reintento-claro'] },
@@ -178,7 +179,7 @@ function advance(k) {
   // «¡Te guardé el camino!»: 5 días o más sin caminar, una vez por ausencia, en el camino y la gracia (no en el recuerdo)
   if (S.inscrito && S.hoy >= 1 && S.hoy <= GRACIA_FIN && (S.sinCaminar || 0) >= RULES.regresoDias && !S.regresoAvisado) { S.regreso = true; S.regresoAvisado = true; }
   save();
-  nota(antes === 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy === 27 ? 'Ya es Navidad' : S.hoy > GRACIA_FIN ? 'El camino quedó como recuerdo' : S.hoy > 27 ? cuentaGracia() : `Hoy es el día ${S.hoy}`);
+  nota(antes <= 0 && S.hoy >= 1 ? '¡Hoy empieza el camino!' : S.hoy === 0 ? '28 de noviembre' : k === 1 ? 'Pasó la medianoche' : `Pasaron ${k} días`, S.hoy === 0 ? 'Ya se puede ver el intro en el mapa' : S.hoy === 27 ? 'Ya es Navidad' : S.hoy > GRACIA_FIN ? 'El camino quedó como recuerdo' : S.hoy > 27 ? cuentaGracia() : `Hoy es el día ${S.hoy}`);
   repintar();
 }
 

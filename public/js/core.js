@@ -15,7 +15,7 @@ const KEY = 'cab-mvp-v2'; // v2: todos empiezan desde cero (antes del 29, sin in
 export const DEFAULT = () => ({
   tema: 'claro', plan: 'premium', nombre: 'Lucía',
   mascota: true,       // tiene la mascota (tab Teodoro) en Theo; sin ella el camino se abre desde Hoy
-  hoy: 0,              // día del calendario: 0 = antes del 29 nov · 1..26 · 27 = 25 dic–6 ene
+  hoy: -1,             // día del calendario: -1 = antes del 28 nov (pre registro) · 0 = 28 nov, un día antes (se abre el intro) · 1..26 · 27 = 25 dic–6 ene
   inscrito: false,
   completos: {},       // día -> { contenido: true, estrellas: 0..3, trivia: true }
   bateria: 5, panes: 0,
@@ -68,8 +68,9 @@ export function activeDay() {
   for (let n = 1; n <= lastDay(); n++) if (!isDone(n)) return n;
   return null;
 }
-/** Día donde está Teodoro: durante el camino, el día del calendario (aunque la familia vaya atrasada); nunca camina hacia atrás. */
-export const teoDay = () => S.hoy <= 0 ? null : S.hoy >= 27 ? (primerSinVer() ?? 26) : Math.min(lastDay(), 26);
+/** Día donde está Teodoro: durante el camino, el día del calendario (aunque la familia vaya atrasada); nunca camina hacia atrás.
+ *  El 28 (día 0, un día antes) espera en el intro, junto a la casa; antes del 28 aún no está en el mapa. */
+export const teoDay = () => S.hoy < 0 ? null : S.hoy >= 27 ? (primerSinVer() ?? 26) : Math.min(lastDay(), 26);
 /** Después de Nochebuena Teodoro espera donde la familia se quedó: el primer cuento sin ver (o Belén si los vio todos). */
 const primerSinVer = () => { for (let n = 1; n <= 26; n++) if (!contentDone(n)) return n; return null; };
 /** Día que se propone hacer: el de hoy si falta; si no, el primero pendiente (historia o trivia).
