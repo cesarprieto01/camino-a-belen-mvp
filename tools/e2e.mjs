@@ -343,6 +343,7 @@ const flows = {
     await tap('Ver mi mundo'); await p.waitForTimeout(1200); await tap('Volver al inicio'); await p.waitForTimeout(1200); await shot('c-dentro');
     // 2) los 26 días
     const visto = new Set();
+    await nextDay(); await p.waitForTimeout(600); // el 28 de noviembre (día 0) se abre el intro; el camino empieza al día siguiente
     for (let d = 1; d <= 26; d++) {
       await nextDay();
       if (await screen() !== 'hoy') errs.push(`día ${d}: no abre en Hoy`);
