@@ -773,12 +773,14 @@ register('teaser', {
 });
 // Slides que cuentan de qué trata el reto, al inscribirse y antes de «¡Ya estás dentro!» (pedido de Rodrigo para una versión posterior;
 // mientras tanto lo envía Braze). Se prenden en el panel › Avanzado › «Slides del reto». Usan la misma ventana que la invitación.
-// Diseño aprobado en el lienzo «Slides del reto · Adviento» (dirección A, claro y oscuro): el mapa con Teodoro en el día de hoy,
-// lo que mira y juega (un cuento, el nacimiento de Jesús y una trivia, cada uno con su mazo detrás) y la ruleta con premios de verdad.
+// Diseño aprobado en el lienzo «Slides del reto · Adviento» (dirección A, claro y oscuro): el pesebre vacío bajo la estrella (A0),
+// el mapa con Teodoro en el día de hoy, lo que mira y juega (un cuento, el nacimiento de Jesús y una trivia, cada uno con su mazo
+// detrás) y la ruleta con premios de verdad.
 const SLIDES = [
-  { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día en el mapa con Teodoro.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
-  { vis: 'aprende', t: '¡Mira, juega y canta!', d: 'Cuentos, trivias, juegos y canciones de la Navidad, todos los días.', alt: 'Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia' },
-  { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Junta estrellas, panes para Teodoro, prendas y sorpresas.', alt: 'La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes' },
+  { vis: 'pesebre', t: '¡Jesús está por llegar!', d: 'Preparemos juntos el corazón para recibirlo en Navidad.', alt: 'El pesebre vacío bajo la estrella de Belén, esperando al Niño Jesús' },
+  { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día junto a Teodoro hasta el pesebre.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
+  { vis: 'aprende', t: 'Mira, juega, canta… y ama', d: 'Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.', alt: 'Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia' },
+  { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.', alt: 'La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes' },
 ];
 // chispas de cuatro puntas: [left, top, tamaño, opacidad]
 const chispas = (l, clase = '') => l.map(([x, y, s, o = 1]) => `<svg class="rs-chispa ${clase}" viewBox="0 0 24 24" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${o}"><path d="M12 1.5 14 10 22.5 12 14 14 12 22.5 10 14 1.5 12 10 10Z"/></svg>`).join('');
@@ -796,6 +798,7 @@ register('retoSlides', {
     const quieto = reduced(), oscuro = dark(), W = 350, N = SLIDES.length;
     caja.setAttribute('aria-label', 'Así es el reto'); caja.classList.add('rs'); caja.classList.toggle('rs-claro', !oscuro);
     const VIS = {
+      pesebre: `<img class="rs-pesebre-img" src="assets/slides/pesebre-${oscuro ? 'noche' : 'dia'}.webp" alt=""><div class="rs-pesebre-luz"></div><div class="rs-pesebre-velo"></div>`,
       camino: `<div class="rs-mundo"><img class="rs-mapa" src="assets/slides/mapa-${oscuro ? 'noche' : 'dia'}.webp" alt=""><div class="rs-aro"></div>
         <img class="rs-teo-hoy" src="${A('345591e97560d37b84ead12837ff9c75')}" alt="">
         <span class="rs-pill rs-hoy"><i></i>Hoy</span>
@@ -828,42 +831,48 @@ register('retoSlides', {
       <button type="button" class="rs-cta"></button>`;
     const pista = caja.querySelector('.rs-pista'), slides = [...caja.querySelectorAll('.rs-slide')], puntos = [...caja.querySelectorAll('.rs-puntos i')], cta = caja.querySelector('.rs-cta');
     // Teodoro salta de alegría, en bucle, en el día de hoy del mapa (quieto si se pidió menos movimiento)
-    celebrar(slides[0], img => img.classList.contains('rs-teo-hoy'));
+    celebrar(slides[SLIDES.findIndex(sl => sl.vis === 'camino')], img => img.classList.contains('rs-teo-hoy'));
     // la entrada de cada slide, la primera vez que se ve. Se preparan en pausa en su comienzo (al arrastrar ya se ve cómo arranca)
     // y corren al llegar; con menos movimiento quedan quietas en su lugar
     const anima = (el, k, o) => el.animate(k, { fill: 'backwards', easing: 'cubic-bezier(.34,1.3,.64,1)', ...o });
     const en = (n, s) => slides[n].querySelector(s), todos = (n, s) => [...slides[n].querySelectorAll(s)];
     const brillan = (n, d) => todos(n, '.rs-vis > .rs-chispa').map((el, k) => anima(el, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: el.style.opacity, transform: 'scale(1)' }], { duration: 420, delay: d + k * 70 }));
-    const ENTRADA = [
-      // 1 · subimos por el camino desde el día 9 («Hecho») hasta Teodoro, que salta en el día de hoy: brilla su aro y aparece «Hoy»
-      () => [
-        anima(en(0, '.rs-mundo'), [{ transform: 'translateY(-112px) scale(1.25)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 1500, delay: 250, easing: 'cubic-bezier(.45,0,.2,1)' }),
-        anima(en(0, '.rs-hecho'), [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 380, delay: 500 }),
-        anima(en(0, '.rs-aro'), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 520, delay: 1350 }),
-        anima(en(0, '.rs-hoy'), [{ opacity: 0, transform: 'translateX(-8px) scale(.6)' }, { opacity: 1, transform: 'translateX(0px) scale(1)' }], { duration: 420, delay: 1650 }),
+    // la entrada de cada tipo de slide; «n» es su lugar en SLIDES
+    const ENTRADA = {
+      // A0 · el pesebre vacío aparece de a poco, como acercándose, y la estrella de Belén se enciende sobre él
+      pesebre: n => [
+        anima(en(n, '.rs-pesebre-img'), [{ opacity: .35, transform: 'scale(1.1)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1500, delay: 100, easing: 'cubic-bezier(.2,.8,.2,1)' }),
+        anima(en(n, '.rs-pesebre-luz'), [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 900, delay: 700 }),
       ],
-      // 2 · las cartas salen juntas del centro y se abren en abanico, cada una con su mazo detrás
-      () => {
+      // A1 · subimos por el camino desde el día 9 («Hecho») hasta Teodoro, que salta en el día de hoy: brilla su aro y aparece «Hoy»
+      camino: n => [
+        anima(en(n, '.rs-mundo'), [{ transform: 'translateY(-112px) scale(1.25)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 1500, delay: 250, easing: 'cubic-bezier(.45,0,.2,1)' }),
+        anima(en(n, '.rs-hecho'), [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 380, delay: 500 }),
+        anima(en(n, '.rs-aro'), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 520, delay: 1350 }),
+        anima(en(n, '.rs-hoy'), [{ opacity: 0, transform: 'translateX(-8px) scale(.6)' }, { opacity: 1, transform: 'translateX(0px) scale(1)' }], { duration: 420, delay: 1650 }),
+      ],
+      // A2 · las cartas salen juntas del centro y se abren en abanico, cada una con su mazo detrás
+      aprende: n => {
         const abre = (el, dx, giro, mas, d) => anima(el, [{ transform: `translate(${dx}px, 20px) rotate(0deg) ${mas} scale(.92)` }, { transform: `translate(0px, 0px) rotate(${giro}deg) ${mas} scale(1)` }], { duration: 640, delay: d });
         return [
-          anima(en(1, '.rs-card.rs-centro'), [{ transform: 'translateY(30px) scale(.92)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 560, delay: 100 }),
-          abre(en(1, '.rs-card.rs-izq'), 93, -9, '', 260), abre(en(1, '.rs-card.rs-der'), -93, 9, '', 260),
-          abre(en(1, '.rs-mazo.rs-izq'), 93, -9, 'translateY(-20px)', 340), abre(en(1, '.rs-mazo.rs-der'), -93, 9, 'translateY(-20px)', 340),
-          anima(en(1, '.rs-mazo.rs-centro'), [{ transform: 'translateY(0px) scale(.92)' }, { transform: 'translateY(-20px) scale(1)' }], { duration: 520, delay: 420 }),
-          ...brillan(1, 520),
+          anima(en(n, '.rs-card.rs-centro'), [{ transform: 'translateY(30px) scale(.92)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 560, delay: 100 }),
+          abre(en(n, '.rs-card.rs-izq'), 93, -9, '', 260), abre(en(n, '.rs-card.rs-der'), -93, 9, '', 260),
+          abre(en(n, '.rs-mazo.rs-izq'), 93, -9, 'translateY(-20px)', 340), abre(en(n, '.rs-mazo.rs-der'), -93, 9, 'translateY(-20px)', 340),
+          anima(en(n, '.rs-mazo.rs-centro'), [{ transform: 'translateY(0px) scale(.92)' }, { transform: 'translateY(-20px) scale(1)' }], { duration: 520, delay: 420 }),
+          ...brillan(n, 520),
         ];
       },
-      // 3 · la ruleta gira y frena, el puntero rebota y salen los premios con confeti
-      () => [
-        anima(en(2, '.rs-rayos'), [{ opacity: 0, transform: 'rotate(-40deg)' }, { opacity: 1, transform: 'rotate(0deg)' }], { duration: 1600, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
-        anima(en(2, '.rs-rueda'), [{ transform: 'rotate(-300deg)' }, { transform: 'rotate(0deg)' }], { duration: 1700, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
-        anima(en(2, '.rs-puntero'), [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-16deg)', offset: .3 }, { transform: 'rotate(10deg)', offset: .6 }, { transform: 'rotate(-4deg)', offset: .8 }, { transform: 'rotate(0deg)' }], { duration: 600, delay: 1500, easing: 'ease-out', fill: 'none' }),
+      // A3 · la ruleta gira y frena, el puntero rebota y salen los premios con confeti
+      gana: n => [
+        anima(en(n, '.rs-rayos'), [{ opacity: 0, transform: 'rotate(-40deg)' }, { opacity: 1, transform: 'rotate(0deg)' }], { duration: 1600, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
+        anima(en(n, '.rs-rueda'), [{ transform: 'rotate(-300deg)' }, { transform: 'rotate(0deg)' }], { duration: 1700, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
+        anima(en(n, '.rs-puntero'), [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-16deg)', offset: .3 }, { transform: 'rotate(10deg)', offset: .6 }, { transform: 'rotate(-4deg)', offset: .8 }, { transform: 'rotate(0deg)' }], { duration: 600, delay: 1500, easing: 'ease-out', fill: 'none' }),
         ...[['.rs-premio.rs-centro', '', 1250], ['.rs-premio.rs-izq', 'rotate(-8deg)', 1350], ['.rs-premio.rs-der', 'rotate(8deg)', 1450]].map(([s, giro, d]) =>
-          anima(en(2, s), [{ opacity: 0, transform: `translateY(36px) ${giro} scale(.8)` }, { opacity: 1, transform: `translateY(0px) ${giro} scale(1)` }], { duration: 520, delay: d })),
-        ...todos(2, '.rs-confeti').map((el, k) => anima(el, [{ opacity: 0, transform: `translateY(-24px) rotate(${CONFETI[k][4] - 120}deg)` }, { opacity: 1, transform: `translateY(0px) rotate(${CONFETI[k][4]}deg)` }], { duration: 700, delay: 1400 + k * 60, easing: 'cubic-bezier(.2,.8,.3,1)' })),
+          anima(en(n, s), [{ opacity: 0, transform: `translateY(36px) ${giro} scale(.8)` }, { opacity: 1, transform: `translateY(0px) ${giro} scale(1)` }], { duration: 520, delay: d })),
+        ...todos(n, '.rs-confeti').map((el, k) => anima(el, [{ opacity: 0, transform: `translateY(-24px) rotate(${CONFETI[k][4] - 120}deg)` }, { opacity: 1, transform: `translateY(0px) rotate(${CONFETI[k][4]}deg)` }], { duration: 700, delay: 1400 + k * 60, easing: 'cubic-bezier(.2,.8,.3,1)' })),
       ],
-    ];
-    const entradas = ENTRADA.map(f => { if (quieto) return null; const l = f(); l.forEach(a => a.pause()); return l; });
+    };
+    const entradas = SLIDES.map((sl, n) => { if (quieto) return null; const l = ENTRADA[sl.vis](n); l.forEach(a => a.pause()); return l; });
     const estrenar = n => { entradas[n]?.forEach(a => a.play()); entradas[n] = null; };
     // pasar de slide: sigue al dedo 1:1, se resiste en los bordes y al soltar decide por la velocidad o por cuánto se corrió
     let i = 0, x = 0;
