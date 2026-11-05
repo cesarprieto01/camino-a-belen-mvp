@@ -687,6 +687,8 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
     radial-gradient(1px 1px at 6% 40%, rgba(255,255,255,.6), transparent 2px), radial-gradient(1.5px 1.5px at 64% 4%, rgba(255,255,255,.7), transparent 2px),
     linear-gradient(180deg, #123A78 0%, #0A2A60 40%, #05204E 66%); }
 .rs-claro .rs-cielo { background: linear-gradient(180deg, #CFEAF4 0%, #EAF6FA 40%, #FFFFFF 62%); }
+.rs-capa { position: absolute; inset: 0; }
+.rs-antes { position: absolute; inset: 0; z-index: 5; pointer-events: none; } /* lo de la invitación, fundiéndose encima de los slides */
 .rs-pista { position: absolute; left: 0; top: 0; bottom: 0; width: max-content; display: flex; touch-action: pan-y; cursor: grab; will-change: transform; }
 .rs-pista:active { cursor: grabbing; }
 .rs-slide { position: relative; flex: none; width: 350px; height: 100%; overflow: hidden; }

@@ -111,8 +111,9 @@ export function cardState() {
   return { key: 3, done: act == null };
 }
 /** Inscribirse antes del 29: el botón se vuelve ✓ «¡Listo!» y se abre «¡Ya estás dentro!» (flujo 1 del pre registro). */
-/** from: desde dónde se une (hoy o teodoro); «¡Ya estás dentro!» vuelve allá. */
-export function inscribir(btn, from = 'hoy') {
+/** from: desde dónde se une (hoy o teodoro); «¡Ya estás dentro!» vuelve allá. Con los slides prendidos salen antes:
+ *  «aqui» los muestra en la misma ventana (la invitación); si no, se abren como pop-up sobre la pantalla de donde se unió. */
+export function inscribir(btn, from = 'hoy', aqui = null) {
   if (S.inscrito) return go('listo', {}, 'push');
   S.inscrito = true; save();
   navigator.vibrate?.(20);
@@ -122,7 +123,7 @@ export function inscribir(btn, from = 'hoy') {
     btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center'; btn.style.gap = '8px';
     btn.style.pointerEvents = 'none'; animate(btn, 'a-pop');
   }
-  setTimeout(() => S.slidesReto ? go('retoSlides', { from }, 'fade') : go('listo', { nueva: true, from }, 'fade'), 750);
+  setTimeout(() => !S.slidesReto ? go('listo', { nueva: true, from }, 'fade') : aqui ? aqui() : go('retoSlides', { from }, 'modal'), aqui ? 600 : 750);
 }
 /** Unirse al camino cuando ya empezó (una sola puerta: Hoy, Teodoro y Mundos). */
 export function unirse(from) {
@@ -734,9 +735,24 @@ function simplifyCard(card) {
 }
 
 // ---------- Antes del 29 ----------
+/** Al unirse desde la invitación con los slides prendidos, salen en la misma ventana: lo de la invitación (con el ✓ «¡Listo!»)
+ *  se va y entran los slides; la ventana y el fondo borroso de atrás no se mueven. */
+function slidesAqui(root, from) {
+  const caja = root.querySelector('[role=dialog]');
+  if (!caja) return go('retoSlides', { from }, 'modal');
+  const antes = document.createElement('div'); antes.className = 'rs-antes';
+  const cs = getComputedStyle(caja); antes.style.background = cs.backgroundColor; antes.style.color = cs.color;
+  antes.append(...caja.childNodes);
+  cur?.layer?.classList.add('con-slides'); // tocar fuera de la ventana ya lleva a «¡Ya estás dentro!»
+  const capa = slidesEn(root, caja, () => go('listo', { nueva: true, from }, 'fade', { replace: true }));
+  caja.append(antes);
+  // fundido de paso: lo de la invitación se va rápido y los slides entran justo después, así nunca se leen dos textos encima
+  antes.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' }).finished.then(() => antes.remove(), () => antes.remove());
+  capa.animate([{ opacity: 0, transform: reduced() ? 'none' : 'scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: 140, easing: 'cubic-bezier(0,0,.2,1)', fill: 'backwards' });
+}
 register('teaser', {
   h1: 'Adviento',
-  dismiss: () => back('hoy', 'fade'),
+  dismiss: () => cur?.layer?.classList.contains('con-slides') ? go('listo', { nueva: true, from: cur.params?.from }, 'fade', { replace: true }) : back('hoy', 'fade'),
   files: F('P-Teaser-a', 'P-Teaser-a-oscuro'),
   mount(root, p = {}) {
     startCountdown(root);
@@ -744,7 +760,7 @@ register('teaser', {
     const reg = find(root, 'Únete al reto') || find(root, 'Unirme gratis');
     if (p.preview) on(root, reg, () => { nota('Aquí tu amigo se inscribe', 'Tú ya estás dentro'); back('invitacion', 'fade'); });
     else if (p.tarde) on(root, reg, () => entrar('hoy'));
-    else on(root, reg, (ev, el) => inscribir(el, p.from));
+    else on(root, reg, (ev, el) => inscribir(el, p.from, () => slidesAqui(root, p.from)));
     // el camino ya salió y la familia no se ha unido: la misma ventana, como invitación a subirse en marcha
     if (p.tarde) {
       const caja = root.querySelector('[role=dialog]') || root.querySelector('[aria-label^="Adviento empieza"]') || root;
@@ -795,128 +811,137 @@ register('retoSlides', {
     const listo = () => go('listo', { nueva: true, from: p.from }, 'fade', { replace: true });
     const caja = root.querySelector('[role=dialog]');
     if (!caja) return listo();
-    const quieto = reduced(), oscuro = dark(), W = 350, N = SLIDES.length;
-    caja.setAttribute('aria-label', 'Así es el reto'); caja.classList.add('rs'); caja.classList.toggle('rs-claro', !oscuro);
-    const VIS = {
-      pesebre: `<img class="rs-pesebre-img" src="assets/slides/pesebre-${oscuro ? 'noche' : 'dia'}.webp" alt=""><div class="rs-pesebre-luz"></div><div class="rs-pesebre-velo"></div>`,
-      camino: `<div class="rs-mundo"><img class="rs-mapa" src="assets/slides/mapa-${oscuro ? 'noche' : 'dia'}.webp" alt=""><div class="rs-aro"></div>
-        <img class="rs-teo-hoy" src="${A('345591e97560d37b84ead12837ff9c75')}" alt="">
-        <span class="rs-pill rs-hoy"><i></i>Hoy</span>
-        <span class="rs-pill rs-hecho"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Hecho</span></div>
-        <div class="rs-mapa-velo"></div>`,
-      aprende: `${chispas([[47, 380, 16], [164, 427, 22], [272, 369, 16]])}<div class="rs-luz"></div>
-        <div class="rs-mazo rs-izq"></div><div class="rs-mazo rs-der"></div>
-        ${chispas([[34, 92, 16], [308, 104, 13, .9], [168, 30, 12, .8], [22, 322, 12, .7], [316, 312, 15]])}
-        <div class="rs-card rs-izq rs-cuento">${oscuro ? '<img class="rs-card-fondo" src="assets/poster/s3-pastores.webp" alt="">' : ''}
-          <img class="rs-oveja" src="${A('183c744879d8ae7dd89b10934cde465c')}" alt=""><span class="rs-chip">${PLAY}Cuento · 5 min</span></div>
-        <div class="rs-card rs-der rs-trivia"><div class="rs-trivia-luz"></div><img class="rs-sorpresa" src="assets/ruleta/sorpresa.webp" alt="">
-          ${chispas([[16, 24, 14], [104, 108, 12, .85]], 'rs-suave')}<span class="rs-chip">${PREGUNTA}Trivia</span></div>
-        <div class="rs-mazo rs-centro"></div>
-        <div class="rs-card rs-centro"><img class="rs-nacimiento" src="assets/poster/navidad.webp" alt="">
-          ${chispas([[84, 108, 12], [150, 96, 10, .85]], 'rs-suave')}<div class="rs-card-velo"></div><span class="rs-chip">${PLAY}El nacimiento de Jesús</span></div>`,
-      gana: `<div class="rs-rayos"></div><div class="rs-brillo"></div>
-        <div class="rs-ruleta"><div class="rs-rueda"><img src="assets/ruleta/rueda8.webp" alt="">${casillas(279, A(IMG.bufanda))}</div></div><img class="rs-puntero" src="${A('3fdb655b7743b5a7a821153429c4d733')}" alt="">
-        <img class="rs-premio rs-izq" src="assets/slides/premio-gorro.webp" alt=""><img class="rs-premio rs-der" src="assets/slides/premio-bufanda.webp" alt="">
-        <img class="rs-premio rs-centro" src="assets/slides/premio-trivia.webp" alt="">
-        ${CONFETI.map(([x, y, w, h, r], k) => `<i class="rs-confeti" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:rotate(${r}deg);background:${(oscuro ? ['#F5DB78', '#5ED3E8', '#FF9AB8', '#FFFFFF', '#5ED3E8', '#F5DB78'] : ['#F0C446', '#1F9DB8', '#F27FA5', '#F0C446', '#1F9DB8', '#F27FA5'])[k]}"></i>`).join('')}`,
-    };
-    caja.innerHTML = `<div class="rs-cielo" aria-hidden="true"></div>
-      <div class="rs-pista">${SLIDES.map((sl, i) => `
-        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="${i + 1} de ${N}">
-          <div class="rs-vis rs-${sl.vis}" role="img" aria-label="${sl.alt}">${VIS[sl.vis]}</div>
-          <div class="rs-txt"><h2>${sl.t}</h2><p>${sl.d}</p></div>
-        </section>`).join('')}</div>
-      <button type="button" class="rs-cerrar" aria-label="Cerrar"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <div class="rs-puntos" aria-hidden="true">${SLIDES.map(() => '<i></i>').join('')}</div>
-      <button type="button" class="rs-cta"></button>`;
-    const pista = caja.querySelector('.rs-pista'), slides = [...caja.querySelectorAll('.rs-slide')], puntos = [...caja.querySelectorAll('.rs-puntos i')], cta = caja.querySelector('.rs-cta');
-    // Teodoro salta de alegría, en bucle, en el día de hoy del mapa (quieto si se pidió menos movimiento)
-    celebrar(slides[SLIDES.findIndex(sl => sl.vis === 'camino')], img => img.classList.contains('rs-teo-hoy'));
-    // la entrada de cada slide, la primera vez que se ve. Se preparan en pausa en su comienzo (al arrastrar ya se ve cómo arranca)
-    // y corren al llegar; con menos movimiento quedan quietas en su lugar
-    const anima = (el, k, o) => el.animate(k, { fill: 'backwards', easing: 'cubic-bezier(.34,1.3,.64,1)', ...o });
-    const en = (n, s) => slides[n].querySelector(s), todos = (n, s) => [...slides[n].querySelectorAll(s)];
-    const brillan = (n, d) => todos(n, '.rs-vis > .rs-chispa').map((el, k) => anima(el, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: el.style.opacity, transform: 'scale(1)' }], { duration: 420, delay: d + k * 70 }));
-    // la entrada de cada tipo de slide; «n» es su lugar en SLIDES
-    const ENTRADA = {
-      // A0 · el pesebre vacío aparece de a poco, como acercándose, y la estrella de Belén se enciende sobre él
-      pesebre: n => [
-        anima(en(n, '.rs-pesebre-img'), [{ opacity: .35, transform: 'scale(1.1)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1500, delay: 100, easing: 'cubic-bezier(.2,.8,.2,1)' }),
-        anima(en(n, '.rs-pesebre-luz'), [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 900, delay: 700 }),
-      ],
-      // A1 · subimos por el camino desde el día 9 («Hecho») hasta Teodoro, que salta en el día de hoy: brilla su aro y aparece «Hoy»
-      camino: n => [
-        anima(en(n, '.rs-mundo'), [{ transform: 'translateY(-112px) scale(1.25)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 1500, delay: 250, easing: 'cubic-bezier(.45,0,.2,1)' }),
-        anima(en(n, '.rs-hecho'), [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 380, delay: 500 }),
-        anima(en(n, '.rs-aro'), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 520, delay: 1350 }),
-        anima(en(n, '.rs-hoy'), [{ opacity: 0, transform: 'translateX(-8px) scale(.6)' }, { opacity: 1, transform: 'translateX(0px) scale(1)' }], { duration: 420, delay: 1650 }),
-      ],
-      // A2 · las cartas salen juntas del centro y se abren en abanico, cada una con su mazo detrás
-      aprende: n => {
-        const abre = (el, dx, giro, mas, d) => anima(el, [{ transform: `translate(${dx}px, 20px) rotate(0deg) ${mas} scale(.92)` }, { transform: `translate(0px, 0px) rotate(${giro}deg) ${mas} scale(1)` }], { duration: 640, delay: d });
-        return [
-          anima(en(n, '.rs-card.rs-centro'), [{ transform: 'translateY(30px) scale(.92)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 560, delay: 100 }),
-          abre(en(n, '.rs-card.rs-izq'), 93, -9, '', 260), abre(en(n, '.rs-card.rs-der'), -93, 9, '', 260),
-          abre(en(n, '.rs-mazo.rs-izq'), 93, -9, 'translateY(-20px)', 340), abre(en(n, '.rs-mazo.rs-der'), -93, 9, 'translateY(-20px)', 340),
-          anima(en(n, '.rs-mazo.rs-centro'), [{ transform: 'translateY(0px) scale(.92)' }, { transform: 'translateY(-20px) scale(1)' }], { duration: 520, delay: 420 }),
-          ...brillan(n, 520),
-        ];
-      },
-      // A3 · la ruleta gira y frena, el puntero rebota y salen los premios con confeti
-      gana: n => [
-        anima(en(n, '.rs-rayos'), [{ opacity: 0, transform: 'rotate(-40deg)' }, { opacity: 1, transform: 'rotate(0deg)' }], { duration: 1600, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
-        anima(en(n, '.rs-rueda'), [{ transform: 'rotate(-300deg)' }, { transform: 'rotate(0deg)' }], { duration: 1700, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
-        anima(en(n, '.rs-puntero'), [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-16deg)', offset: .3 }, { transform: 'rotate(10deg)', offset: .6 }, { transform: 'rotate(-4deg)', offset: .8 }, { transform: 'rotate(0deg)' }], { duration: 600, delay: 1500, easing: 'ease-out', fill: 'none' }),
-        ...[['.rs-premio.rs-centro', '', 1250], ['.rs-premio.rs-izq', 'rotate(-8deg)', 1350], ['.rs-premio.rs-der', 'rotate(8deg)', 1450]].map(([s, giro, d]) =>
-          anima(en(n, s), [{ opacity: 0, transform: `translateY(36px) ${giro} scale(.8)` }, { opacity: 1, transform: `translateY(0px) ${giro} scale(1)` }], { duration: 520, delay: d })),
-        ...todos(n, '.rs-confeti').map((el, k) => anima(el, [{ opacity: 0, transform: `translateY(-24px) rotate(${CONFETI[k][4] - 120}deg)` }, { opacity: 1, transform: `translateY(0px) rotate(${CONFETI[k][4]}deg)` }], { duration: 700, delay: 1400 + k * 60, easing: 'cubic-bezier(.2,.8,.3,1)' })),
-      ],
-    };
-    const entradas = SLIDES.map((sl, n) => { if (quieto) return null; const l = ENTRADA[sl.vis](n); l.forEach(a => a.pause()); return l; });
-    const estrenar = n => { entradas[n]?.forEach(a => a.play()); entradas[n] = null; };
-    // pasar de slide: sigue al dedo 1:1, se resiste en los bordes y al soltar decide por la velocidad o por cuánto se corrió
-    let i = 0, x = 0;
-    const poner = (v, ms = 0) => { x = v; pista.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none'; pista.style.transform = `translateX(${v}px)`; };
-    const pintar = (anim = true) => {
-      if (quieto) { poner(-i * W); if (anim) slides[i].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' }); }
-      else poner(-i * W, anim ? 380 : 0);
-      slides.forEach((sl, n) => { sl.inert = n !== i; sl.setAttribute('aria-hidden', String(n !== i)); });
-      puntos.forEach((pt, n) => pt.classList.toggle('on', n === i));
-      cta.textContent = i < N - 1 ? 'Siguiente' : '¡Vamos!';
-      estrenar(i);
-    };
-    const ir = n => { i = Math.max(0, Math.min(N - 1, n)); pintar(); };
-    on(root, cta, () => i < N - 1 ? ir(i + 1) : listo());
-    on(root, caja.querySelector('.rs-cerrar'), listo);
-    caja.addEventListener('keydown', e => { if (e.key === 'ArrowRight') ir(i + 1); if (e.key === 'ArrowLeft') ir(i - 1); });
-    const goma = (d, dim = W, c = .55) => (d * dim * c) / (dim + c * Math.abs(d));
-    let g = null; // el gesto en curso: dónde empezó, desde qué posición y las últimas muestras para la velocidad
-    pista.addEventListener('pointerdown', e => {
-      // se puede agarrar a medio camino: parte de donde se ve, no de donde iba
-      const vista = new DOMMatrix(getComputedStyle(pista).transform).m41;
-      g = { x0: e.clientX, y0: e.clientY, desde: vista, k: pista.getBoundingClientRect().width / pista.offsetWidth || 1, h: [[performance.now(), vista]], activo: false };
-      poner(vista); pista.setPointerCapture(e.pointerId);
-    });
-    pista.addEventListener('pointermove', e => {
-      if (!g) return;
-      const dx = (e.clientX - g.x0) / g.k;
-      if (!g.activo) { if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - g.y0)) return; g.activo = true; }
-      let v = g.desde + dx; const min = -(N - 1) * W;
-      if (v > 0) v = goma(v); else if (v < min) v = min + goma(v - min);
-      poner(v); g.h.push([performance.now(), v]); if (g.h.length > 5) g.h.shift();
-    });
-    const soltar = () => {
-      if (!g) return;
-      const { h } = g; g = null;
-      const vel = h.length > 1 ? (h.at(-1)[1] - h[0][1]) / Math.max(1, h.at(-1)[0] - h[0][0]) * 1000 : 0; // px/s
-      // un gesto rápido decide por su dirección; uno lento pasa si se movió más de un cuarto del ancho
-      const corrido = x + i * W;
-      ir(Math.abs(vel) > 300 ? i + (vel < 0 ? 1 : -1) : corrido < -W / 4 ? i + 1 : corrido > W / 4 ? i - 1 : i);
-    };
-    pista.addEventListener('pointerup', soltar); pista.addEventListener('pointercancel', soltar);
-    pintar(false);
+    caja.replaceChildren();
+    slidesEn(root, caja, listo);
   },
 });
+/** Arma los slides del reto dentro de la ventana «caja» (la misma de la invitación); «listo» lleva a «¡Ya estás dentro!»
+ *  al cerrar o al terminar. Sirve para la pantalla «retoSlides» y para mostrarlos en la misma invitación al unirse. */
+function slidesEn(root, caja, listo) {
+  const quieto = reduced(), oscuro = dark(), W = 350, N = SLIDES.length;
+  caja.setAttribute('aria-label', 'Así es el reto'); caja.classList.add('rs'); caja.classList.toggle('rs-claro', !oscuro);
+  const VIS = {
+    pesebre: `<img class="rs-pesebre-img" src="assets/slides/pesebre-${oscuro ? 'noche' : 'dia'}.webp" alt=""><div class="rs-pesebre-luz"></div><div class="rs-pesebre-velo"></div>`,
+    camino: `<div class="rs-mundo"><img class="rs-mapa" src="assets/slides/mapa-${oscuro ? 'noche' : 'dia'}.webp" alt=""><div class="rs-aro"></div>
+      <img class="rs-teo-hoy" src="${A('345591e97560d37b84ead12837ff9c75')}" alt="">
+      <span class="rs-pill rs-hoy"><i></i>Hoy</span>
+      <span class="rs-pill rs-hecho"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Hecho</span></div>
+      <div class="rs-mapa-velo"></div>`,
+    aprende: `${chispas([[47, 380, 16], [164, 427, 22], [272, 369, 16]])}<div class="rs-luz"></div>
+      <div class="rs-mazo rs-izq"></div><div class="rs-mazo rs-der"></div>
+      ${chispas([[34, 92, 16], [308, 104, 13, .9], [168, 30, 12, .8], [22, 322, 12, .7], [316, 312, 15]])}
+      <div class="rs-card rs-izq rs-cuento">${oscuro ? '<img class="rs-card-fondo" src="assets/poster/s3-pastores.webp" alt="">' : ''}
+        <img class="rs-oveja" src="${A('183c744879d8ae7dd89b10934cde465c')}" alt=""><span class="rs-chip">${PLAY}Cuento · 5 min</span></div>
+      <div class="rs-card rs-der rs-trivia"><div class="rs-trivia-luz"></div><img class="rs-sorpresa" src="assets/ruleta/sorpresa.webp" alt="">
+        ${chispas([[16, 24, 14], [104, 108, 12, .85]], 'rs-suave')}<span class="rs-chip">${PREGUNTA}Trivia</span></div>
+      <div class="rs-mazo rs-centro"></div>
+      <div class="rs-card rs-centro"><img class="rs-nacimiento" src="assets/poster/navidad.webp" alt="">
+        ${chispas([[84, 108, 12], [150, 96, 10, .85]], 'rs-suave')}<div class="rs-card-velo"></div><span class="rs-chip">${PLAY}El nacimiento de Jesús</span></div>`,
+    gana: `<div class="rs-rayos"></div><div class="rs-brillo"></div>
+      <div class="rs-ruleta"><div class="rs-rueda"><img src="assets/ruleta/rueda8.webp" alt="">${casillas(279, A(IMG.bufanda))}</div></div><img class="rs-puntero" src="${A('3fdb655b7743b5a7a821153429c4d733')}" alt="">
+      <img class="rs-premio rs-izq" src="assets/slides/premio-gorro.webp" alt=""><img class="rs-premio rs-der" src="assets/slides/premio-bufanda.webp" alt="">
+      <img class="rs-premio rs-centro" src="assets/slides/premio-trivia.webp" alt="">
+      ${CONFETI.map(([x, y, w, h, r], k) => `<i class="rs-confeti" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:rotate(${r}deg);background:${(oscuro ? ['#F5DB78', '#5ED3E8', '#FF9AB8', '#FFFFFF', '#5ED3E8', '#F5DB78'] : ['#F0C446', '#1F9DB8', '#F27FA5', '#F0C446', '#1F9DB8', '#F27FA5'])[k]}"></i>`).join('')}`,
+  };
+  const capa = document.createElement('div'); capa.className = 'rs-capa';
+  capa.innerHTML = `<div class="rs-cielo" aria-hidden="true"></div>
+    <div class="rs-pista">${SLIDES.map((sl, i) => `
+      <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="${i + 1} de ${N}">
+        <div class="rs-vis rs-${sl.vis}" role="img" aria-label="${sl.alt}">${VIS[sl.vis]}</div>
+        <div class="rs-txt"><h2>${sl.t}</h2><p>${sl.d}</p></div>
+      </section>`).join('')}</div>
+    <button type="button" class="rs-cerrar" aria-label="Cerrar"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="rs-puntos" aria-hidden="true">${SLIDES.map(() => '<i></i>').join('')}</div>
+    <button type="button" class="rs-cta"></button>`;
+  caja.append(capa);
+  const pista = caja.querySelector('.rs-pista'), slides = [...caja.querySelectorAll('.rs-slide')], puntos = [...caja.querySelectorAll('.rs-puntos i')], cta = caja.querySelector('.rs-cta');
+  // Teodoro salta de alegría, en bucle, en el día de hoy del mapa (quieto si se pidió menos movimiento)
+  celebrar(slides[SLIDES.findIndex(sl => sl.vis === 'camino')], img => img.classList.contains('rs-teo-hoy'));
+  // la entrada de cada slide, la primera vez que se ve. Se preparan en pausa en su comienzo (al arrastrar ya se ve cómo arranca)
+  // y corren al llegar; con menos movimiento quedan quietas en su lugar
+  const anima = (el, k, o) => el.animate(k, { fill: 'backwards', easing: 'cubic-bezier(.34,1.3,.64,1)', ...o });
+  const en = (n, s) => slides[n].querySelector(s), todos = (n, s) => [...slides[n].querySelectorAll(s)];
+  const brillan = (n, d) => todos(n, '.rs-vis > .rs-chispa').map((el, k) => anima(el, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: el.style.opacity, transform: 'scale(1)' }], { duration: 420, delay: d + k * 70 }));
+  // la entrada de cada tipo de slide; «n» es su lugar en SLIDES
+  const ENTRADA = {
+    // A0 · el pesebre vacío aparece de a poco, como acercándose, y la estrella de Belén se enciende sobre él
+    pesebre: n => [
+      anima(en(n, '.rs-pesebre-img'), [{ opacity: .35, transform: 'scale(1.1)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1500, delay: 100, easing: 'cubic-bezier(.2,.8,.2,1)' }),
+      anima(en(n, '.rs-pesebre-luz'), [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 900, delay: 700 }),
+    ],
+    // A1 · subimos por el camino desde el día 9 («Hecho») hasta Teodoro, que salta en el día de hoy: brilla su aro y aparece «Hoy»
+    camino: n => [
+      anima(en(n, '.rs-mundo'), [{ transform: 'translateY(-112px) scale(1.25)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 1500, delay: 250, easing: 'cubic-bezier(.45,0,.2,1)' }),
+      anima(en(n, '.rs-hecho'), [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 380, delay: 500 }),
+      anima(en(n, '.rs-aro'), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 520, delay: 1350 }),
+      anima(en(n, '.rs-hoy'), [{ opacity: 0, transform: 'translateX(-8px) scale(.6)' }, { opacity: 1, transform: 'translateX(0px) scale(1)' }], { duration: 420, delay: 1650 }),
+    ],
+    // A2 · las cartas salen juntas del centro y se abren en abanico, cada una con su mazo detrás
+    aprende: n => {
+      const abre = (el, dx, giro, mas, d) => anima(el, [{ transform: `translate(${dx}px, 20px) rotate(0deg) ${mas} scale(.92)` }, { transform: `translate(0px, 0px) rotate(${giro}deg) ${mas} scale(1)` }], { duration: 640, delay: d });
+      return [
+        anima(en(n, '.rs-card.rs-centro'), [{ transform: 'translateY(30px) scale(.92)' }, { transform: 'translateY(0px) scale(1)' }], { duration: 560, delay: 100 }),
+        abre(en(n, '.rs-card.rs-izq'), 93, -9, '', 260), abre(en(n, '.rs-card.rs-der'), -93, 9, '', 260),
+        abre(en(n, '.rs-mazo.rs-izq'), 93, -9, 'translateY(-20px)', 340), abre(en(n, '.rs-mazo.rs-der'), -93, 9, 'translateY(-20px)', 340),
+        anima(en(n, '.rs-mazo.rs-centro'), [{ transform: 'translateY(0px) scale(.92)' }, { transform: 'translateY(-20px) scale(1)' }], { duration: 520, delay: 420 }),
+        ...brillan(n, 520),
+      ];
+    },
+    // A3 · la ruleta gira y frena, el puntero rebota y salen los premios con confeti
+    gana: n => [
+      anima(en(n, '.rs-rayos'), [{ opacity: 0, transform: 'rotate(-40deg)' }, { opacity: 1, transform: 'rotate(0deg)' }], { duration: 1600, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
+      anima(en(n, '.rs-rueda'), [{ transform: 'rotate(-300deg)' }, { transform: 'rotate(0deg)' }], { duration: 1700, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
+      anima(en(n, '.rs-puntero'), [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-16deg)', offset: .3 }, { transform: 'rotate(10deg)', offset: .6 }, { transform: 'rotate(-4deg)', offset: .8 }, { transform: 'rotate(0deg)' }], { duration: 600, delay: 1500, easing: 'ease-out', fill: 'none' }),
+      ...[['.rs-premio.rs-centro', '', 1250], ['.rs-premio.rs-izq', 'rotate(-8deg)', 1350], ['.rs-premio.rs-der', 'rotate(8deg)', 1450]].map(([s, giro, d]) =>
+        anima(en(n, s), [{ opacity: 0, transform: `translateY(36px) ${giro} scale(.8)` }, { opacity: 1, transform: `translateY(0px) ${giro} scale(1)` }], { duration: 520, delay: d })),
+      ...todos(n, '.rs-confeti').map((el, k) => anima(el, [{ opacity: 0, transform: `translateY(-24px) rotate(${CONFETI[k][4] - 120}deg)` }, { opacity: 1, transform: `translateY(0px) rotate(${CONFETI[k][4]}deg)` }], { duration: 700, delay: 1400 + k * 60, easing: 'cubic-bezier(.2,.8,.3,1)' })),
+    ],
+  };
+  const entradas = SLIDES.map((sl, n) => { if (quieto) return null; const l = ENTRADA[sl.vis](n); l.forEach(a => a.pause()); return l; });
+  const estrenar = n => { entradas[n]?.forEach(a => a.play()); entradas[n] = null; };
+  // pasar de slide: sigue al dedo 1:1, se resiste en los bordes y al soltar decide por la velocidad o por cuánto se corrió
+  let i = 0, x = 0;
+  const poner = (v, ms = 0) => { x = v; pista.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none'; pista.style.transform = `translateX(${v}px)`; };
+  const pintar = (anim = true) => {
+    if (quieto) { poner(-i * W); if (anim) slides[i].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' }); }
+    else poner(-i * W, anim ? 380 : 0);
+    slides.forEach((sl, n) => { sl.inert = n !== i; sl.setAttribute('aria-hidden', String(n !== i)); });
+    puntos.forEach((pt, n) => pt.classList.toggle('on', n === i));
+    cta.textContent = i < N - 1 ? 'Siguiente' : '¡Vamos!';
+    estrenar(i);
+  };
+  const ir = n => { i = Math.max(0, Math.min(N - 1, n)); pintar(); };
+  on(root, cta, () => i < N - 1 ? ir(i + 1) : listo());
+  on(root, caja.querySelector('.rs-cerrar'), listo);
+  caja.addEventListener('keydown', e => { if (e.key === 'ArrowRight') ir(i + 1); if (e.key === 'ArrowLeft') ir(i - 1); });
+  const goma = (d, dim = W, c = .55) => (d * dim * c) / (dim + c * Math.abs(d));
+  let g = null; // el gesto en curso: dónde empezó, desde qué posición y las últimas muestras para la velocidad
+  pista.addEventListener('pointerdown', e => {
+    // se puede agarrar a medio camino: parte de donde se ve, no de donde iba
+    const vista = new DOMMatrix(getComputedStyle(pista).transform).m41;
+    g = { x0: e.clientX, y0: e.clientY, desde: vista, k: pista.getBoundingClientRect().width / pista.offsetWidth || 1, h: [[performance.now(), vista]], activo: false };
+    poner(vista); pista.setPointerCapture(e.pointerId);
+  });
+  pista.addEventListener('pointermove', e => {
+    if (!g) return;
+    const dx = (e.clientX - g.x0) / g.k;
+    if (!g.activo) { if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - g.y0)) return; g.activo = true; }
+    let v = g.desde + dx; const min = -(N - 1) * W;
+    if (v > 0) v = goma(v); else if (v < min) v = min + goma(v - min);
+    poner(v); g.h.push([performance.now(), v]); if (g.h.length > 5) g.h.shift();
+  });
+  const soltar = () => {
+    if (!g) return;
+    const { h } = g; g = null;
+    const vel = h.length > 1 ? (h.at(-1)[1] - h[0][1]) / Math.max(1, h.at(-1)[0] - h[0][0]) * 1000 : 0; // px/s
+    // un gesto rápido decide por su dirección; uno lento pasa si se movió más de un cuarto del ancho
+    const corrido = x + i * W;
+    ir(Math.abs(vel) > 300 ? i + (vel < 0 ? 1 : -1) : corrido < -W / 4 ? i + 1 : corrido > W / 4 ? i - 1 : i);
+  };
+  pista.addEventListener('pointerup', soltar); pista.addEventListener('pointercancel', soltar);
+  pintar(false);
+  return capa;
+}
 // «¡Ya estás dentro!» (flujo 1 del pre registro): al unirse y cuando ya está dentro antes del 29
 register('listo', {
   h1: '¡Ya estás dentro!',
