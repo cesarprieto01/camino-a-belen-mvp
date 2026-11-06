@@ -344,25 +344,27 @@ register('triviaFin', {
     const n = p.day;
     if (sinTrivia(n)) return;
     muteBtn(root);
-    const { est, first, gana, mejoro } = finishTrivia(n, p.ok, p.replay);
+    const { est, mejor, first, gana, mejoro } = finishTrivia(n, p.ok, p.replay);
+    // al repetir y sacar menos, se queda con su mejor marca: se ven esas estrellas (sin festejo); «X de 5» es de esta partida
+    const peor = mejor > est, vis = mejor;
     setText(root, /^\d de 5$/, `${p.ok} de 5`);
     replaceText(root, /respuestas correctas/, 'a la primera');
     if (S.triviaProgreso) delete S.triviaProgreso[n];
-    setText(root, '¡Gran trivia!', est === 3 ? '¡Trivia perfecta!' : est === 2 ? '¡Gran trivia!' : '¡Buen intento!');
+    setText(root, '¡Gran trivia!', peor ? `¡Sigues con ${vis} estrellas!` : est === 3 ? '¡Trivia perfecta!' : est === 2 ? '¡Gran trivia!' : '¡Buen intento!');
     const starsBox = root.querySelector('[role=img][aria-label^="Ganaste"]');
     if (starsBox) {
-      starsBox.setAttribute('aria-label', `Ganaste ${est} de 3 estrellas`);
+      starsBox.setAttribute('aria-label', peor ? `Sigues con ${vis} de 3 estrellas` : `Ganaste ${est} de 3 estrellas`);
       const svgs = $$(starsBox, 'svg');
       const gold = svgs.find(s => s.innerHTML.includes('#F7C948') || s.innerHTML.includes('#F5C')) ;
       const grey = svgs.find(s => !s.innerHTML.includes('#F7C948'));
       svgs.forEach((s, k) => {
-        const src = (k < est ? gold : grey) || s;
+        const src = (k < vis ? gold : grey) || s;
         if (src !== s) { const c = src.cloneNode(true); c.setAttribute('style', s.getAttribute('style')); s.replaceWith(c); s = c; }
         s.style.animation = `pop .5s ${.35 + k * .22}s cubic-bezier(.2,.9,.3,1.4) both`;
       });
     }
     // cada estrella ganada suena al aparecer (sol, si, re: la trivia perfecta completa el acorde); con menos movimiento, una sola nota
-    if (reduced()) { if (est) sonido('estrella', est - 1, 0.35); } else for (let k = 0; k < est; k++) sonido('estrella', k, 0.35 + k * 0.22);
+    if (reduced()) { if (vis) sonido('estrella', vis - 1, 0.35); } else for (let k = 0; k < vis; k++) sonido('estrella', k, 0.35 + k * 0.22);
     if (est && (!p.replay || mejoro)) teoDice(est === 3 ? 'triviaPerfecta' : est === 2 ? 'triviaBien' : 'triviaIntento', { tras: 0.35 + (est - 1) * 0.22 + 0.35 });
     const chip = root.querySelector('[aria-label^="Ganaste 10 panes"]');
     if (mejoro) setTimeout(() => toast('¡Mejoraste tus estrellas!', n === 0 ? '' : `+${RULES.panes.trivia} panes`), 600); // el intro no da panes
@@ -373,7 +375,7 @@ register('triviaFin', {
     requestAnimationFrame(() => celebrar(root)); // Teodoro salta en bucle (Lottie) donde estaba el dibujo quieto
     // la trivia de abajo queda quieta (y borrosa, en el CSS): un solo Teodoro saltando
     const debajo = layer.previousElementSibling; if (debajo?.dataset.screen === 'trivia') pausar(debajo);
-    if (est >= 2) confetti(layer, 195, 300, est === 3 ? 60 : 30);
+    if (est >= 2 && !peor) confetti(layer, 195, 300, est === 3 ? 60 : 30);
     on(root, 'Volver al camino', () => p.replay ? go('mapa', {}, 'down', { replace: true }) : toMapAfterGame(n));
     const vc = find(root, 'Volver al camino'); if (vc) vc.dataset.back = '1';
     on(root, 'Jugar otra vez', () => go('trivia', { day: n, i: 0, ok: 0, replay: true }, 'fade'));

@@ -563,6 +563,16 @@
         "codigo": "est = 1."
       },
       {
+        "id": "repetida-peor",
+        "nombre": "Repetida y le fue peor",
+        "cuando": "Al repetir la trivia y sacar menos estrellas que su mejor marca",
+        "visual": "Título «¡Sigues con N estrellas!», las estrellas de su mejor marca, sin confeti ni panes. «X de 5 a la primera» es de esta partida",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Saca 3 estrellas, toca «Jugar otra vez» y falla 3 o más.",
+        "codigo": "mejor > est: se muestran las estrellas guardadas (las de la mejor partida)."
+      },
+      {
         "id": "sin-panes",
         "nombre": "Sin panes",
         "cuando": "Al repetir la trivia sin mejorar estrellas, y en el intro",
@@ -609,7 +619,7 @@
     "pantallas": [
       "triviaFin"
     ],
-    "selector": "#viewport .layer[data-screen=triviaFin] [role=img][aria-label^=\"Ganaste\"]",
+    "selector": "#viewport .layer[data-screen=triviaFin] [role=img][aria-label$=\"de 3 estrellas\"]",
     "descripcion": "Las 3 estrellas grandes del resultado: se encienden las ganadas.",
     "medidas": "Caja 390 × 120 pt en y 334. Tres estrellas de 78 pt: la 1.ª girada −10°, la del centro sin giro y 18 pt más arriba, la 3.ª +10°. Ganada: relleno #F7C948 con brillo #FFF3C4 y sombra drop-shadow(0 6 10 rgba(184,134,42,.35)); vacía: #D6E2EA (oscuro rgba(255,255,255,.16)).",
     "estados": [
@@ -642,6 +652,14 @@
         "assets": [],
         "lienzo": [],
         "probar": "Falla 3 o más."
+      },
+      {
+        "id": "mejor-marca",
+        "nombre": "Su mejor marca",
+        "cuando": "Al repetir y sacar menos: se ven las estrellas que ya tenía (la mejor partida queda guardada)",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Saca 3 estrellas y repite fallando."
       }
     ]
   },

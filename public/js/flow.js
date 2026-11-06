@@ -61,18 +61,20 @@ export function finishContent(n) {
 }
 export function finishTrivia(n, aciertos, replay = false) {
   const est = aciertos >= 5 ? 3 : aciertos >= 3 ? 2 : 1;
-  if (fase() === 'recuerdo') return { est, first: false, gana: false, mejoro: false }; // el camino terminó: se juega, pero nada suma
+  if (fase() === 'recuerdo') return { est, mejor: est, first: false, gana: false, mejoro: false }; // el camino terminó: se juega, pero nada suma
   const first = !isDone(n);
   const prev = stars(n);
+  // queda la mejor partida (sus estrellas y sus aciertos): si al repetir le va peor, se queda con la de antes. «mejor» es lo que se muestra
+  const mejor = Math.max(est, prev), ok = Math.max(aciertos, S.completos[n]?.aciertos ?? 0);
   // el intro da sus estrellas, pero no panes ni toca a Teodoro (es la presentación del reto)
-  if (n === 0) { S.completos[0] = { ...(S.completos[0] || {}), contenido: true, trivia: true, estrellas: Math.max(est, prev), aciertos }; save(); return { est, first, gana: false, mejoro: replay && est > prev }; }
-  S.completos[n] = { ...(S.completos[n] || {}), contenido: true, trivia: true, estrellas: Math.max(est, prev), aciertos };
+  if (n === 0) { S.completos[0] = { ...(S.completos[0] || {}), contenido: true, trivia: true, estrellas: mejor, aciertos: ok }; save(); return { est, mejor, first, gana: false, mejoro: replay && est > prev }; }
+  S.completos[n] = { ...(S.completos[n] || {}), contenido: true, trivia: true, estrellas: mejor, aciertos: ok };
   // primera vez: llena la batería y suma; al repetir solo suma si mejora las estrellas
   const gana = first || (replay && est > prev);
   if (first) { recargar(); S.pasoAnimado = n; }
   if (gana) addPanes(RULES.panes.trivia);
   save();
-  return { est, first, gana, mejoro: replay && est > prev };
+  return { est, mejor, first, gana, mejoro: replay && est > prev };
 }
 
 // Barra de pestañas de la app (igual en todas)
