@@ -1169,11 +1169,10 @@ register('mundos', {
       const vuelta = document.createElement('button'); vuelta.type = 'button'; vuelta.className = 'mundos-volver';
       vuelta.innerHTML = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10v9h11v-9"/></svg><span>Volver al inicio</span>';
       root.appendChild(vuelta); on(root, vuelta, () => go('hoy', {}, 'down', { tab: true }));
-      if (S.inscrito) adv?.insertAdjacentHTML('beforeend', '<strong class="mundos-dentro"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Ya estás dentro</strong>');
       const ms = Math.max(0, new Date(2026, 10, 29) - new Date());
-      adv?.setAttribute('aria-label', `Adviento: empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
-      // sin unirse abre la invitación al reto; ya dentro, «¡Ya estás dentro!» con la cuenta regresiva
-      on(root, adv, () => tocarIsla(adv, () => S.inscrito ? go('listo', { from: 'mundos' }, 'push') : go('teaser', { from: 'mundos' }, 'modal')));
+      adv?.setAttribute('aria-label', `Adviento: ${S.inscrito ? 'ya estás dentro. ' : ''}empieza el 29 de noviembre. Faltan ${Math.floor(ms / 864e5)} días`);
+      // sin unirse abre la invitación al reto; ya dentro, la isla se ilumina y sale «Ya estás dentro» por 5 s
+      on(root, adv, () => tocarIsla(adv, () => S.inscrito ? avisoDentro(adv) : go('teaser', { from: 'mundos' }, 'modal')));
     } else {
       const n = walkDay() ?? Math.max(0, Math.min(lastDay(), 26));
       replaceText(root, /Día 9 de 26/, n === 0 ? 'Intro' : `Día ${n} de 26`); // el 28: el intro
@@ -1185,7 +1184,7 @@ register('mundos', {
     // Enero aún no se abre: el candado se sacude y un globo lo dice sobre la isla (no un aviso abajo)
     const enero = root.querySelector('[aria-label^="Mundo Enero"]');
     on(root, enero, () => tocarIsla(enero, () => globoEnero(root, enero)));
-    if (p.nueva && adv && !reduced()) resaltarIsla(adv); // recién unida: Adviento se resalta al llegar
+    if (p.nueva && adv) resaltarIsla(adv); // recién unida: Adviento se resalta al llegar
   },
 });
 /** Tocar una isla: se hunde y rebota, y luego pasa lo que toca (se ve que el toque llegó). */
@@ -1194,16 +1193,37 @@ function tocarIsla(el, luego) {
   el.animate([{ transform: 'scale(1)' }, { transform: 'scale(.95)', offset: .3 }, { transform: 'scale(1.02)', offset: .7 }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
   setTimeout(luego, 160);
 }
-/** Recién unida: la isla de Adviento brilla, late una vez y aparece «Ya estás dentro». */
+/** Recién unida: la isla de Adviento late una vez y brilla; antes del 29 sale «Ya estás dentro» (como al tocarla). */
 function resaltarIsla(adv) {
-  const isla = adv.querySelector(':scope > img');
   setTimeout(() => {
     if (!adv.isConnected) return;
-    adv.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: .4 }, { transform: 'scale(1)' }], { duration: 700, easing: 'cubic-bezier(.23,1,.32,1)' });
+    if (!reduced()) adv.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.04)', offset: .4 }, { transform: 'scale(1)' }], { duration: 700, easing: 'cubic-bezier(.23,1,.32,1)' });
+    if (advCerrado()) return avisoDentro(adv);
     const sin = 'drop-shadow(0 0 0 rgba(255,214,90,0)) drop-shadow(0 0 0 rgba(255,255,255,0))';
-    isla?.animate([{ filter: sin }, { filter: 'drop-shadow(0 0 12px rgba(255,214,90,.95)) drop-shadow(0 0 26px rgba(255,255,255,.75))', offset: .35 }, { filter: sin }], { duration: 1800, easing: 'ease-out' });
-    adv.querySelector('.mundos-dentro')?.animate([{ opacity: 0, transform: 'translate(-50%, 6px) scale(.85)' }, { opacity: 1, transform: 'translate(-50%, 0) scale(1)' }], { duration: 320, delay: 250, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
+    adv.querySelector(':scope > img')?.animate([{ filter: sin }, { filter: 'drop-shadow(0 0 12px rgba(255,214,90,.95)) drop-shadow(0 0 26px rgba(255,255,255,.75))', offset: .35 }, { filter: sin }], { duration: 1800, easing: 'ease-out' });
   }, 350);
+}
+/** Ya dentro antes del 29: la isla se ilumina y sale «Ya estás dentro»; a los 5 s se van los dos. Otro toque reinicia la cuenta. */
+function avisoDentro(adv) {
+  const isla = adv.querySelector(':scope > img');
+  const sin = 'drop-shadow(0 0 0 rgba(255,214,90,0)) drop-shadow(0 0 0 rgba(255,255,255,0))';
+  const suave = 'drop-shadow(0 0 9px rgba(255,214,90,.75)) drop-shadow(0 0 20px rgba(255,255,255,.5))';
+  const fuerte = 'drop-shadow(0 0 12px rgba(255,214,90,.95)) drop-shadow(0 0 26px rgba(255,255,255,.75))';
+  const a = avisoDentro.a ??= new WeakMap(), prev = a.get(adv);
+  if (prev) { clearTimeout(prev.t); prev.brillo?.cancel(); }
+  const brillo = isla?.animate([{ filter: prev ? suave : sin }, { filter: fuerte, offset: .08 }, { filter: suave, offset: .2 }, { filter: suave, offset: .9 }, { filter: sin }], { duration: 5400, easing: 'ease-out' });
+  const quieto = reduced();
+  let pill = adv.querySelector('.mundos-dentro:not(.saliendo)');
+  if (!pill) {
+    adv.insertAdjacentHTML('beforeend', '<strong class="mundos-dentro" role="status"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Ya estás dentro</strong>');
+    pill = adv.lastElementChild;
+    pill.animate(quieto ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translate(-50%, 6px) scale(.85)' }, { opacity: 1, transform: 'translate(-50%, 0) scale(1)' }], { duration: 320, delay: 120, easing: 'cubic-bezier(.2,.9,.3,1.2)', fill: 'backwards' });
+  }
+  const t = setTimeout(() => {
+    a.delete(adv); pill.classList.add('saliendo');
+    pill.animate(quieto ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 1, transform: 'translate(-50%, 0) scale(1)' }, { opacity: 0, transform: 'translate(-50%, -4px) scale(.94)' }], { duration: 300, easing: 'ease-in', fill: 'forwards' }).finished.then(() => pill.remove());
+  }, 5000);
+  a.set(adv, { t, brillo });
 }
 /** Enero bloqueado: globo bajo su candado que se va solo. */
 function globoEnero(root, enero) {

@@ -224,11 +224,15 @@ const flows = {
     // Enero bloqueado: globo sobre la isla, sin salir de Mundos
     await p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label^="Mundo Enero"]')?.click()); await p.waitForTimeout(500); await shot('enero');
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .mundos-globo')))) errs.push('tocar Enero no muestra su globo');
-    // Adviento ya dentro: «¡Ya estás dentro!» y «Ver mi mundo» vuelve a Mundos
-    await p.evaluate(() => document.querySelector('#viewport .layer:last-child a[aria-label^="Adviento:"]')?.click()); await p.waitForTimeout(1000);
-    if ((await screen()) !== 'listo') errs.push('ya dentro, tocar Adviento no abre «¡Ya estás dentro!»: ' + await screen());
-    await tap('Ver mi mundo'); await p.waitForTimeout(900);
-    if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no vuelve a Mundos: ' + await screen());
+    // Adviento ya dentro: se ilumina y sale «Ya estás dentro» por 5 s, sin salir de Mundos
+    const pill = () => p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .mundos-dentro:not(.saliendo)'));
+    await p.waitForTimeout(5600);
+    if (await pill()) errs.push('al llegar recién unida, «Ya estás dentro» no se va a los 5 s');
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child a[aria-label^="Adviento:"]')?.click()); await p.waitForTimeout(800); await shot('mundos-toque');
+    if ((await screen()) !== 'mundos') errs.push('ya dentro, tocar Adviento sale de Mundos: ' + await screen());
+    if (!(await pill())) errs.push('ya dentro, tocar Adviento no muestra «Ya estás dentro»');
+    await p.waitForTimeout(5000);
+    if (await pill()) errs.push('«Ya estás dentro» no se va a los 5 s del toque');
     await tap('Invitar amigos'); await p.waitForTimeout(900); await shot('invitacion');
     if ((await screen()) !== 'invitacion') errs.push('«Invitar amigos» de Mundos no abre la invitación: ' + await screen());
   },
@@ -306,9 +310,7 @@ const flows = {
     if ((await screen()) !== 'mundos') errs.push('antes del 29, «Saber más» no abre los mundos: ' + await screen());
     await shot('mundos-antes');
     await tap('Adviento'); await p.waitForTimeout(900);
-    if ((await screen()) !== 'listo') errs.push('antes del 29, tocar Adviento ya unido no abre «¡Ya estás dentro!»: ' + await screen());
-    await tap('Ver mi mundo'); await p.waitForTimeout(900);
-    if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no vuelve a los mundos: ' + await screen());
+    if ((await screen()) !== 'mundos' || !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .mundos-dentro')))) errs.push('antes del 29, tocar Adviento ya unido no muestra «Ya estás dentro» en Mundos: ' + await screen());
     await tap('Volver al cuarto de Teodoro'); await p.waitForTimeout(800);
     if ((await screen()) !== 'hoy') errs.push('volver de los mundos no regresa a Hoy: ' + await screen());
     // pasan dos medianoches: al 28 (un día antes, se abre el intro) y del 28 al 29 (empieza el camino)
