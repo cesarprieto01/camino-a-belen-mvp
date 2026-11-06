@@ -1,7 +1,7 @@
 // Modo developer (solo prototipo), como el modo Dev de Figma sobre el teléfono: al pasar el cursor se ve cada capa con su tamaño;
 // al hacer clic queda elegida y el panel muestra lo que hace falta para construirla (medidas, estilo, texto, asset, estados y código).
 // Con una capa elegida, pasar sobre otra muestra las distancias en rojo. «Usar la app» deja tocar la app sin salir del modo.
-import { VP, capaArriba, capaEn, capasEn, cajaVista, hijosCapa, padreCapa, pt, visible, nombreDe, tipo, nombreTipo } from './dev-motor.js';
+import { VP, capaArriba, capaEn, capasEn, cajaVista, cajaPantalla, hijosCapa, padreCapa, pt, visible, nombreDe, tipo, nombreTipo, esCapa } from './dev-motor.js';
 
 const E = { on: false, usar: false, sel: null, hover: null, alCambiar: () => {} };
 try { E.on = localStorage.getItem('cab-dev') === '1'; } catch { /* sin storage */ }
@@ -18,7 +18,34 @@ export function activar(on = !E.on) {
   document.body.classList.toggle('dev-on', on); sincronizar(); dibujar(); E.alCambiar();
 }
 export function usar(si = !E.usar) { E.usar = si; E.hover = null; sincronizar(); dibujar(); E.alCambiar(); }
-export function elegir(el) { E.sel = el && el.isConnected ? el : null; E.hover = null; dibujar(); E.alCambiar(); }
+export function elegir(el) { E.sel = el && el.isConnected ? el : null; E.firma = E.sel && firma(E.sel); E.buscando = false; buscando++; E.hover = null; dibujar(); E.alCambiar(); }
+// cómo reconocer lo elegido si la pantalla se vuelve a dibujar (cambiar a noche o a día, cambiar de día): misma pantalla,
+// mismo tipo y el mismo lugar; así se siguen viendo sus medidas, ya con los valores del otro tema
+const firma = el => ({ pantalla: capaArriba()?.dataset.screen, caja: cajaPantalla(el), tipo: tipo(el), nombre: nombreDe(el), anim: el.dataset?.anim });
+const solape = (a, b) => { const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y); if (w <= 0 || h <= 0) return 0; const i = w * h; return i / (a.w * a.h + b.w * b.h - i); };
+function reencontrar(f) {
+  const top = capaArriba(); if (!top || top.dataset.screen !== f.pantalla) return null;
+  let mejor = null, nota = 0;
+  for (const e of top.querySelectorAll('*')) {
+    if (!(e.matches('.teo-anim') || esCapa(e)) || tipo(e) !== f.tipo || !visible(e)) continue;
+    const s = solape(cajaPantalla(e), f.caja) + (nombreDe(e) === f.nombre ? .3 : 0) + (f.anim && e.dataset?.anim === f.anim ? .3 : 0);
+    if (s > nota) { nota = s; mejor = e; }
+  }
+  return nota > .55 ? mejor : null;
+}
+let buscando = 0;
+export const reubicando = () => !!E.buscando;
+function seguirEligiendo() {
+  const f = E.firma, mio = ++buscando, t0 = performance.now(); E.buscando = true;
+  const paso = () => {
+    if (mio !== buscando || !E.on) return;
+    const e = f && reencontrar(f);
+    if (e) { E.sel = e; E.firma = firma(e); E.buscando = false; dibujar(); E.alCambiar(); return; }
+    if (performance.now() - t0 < 2500 && capaArriba()?.dataset.screen === f?.pantalla) setTimeout(paso, 150); // la animación de Teodoro llega un poco después
+    else { E.firma = null; E.buscando = false; E.alCambiar(); }
+  };
+  setTimeout(paso, 120);
+}
 export const subir = () => { const p = elegida() && padreCapa(E.sel); if (p) elegir(p); };
 export const bajarA = () => { const h = elegida() && hijosCapa(E.sel)[0]; if (h) elegir(h); };
 /** La capa hermana siguiente (o anterior), dando la vuelta */
@@ -138,6 +165,7 @@ addEventListener('keydown', ev => {
   else if (ev.key === 'Tab' && elegida() && !ev.target.closest?.('#panel')) { corta(); hermana(ev.shiftKey ? -1 : 1); }
 }, { capture: true });
 // al cambiar de pantalla, lo elegido ya no existe
-new MutationObserver(() => { if (!E.on) return; if (E.sel && !E.sel.isConnected) { E.sel = null; E.alCambiar(); } dibujar(); }).observe(document.getElementById('viewport') || document.body, { childList: true });
+// al cambiar la pantalla de abajo: si era la misma pantalla vuelta a dibujar, lo elegido se reencuentra; si no, se suelta
+new MutationObserver(() => { if (!E.on) return; if (E.sel && !E.sel.isConnected) { E.sel = null; if (E.firma) seguirEligiendo(); else E.alCambiar(); } dibujar(); }).observe(document.getElementById('viewport') || document.body, { childList: true });
 document.body.classList.toggle('dev-on', E.on); sincronizar();
 export const pantallaActual = capaArriba;

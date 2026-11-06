@@ -6,7 +6,7 @@ import { musicaPara } from './musica.js';
 import './flow.js';
 import './map.js';
 import './games.js';
-import { devActivo, alCambiar, activar as modoDev, usandoApp, usar as usarApp } from './dev.js';
+import { devActivo, alCambiar, activar as modoDev, usandoApp, usar as usarApp, reubicando } from './dev.js';
 import { pintarDev } from './dev-panel.js';
 
 const NAMES = {
@@ -254,6 +254,7 @@ function coverage() {
 
 function render() {
   if (window.innerWidth <= 1100 && !panel.classList.contains('open')) return;
+  if (devActivo() && tab === 'insp' && reubicando()) return; // lo elegido se está reencontrando en el otro tema: al terminar se repinta
   const act = activeDay();
   const name = cur ? (NAMES[cur.name] || cur.name) : '—';
   const sec = SECTIONS.find(s => s[0] === SECTION_OF(cur?.name || 'hoy'));

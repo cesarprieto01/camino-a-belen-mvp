@@ -5,7 +5,7 @@
 // los estados, de dev/componentes.json; lo que no es de Adviento, de dev/fuera.json y del catálogo.
 import { ponerFuera, ficha, nombreDe, nombreTipo, tipo, assetsDe, lottieInfo, descLottie, swift, pt, token, hijosCapa, padreCapa, cajaPantalla, bajar, traer, png, svgTexto, zip, reiniciarTokens, swiftColor, swiftFuente, swiftSombra, postscript } from './dev-motor.js';
 import { elegida, elegir, resaltar, usandoApp, usar, subir, bajarA, tocarElegida, pantallaActual, reconocer } from './dev.js';
-import { manifest, logical, S, save, cur } from './core.js';
+import { manifest, logical, html, S, save, cur } from './core.js';
 import { miniatura as miniaturaLottie } from './teo-anim.js';
 import { logicaDe, corto } from './dev-logica.js';
 
@@ -100,6 +100,41 @@ const ref = (k, texto, copia = texto) => texto === '' || texto == null ? '' : `<
 const muestra = c => c ? `<i class="dv-sw" style="background:${c.hex};opacity:${Math.max(c.alfa, .2)}"></i>${c.hex}${c.alfa < 1 ? ` · ${Math.round(c.alfa * 100)} %` : ''}${token(c.hex) ? ` <small>${token(c.hex)}</small>` : ''}` : '';
 const grupo = (titulo, filas) => filas ? `<section class="dv-grupo"><h3>${titulo}</h3><dl class="dv-ref">${filas}</dl></section>` : '';
 
+// si el nombre no lo dice, la versión del otro tema se busca en el diseño: la pantalla del lienzo del otro tema se dibuja oculta
+// y se toma la imagen que ocupa el mismo lugar (fondo-hub-dia ↔ fondo-trivia-noche)
+const delLienzo = new Map();
+function imagenesDel(file) {
+  if (!delLienzo.has(file)) delLienzo.set(file, (async () => {
+    const capa = document.createElement('div'); capa.className = 'layer'; capa.setAttribute('aria-hidden', 'true');
+    capa.style.cssText = 'position:fixed;left:-6000px;top:0;width:390px;height:844px;visibility:hidden;pointer-events:none';
+    capa.innerHTML = '<div class="root">' + await html(file) + '</div>'; document.body.append(capa);
+    const raiz = capa.querySelector('.root'), v = raiz.getBoundingClientRect(), out = [];
+    raiz.querySelectorAll('*').forEach(e => {
+      const r = e.getBoundingClientRect(); if (!r.width || !r.height) return;
+      const caja = { x: r.left - v.left, y: r.top - v.top, w: r.width, h: r.height };
+      if (e.tagName === 'IMG' && e.getAttribute('src')) out.push({ caja, ruta: e.getAttribute('src') });
+      const m = (e.style.backgroundImage || '').match(/url\(["']?([^"')]+)/); if (m) out.push({ caja, ruta: m[1] });
+    });
+    capa.remove(); return out;
+  })().catch(() => []));
+  return delLienzo.get(file);
+}
+const solape = (a, b) => { const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y); if (w <= 0 || h <= 0) return 0; const i = w * h; return i / (a.w * a.h + b.w * b.h - i); };
+/** { dia, noche } de una imagen: por nombre o, si no, por el lugar que ocupa en la pantalla del otro tema */
+async function parDe(r, el) {
+  const p = parTema(r); if (p || !el) return p;
+  const f = cur?.name === 'estatica' ? cur.params?.file : cur?.file, M = manifest(); if (!f || !M[f]) return null;
+  const otro = Object.keys(M).find(k => k !== f && logical(k) === logical(f) && M[k].dark !== M[f].dark); if (!otro) return null;
+  const c = cajaPantalla(el); let mejor = null, nota = 0;
+  for (const x of await imagenesDel(otro)) { const s = solape(x.caja, c); if (s > nota) { nota = s; mejor = x; } }
+  const otra = mejor && nota > .6 ? decodeURIComponent(mejor.ruta.replace(/^\.?\//, '')) : null;
+  if (!otra || otra === r || !deAdviento(otra)) return null;
+  return M[f].dark ? { dia: otra, noche: r } : { dia: r, noche: otra };
+}
+
+/** Las dos versiones de una imagen, una al lado de la otra sobre su fondo; se descargan al tocarlas */
+const diaNoche = (par, actual) => `<section class="dv-temas"><h3>Día y noche</h3><div class="dv-par">${[['dia', 'Día'], ['noche', 'Noche']].map(([k, l]) => `<button class="dv-tema ${par[k] === actual ? 'on' : ''}" data-t="${k}" data-png="${esc(par[k])}" data-k="3" title="Descargar ${esc(infoAsset(par[k]).nombre)}@3x.png"><span class="dv-tthumb">${miniatura(par[k])}</span><b>${l}${par[k] === actual ? ' <small>en pantalla</small>' : ''}</b><small>${esc(infoAsset(par[k]).nombre)}@3x.png</small></button>`).join('')}</div></section>`;
+
 // ---------- La capa elegida ----------
 let cadenaEls = [];
 function capaHtml(el) {
@@ -115,7 +150,7 @@ function capaHtml(el) {
   const fi = svgEl && svgEl !== el ? ficha(svgEl) : f;
   const sf = svgEl ? sfSymbol(svgEl) : '', i = img && infoAsset(img.ruta), L = lot && lottieInfo(lot.el), d = lot && descLottie(lot.el.dataset.anim);
   const raizComp = m && m.d === 0;
-  const titulo = raizComp ? m.c.nombre : f.nombre;
+  const titulo = raizComp ? m.c.nombre : f.nombre === nombreTipo(f.tipo) && i ? i.nombre : f.nombre; // una imagen sin nombre se llama como en Drive
   const voz = el.getAttribute('aria-label') || el.getAttribute('alt') || '';
   const tipoTxt = lot ? 'Animación' : sf ? (svgEl !== el ? 'Botón con ícono del sistema' : 'Ícono del sistema') : img ? (img.tipo === 'fondo' ? 'Fondo' : 'Imagen') : raizComp ? 'Componente' : nombreTipo(f.tipo);
   const primera = !img && !lot ? [...el.querySelectorAll('img')].find(x => x.currentSrc && x.getClientRects().length && deAdviento(decodeURIComponent(new URL(x.currentSrc).pathname.replace(/^\/+/, ''))))?.getAttribute('src') : null;
@@ -130,9 +165,9 @@ function capaHtml(el) {
       ${como ? `<details class="dv-mas"><summary>Cómo se reproduce</summary><p>${esc(como)}</p></details>` : ''}
       ${quieto ? `<div class="dv-quieto"><h3>Sin animación</h3><div class="dv-fila-asset">${miniatura(quieto.ruta)}<span><b>${esc(infoAsset(quieto.ruta).nombre)}</b><small>Se ve con «Reducir movimiento» y mientras carga la animación. Mismos pies y alto de Teodoro que la animación.</small></span></div><button class="dv-link" data-png="${esc(quieto.ruta)}" data-k="3">Descargar imagen</button></div>` : ''}`;
   } else if (img) {
-    const noche = parNoche(img.ruta), corto = i.px && i.pt && i.px[0] < i.pt[0] * 3 - 2 ? ` · el original alcanza hasta @${Math.max(1, Math.floor(i.px[0] / i.pt[0]))}x` : '';
+    const par = parTema(img.ruta), corto = i.px && i.pt && i.px[0] < i.pt[0] * 3 - 2 ? ` · el original alcanza hasta @${Math.max(1, Math.floor(i.px[0] / i.pt[0]))}x` : '';
     // un solo archivo: el PNG @3x; @2x y la versión de noche, al lado
-    obra = `<button class="dv-btn main dv-wide" data-png="${esc(img.ruta)}" data-k="3">${ico(I.bajar)}Descargar imagen</button><p class="dv-pie">${esc(i.nombre)}@3x.png${corto} · <button class="dv-link" data-png="${esc(img.ruta)}" data-k="2">@2x</button>${noche ? ` · <button class="dv-link" data-png="${esc(noche)}" data-k="3">versión de noche</button>` : ''}</p>`;
+    obra = `<button class="dv-btn main dv-wide" data-png="${esc(img.ruta)}" data-k="3">${ico(I.bajar)}Descargar imagen</button><p class="dv-pie">${esc(i.nombre)}@3x.png${corto} · <button class="dv-link" data-png="${esc(img.ruta)}" data-k="2">@2x</button></p>${par ? diaNoche(par, img.ruta) : `<div data-par="${esc(img.ruta)}"></div>`}`;
   } else if (sf) {
     obra = `<button class="dv-btn main dv-wide" data-copia="${sf}">${ico(I.copiar)}Copiar «${sf}»</button><p class="dv-pie">SF Symbol · ${pt(fi.h)} pt · ${pesoSF(svgEl)}</p>`;
   } else if (svgEl) {
@@ -211,7 +246,7 @@ function pantallaHtml(info) {
   <div class="dv-hero dv-hero-p"><div class="dv-ident"><h2>${esc(info.nombre)}</h2><p>${comps.length ? `${comps.length} componentes · ` : ''}${assets.length} ${assets.length === 1 ? 'imagen o animación' : 'imágenes y animaciones'}</p></div></div>
   ${assets.length ? `<div class="dv-obra"><button class="dv-btn main dv-wide" data-zip>${ico(I.bajar)}Descargar pantalla</button><p class="dv-pie">.zip con las imágenes (@2x y @3x) y las animaciones</p></div>` : ''}
   ${comps.length ? `<section class="dv-grupo"><h3>Componentes</h3><ul class="dv-comps">${comps.map((x, k) => `<li><button data-comp="${k}"><span>${esc(x.c.nombre)}${x.els.length > 1 ? ` <small>×${x.els.length}</small>` : ''}</span><small>${(x.c.estados || []).length > 1 ? `${x.c.estados.length} estados` : ''}</small></button></li>`).join('')}</ul></section>` : ''}
-  ${assets.length ? `<section class="dv-grupo"><h3>Imágenes y animaciones</h3><div class="dv-agrid">${assets.map((a, k) => `<button class="dv-acard" data-ver-asset="${k}" title="${esc(a.nombre)}">${a.tipo === 'lottie' ? `<span class="dv-mini" data-mini="${esc(a.el.dataset.anim)}"></span><i class="dv-badge">Lottie</i>` : miniatura(a.ruta)}<span>${esc(a.nombre)}</span></button>`).join('')}</div></section>` : ''}
+  ${assets.length ? `<section class="dv-grupo"><h3>Imágenes y animaciones</h3><div class="dv-agrid">${assets.map((a, k) => `<button class="dv-acard" data-ver-asset="${k}" title="${esc(a.nombre)}">${a.tipo === 'lottie' ? `<span class="dv-mini" data-mini="${esc(a.el.dataset.anim)}"></span><i class="dv-badge">Lottie</i>` : miniatura(a.ruta)}<span>${esc(a.nombre)}</span>${a.tipo !== 'lottie' && parTema(a.ruta) ? '<i class="dv-badge dv-badge-t">día · noche</i>' : ''}</button>`).join('')}</div></section>` : ''}
   <details class="dv-mas"><summary>Capas</summary><div class="dv-layers">${capasHtml(pantallaActual())}</div></details>
   <details class="dv-mas"><summary>Atajos de teclado</summary><p>Clic: elegir el componente · otro clic o doble clic: lo de adentro · clic derecho: capas aquí · Esc: soltar · Tab: el siguiente · T: tocar · I / U: inspeccionar o usar la app · ⇧D: salir</p></details>`;
 }
@@ -238,6 +273,7 @@ export async function pintarDev(cont, info) {
     <div class="dv-body" aria-live="polite">${el ? capaHtml(el) : pantallaHtml(info)}</div>`;
   if (!el) mapearCapas(cont);
   cont.querySelectorAll('[data-mini]').forEach(async m => minis.push(await miniaturaLottie(m, m.dataset.mini)));
+  cont.querySelectorAll('[data-par]').forEach(async d => { const r = d.dataset.par, par = await parDe(r, el); if (par && d.isConnected) d.outerHTML = diaNoche(par, r); });
   cont.onclick = ev => clic(ev, cont, info);
   cont.onmouseover = ev => { const b = ev.target.closest('[data-capa], [data-ver-asset], [data-comp], [data-ir^="c"]'); if (!b) return; resaltar(b._el || (b.dataset.verAsset ? assetsEls[+b.dataset.verAsset]?.sel : b.dataset.comp ? compsEls[+b.dataset.comp] : cadenaEls[+b.dataset.ir.slice(1)])); };
   cont.onmouseleave = () => resaltar(null);
@@ -262,8 +298,18 @@ async function pngDe(r, k, el) {
   const f = el && ficha(el), [w, h] = i.pt || (f ? [f.w, f.h] : [0, 0]);
   const out = await png(r, w, h, k); return { blob: out.blob, nombre: `${i.nombre}@${k}x.png`, corto: out.corto, w: out.w };
 }
-// la versión de noche de una imagen de día (mismo nombre con -oscuro)
-const parNoche = r => { const i = infoAsset(r); if (!/-claro$/.test(i.nombre)) return null; const n = i.nombre.replace(/-claro$/, '-oscuro'); return Object.keys(CAT || {}).find(k => CAT[k].nombre === n) || null; };
+// la otra versión de una imagen (de día o de noche), por su nombre: -claro/-oscuro o -dia/-noche
+const TEMAS = [['-claro', '-oscuro'], ['-dia', '-noche']];
+const rutaDe = nombre => Object.keys(CAT || {}).find(k => CAT[k].nombre === nombre) || null;
+/** { dia, noche } si la imagen tiene su par del otro tema; si no, null */
+function parTema(r) {
+  const n = infoAsset(r).nombre;
+  for (const [d, o] of TEMAS) {
+    if (n.endsWith(d)) { const otra = rutaDe(n.slice(0, -d.length) + o); if (otra) return { dia: r, noche: otra }; }
+    if (n.endsWith(o)) { const otra = rutaDe(n.slice(0, -o.length) + d); if (otra) return { dia: otra, noche: r }; }
+  }
+  return null;
+}
 
 async function clic(ev, cont, info) {
   const b = ev.target.closest('button'); if (!b || b.disabled) return;
@@ -305,8 +351,12 @@ async function paquete(info, avance) {
     avance(`Preparando ${i + 1} de ${assets.length}…`);
     try {
       if (a.tipo === 'lottie') { archivos.push({ nombre: `animaciones/${unico(a.el.dataset.anim)}.json`, datos: await traer(a.ruta) }); continue; }
-      const n = unico(infoAsset(a.ruta).nombre);
-      for (const k of [3, 2]) archivos.push({ nombre: `imagenes/${n}@${k}x.png`, datos: (await pngDe(a.ruta, k, a.sel)).blob });
+      // la imagen y, si la tiene, su versión del otro tema (para que no se pase ninguna)
+      const par = await parDe(a.ruta, a.sel);
+      for (const r of par ? [par.dia, par.noche] : [a.ruta]) {
+        const n = infoAsset(r).nombre; if (usados.has(n)) continue; usados.add(n);
+        for (const k of [3, 2]) archivos.push({ nombre: `imagenes/${n}@${k}x.png`, datos: (await pngDe(r, k, r === a.ruta ? a.sel : null)).blob });
+      }
     } catch (e) { console.warn('paquete', a, e); faltan.push(a.nombre); }
   }
   if (faltan.length) archivos.push({ nombre: 'FALTAN.txt', datos: `No se pudieron preparar:\n${faltan.map(x => '- ' + x).join('\n')}\n` });
