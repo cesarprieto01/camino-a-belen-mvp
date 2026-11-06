@@ -231,6 +231,90 @@ export function svgTexto(el) {
   return new XMLSerializer().serializeToString(c).replace(/currentColor/g, col);
 }
 
+// ---------- Piezas de diseño: una card que se entrega como una sola imagen ----------
+// Un contenedor con marco (esquinas, borde o sombra) y arte adentro sale en un PNG con todo lo suyo: el developer la pone como imagen.
+// No va en la imagen lo que se arma en código: un botón de texto o de ícono y el vidrio (en iOS es un material; una imagen no lo copia).
+// No se une lo que es casi todo texto, lo que ocupa media pantalla o más, lo que es de vidrio (el día del mapa), lo que lleva algo
+// que se mueve por su cuenta (un Lottie, una animación en bucle) o un dibujo a mano (el vidrio que se limpia con el dedo) ni lo
+// marcado «por capas» (Mundos: las islas y su card se animan por separado).
+const POR_CAPAS = '.mundos-v';
+const CONTROL = 'button, a, [role=button], input, select, textarea';
+const conMarco = cs => parseFloat(cs.borderTopLeftRadius) > 0 || parseFloat(cs.borderTopWidth) > 0 || cs.boxShadow !== 'none';
+const vidrio = e => { const cs = getComputedStyle(e); return [cs.backdropFilter, cs.webkitBackdropFilter].some(v => v && v !== 'none'); };
+/** Lo de adentro de la card que no va en su imagen: se arma en código (un botón con arte sí va) */
+export const vaEnCodigo = (e, raiz) => e !== raiz && ((e.matches(CONTROL) && !e.querySelector('img')) || vidrio(e));
+const fueraDeLaImagen = (e, raiz) => vaEnCodigo(e, raiz) || e.matches('#dev-ov, script, style') || esFuera(e);
+const apartado = (x, raiz) => { for (let e = x; e && e !== raiz; e = e.parentElement) if (fueraDeLaImagen(e, raiz)) return true; return false; };
+export function textoFijo(el) {
+  let t = ''; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) if (!apartado(n.parentElement, el)) t += n.nodeValue;
+  return t.replace(/\s+/g, ' ').trim();
+}
+const seMueve = el => !!el.querySelector('.teo-anim') || el.getAnimations({ subtree: true }).some(a => a.effect?.target !== el && a.effect?.getComputedTiming().iterations === Infinity);
+export function esPieza(el) {
+  if (!(el instanceof HTMLElement) || el.matches('.teo-anim, .root, .ov-body') || esFuera(el) || el.closest(POR_CAPAS) || !visible(el)) return false;
+  const c = cajaVista(el);
+  if (c.w < 48 || c.h < 48 || c.w * c.h > 390 * 844 * .5) return false;
+  const cs = getComputedStyle(el);
+  if (!conMarco(cs) || vidrio(el)) return false;
+  const arte = el.matches('img') || /url\(/.test(cs.backgroundImage) || [...el.querySelectorAll('*')].some(x => (x.matches('img') || /url\(/.test(getComputedStyle(x).backgroundImage)) && visible(x) && !apartado(x, el));
+  return arte && textoFijo(el).length <= 40 && !seMueve(el) && !el.querySelector('canvas');
+}
+/** La pieza que contiene a la capa (ella misma o la más cercana hacia arriba) */
+export function piezaDe(el) { for (let e = el; e && e !== capaArriba(); e = e.parentElement) if (esPieza(e)) return e; return null; }
+/** El giro de la pieza en grados (rotate del CSS) */
+export const giroDe = el => { const m = new DOMMatrix(getComputedStyle(el).transform); return Math.round(Math.atan2(m.b, m.a) * 180 / Math.PI * 10) / 10; };
+
+let h2i = null;
+const libreria = () => h2i ??= new Promise((ok, mal) => {
+  if (window.htmlToImage) return ok(window.htmlToImage);
+  const s = document.createElement('script'); s.src = 'vendor/html-to-image.min.js'; s.onload = () => ok(window.htmlToImage); s.onerror = mal; document.head.append(s);
+});
+// fuentes: solo las que usa la pieza, y de Google solo el subconjunto latino (la librería bajaría todas las variantes)
+const hojas = new Map(), datosFuente = new Map();
+const hoja = href => { if (!hojas.has(href)) hojas.set(href, fetch(href).then(r => r.text()).catch(() => '')); return hojas.get(href); };
+const aDatos = url => { if (!datosFuente.has(url)) datosFuente.set(url, fetch(url).then(r => r.blob()).then(b => new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b); }))); return datosFuente.get(url); };
+async function fuentesDe(el) {
+  const usadas = new Set(); [el, ...el.querySelectorAll('*')].forEach(e => { if (TEXTO(e)) { const cs = getComputedStyle(e); usadas.add(`${cs.fontFamily.split(',')[0].replace(/["']/g, '').trim()}|${cs.fontWeight}|${cs.fontStyle}`); } });
+  if (!usadas.size) return '';
+  const css = (await Promise.all([...document.querySelectorAll('link[rel=stylesheet]')].map(l => hoja(l.href).then(t => ({ t, base: l.href }))))), out = [];
+  for (const { t, base } of css) for (const [regla] of t.matchAll(/@font-face\s*{[^}]*}/g)) {
+    const fam = regla.match(/font-family:\s*["']?([^;"']+)/)?.[1].trim(), peso = regla.match(/font-weight:\s*(\d+)/)?.[1] || '400', estilo = regla.match(/font-style:\s*(\w+)/)?.[1] || 'normal';
+    const rango = regla.match(/unicode-range:\s*([^;]+)/)?.[1], url = regla.match(/url\(["']?([^"')]+)/)?.[1];
+    if (!url || !usadas.has(`${fam}|${peso}|${estilo}`) || (rango && !/U\+0000-00FF/i.test(rango))) continue;
+    out.push(regla.replace(/src:[^;]+;?/, `src: url(${await aDatos(new URL(url, base).href)});`));
+  }
+  return out.join('\n');
+}
+/** Recorta lo transparente de los bordes (la sombra y el giro dejan aire) */
+function recortar(cv) {
+  const x = cv.getContext('2d'), { data } = x.getImageData(0, 0, cv.width, cv.height); let t = cv.height, b = -1, l = cv.width, r = -1;
+  for (let y = 0; y < cv.height; y++) for (let i = 0; i < cv.width; i++) if (data[(y * cv.width + i) * 4 + 3] > 2) { if (y < t) t = y; if (y > b) b = y; if (i < l) l = i; if (i > r) r = i; }
+  if (b < 0) return cv;
+  const o = document.createElement('canvas'); o.width = r - l + 1; o.height = b - t + 1; o.getContext('2d').drawImage(cv, -l, -t); return o;
+}
+/** La pieza en PNG @k. Por defecto al tamaño de su caja, derecha y sin sombra (la sombra y el giro van en SwiftUI);
+ *  «comoSeVe»: con su sombra y su giro, recortada a lo que se ve. */
+export async function piezaPng(el, { k = 3, comoSeVe = false } = {}) {
+  const lib = await libreria(), w = el.offsetWidth, h = el.offsetHeight, cs = getComputedStyle(el);
+  let pad = 0;
+  if (comoSeVe) {
+    const sombras = [...cs.boxShadow.matchAll(/(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px(?:\s+(-?[\d.]+)px)?/g)].map(m => Math.abs(+m[1]) + Math.abs(+m[2]) + 2 * +m[3] + Math.max(0, +(m[4] || 0)));
+    const m = new DOMMatrix(cs.transform);
+    pad = Math.ceil(Math.max(0, ...sombras) + Math.hypot(w, h) / 2 - Math.min(w, h) / 2 + Math.abs(m.e) + Math.abs(m.f) + 4);
+  }
+  const quieta = comoSeVe ? {} : { transform: 'none', rotate: 'none', translate: 'none', scale: 'none', boxShadow: 'none' };
+  const opciones = {
+    pixelRatio: k, width: w + 2 * pad, height: h + 2 * pad, fontEmbedCSS: await fuentesDe(el), cacheBust: false,
+    style: { ...quieta, width: w + 'px', height: h + 'px', margin: '0', position: el.matches('img') ? 'absolute' : cs.position === 'static' ? 'relative' : cs.position, left: pad + 'px', top: pad + 'px', right: 'auto', bottom: 'auto', opacity: '1' },
+    filter: n => !(n instanceof Element) || !fueraDeLaImagen(n, el),
+  };
+  // si una imagen no llegó (la red se cortó), se arma de nuevo una vez
+  const cv = await lib.toCanvas(el, opciones).catch(() => lib.toCanvas(el, opciones));
+  const fin = comoSeVe ? recortar(cv) : cv;
+  return { blob: await new Promise(ok => fin.toBlob(ok, 'image/png')), w: fin.width, h: fin.height, url: () => fin.toDataURL('image/png') };
+}
+
 // ---------- .zip sin dependencias (solo guardar, sin comprimir: las imágenes ya vienen comprimidas) ----------
 const TABLA = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 const crc32 = u8 => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = TABLA[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };

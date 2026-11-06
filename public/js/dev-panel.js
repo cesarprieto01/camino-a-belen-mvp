@@ -3,7 +3,7 @@
 // lo que la define (asset, animación o texto), sus medidas, todos los estados de su componente, sus colores y lo demás plegado.
 // Cada valor se copia con un clic, como valor o como SwiftUI. Nombres y PNG salen de Drive («01 PARA LA APP», copiado en dev/app/);
 // los estados, de dev/componentes.json; lo que no es de Adviento, de dev/fuera.json y del catálogo.
-import { ponerFuera, ficha, nombreDe, nombreTipo, tipo, assetsDe, lottieInfo, descLottie, swift, pt, token, hijosCapa, padreCapa, cajaPantalla, bajar, traer, png, svgTexto, zip, reiniciarTokens, swiftColor, swiftFuente, swiftSombra, postscript } from './dev-motor.js';
+import { ponerFuera, ficha, nombreDe, nombreTipo, tipo, assetsDe, lottieInfo, descLottie, swift, pt, token, hijosCapa, padreCapa, cajaPantalla, bajar, traer, png, svgTexto, zip, reiniciarTokens, swiftColor, swiftFuente, swiftSombra, postscript, esPieza, piezaDe, piezaPng, giroDe, textoFijo, vaEnCodigo, VP } from './dev-motor.js';
 import { elegida, elegir, resaltar, usandoApp, usar, subir, bajarA, tocarElegida, pantallaActual, reconocer } from './dev.js';
 import { manifest, logical, html, S, save, cur } from './core.js';
 import { miniatura as miniaturaLottie } from './teo-anim.js';
@@ -135,12 +135,78 @@ async function parDe(r, el) {
 /** Las dos versiones de una imagen, una al lado de la otra sobre su fondo; se descargan al tocarlas */
 const diaNoche = (par, actual) => `<section class="dv-temas"><h3>Día y noche</h3><div class="dv-par">${[['dia', 'Día'], ['noche', 'Noche']].map(([k, l]) => `<button class="dv-tema ${par[k] === actual ? 'on' : ''}" data-t="${k}" data-png="${esc(par[k])}" data-k="3" title="Descargar ${esc(infoAsset(par[k]).nombre)}@3x.png"><span class="dv-tthumb">${miniatura(par[k])}</span><b>${l}${par[k] === actual ? ' <small>en pantalla</small>' : ''}</b><small>${esc(infoAsset(par[k]).nombre)}@3x.png</small></button>`).join('')}</div></section>`;
 
+// ---------- Cards: lo agrupado en una sola imagen, con sus capas a mano para bajar solo una ----------
+const artePrincipal = el => [el, ...el.querySelectorAll('*')].flatMap(x => assetsDe(x)).find(x => x.tipo !== 'svg' && x.tipo !== 'lottie' && deAdviento(x.ruta));
+/** El nombre de una card: el de su componente, su etiqueta, su texto corto o el de su imagen principal */
+function nombrePieza(el) {
+  const m = componenteDe(el); if (m && m.d === 0) return m.c.nombre;
+  const n = el.getAttribute('aria-label') || (el.matches('img') ? '' : textoFijo(el)); if (n) return n;
+  const a = artePrincipal(el); return a ? infoAsset(a.ruta).nombre : 'Card';
+}
+/** card-cuento-5-min-dia: siempre con «card» y con el tema (de día y de noche la card cambia) */
+const archivoPieza = el => { let n = slug(nombrePieza(el)); if (!n.includes('card')) n = 'card-' + n; return /-(dia|noche|claro|oscuro)$/.test(n) ? n : `${n}-${oscuro() ? 'noche' : 'dia'}`; };
+const nombreCapa = e => esPieza(e) ? nombrePieza(e) : nombreDe(e);
+// la vista previa de la card tal como se descarga (recta, sin sombra); se guarda por card y por tema
+const vistas = new WeakMap();
+async function vistaCard(el) {
+  const t = oscuro() ? 'n' : 'd', v = vistas.get(el);
+  if (v?.t === t) return v.url;
+  const url = await piezaPng(el, { k: 2 }).then(o => o.url()).catch(() => null);
+  vistas.set(el, { t, url }); return url;
+}
+/** Las cards de la pantalla que se ven (sin las que van dentro de otra) */
+function piezasPantalla() {
+  const top = pantallaActual(); if (!top) return [];
+  // con una ventana abierta, solo cuenta lo de la ventana (lo de atrás está tapado)
+  const ambito = [...top.querySelectorAll('[role=dialog], [aria-modal=true]')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').pop() || top;
+  // se ve si al menos la mitad queda dentro del teléfono y de la ventana (los slides de al lado quedan fuera)
+  const v = VP().getBoundingClientRect(), m = ambito.getBoundingClientRect();
+  const enVista = e => { const r = e.getBoundingClientRect(), w = Math.min(r.right, v.right, m.right) - Math.max(r.left, v.left, m.left), h = Math.min(r.bottom, v.bottom, m.bottom) - Math.max(r.top, v.top, m.top); return w > 0 && h > 0 && w * h > r.width * r.height * .5; };
+  const todas = [...ambito.querySelectorAll('*')].filter(e => enVista(e) && esPieza(e));
+  // una card que se repite (el dorso de las cartas del memorama) sale una vez
+  const vistas = new Set();
+  return todas.filter(e => !todas.some(o => o !== e && o.contains(e))).filter(e => { const n = archivoPieza(e); return !vistas.has(n) && vistas.add(n); });
+}
+let piezaSel = null, capasCard = [];
+const ICONO_SF = e => e instanceof SVGElement && !!sfSymbol(e);
+const bajable = e => esPieza(e) || !!assetsDe(e).find(x => x.tipo !== 'svg' && deAdviento(x.ruta)) || (e instanceof SVGSVGElement && !ICONO_SF(e));
+/** Cómo se llama una capa en la lista: la imagen como en Drive; un contenedor sin nombre, por lo que es */
+function nombreEnCard(h) {
+  const t = tipo(h), a = assetsDe(h).find(x => x.tipo !== 'svg' && x.tipo !== 'lottie' && deAdviento(x.ruta));
+  if (a && !esPieza(h) && CAT?.[a.ruta]?.nombre) return CAT[a.ruta].nombre;
+  if (t === 'caja' && nombreDe(h, t) === nombreTipo(t)) { const f = ficha(h); return f.fondo ? 'Degradado' : f.relleno ? 'Fondo de color' : nombreTipo(t); }
+  return nombreCapa(h);
+}
+/** Lo que lleva la card, capa por capa: tocar una entra en ella; la flecha baja solo esa. Lo que va en código se lista sin entrar en él */
+function capasCardHtml(pz) {
+  capasCard = []; const rec = (e, n) => hijosCapa(e).forEach(h => { capasCard.push([h, n]); if (!h.matches('svg, .teo-anim, img') && !esPieza(h) && !vaEnCodigo(h, pz)) rec(h, n + 1); });
+  rec(pz, 0); capasCard = capasCard.slice(0, 30);
+  if (!capasCard.length) return '';
+  const fila = ([h, n], k) => {
+    const t = tipo(h), a = assetsDe(h).find(x => x.tipo !== 'svg' && deAdviento(x.ruta)), nom = nombreEnCard(h), codigo = vaEnCodigo(h, pz);
+    const cs = getComputedStyle(h), pinta = t === 'caja' && !a && (cs.backgroundImage !== 'none' || !/rgba\([^)]*,\s*0\)$|transparent/.test(cs.backgroundColor));
+    const mini = a && a.tipo !== 'lottie' ? miniatura(a.ruta) : t === 'svg' ? `<span class="dv-svgprev">${svgTexto(h)}</span>` : pinta ? `<i class="dv-csw" style="background:${esc(cs.backgroundImage !== 'none' ? cs.backgroundImage : cs.backgroundColor)}"></i>` : `<i class="dv-t dv-t-${t}"></i>`;
+    return `<div class="dv-crow" style="--n:${n}"><button class="dv-crow-b" data-entrar="${k}"><span class="dv-cmini">${mini}</span><span>${esc(nom)}${codigo ? '<small>en código</small>' : ''}</span></button>${!codigo && bajable(h) ? `<button class="dv-crow-dl" data-capa-dl="${k}" aria-label="Descargar ${esc(nom)}" title="Descargar solo esta capa">${ico(I.bajar)}</button>` : ''}</div>`;
+  };
+  return `<section class="dv-grupo dv-ccapas"><h3>Capas <span>${capasCard.length}</span></h3><div>${capasCard.map(fila).join('')}</div></section>`;
+}
+async function bajarCapa(h) {
+  if (esPieza(h)) { const o = await piezaPng(h, { k: 3 }); return bajar(o.blob, `${archivoPieza(h)}@3x.png`); }
+  const a = assetsDe(h).find(x => x.tipo !== 'svg' && deAdviento(x.ruta));
+  if (a?.tipo === 'lottie') return bajar(await traer(a.ruta), `${a.el.dataset.anim}.json`);
+  if (a) { const p = await pngDe(a.ruta, 3, h); return bajar(p.blob, p.nombre); }
+  const sv = h.matches('svg') ? h : h.querySelector('svg'); if (sv) bajar(new Blob([svgTexto(sv)], { type: 'image/svg+xml' }), `${slug(nombreDe(h))}.svg`);
+}
+const swiftCard = (el, arch, sombra, giro) => [`Image("${arch}")`, '    .resizable()', `    .frame(width: ${pt(el.offsetWidth)}, height: ${pt(el.offsetHeight)})`, sombra && swiftSombra(sombra) ? `    ${swiftSombra(sombra)}` : '', giro ? `    .rotationEffect(.degrees(${giro}))` : ''].filter(Boolean).join('\n');
+
 // ---------- La capa elegida ----------
 let cadenaEls = [];
 function capaHtml(el) {
   if (el !== selAnterior) { estadoSel = -1; selAnterior = el; }
   const f = ficha(el), m = componenteDe(el), padre = padreCapa(el);
-  const generico = e => nombreDe(e) === nombreTipo(tipo(e));
+  const pz = piezaSel = piezaDe(el), esCard = pz === el;
+  capasCard = [];
+  const generico = e => !esPieza(e) && nombreDe(e) === nombreTipo(tipo(e));
   const cadena = []; let p = padre; while (p && cadena.length < 3) { if (!generico(p)) cadena.unshift(p); p = padreCapa(p); }
   cadenaEls = cadena;
   const img = f.assets.find(a => a.tipo !== 'svg' && a.tipo !== 'lottie' && !a.quieto && deAdviento(a.ruta));
@@ -150,13 +216,21 @@ function capaHtml(el) {
   const fi = svgEl && svgEl !== el ? ficha(svgEl) : f;
   const sf = svgEl ? sfSymbol(svgEl) : '', i = img && infoAsset(img.ruta), L = lot && lottieInfo(lot.el), d = lot && descLottie(lot.el.dataset.anim);
   const raizComp = m && m.d === 0;
-  const titulo = raizComp ? m.c.nombre : f.nombre === nombreTipo(f.tipo) && i ? i.nombre : f.nombre; // una imagen sin nombre se llama como en Drive
+  const titulo = esCard ? nombrePieza(el) : raizComp ? m.c.nombre : f.nombre === nombreTipo(f.tipo) && i ? i.nombre : f.nombre; // una imagen sin nombre se llama como en Drive
   const voz = el.getAttribute('aria-label') || el.getAttribute('alt') || '';
-  const tipoTxt = lot ? 'Animación' : sf ? (svgEl !== el ? 'Botón con ícono del sistema' : 'Ícono del sistema') : img ? (img.tipo === 'fondo' ? 'Fondo' : 'Imagen') : raizComp ? 'Componente' : nombreTipo(f.tipo);
+  const tipoTxt = esCard ? 'Card' : lot ? 'Animación' : sf ? (svgEl !== el ? 'Botón con ícono del sistema' : 'Ícono del sistema') : img ? (img.tipo === 'fondo' ? 'Fondo' : 'Imagen') : raizComp ? 'Componente' : nombreTipo(f.tipo);
+  // una card mide lo que mide su caja (recta): la caja que se ve crece si está girada
+  const tw = esCard ? el.offsetWidth : f.w, th = esCard ? el.offsetHeight : f.h, giro = esCard ? giroDe(el) : 0;
   const primera = !img && !lot ? [...el.querySelectorAll('img')].find(x => x.currentSrc && x.getClientRects().length && deAdviento(decodeURIComponent(new URL(x.currentSrc).pathname.replace(/^\/+/, ''))))?.getAttribute('src') : null;
   // 1 · qué se construye (con una sola acción principal; el formato va en gris)
   let obra = '';
-  if (lot) {
+  if (esCard) {
+    // todo unido en un PNG al tamaño de la card, recta y sin sombra (la sombra y el giro van en SwiftUI); al lado, @2x,
+    // la versión tal como se ve (con sombra y giro) y, si la card es una imagen con marco, la imagen sola
+    const arch = archivoPieza(el), efecto = !!f.sombra || !!giro;
+    obra = `<button class="dv-btn main dv-wide" data-card="3">${ico(I.bajar)}Descargar card</button>
+      <p class="dv-pie">${esc(arch)}@3x.png · <button class="dv-link" data-card="2">@2x</button>${efecto ? ' · <button class="dv-link" data-card="3" data-vista>tal como se ve</button>' : ''}${img ? ` · <button class="dv-link" data-png="${esc(img.ruta)}" data-k="3">solo la imagen</button>` : ''}</p>`;
+  } else if (lot) {
     const como = d && (d.tramo || d.vel || d.inicio || d.salidas) ? [d.tramo && `Se juegan los cuadros ${d.tramo[0]} a ${d.tramo[1] - 1}${d.vel ? ` a ${d.vel}×` : ''}, una vez.`, d.inicio && `El bucle entra en el cuadro ${d.inicio}.`, d.salidas && `Pasa a otra animación en los cuadros ${d.salidas.map(([x, y]) => `${x}–${y - 1}`).join(', ')}.`, d.reposo && `Repite los cuadros 0 a ${d.reposo.hasta - 1} ${d.reposo.vueltas} veces antes de la actuación completa.`].filter(Boolean).join(' ') : '';
     obra = `<div class="dv-escena"><span class="dv-mini" data-mini="${esc(lot.el.dataset.anim)}"></span></div>
       <p class="dv-dato">Lottie · ${d?.tramo ? 'transición, una vez' : L?.enBucle ? 'bucle' : 'una vez'}${L ? ` · ${pt(L.segundos)} s · ${L.fps} fps` : ''} · ajustar sin recortar</p>
@@ -187,7 +261,8 @@ function capaHtml(el) {
   const ft = tEl ? (tEl === el ? f : ficha(tEl)) : null;
   const fu = ft?.fuente, colores = [...new Map([f.relleno, ...(f.fondo?.colores || []), f.borde?.color].filter(Boolean).map(c => [c.hex + c.alfa, c])).values()];
   const medidas = [
-    ref('Tamaño', `${pt(f.w)} × ${pt(f.h)}`),
+    ref('Tamaño', `${pt(tw)} × ${pt(th)}`),
+    giro ? ref('Giro', `${giro}°`, `.rotationEffect(.degrees(${giro}))`) : '',
     pc ? ref('Al contenedor', `↑ ${pt(f.y - pc.y)}  → ${pt(pc.x + pc.w - f.x - f.w)}  ↓ ${pt(pc.y + pc.h - f.y - f.h)}  ← ${pt(f.x - pc.x)}`, `top ${pt(f.y - pc.y)}, trailing ${pt(pc.x + pc.w - f.x - f.w)}, bottom ${pt(pc.y + pc.h - f.y - f.h)}, leading ${pt(f.x - pc.x)}`) : '',
     antes || despues ? ref('Separación', [antes && `${pt(f.y - antes[1].y - antes[1].h)} arriba`, despues && `${pt(despues[1].y - f.y - f.h)} abajo`].filter(Boolean).join(' · '), String(pt(antes ? f.y - antes[1].y - antes[1].h : despues[1].y - f.y - f.h))) : '',
     f.radio ? ref('Esquinas', f.radio) : '',
@@ -207,11 +282,14 @@ function capaHtml(el) {
     f.sombra ? ref('Sombra', 'Copiar para SwiftUI', swiftSombra(f.sombra) || f.sombra) : '',
     f.opacidad ? ref('Opacidad', f.opacidad, String(parseFloat(f.opacidad) / 100)) : '',
   ].join('');
-  const codigo = sf ? `Image(systemName: "${sf}")\n    .font(.system(size: ${pt(fi.h)}, weight: .${pesoSF(svgEl)}))\n    .foregroundStyle(${swiftColor(fi.iconoColor)})${svgEl !== el ? `\n    .frame(width: ${pt(f.w)}, height: ${pt(f.h)})` : ''}` : swift(f, i?.nombre || slug(f.nombre));
-  return `<nav class="dv-crumbs" aria-label="Ruta"><button class="dv-link" data-ir="pantalla">${esc(pantallaNombre)}</button>${cadena.map((c, k) => `<span aria-hidden="true">›</span><button class="dv-link" data-ir="c${k}">${esc(nombreDe(c).slice(0, k === cadena.length - 1 ? 40 : 18))}</button>`).join('')}</nav>
-  <div class="dv-hero">${!lot ? `<div class="dv-prev">${img ? miniatura(img.ruta) : primera ? miniatura(primera) : svgEl ? `<span class="dv-svgprev">${svgTexto(svgEl)}</span>` : fu ? `<span class="dv-aa" style="font-family:${esc(fu.familia)};font-weight:${fu.peso};color:${fu.color?.hex}">Aa</span>` : `<span class="dv-caja" style="background:${f.relleno?.hex || 'transparent'};border-radius:${Math.min(parseFloat(String(f.radio)) || 0, 16)}px"></span>`}</div>` : ''}
-    <div class="dv-ident"><h2>${esc(titulo)}</h2><p>${tipoTxt} · ${pt(f.w)} × ${pt(f.h)} pt${oscuro() ? ' · noche' : ''}</p></div></div>
+  const codigo = esCard ? swiftCard(el, archivoPieza(el), f.sombra, giro) : sf ? `Image(systemName: "${sf}")\n    .font(.system(size: ${pt(fi.h)}, weight: .${pesoSF(svgEl)}))\n    .foregroundStyle(${swiftColor(fi.iconoColor)})${svgEl !== el ? `\n    .frame(width: ${pt(f.w)}, height: ${pt(f.h)})` : ''}` : swift(f, i?.nombre || slug(f.nombre));
+  // dentro de una card: la card entera a un toque (para volver a ella o bajarla toda)
+  const deCard = pz && !esCard ? `<section class="dv-grupo"><h3>Card</h3><div class="dv-crow dv-crow-card"><button class="dv-crow-b" data-ir="pieza"><span class="dv-cmini" data-card-prev>${artePrincipal(pz) ? miniatura(artePrincipal(pz).ruta) : ''}</span><span>${esc(nombrePieza(pz))}<small>${pt(pz.offsetWidth)} × ${pt(pz.offsetHeight)} pt</small></span></button><button class="dv-crow-dl" data-card="3" aria-label="Descargar card" title="Descargar card">${ico(I.bajar)}</button></div></section>` : '';
+  return `<nav class="dv-crumbs" aria-label="Ruta"><button class="dv-link" data-ir="pantalla">${esc(pantallaNombre)}</button>${cadena.map((c, k) => `<span aria-hidden="true">›</span><button class="dv-link" data-ir="c${k}">${esc(nombreCapa(c).slice(0, k === cadena.length - 1 ? 40 : 18))}</button>`).join('')}</nav>
+  <div class="dv-hero">${!lot ? `<div class="dv-prev" ${esCard ? 'data-card-prev' : ''}>${img ? miniatura(img.ruta) : primera ? miniatura(primera) : svgEl ? `<span class="dv-svgprev">${svgTexto(svgEl)}</span>` : fu ? `<span class="dv-aa" style="font-family:${esc(fu.familia)};font-weight:${fu.peso};color:${fu.color?.hex}">Aa</span>` : `<span class="dv-caja" style="background:${f.relleno?.hex || 'transparent'};border-radius:${Math.min(parseFloat(String(f.radio)) || 0, 16)}px"></span>`}</div>` : ''}
+    <div class="dv-ident"><h2>${esc(titulo)}</h2><p>${tipoTxt} · ${pt(tw)} × ${pt(th)} pt${oscuro() ? ' · noche' : ''}</p></div></div>
   ${obra ? `<div class="dv-obra">${obra}</div>` : ''}
+  ${esCard ? capasCardHtml(el) : deCard}
   ${m ? estadosHtml(m) : ''}
   ${grupo('Medidas', medidas)}
   ${grupo('Texto', texto)}
@@ -221,7 +299,7 @@ function capaHtml(el) {
 }
 
 // ---------- La pantalla ----------
-let pantallaNombre = 'Pantalla', assetsEls = [], compsEls = [], minis = [];
+let pantallaNombre = 'Pantalla', assetsEls = [], compsEls = [], cardsEls = [], minis = [];
 function todas(raiz = pantallaActual()) { const out = []; const rec = e => hijosCapa(e).forEach(h => { out.push(h); if (!h.matches('svg, .teo-anim, img')) rec(h); }); if (raiz) rec(raiz); return out; }
 /** Los assets de Adviento de la pantalla (imágenes y animaciones; los íconos de interfaz son SF Symbols), sin repetir */
 function assetsPantalla() {
@@ -240,11 +318,12 @@ function capasHtml(raiz, nivel = 0) {
   }).join('');
 }
 function pantallaHtml(info) {
-  const assets = assetsEls = assetsPantalla(), comps = componentesPantalla();
+  const assets = assetsEls = assetsPantalla(), comps = componentesPantalla(), cards = cardsEls = piezasPantalla();
   compsEls = comps.map(x => x.els[0]);
   return `<p class="dv-guia">${ico(I.cursor, 18)}<span>Elige algo en el teléfono.</span></p>
-  <div class="dv-hero dv-hero-p"><div class="dv-ident"><h2>${esc(info.nombre)}</h2><p>${comps.length ? `${comps.length} componentes · ` : ''}${assets.length} ${assets.length === 1 ? 'imagen o animación' : 'imágenes y animaciones'}</p></div></div>
-  ${assets.length ? `<div class="dv-obra"><button class="dv-btn main dv-wide" data-zip>${ico(I.bajar)}Descargar pantalla</button><p class="dv-pie">.zip con las imágenes (@2x y @3x) y las animaciones</p></div>` : ''}
+  <div class="dv-hero dv-hero-p"><div class="dv-ident"><h2>${esc(info.nombre)}</h2><p>${comps.length ? `${comps.length} componentes · ` : ''}${cards.length ? `${cards.length} ${cards.length === 1 ? 'card' : 'cards'} · ` : ''}${assets.length} ${assets.length === 1 ? 'imagen o animación' : 'imágenes y animaciones'}</p></div></div>
+  ${assets.length || cards.length ? `<div class="dv-obra"><button class="dv-btn main dv-wide" data-zip>${ico(I.bajar)}Descargar pantalla</button><p class="dv-pie">.zip con ${cards.length ? 'las cards, ' : ''}las imágenes (@2x y @3x) y las animaciones</p></div>` : ''}
+  ${cards.length ? `<section class="dv-grupo"><h3>Cards</h3><div class="dv-agrid">${cards.map((c, k) => { const a = artePrincipal(c); return `<button class="dv-acard" data-ver-card="${k}" title="${esc(nombrePieza(c))}"><span class="dv-ph dv-cardph" data-card-mini="${k}">${a ? miniatura(a.ruta) : ''}</span><span>${esc(nombrePieza(c))}</span></button>`; }).join('')}</div></section>` : ''}
   ${comps.length ? `<section class="dv-grupo"><h3>Componentes</h3><ul class="dv-comps">${comps.map((x, k) => `<li><button data-comp="${k}"><span>${esc(x.c.nombre)}${x.els.length > 1 ? ` <small>×${x.els.length}</small>` : ''}</span><small>${(x.c.estados || []).length > 1 ? `${x.c.estados.length} estados` : ''}</small></button></li>`).join('')}</ul></section>` : ''}
   ${assets.length ? `<section class="dv-grupo"><h3>Imágenes y animaciones</h3><div class="dv-agrid">${assets.map((a, k) => `<button class="dv-acard" data-ver-asset="${k}" title="${esc(a.nombre)}">${a.tipo === 'lottie' ? `<span class="dv-mini" data-mini="${esc(a.el.dataset.anim)}"></span><i class="dv-badge">Lottie</i>` : miniatura(a.ruta)}<span>${esc(a.nombre)}</span>${a.tipo !== 'lottie' && parTema(a.ruta) ? '<i class="dv-badge dv-badge-t">día · noche</i>' : ''}</button>`).join('')}</div></section>` : ''}
   <details class="dv-mas"><summary>Capas</summary><div class="dv-layers">${capasHtml(pantallaActual())}</div></details>
@@ -260,9 +339,13 @@ export async function pintarDev(cont, info) {
   // un componente que ocupa media pantalla o más (un pop-up entero) no se elige de un clic: se llega con el breadcrumb
   reconocer(el => {
     if (!el) return el;
-    const r = componenteDe(el)?.raiz, b = el.closest('button, a, [role=button], [role=checkbox], [role=radio]');
+    // una card se elige entera (lo agrupado); otro clic o doble clic entra en sus capas
+    const r = componenteDe(el)?.raiz, b = el.closest('button, a, [role=button], [role=checkbox], [role=radio]'), pz = piezaDe(el);
     const chico = x => { const c = x?.getBoundingClientRect(), v = document.getElementById('viewport').getBoundingClientRect(); return x && c.width * c.height < v.width * v.height * .5; };
-    const cands = [chico(r) && r, b].filter(Boolean);
+    // un enlace que cubre toda la card (el póster entero se toca) no le gana a la card; un botón más chico adentro, sí
+    const area = x => { const c = x.getBoundingClientRect(); return c.width * c.height; };
+    const tapa = b && pz && pz.contains(b) && area(b) >= area(pz) * .9;
+    const cands = [chico(r) && r, !tapa && b, pz].filter(Boolean);
     return cands.sort((x, y) => (x.contains(y) ? 1 : y.contains(x) ? -1 : 0))[0] || el;
   });
   reiniciarTokens();
@@ -274,8 +357,11 @@ export async function pintarDev(cont, info) {
   if (!el) mapearCapas(cont);
   cont.querySelectorAll('[data-mini]').forEach(async m => minis.push(await miniaturaLottie(m, m.dataset.mini)));
   cont.querySelectorAll('[data-par]').forEach(async d => { const r = d.dataset.par, par = await parDe(r, el); if (par && d.isConnected) d.outerHTML = diaNoche(par, r); });
+  // las vistas previas de las cards salen de la card misma (una a la vez: no traban la app)
+  const previas = [...cont.querySelectorAll('[data-card-prev]')].map(x => [x, piezaSel]).concat([...cont.querySelectorAll('[data-card-mini]')].map(x => [x, cardsEls[+x.dataset.cardMini]]));
+  (async () => { for (const [x, pz] of previas) { if (!pz || !x.isConnected) continue; const u = await vistaCard(pz); if (u && x.isConnected) x.innerHTML = `<img src="${u}" alt="">`; } })();
   cont.onclick = ev => clic(ev, cont, info);
-  cont.onmouseover = ev => { const b = ev.target.closest('[data-capa], [data-ver-asset], [data-comp], [data-ir^="c"]'); if (!b) return; resaltar(b._el || (b.dataset.verAsset ? assetsEls[+b.dataset.verAsset]?.sel : b.dataset.comp ? compsEls[+b.dataset.comp] : cadenaEls[+b.dataset.ir.slice(1)])); };
+  cont.onmouseover = ev => { const b = ev.target.closest('[data-capa], [data-ver-asset], [data-comp], [data-ir^="c"], [data-ir="pieza"], [data-entrar], [data-ver-card]'); if (!b) return; resaltar(b._el || (b.dataset.verAsset ? assetsEls[+b.dataset.verAsset]?.sel : b.dataset.comp ? compsEls[+b.dataset.comp] : b.dataset.entrar ? capasCard[+b.dataset.entrar]?.[0] : b.dataset.verCard ? cardsEls[+b.dataset.verCard] : b.dataset.ir === 'pieza' ? piezaSel : cadenaEls[+b.dataset.ir.slice(1)])); };
   cont.onmouseleave = () => resaltar(null);
 }
 function mapearCapas(cont) {
@@ -286,9 +372,12 @@ function mapearCapas(cont) {
 const avisar = (cont, t) => { let x = cont.querySelector('.dv-aviso'); if (!x) { x = document.createElement('div'); x.className = 'dv-aviso'; x.setAttribute('role', 'status'); cont.append(x); } x.textContent = t; x.classList.add('on'); clearTimeout(x._t); x._t = setTimeout(() => x.classList.remove('on'), 1800); };
 /** El botón dice qué está pasando: «Preparando…», «Listo» o «No se pudo · Reintentar» */
 async function conBoton(b, fn) {
-  const antes = b.innerHTML; b.disabled = true; b.textContent = 'Preparando…';
-  try { const r = await fn(t => { b.textContent = t; }); b.textContent = r || 'Listo'; setTimeout(() => { if (b.isConnected) { b.innerHTML = antes; b.disabled = false; } }, 1600); }
-  catch (e) { console.warn(e); b.innerHTML = antes; b.disabled = false; b.textContent = 'No se pudo · Reintentar'; }
+  // el botón de solo flecha (una capa de la card) no cambia de texto: se atenúa mientras prepara y muestra un visto al terminar
+  const antes = b.innerHTML, flecha = b.classList.contains('dv-crow-dl'); b.disabled = true;
+  if (flecha) b.classList.add('ocupado'); else b.textContent = 'Preparando…';
+  const volver = () => { if (b.isConnected) { b.innerHTML = antes; b.disabled = false; b.classList.remove('ocupado'); } };
+  try { const r = await fn(t => { if (!flecha) b.textContent = t; }); if (flecha) { b.classList.remove('ocupado'); b.innerHTML = ico('<path d="M5 12.5l4.5 4.5L19 7.5"/>'); } else b.textContent = r || 'Listo'; setTimeout(volver, 1600); }
+  catch (e) { console.warn(e); volver(); if (!flecha) b.textContent = 'No se pudo · Reintentar'; }
 }
 
 /** PNG @k: el de Drive si existe (la calidad de la entrega), si no, sale del archivo del MVP a su tamaño en pt */
@@ -328,12 +417,20 @@ async function clic(ev, cont, info) {
     else if (b.dataset.ir === 'arriba') subir();
     else if (b.dataset.ir === 'abajo') bajarA();
     else if (b.dataset.ir === 'comp' && m) elegir(m.raiz);
+    else if (b.dataset.ir === 'pieza' && piezaSel) elegir(piezaSel);
     else if (/^c\d+$/.test(b.dataset.ir)) elegir(cadenaEls[+b.dataset.ir.slice(1)]);
     return;
   }
   if ('capa' in b.dataset && b._el) { ev.preventDefault(); elegir(b._el); return; }
   if (b.dataset.hijo) { elegir(contieneEls[+b.dataset.hijo]); return; }
   if (b.dataset.verAsset) { elegir(assetsEls[+b.dataset.verAsset]?.sel); return; }
+  if (b.dataset.verCard) { elegir(cardsEls[+b.dataset.verCard]); return; }
+  if (b.dataset.entrar) { elegir(capasCard[+b.dataset.entrar]?.[0]); return; }
+  if (b.dataset.capaDl) return conBoton(b, () => bajarCapa(capasCard[+b.dataset.capaDl][0]));
+  if (b.dataset.card) return conBoton(b, async () => {
+    const pz = piezaSel, k = +b.dataset.card, vista = 'vista' in b.dataset; if (!pz) throw new Error('sin card');
+    const o = await piezaPng(pz, { k, comoSeVe: vista }); bajar(o.blob, `${archivoPieza(pz)}${vista ? '-como-se-ve' : ''}@${k}x.png`);
+  });
   const el = elegida();
   if (b.dataset.bajar) return conBoton(b, async () => { const r = b.dataset.bajar; bajar(await traer(r), `${infoAsset(r).nombre}.${ext(r)}`); });
   if (b.dataset.png) return conBoton(b, async () => { const p = await pngDe(b.dataset.png, +b.dataset.k, el); bajar(p.blob, p.nombre); return p.corto ? `Descargado a ${p.w} px` : 'Descargado'; });
@@ -343,10 +440,16 @@ async function clic(ev, cont, info) {
   if ('zip' in b.dataset) return conBoton(b, set => paquete(info, set));
 }
 
-// ---------- El paquete de la pantalla: imagenes/ (PNG @2x y @3x) y animaciones/ (JSON de Lottie); carpetas sin tilde: se abren bien en cualquier descompresor ----------
+// ---------- El paquete de la pantalla: cards/ (cada card unida, PNG @2x y @3x), imagenes/ (PNG @2x y @3x) y animaciones/ (JSON de Lottie);
+// carpetas sin tilde: se abren bien en cualquier descompresor ----------
 async function paquete(info, avance) {
-  const assets = assetsPantalla(), base = 'adviento-' + slug(info.nombre), archivos = [], usados = new Set(), faltan = [];
+  const assets = assetsPantalla(), cards = piezasPantalla(), base = 'adviento-' + slug(info.nombre), archivos = [], usados = new Set(), faltan = [];
   const unico = n => { let x = n, k = 2; while (usados.has(x)) x = `${n}-${k++}`; usados.add(x); return x; };
+  for (const [i, c] of cards.entries()) {
+    avance(`Card ${i + 1} de ${cards.length}…`);
+    try { const n = unico(archivoPieza(c)); for (const k of [3, 2]) archivos.push({ nombre: `cards/${n}@${k}x.png`, datos: (await piezaPng(c, { k })).blob }); }
+    catch (e) { console.warn('paquete', c, e); faltan.push(nombrePieza(c)); }
+  }
   for (const [i, a] of assets.entries()) {
     avance(`Preparando ${i + 1} de ${assets.length}…`);
     try {

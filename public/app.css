@@ -1101,6 +1101,24 @@ body.dev-on .p-arrow { width: 34px; height: 34px; border-radius: 10px; font-size
 /* estados: una fila que se desliza de lado (no empuja lo principal hacia abajo) */
 .dv-estados h3 { margin: 0 0 8px; font: 800 13px Mulish, sans-serif; }
 .dv-estados h3 span { margin-left: 4px; font-weight: 700; color: var(--muted); }
+/* cards: las capas de adentro, una por fila (tocar entra; la flecha baja solo esa) */
+.dv-ccapas h3 span { margin-left: 4px; font-weight: 700; color: var(--muted); }
+.dv-ccapas h3 { margin-bottom: 6px; }
+.dv-crow { display: flex; align-items: center; gap: 4px; padding-left: calc(var(--n, 0) * 16px); }
+.dv-crow-b { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 6px; border: 0; border-radius: 10px; background: none; color: var(--ink); font: 600 13px Mulish, sans-serif; text-align: left; cursor: pointer; }
+.dv-crow-b:hover { background: var(--chip); }
+.dv-crow-b > span:last-child { min-width: 0; display: grid; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dv-crow-b small { font: 500 12px Mulish, sans-serif; color: var(--muted); }
+.dv-cmini { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; background: repeating-conic-gradient(rgba(127,140,160,.16) 0 25%, transparent 0 50%) 0 0 / 10px 10px; overflow: hidden; color: var(--muted); }
+.dv-cmini > img { width: 100%; height: 100%; object-fit: contain; }
+.dv-csw { width: 24px; height: 24px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line); }
+.dv-cmini .dv-svgprev { width: 100%; height: 100%; display: grid; place-items: center; }
+.dv-crow-card .dv-cmini { width: 44px; height: 44px; }
+.dv-crow-dl { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: none; color: #0A66D6; cursor: pointer; transition: opacity .15s; }
+.dv-crow-dl:hover { background: var(--chip); }
+.dv-crow-dl.ocupado { opacity: .35; }
+:root[data-theme="dark"] .dv-crow-dl { color: #6CC2FF; }
+.dv-cardph > img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .dv-tira { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 0 18px 2px; scroll-padding: 18px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 28px), transparent); }
 .dv-tira::-webkit-scrollbar { display: none; }
 .dv-tira button { flex: none; white-space: nowrap; }
