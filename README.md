@@ -16,7 +16,7 @@ Abre http://localhost:5190/app.html. El panel de controles (a la derecha; en el 
 
 - **Arriba, siempre a la vista:** la pantalla donde estás, Día/Noche, copiar el enlace a este estado y el día con ‹ ›.
 - **Estado:** Teodoro y su energía, la familia (plan, inscrito, panes), el tiempo (completó hasta, saltar 7 días) y «Empezar de cero».
-- **Ajustes:** variantes para comparar (slides del reto, canción del mapa), qué sale en la ruleta y girarla otra vez, la isla dinámica y las zonas seguras del iPhone, y las reglas que usa el MVP.
+- **Ajustes:** variantes para comparar (canción del mapa), qué sale en la ruleta y girarla otra vez, la isla dinámica y las zonas seguras del iPhone, y las reglas que usa el MVP.
 - **Al pie, para el equipo:** Recorridos (escenarios del lienzo: antes del 29, un día con trivia, ruleta, juegos sorpresa, Navidad, gracia, free…), Pantallas (las del lienzo vistas y por ver) y Notas.
 
 ## Qué hay en el repo
@@ -45,7 +45,9 @@ public/            la app (HTML, CSS y JavaScript sin framework)
     *.webp/png     el resto, con el código del lienzo como nombre (el índice con nombres legibles está en Drive)
   audio/           «Quiet Snow Village» (actividades y, por defecto, el mapa), «Burrito Sabanero» con Eduardo (mapa, opción 2) y teo/ (9 reacciones de voz de Teodoro)
   anim/            las animaciones Lottie de Teodoro (ver «Teodoro animado»)
+  braze/slides-reto/  el in-app de Braze con los slides del reto (al unirse): braze.html se pega en Braze; ver su LEEME.md
 tools/             SOLO PROTOTIPO: pruebas de recorrido y capturas (Playwright); no van a la app
+                   braze-slides.mjs arma el in-app de Braze desde el MVP («capturar» saca el arte de los slides)
 ```
 
 Todo lo que está en `public/` lo usa la app o el panel del prototipo (`raw.html` y `sheet.html` son para las capturas de `tools/`). El 26 de octubre de 2026 se borró lo que no se usaba: imágenes y pantallas que nadie pedía, la página «Basura» del lienzo, los archivos fuente del lienzo (`design-source/`, con su conversor `tools/convert.py`) y scripts temporales. Todo sigue en el historial de git.

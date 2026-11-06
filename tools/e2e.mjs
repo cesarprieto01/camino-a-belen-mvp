@@ -108,6 +108,12 @@ const tap = async (q) => {
 };
 // al terminar cada video o canción: calificar con 4 estrellas en «¡Terminaste!» (el siguiente paso lo toca quien llama)
 const rate = async (tag = '') => { if ((await screen()) !== 'completado' || !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rate-row')))) { errs.push(`${tag}: «¡Terminaste!» sin la fila de calificar (${await screen()})`); return; } await tap('4 de 5 estrellas'); const k = await p.evaluate(async () => (await import('/js/core.js')).S.calificaciones); if (!k || !Object.values(k).includes(4)) errs.push(`${tag}: no se guardó la calificación`); };
+// al unirse salen los 4 slides del reto: «Siguiente» tres veces y «¡Vamos!» lleva a «¡Ya estás dentro!»
+const pasarSlides = async (tag) => {
+  if (!(await waitScreen('retoSlides', 4000)) && !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rs-cta')))) { errs.push(`${tag}: al unirse no salen los slides (${await screen()})`); return; }
+  for (let i = 0; i < 3; i++) { await tap('Siguiente'); await p.waitForTimeout(250); }
+  await tap('¡Vamos!'); await p.waitForTimeout(1200);
+};
 const scenario = async (i) => { if (!(await p.evaluate(() => document.querySelectorAll('[data-tab]').length))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
 const answerTrivia = async () => {
   for (let q = 0; q < 5; q++) {
@@ -206,9 +212,10 @@ const flows = {
     if (!(await waitScreen('desafioFin', 4000))) errs.push('en oscuro no llega «¡Desafío cumplido!»'); await p.waitForTimeout(700); await shot('fin-oscuro');
   },
   async antes() {
-    await scenario('Sin inscribirse'); await p.waitForTimeout(1500); await shot('teaser');
-    await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('listo');
-    if ((await screen()) !== 'listo') errs.push('«Únete al reto» no abre «¡Ya estás dentro!»: ' + await screen());
+    await scenario('Sin inscribirse'); await p.waitForTimeout(2200); await shot('hoy-sin-unirse');
+    if ((await screen()) !== 'hoy') errs.push('al entrar de cero se abrió algo solo: ' + await screen());
+    await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('slides'); await pasarSlides('antes'); await shot('listo');
+    if ((await screen()) !== 'listo') errs.push('«Únete al reto» → slides → «¡Vamos!» no abre «¡Ya estás dentro!»: ' + await screen());
     // el preregistro termina en Mundos: Adviento resaltada con «Ya estás dentro» y el botón amarillo de invitar
     await tap('Ver mi mundo'); await p.waitForTimeout(1500); await shot('mundos');
     if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no lleva a Mundos: ' + await screen());
@@ -246,11 +253,11 @@ const flows = {
   async nav() {
     const expect = async (want, why) => { await p.waitForTimeout(700); const s = await screen(); if (s !== want) errs.push(`${why}: esperaba ${want}, quedó ${s}`); };
     await scenario('Sin inscribirse'); await p.waitForTimeout(1500);
-    await expect('teaser', 'teaser automático'); await tap('Ahora no'); await expect('hoy', 'teaser Ahora no');
+    await p.waitForTimeout(700); await expect('hoy', 'al entrar de cero no se abre nada solo');
     await tap('Teodoro'); await expect('teodoro', 'tab Teodoro'); await shot('teodoro-sin');
     // la card del tab Teodoro es la misma del inicio: vidrio empañado y «Únete al reto»
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child :is(img[src*="ffc14384"], canvas.vidrio-dedo)')))) errs.push('la card del tab Teodoro no es la del inicio (vidrio empañado)');
-    await tap('Únete al reto'); await p.waitForTimeout(1600); await expect('listo', 'inscribirme desde Teodoro'); await shot('listo');
+    await tap('Únete al reto'); await p.waitForTimeout(1600); await pasarSlides('nav'); await expect('listo', 'inscribirme desde Teodoro'); await shot('listo');
     await tap('Invitar amigos'); await expect('invitacion', 'invitar'); await shot('invitacion');
     await tap('Vista previa del enlace'); await expect('teaser', 'vista previa'); await tap('Únete al reto'); await expect('invitacion', 'vista previa vuelve');
     await tap('Volver'); await expect('listo', 'volver de invitación');
@@ -286,9 +293,10 @@ const flows = {
     await p.waitForTimeout(800);
     const s0 = await p.evaluate(async () => { const c = await import('/js/core.js'); return { hoy: c.S.hoy, inscrito: c.S.inscrito }; });
     if (s0.hoy !== -1 || s0.inscrito) errs.push('no arranca desde cero: ' + JSON.stringify(s0));
-    if (!(await waitScreen('teaser'))) errs.push('el teaser no sale solo al entrar: ' + await screen());
-    await shot('teaser'); await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('listo');
-    if ((await screen()) !== 'listo') errs.push('«Únete al reto» no abre «¡Ya estás dentro!»: ' + await screen());
+    await waitScreen('hoy'); await p.waitForTimeout(1800);
+    if ((await screen()) !== 'hoy') errs.push('al entrar de cero se abrió algo solo: ' + await screen());
+    await shot('hoy-de-cero'); await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('slides'); await pasarSlides('inicio'); await shot('listo');
+    if ((await screen()) !== 'listo') errs.push('«Únete al reto» → slides → «¡Vamos!» no abre «¡Ya estás dentro!»: ' + await screen());
     await tap('Ver mi mundo'); await p.waitForTimeout(1500); await shot('mundos-recien-unida');
     if ((await screen()) !== 'mundos') errs.push('«Ver mi mundo» no lleva a Mundos: ' + await screen());
     await tap('Volver al inicio'); await p.waitForTimeout(3200); await shot('hoy-dentro');
@@ -325,7 +333,7 @@ const flows = {
     await p.goBack(); await p.waitForTimeout(600);
     if (await layers() !== 'hoy') errs.push('atrás del sistema no vuelve a Hoy: ' + await layers());
   },
-  // EL FLUJO ENTERO como una familia: teaser → inscripción → día 0 → los 26 días → Nochebuena → Navidad
+  // EL FLUJO ENTERO como una familia: inscripción con los slides → día 0 → los 26 días → Nochebuena → Navidad
   async completo() {
     const cur = () => p.evaluate(async () => { const c = await import('/js/core.js'); return { s: c.cur.name, p: c.cur.params, hoy: c.S.hoy, bat: c.S.bateria, panes: c.S.panes }; });
     const clickYellow = () => p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); const a = [...L.querySelectorAll('a,button,[role=button]')].find(e => /F5DB78|245, 219, 120/i.test(e.getAttribute('style') || '') && e.offsetParent !== null && !/Premium/.test(e.textContent)); if (!a) return false; a.click(); return a.textContent.trim().slice(0, 30); });
@@ -338,8 +346,8 @@ const flows = {
     };
     // 1) antes del 29
     await p.waitForTimeout(800);
-    if (!(await waitScreen('teaser'))) errs.push('no arranca con el teaser');
-    await tap('Únete al reto'); await p.waitForTimeout(1600); await shot('c-listo');
+    await waitScreen('hoy'); await p.waitForTimeout(1800); if ((await screen()) !== 'hoy') errs.push('al entrar de cero se abrió algo solo: ' + await screen());
+    await tap('Únete al reto'); await p.waitForTimeout(1600); await pasarSlides('completo'); await shot('c-listo');
     await tap('Ver mi mundo'); await p.waitForTimeout(1200); await tap('Volver al inicio'); await p.waitForTimeout(1200); await shot('c-dentro');
     // 2) los 26 días
     const visto = new Set();

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Así es el reto · Adviento</title>
+<!-- In-app de Braze (Custom Code): los slides del reto al unirse. Generado con tools/braze-slides.mjs desde el MVP; no se edita a mano. -->
+<style>
+@font-face { font-family: 'Neue Montreal'; src: url('https://braze-images.com/appboy/communication/assets/font_assets/files/6aede6becad05100876413ac/original.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Neue Montreal'; src: url('https://braze-images.com/appboy/communication/assets/font_assets/files/6aede6be428224008ad6e132/original.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Neue Montreal', system-ui, -apple-system, sans-serif; }
+/* el velo sobre la app (el mismo del MVP); tocarlo es como cerrar */
+.velo { position: fixed; inset: 0; background: rgba(4,14,36,.55); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); animation: velo-entra .28s ease-out both; }
+.claro .velo { background: rgba(0,8,43,.42); }
+.marco { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top, 0px); bottom: env(safe-area-inset-bottom, 0px); }
+/* la ventana mide 350 × 698 pt, como en el MVP; su centro va al centro de la pantalla y se escala desde ahí para caber en cada
+   teléfono (centrada aunque antes de escalar no quepa: si no, en pantallas bajas queda corrida hacia abajo) */
+.rs { position: absolute; left: 50%; top: 50%; width: 350px; height: 698px; margin: -349px 0 0 -175px; border-radius: 36px; overflow: hidden; box-shadow: 0 30px 70px rgba(4,14,36,.45); transform-origin: 50% 50%; animation: ventana-entra .32s cubic-bezier(0,0,.2,1) both; }
+.rs button { font-family: inherit; }
+/* cada slide lleva el color de la ventana (así el revisor de accesibilidad de Braze sabe sobre qué fondo va el texto) */
+.rs-slide { background: #05204E; }
+.rs-claro .rs-slide { background: #FFFFFF; }
+/* el arte del slide: una imagen ya armada, hasta el título */
+.arte { position: absolute; left: 0; top: 0; width: 350px; height: auto; display: block; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+@keyframes velo-entra { from { opacity: 0; } }
+@keyframes ventana-entra { from { opacity: 0; translate: 0 16px; } }
+@media (prefers-reduced-motion: reduce) { .velo, .rs { animation: none; } }
+/* vista previa en el navegador (sin Braze): lo que haría la app */
+.aviso { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); translate: -50% 0; padding: 10px 16px; border-radius: 14px; background: #06325A; color: #FFFFFF; font: 700 15px 'Neue Montreal', system-ui, sans-serif; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.aviso.on { opacity: 1; }
+
+/* ---- textos, puntos y botones (de app.css del MVP) ---- */
+.rs { background: #05204E !important; color: #FFFFFF !important; outline: 1px solid rgba(255,255,255,.1) !important; outline-offset: -1px; }
+.rs.rs-claro { background: #FFFFFF !important; color: #00516D !important; outline: 0 !important; }
+.rs-cielo { position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(1.5px 1.5px at 12% 8%, rgba(255,255,255,.9), transparent 2px), radial-gradient(1px 1px at 28% 20%, rgba(255,255,255,.7), transparent 2px),
+    radial-gradient(1.5px 1.5px at 84% 6%, rgba(255,255,255,.85), transparent 2px), radial-gradient(1px 1px at 92% 30%, rgba(255,255,255,.6), transparent 2px),
+    radial-gradient(1px 1px at 6% 40%, rgba(255,255,255,.6), transparent 2px), radial-gradient(1.5px 1.5px at 64% 4%, rgba(255,255,255,.7), transparent 2px),
+    linear-gradient(180deg, #123A78 0%, #0A2A60 40%, #05204E 66%); }
+.rs-claro .rs-cielo { background: linear-gradient(180deg, #CFEAF4 0%, #EAF6FA 40%, #FFFFFF 62%); }
+.rs-capa { position: absolute; inset: 0; }
+.rs-pista { position: absolute; left: 0; top: 0; bottom: 0; width: max-content; display: flex; touch-action: pan-y; cursor: grab; will-change: transform; }
+.rs-pista:active { cursor: grabbing; }
+.rs-slide { position: relative; flex: none; width: 350px; height: 100%; overflow: hidden; }
+.rs-vis { position: absolute; inset: 0; font-family: 'Neue Montreal', Mulish, system-ui, sans-serif; }
+.rs-vis img { position: absolute; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.rs-vis > * { position: absolute; }
+.rs-chispa { fill: #F5DB78; }
+.rs-claro .rs-chispa { fill: #F0B93A; }
+.rs-vis .rs-suave { fill: #FFF3C4; }
+
+/* 0 · el pesebre vacío bajo la estrella de Belén, a todo lo ancho; se funde con la ventana bajo el título */
+.rs-pesebre-img { left: 0; top: 0; width: 350px; height: 525px; object-fit: cover; transform-origin: 50% 12%; } /* al entrar se acerca hacia la estrella */
+.rs-pesebre-luz { left: 104px; top: -8px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,170,.5) 0%, rgba(255,236,170,0) 66%); }
+.rs-pesebre-velo { left: 0; top: 380px; width: 350px; height: 150px; background: linear-gradient(180deg, rgba(5,32,78,0) 0%, #05204E 70%); }
+.rs-claro .rs-pesebre-velo { top: 370px; height: 160px; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #FFFFFF 62%); }
+
+/* 1 · el camino: el mapa a lo ancho, Teodoro en el día de hoy con su aro dorado, «Hoy» y «Hecho» */
+.rs-mundo { left: 0; top: 0; width: 350px; height: 449px; transform-origin: 50% 0; } /* al entrar sube por el camino hasta hoy */
+.rs-mundo > * { position: absolute; }
+.rs-mapa { left: 0; top: 0; width: 350px; height: 449px; object-fit: cover; }
+.rs-mapa-velo { left: 0; top: 350px; width: 350px; height: 100px; background: linear-gradient(180deg, rgba(5,32,78,0) 0%, #05204E 92%); }
+.rs-claro .rs-mapa-velo { background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #FFFFFF 92%); }
+.rs-aro { left: 92px; top: 180px; width: 104px; height: 104px; box-sizing: border-box; border-radius: 50%; border: 2px solid rgba(245,219,120,.75); box-shadow: 0 0 0 10px rgba(245,219,120,.14); }
+.rs-claro .rs-aro { border-color: rgba(232,184,64,.95); box-shadow: 0 0 0 10px rgba(245,219,120,.3); }
+.rs-teo-hoy { left: 117px; top: 165px; width: 54px; height: 93px; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(0,6,30,.35)); }
+.rs-claro .rs-teo-hoy { filter: drop-shadow(0 6px 8px rgba(8,93,111,.3)); }
+.rs-mundo .teo-anim { filter: drop-shadow(0 6px 8px rgba(0,6,30,.35)); } /* el Teodoro que salta en el día de hoy */
+.rs-claro .rs-mundo .teo-anim { filter: drop-shadow(0 6px 8px rgba(8,93,111,.3)); }
+.rs-pill { height: 24px; border-radius: 12px; transform-origin: 0 50%; display: flex; align-items: center; font-size: 12px; font-weight: 700; box-shadow: 0 6px 14px rgba(0,6,30,.4); }
+.rs-claro .rs-pill { box-shadow: 0 6px 14px rgba(0,40,70,.25); }
+.rs-hoy { left: 194px; top: 220px; padding: 0 10px 0 8px; gap: 5px; background: #F5DB78; color: #06325A; }
+.rs-hoy i { width: 6px; height: 6px; border-radius: 50%; background: #06325A; }
+.rs-hecho { left: 238px; top: 321px; padding: 0 10px 0 7px; gap: 4px; background: #1F7F95; color: #FFFFFF; }
+
+/* 2 · lo que mira y juega: un cuento, el nacimiento de Jesús (Teodoro salta) y una trivia; detrás de cada una, su mazo
+   (mismo giro, 8 px más angosto por lado y asoma 20 px) */
+.rs-aprende { background: radial-gradient(70% 40% at 50% 32%, rgba(245,219,120,.16), rgba(245,219,120,0) 70%); }
+.rs-claro .rs-aprende { background: radial-gradient(70% 40% at 50% 32%, rgba(245,219,120,.28), rgba(245,219,120,0) 70%); }
+.rs-luz { left: 15px; top: 44px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(245,219,120,.26) 0%, rgba(245,219,120,0) 68%); }
+.rs-claro .rs-luz { background: radial-gradient(circle, rgba(255,226,140,.55) 0%, rgba(255,226,140,0) 68%); }
+.rs-mazo { box-sizing: border-box; background: #1C4A86; border: 2px solid rgba(255,255,255,.22); opacity: .9; }
+.rs-claro .rs-mazo { background: #FFFFFF; border-color: #D7E9EF; opacity: .85; }
+.rs-mazo.rs-izq, .rs-mazo.rs-der { top: 153px; width: 120px; height: 188px; border-radius: 16px; }
+.rs-mazo.rs-izq { left: 22px; transform: rotate(-9deg) translateY(-20px); }
+.rs-mazo.rs-der { left: 208px; transform: rotate(9deg) translateY(-20px); }
+.rs-mazo.rs-centro { left: 97px; top: 148px; width: 156px; height: 238px; border-radius: 20px; transform: translateY(-20px); }
+.rs-card { box-sizing: border-box; overflow: hidden; border: 2px solid rgba(255,255,255,.3); }
+.rs-claro .rs-card { border: 3px solid #FFFFFF; }
+.rs-card.rs-izq, .rs-card.rs-der { top: 153px; width: 136px; height: 188px; border-radius: 18px; box-shadow: 0 18px 34px rgba(0,6,30,.55); }
+.rs-claro .rs-card.rs-izq, .rs-claro .rs-card.rs-der { box-shadow: 0 16px 30px rgba(0,60,90,.25); }
+.rs-card.rs-izq { left: 14px; transform: rotate(-9deg); }
+.rs-card.rs-der { left: 200px; transform: rotate(9deg); }
+.rs-card.rs-centro { left: 89px; top: 148px; width: 172px; height: 238px; border-radius: 22px; box-shadow: 0 26px 50px rgba(0,6,30,.6); }
+.rs-claro .rs-card.rs-centro { box-shadow: 0 24px 44px rgba(0,60,90,.3); }
+.rs-card > * { position: absolute; }
+.rs-claro .rs-cuento { background: linear-gradient(180deg, #8FD3EE 0%, #CFEFFA 55%, #FFF3CF 100%); }
+.rs-card-fondo { left: 0; top: 0; width: 136px; height: 188px; object-fit: cover; object-position: 30% 40%; }
+.rs-oveja { left: -2px; top: 34px; width: 136px; height: 136px; object-fit: contain; }
+.rs-trivia { background: linear-gradient(160deg, #3CC0D4 0%, #1F8FA8 50%, #0E5E75 100%); }
+.rs-trivia-luz { left: 18px; top: 22px; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(255,240,180,.55) 0%, rgba(255,240,180,0) 70%); }
+.rs-sorpresa { left: 24px; top: 26px; width: 88px; height: 88px; object-fit: contain; transform: rotate(8deg); }
+.rs-nacimiento { left: -150px; top: -50px; width: 323px; height: 430px; object-fit: cover; }
+.rs-card-velo { left: 0; right: 0; bottom: 0; height: 70px; background: linear-gradient(180deg, rgba(4,14,36,0) 0%, rgba(4,14,36,.6) 100%); }
+.rs-chip { left: 10px; bottom: 10px; height: 22px; padding: 0 9px 0 7px; border-radius: 11px; background: rgba(4,14,36,.66); display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #FFFFFF; white-space: nowrap; }
+.rs-trivia .rs-chip { left: auto; right: 10px; }
+
+/* 3 · lo que gana: la ruleta grande con su puntero, rayos dorados, confeti y tres premios de verdad */
+.rs-rayos { left: -35px; top: -27px; width: 420px; height: 420px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(5,32,78,0) 30%, #0A2A60 70%), repeating-conic-gradient(from 0deg, rgba(245,219,120,.24) 0deg 9deg, rgba(245,219,120,0) 9deg 20deg); }
+.rs-claro .rs-rayos { background: radial-gradient(circle, rgba(234,246,250,0) 30%, #EAF6FA 70%), repeating-conic-gradient(from 0deg, rgba(240,196,70,.32) 0deg 9deg, rgba(240,196,70,0) 9deg 20deg); }
+.rs-brillo { left: 5px; top: 13px; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgba(245,219,120,.45) 0%, rgba(245,219,120,0) 66%); }
+.rs-claro .rs-brillo { background: radial-gradient(circle, rgba(255,236,170,.9) 0%, rgba(255,236,170,0) 66%); }
+.rs-ruleta { left: 25px; top: 20px; width: 300px; height: 308px; filter: drop-shadow(0 20px 34px rgba(0,6,30,.6)); }
+.rs-claro .rs-ruleta { filter: drop-shadow(0 18px 30px rgba(0,60,90,.35)); }
+.rs-rueda { position: absolute; left: 10px; top: 26px; width: 279px; height: 279px; } /* la rueda de la app con sus 8 casillas; gira sobre su centro */
+.rs-rueda > img { left: 0; top: 0; width: 279px; height: 279px; }
+.rs-puntero { left: 153px; top: 19px; width: 44px; height: 53px; transform-origin: 50% 25%; filter: drop-shadow(0 6px 8px rgba(0,6,30,.5)); }
+.rs-claro .rs-puntero { filter: drop-shadow(0 6px 8px rgba(8,93,111,.3)); }
+.rs-premio { box-sizing: border-box; object-fit: cover; border: 3px solid #FFFFFF; border-radius: 16px; box-shadow: 0 18px 32px rgba(0,6,30,.55); }
+.rs-claro .rs-premio { box-shadow: 0 16px 30px rgba(0,60,90,.3); }
+.rs-premio.rs-izq, .rs-premio.rs-der { top: 262px; width: 120px; height: 115px; }
+.rs-premio.rs-izq { left: 6px; transform: rotate(-8deg); }
+.rs-premio.rs-der { left: 224px; transform: rotate(8deg); }
+.rs-premio.rs-centro { left: 96px; top: 284px; width: 158px; height: 128px; box-shadow: 0 20px 36px rgba(0,6,30,.6); }
+.rs-claro .rs-premio.rs-centro { box-shadow: 0 18px 34px rgba(0,60,90,.35); }
+.rs-confeti { border-radius: 2px; }
+
+.rs-txt { position: absolute; left: 28px; right: 28px; top: 478px; text-align: center; }
+.rs-txt h2 { margin: 0 -12px; font: 700 28px/1.08 'Neue Montreal', Mulish, system-ui, sans-serif; letter-spacing: -.02em; color: #FFFFFF; text-wrap: balance; }
+.rs-txt p { margin: 12px 0 0; font: 400 17px/1.45 'Neue Montreal', Mulish, system-ui, sans-serif; color: rgba(255,255,255,.82); text-wrap: pretty; }
+.rs-claro .rs-txt h2 { color: #00516D; }
+.rs-claro .rs-txt p { color: #3E5F6B; }
+/* cerrar: la misma X de la invitación */
+.rs-cerrar { position: absolute; right: 14px; top: 14px; z-index: 3; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: rgba(4,14,36,.38); display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
+.rs-cerrar::after { content: ''; position: absolute; inset: -4px; } /* 44 de área para el dedo */
+.rs-cerrar:active { transform: scale(.92); }
+.rs-puntos { position: absolute; left: 0; right: 0; top: 590px; display: flex; justify-content: center; gap: 8px; pointer-events: none; }
+.rs-puntos i { width: 7px; height: 7px; border-radius: 4px; background: rgba(255,255,255,.35); transition: width .3s cubic-bezier(.2,.9,.25,1), background-color .3s ease; }
+.rs-puntos i.on { width: 22px; background: #F5DB78; }
+.rs-claro .rs-puntos i { background: rgba(0,81,109,.2); }
+.rs-claro .rs-puntos i.on { background: #0B748A; }
+.rs-cta { position: absolute; left: 24px; right: 24px; bottom: 28px; height: 58px; border: 0; border-radius: 20px; background: #F5DB78; color: #06325A; font: 700 20px 'Neue Montreal', Mulish, system-ui, sans-serif; cursor: pointer; transition: transform 100ms ease-out; touch-action: manipulation; }
+.rs-cta:active { transform: scale(.97); }
+.rs-cerrar:focus-visible, .rs-cta:focus-visible { outline: 3px solid #F5DB78; outline-offset: 3px; }
+.rs-claro .rs-cerrar:focus-visible, .rs-claro .rs-cta:focus-visible { outline-color: #0B748A; }
+@media (prefers-reduced-motion: reduce) { .rs-puntos i { transition: none; } }
+</style>
+</head>
+<body>
+<div class="velo" aria-hidden="true"></div>
+<div class="marco">
+  <div class="rs" role="dialog" aria-modal="true" aria-label="Así es el reto">
+    <div class="rs-capa">
+      <div class="rs-pista" aria-roledescription="carrusel">
+        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="1 de 4">
+          <img class="arte solo-dia" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede9210dd9bb008934fb34/original.jpg" alt="El pesebre vacío bajo la estrella de Belén, esperando al Niño Jesús"><img class="arte solo-noche" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede92188168800892aea7f/original.jpg" alt="El pesebre vacío bajo la estrella de Belén, esperando al Niño Jesús">
+          <div class="rs-txt"><h2>¡Jesús está por llegar!</h2><p>Preparemos juntos el corazón para recibirlo en Navidad.</p></div>
+        </section>
+        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="2 de 4">
+          <img class="arte solo-dia" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede921b88bba0087c3171f/original.jpg" alt="El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado"><img class="arte solo-noche" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede92163b6640089f003a2/original.jpg" alt="El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado">
+          <div class="rs-txt"><h2>¡Rumbo a Belén!</h2><p>26 días, un paso nuevo cada día junto a Teodoro hasta el pesebre.</p></div>
+        </section>
+        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="3 de 4">
+          <img class="arte solo-dia" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede92171e3ef0089b3df7b/original.jpg" alt="Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia"><img class="arte solo-noche" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede921453eff0089eb3d22/original.jpg" alt="Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia">
+          <div class="rs-txt"><h2>Mira, juega, canta… y ama</h2><p>Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.</p></div>
+        </section>
+        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="4 de 4">
+          <img class="arte solo-dia" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede922e6829b0089844014/original.jpg" alt="La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes"><img class="arte solo-noche" src="https://braze-images.com/appboy/communication/assets/image_assets/images/6aede9221031c500873d1799/original.jpg" alt="La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes">
+          <div class="rs-txt"><h2>¡Gira la ruleta y gana!</h2><p>Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.</p></div>
+        </section>
+      </div>
+      <button type="button" class="rs-cerrar" aria-label="Cerrar"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="rs-puntos" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <button type="button" class="rs-cta">Siguiente</button>
+    </div>
+  </div>
+</div>
+<div class="aviso" role="status"></div>
+<script>
+(function () {
+  // «¡Vamos!» y cerrar llevan a «¡Ya estás dentro!» en la app
+  var DEEP_LINK = "theo://adviento/ya-estas-dentro";
+  var caja = document.querySelector('.rs'), oscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches, W = 350;
+  if (!oscuro) { caja.classList.add('rs-claro'); document.body.classList.add('claro'); }
+  // solo el arte del tema
+  [].forEach.call(document.querySelectorAll(oscuro ? '.solo-dia' : '.solo-noche'), function (e) { e.remove(); });
+
+  // la ventana se ajusta al teléfono (16 pt de aire por lado, hasta 1,2×)
+  var marco = document.querySelector('.marco');
+  function ajustar() { var s = Math.min((marco.clientWidth - 32) / 350, (marco.clientHeight - 32) / 698, 1.2); caja.style.transform = 'scale(' + s + ')'; }
+  ajustar(); window.addEventListener('resize', ajustar);
+
+  // salir: Botón 1 «¡Vamos!», Botón 2 cerrar (para ver los clics en Braze); el deep link lo abre la app y cierra el mensaje sola
+  var yendo = false;
+  function salir(boton) {
+    if (yendo) return; yendo = true;
+    if (window.brazeBridge) {
+      brazeBridge.logClick(boton === 'vamos' ? '0' : '1');
+      if (DEEP_LINK) window.location.href = DEEP_LINK; else brazeBridge.closeMessage();
+      return;
+    }
+    var a = document.querySelector('.aviso'); a.textContent = 'En la app: ¡Ya estás dentro!'; a.classList.add('on');
+    setTimeout(function () { a.classList.remove('on'); yendo = false; ir(0); }, 1800);
+  }
+
+  var pista = caja.querySelector('.rs-pista'), slides = [].slice.call(caja.querySelectorAll('.rs-slide')), puntos = [].slice.call(caja.querySelectorAll('.rs-puntos i')), cta = caja.querySelector('.rs-cta'), N = slides.length;
+  // la primera vez que se ve un slide, su arte entra suave
+  var vistos = [];
+  function estrenar(n) {
+    if (vistos[n] || quieto) return; vistos[n] = true;
+    var a = slides[n].querySelector('.arte');
+    if (a && a.animate) a.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 520, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+  }
+  // pasar de slide: sigue al dedo 1:1, se resiste en los bordes y al soltar decide por la velocidad o por cuánto se corrió
+  var i = 0, x = 0;
+  function poner(v, ms) { x = v; pista.style.transition = ms ? 'transform ' + ms + 'ms cubic-bezier(.2,.9,.25,1)' : 'none'; pista.style.transform = 'translateX(' + v + 'px)'; }
+  function pintar(anim) {
+    if (quieto) { poner(-i * W, 0); if (anim && slides[i].animate) slides[i].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' }); }
+    else poner(-i * W, anim ? 380 : 0);
+    slides.forEach(function (sl, n) { sl.inert = n !== i; sl.setAttribute('aria-hidden', String(n !== i)); });
+    puntos.forEach(function (p, n) { p.classList.toggle('on', n === i); });
+    cta.textContent = i < N - 1 ? 'Siguiente' : '¡Vamos!';
+    estrenar(i);
+  }
+  function ir(n) { i = Math.max(0, Math.min(N - 1, n)); pintar(true); }
+  cta.addEventListener('click', function () { if (i < N - 1) ir(i + 1); else salir('vamos'); });
+  caja.querySelector('.rs-cerrar').addEventListener('click', function () { salir('cerrar'); });
+  marco.addEventListener('click', function (e) { if (e.target === marco) salir('cerrar'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') ir(i + 1); if (e.key === 'ArrowLeft') ir(i - 1); if (e.key === 'Escape') salir('cerrar'); });
+  var goma = function (d) { var c = .55; return (d * W * c) / (W + c * Math.abs(d)); };
+  var g = null;
+  pista.addEventListener('pointerdown', function (e) {
+    var vista = new DOMMatrix(getComputedStyle(pista).transform).m41;
+    g = { x0: e.clientX, y0: e.clientY, desde: vista, k: pista.getBoundingClientRect().width / pista.offsetWidth || 1, h: [[performance.now(), vista]], activo: false };
+    poner(vista, 0); pista.setPointerCapture(e.pointerId);
+  });
+  pista.addEventListener('pointermove', function (e) {
+    if (!g) return;
+    var dx = (e.clientX - g.x0) / g.k;
+    if (!g.activo) { if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - g.y0)) return; g.activo = true; }
+    var v = g.desde + dx, min = -(N - 1) * W;
+    if (v > 0) v = goma(v); else if (v < min) v = min + goma(v - min);
+    poner(v, 0); g.h.push([performance.now(), v]); if (g.h.length > 5) g.h.shift();
+  });
+  function soltar() {
+    if (!g) return;
+    var h = g.h; g = null;
+    var vel = h.length > 1 ? (h[h.length - 1][1] - h[0][1]) / Math.max(1, h[h.length - 1][0] - h[0][0]) * 1000 : 0;
+    var corrido = x + i * W;
+    ir(Math.abs(vel) > 300 ? i + (vel < 0 ? 1 : -1) : corrido < -W / 4 ? i + 1 : corrido > W / 4 ? i - 1 : i);
+  }
+  pista.addEventListener('pointerup', soltar); pista.addEventListener('pointercancel', soltar);
+  pintar(false);
+})();
+</script>
+</body>
+</html>

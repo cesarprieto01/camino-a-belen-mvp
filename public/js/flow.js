@@ -112,9 +112,10 @@ export function cardState() {
   if (act == null && RULES.sorpresa[h] && isDone(h) && S.sorpresas[h] !== 'hecha') return { key: 3, sorpresa: true };
   return { key: 3, done: act == null };
 }
-/** Inscribirse antes del 29: el botón se vuelve ✓ «¡Listo!» y se abre «¡Ya estás dentro!» (flujo 1 del pre registro). */
-/** from: desde dónde se une (hoy o teodoro); «¡Ya estás dentro!» vuelve allá. Con los slides prendidos salen antes:
- *  «aqui» los muestra en la misma ventana (la invitación); si no, se abren como pop-up sobre la pantalla de donde se unió. */
+/** Inscribirse antes del 29: el botón se vuelve ✓ «¡Listo!», salen los slides del reto y su «¡Vamos!» abre «¡Ya estás dentro!»
+ *  (flujo 1 del pre registro; en la app los slides son un in-app de Braze, ver braze/slides-reto/).
+ *  from: desde dónde se une (hoy o teodoro); «¡Ya estás dentro!» vuelve allá. «aqui» muestra los slides en la misma ventana
+ *  (la invitación); si no, se abren como pop-up sobre la pantalla de donde se unió. */
 export function inscribir(btn, from = 'hoy', aqui = null) {
   if (S.inscrito) return go('listo', {}, 'push');
   S.inscrito = true; save();
@@ -125,7 +126,7 @@ export function inscribir(btn, from = 'hoy', aqui = null) {
     btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center'; btn.style.gap = '8px';
     btn.style.pointerEvents = 'none'; animate(btn, 'a-pop');
   }
-  setTimeout(() => !S.slidesReto ? go('listo', { nueva: true, from }, 'fade') : aqui ? aqui() : go('retoSlides', { from }, 'modal'), aqui ? 600 : 750);
+  setTimeout(() => aqui ? aqui() : go('retoSlides', { from }, 'modal'), aqui ? 600 : 750);
 }
 /** Unirse al camino cuando ya empezó (una sola puerta: Hoy, Teodoro y Mundos). */
 export function unirse(from) {
@@ -560,7 +561,7 @@ register('hoy', {
       on(root, root.querySelector('a[aria-label^="Mundos"]'), () => go('mundos', {}, 'push'));
       vidrioPendiente(root, p);
       if (!S.inscrito) vidrioConDedo(root, 'hoy');
-      if (!S.inscrito && !S.teaserVisto) { S.teaserVisto = true; save(); await wait(900); if (layer.isConnected) go('teaser', {}, 'modal'); }
+      // al entrar de cero ya no se abre nada solo: la invitación sale al tocar el póster o la card, y los slides, al unirse
       return;
     }
 
@@ -792,8 +793,8 @@ register('teaser', {
     hero?.classList.add('a-bob');
   },
 });
-// Slides que cuentan de qué trata el reto, al inscribirse y antes de «¡Ya estás dentro!» (pedido de Rodrigo para una versión posterior;
-// mientras tanto lo envía Braze). Se prenden en el panel › Avanzado › «Slides del reto». Usan la misma ventana que la invitación.
+// Slides que cuentan de qué trata el reto: salen al unirse y su «¡Vamos!» (o cerrar) lleva a «¡Ya estás dentro!». En la app los
+// envía Braze como in-app de código, disparado al unirse (braze/slides-reto/: mismo diseño y textos). Usan la misma ventana que la invitación.
 // Diseño aprobado en el lienzo «Slides del reto · Adviento» (dirección A, claro y oscuro): el pesebre vacío bajo la estrella (A0),
 // el mapa con Teodoro en el día de hoy, lo que mira y juega (un cuento, el nacimiento de Jesús y una trivia, cada uno con su mazo
 // detrás) y la ruleta con premios de verdad.

@@ -66,8 +66,7 @@ const day = (hoy, done, extra = {}) => () => { reset({ hoy, inscrito: true, teas
 
 // Recorridos: uno por cada caso del lienzo. «covers» = pantallas del lienzo que deja ver.
 const REC = [
-  { sec: 1, t: 'Sin inscribirse', mira: 'Inicio con vidrio empañado → teaser → «Únete al reto» → «¡Ya estás dentro!» → el vidrio se limpia', run: () => { reset({ hoy: -1, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-antes-d', 'P-Teaser-a', 'P-Listo-a'] },
-  { sec: 1, t: 'Slides del reto (versión posterior)', mira: 'Prende los slides y deja la app sin inscribirse: «Únete al reto» → 4 slides → «¡Ya estás dentro!»', run: () => { reset({ hoy: -1, inscrito: false, teaserVisto: false, slidesReto: true }); S.completos = {}; }, go: 'hoy', covers: [] },
+  { sec: 1, t: 'Sin inscribirse', mira: 'Inicio con vidrio empañado (no se abre nada solo) → «Únete al reto» → 4 slides → «¡Vamos!» → «¡Ya estás dentro!» → el vidrio se limpia', run: () => { reset({ hoy: -1, inscrito: false, teaserVisto: false }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-antes-d', 'P-Teaser-a', 'P-Listo-a'] },
   { sec: 1, t: 'Ya inscrito', mira: 'Teodoro de espaldas mirando el pesebre · «Saber más» abre los Mundos con la cuenta regresiva', run: () => { reset({ hoy: -1, inscrito: true }); S.completos = {}; }, go: 'hoy', covers: ['P-Hoy-despues-d', 'V2-Invitacion-claro'] },
   { sec: 1, t: 'Tab Teodoro antes del 29', mira: 'Ícono de Adviento junto a Teodoro, sin inscribirse', run: () => { reset({ hoy: -1, inscrito: false, teaserVisto: true }); S.completos = {}; }, go: 'teodoro', covers: ['V2-Pre-Teodoro-claro'] },
   { sec: 1, t: 'El intro (28 de noviembre)', mira: 'Un día antes del día 1: el mapa ya se ve y Teodoro espera en el intro (la casa) · video y trivia de presentación con sus 3 estrellas · al día siguiente camina al día 1', run: () => { reset({ hoy: 0, inscrito: true, teaserVisto: true }); S.completos = {}; }, go: 'mapa', covers: [] },
@@ -336,8 +335,7 @@ function render() {
   } else {
     const mus = S.musicaMapa === 'original' ? 'original' : 'juegos';
     body = `${grupo('Variantes',
-      fila('Slides del reto', sw('slides', S.slidesReto, 'Slides del reto'), 'Versión posterior · hoy lo envía Braze')
-      + `<div class="p-row p-stack"><span class="p-row-t">Canción del mapa</span><div class="p-radio" role="radiogroup" aria-label="Canción del mapa">${MUSICA_MAPA.map(([v, l, d]) => `<button role="radio" aria-checked="${mus === v}" data-musica="${v}"><span><b>${l}</b><small>${d}</small></span>${svg(ICON.ok, 18)}</button>`).join('')}</div></div>`)}
+      `<div class="p-row p-stack"><span class="p-row-t">Canción del mapa</span><div class="p-radio" role="radiogroup" aria-label="Canción del mapa">${MUSICA_MAPA.map(([v, l, d]) => `<button role="radio" aria-checked="${mus === v}" data-musica="${v}"><span><b>${l}</b><small>${d}</small></span>${svg(ICON.ok, 18)}</button>`).join('')}</div></div>`)}
     ${grupo('Ruleta',
       `<div class="p-row p-stack"><span class="p-row-t">Qué sale al girar</span><div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div></div>`
       + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
@@ -381,7 +379,6 @@ panel.addEventListener('click', e => {
   if (t.dataset.tema) { S.tema = t.dataset.tema; save(); if (cur?.name === 'estatica') go('hoy', {}, 'fade'); else go(cur?.name || 'hoy', cur?.params || {}, 'fade', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   // interruptores (sí/no): cambian al tocar
   if (t.dataset.sw === 'ins') { S.inscrito = !S.inscrito; save(); go('hoy', {}, 'fade'); return; }
-  if (t.dataset.sw === 'slides') { S.slidesReto = !S.slidesReto; save(); nota(S.slidesReto ? 'Slides del reto prendidos' : 'Slides del reto apagados', S.slidesReto ? 'Salen al tocar «Únete al reto»' : ''); return; }
   if (t.dataset.sw === 'isla') { S.isla = S.isla === false; save(); return; }
   if (t.dataset.sw === 'zonas') { S.zonas = !S.zonas; save(); return; }
   if (t.dataset.musica) { S.musicaMapa = t.dataset.musica; save(); musicaPara(); render(); const [, l, d] = MUSICA_MAPA.find(([v]) => v === S.musicaMapa); nota(`Canción del mapa: ${l.toLowerCase()}`, d); return; }
