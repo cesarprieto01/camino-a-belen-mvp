@@ -2420,7 +2420,7 @@
         "id": "antes-dentro",
         "nombre": "Antes del 29 · ya dentro",
         "cuando": "Antes del 29, ya unidos",
-        "visual": "Igual, con la insignia «✓ Ya estás dentro» (26 pt, radio 13, #1F7F95, texto blanco 800 12 pt) en y 158 y el botón «Invitar amigos». Al tocarla: «¡Ya estás dentro!».",
+        "visual": "Igual, con el botón «Invitar amigos». Al tocar la isla: se hunde y rebota (320 ms), brilla dorado (sube a resplandor 12 pt rgba(255,214,90,.95) + 26 pt blanco en 0,4 s y se queda suave en 9 pt + 20 pt) y entra la insignia «✓ Ya estás dentro» (26 pt, radio 13, #1F7F95, texto blanco 800 12 pt, en y 158; 320 ms con rebote). A los 5 s la insignia se va (300 ms) y el brillo se apaga (5,4 s en total). Otro toque reinicia los 5 s.",
         "assets": [],
         "lienzo": [
           "V2-02-Mundos-pre-claro",
@@ -2432,7 +2432,7 @@
         "id": "recien-unida",
         "nombre": "Recién unida (resaltada)",
         "cuando": "Al llegar desde «¡Ya estás dentro!» › «Ver mi mundo»",
-        "visual": "A los 350 ms late (escala 1,04, 700 ms), brilla dorado (resplandor 12 pt rgba(255,214,90,.95) + 26 pt blanco, 1800 ms) y entra la insignia (320 ms).",
+        "visual": "A los 350 ms late (escala 1,04, 700 ms). Antes del 29: brilla y sale «✓ Ya estás dentro» 5 s, igual que al tocarla. Desde el 29: solo brilla dorado (resplandor 12 pt rgba(255,214,90,.95) + 26 pt blanco, 1800 ms).",
         "assets": [],
         "lienzo": [],
         "probar": "«Únete al reto» › «Ver mi mundo»."
