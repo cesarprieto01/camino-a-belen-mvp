@@ -33,6 +33,8 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   js/teo-anim.js   Teodoro animado (Lottie): camina en el mapa, salta donde celebra y en la trivia cambia de pose con transiciones
   js/assets.js     índice de imágenes del lienzo (código → archivo)
   js/app.js        SOLO PROTOTIPO: arranque y panel de controles del equipo
+  js/dev*.js       SOLO PROTOTIPO: el modo developer (inspector tipo Figma y descargas para Xcode)
+  dev/             SOLO PROTOTIPO: catálogo de assets, componentes y estados, y los PNG de Drive para el modo developer
   screens/         las pantallas del lienzo de diseño, ya convertidas a HTML; la app las usa de base y las completa con JS
   assets/          las imágenes que usa la app
     mapa/          el paisaje del mapa en 6 tiras de 600 px (día y noche) y las dos ruletas del camino
@@ -58,6 +60,19 @@ Todo lo que está en `public/` lo usa la app o el panel del prototipo (`raw.html
 ### El mapa
 
 El mapa es el «Mapa Diozen» del Figma *Theo · Mapa completo (oscuro)*: el paisaje (cielo, sendero, casas, árboles) es una imagen de fondo en `assets/mapa/`, y encima se pintan en vivo los 26 días, Teodoro, las ruletas y sus etiquetas, en las mismas posiciones del Figma (`CENTRO` y `RULETAS` en `js/map.js`). Los días que aún no se abren llevan candado. Si cambia el dibujo del paisaje en el Figma, hay que volver a exportar las tiras; si solo cambian los días o los textos, basta con el código. `tools/mapa-medidas.mjs` compara caja por caja el mapa del MVP con el Figma.
+
+### Modo developer (para quien construye la app)
+
+Como el modo Dev de Figma, sobre el prototipo: **⇧D** o el botón `</>` del panel (en computador; en el celular no aparece). Solo muestra lo de Adviento: la barra de pestañas, la barra de estado del iPhone, lo de Theo en Hoy y el tab Teodoro, y los mundos que no son Adviento no existen para el modo.
+
+- **Arriba, una fila:** el día (‹ Día 9 ›), día/noche, inspeccionar (la flecha; apagada, se usa la app), copiar enlace y salir.
+- **Sobre el teléfono:** al pasar el cursor se ve cada componente con su tamaño en pt; el clic lo elige (la opción de respuesta, el botón de música, el día del mapa) y otro clic o doble clic entra a lo de adentro. Con algo elegido, pasar sobre otra cosa muestra la distancia en rojo. Clic derecho: «Capas aquí». Teclado: Esc soltar · Tab el siguiente · T tocar (el toque llega a la app) · I / U inspeccionar o usar la app.
+- **Sin nada elegido:** «Elige algo en el teléfono», «Descargar pantalla», los componentes de la pantalla con su número de estados (la lista de trabajo), sus imágenes y animaciones (las Lottie se ven animadas) y, plegadas, las capas.
+- **Con algo elegido, en este orden:** qué es (nombre del componente, tipo y tamaño) → un solo botón principal (descargar la imagen o la animación, o copiar el SF Symbol) → sus **estados** en una fila (al tocar uno: cuándo pasa, qué cambia, sus assets y su pantalla en el diseño) → medidas para SwiftUI (tamaño, al contenedor, separación, esquinas), texto (contenido, fuente PostScript, línea, Dynamic Type, líneas, color), estilo y la etiqueta de VoiceOver → el código SwiftUI, plegado. Cada valor se copia al tocarlo, con punto decimal.
+- **Cuándo sale cada animación:** al elegir una animación de Teodoro, debajo de «Descargar animación» está su lógica: qué la dispara y qué clips se encadenan (en la trivia: al abrir la pregunta, si fallan, tras 2 vueltas del farol, si aciertan, «Siguiente»…), con el clip elegido resaltado y cada clip descargable; las reglas comunes (salidas del bucle, respingo, movimiento reducido) van plegadas. La misma lógica viaja en el `manifest.json` del paquete. Fuente: `js/dev-logica.js` (se mantiene a mano junto a `teo-anim.js`, `games.js` y `map.js`).
+- **Íconos de interfaz:** no son assets; el modo dice qué SF Symbol usar (`speaker.slash.fill`, `xmark`…) con su tamaño, peso y color.
+- **Descargas:** «Descargar imagen» baja el `.imageset` para Xcode (@2x y @3x y, si existe, la variante de noche como apariencia oscura); «Descargar animación» baja el JSON para lottie-ios (en la trivia, también las 8); «Descargar pantalla» baja un .zip con `Assets.xcassets/`, `Lottie/` y `manifest.json` (cada capa con posición, tamaño, colores, fuente, SF Symbol y su componente, y los componentes de la pantalla con todos sus estados).
+- **De dónde sale cada cosa:** `public/dev/assets.json` (nombre igual al de Drive, descripción, px, pt, ruta en «01 PARA LA APP», si es de Adviento), `public/dev/app/` (los PNG @2x/@3x de Drive: la descarga es la misma calidad de la entrega), `public/dev/componentes.json` (componentes y estados) y `public/dev/fuera.json` (zonas que no son de Adviento). El código está en `js/dev.js` (sobre el teléfono), `js/dev-motor.js` (medidas, colores, descargas y el .zip), `js/dev-panel.js` (el inspector) y `js/dev-logica.js` (cuándo sale cada animación).
 
 ### Teodoro animado
 
