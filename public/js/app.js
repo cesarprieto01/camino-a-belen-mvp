@@ -6,6 +6,8 @@ import { musicaPara } from './musica.js';
 import './flow.js';
 import './map.js';
 import './games.js';
+import { devActivo, alCambiar, activar as modoDev, usandoApp, usar as usarApp } from './dev.js';
+import { pintarDev } from './dev-panel.js';
 
 const NAMES = {
   hoy: 'Hoy', teaser: 'Teaser', retoSlides: 'Slides del reto', listo: '¡Ya estás dentro!', invitacion: 'Invitación',
@@ -218,6 +220,8 @@ const ICON = {
   chev: '<path d="M9 6l6 6-6 6"/>',
   atras: '<path d="M15 6l-6 6 6 6"/>',
   ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  dev: '<path d="M8.5 7.5L4 12l4.5 4.5M15.5 7.5L20 12l-4.5 4.5M13.5 5l-3 14"/>',
+  cursor: '<path d="M5 3.5l13 7-5.6 1.6L10 18z"/><path d="M12.4 12.1l5 5"/>',
 };
 // acceso rápido: Estado y Ajustes. Recorridos, Pantallas y Notas se usan poco: van discretas al pie y se vuelve con «‹»
 const PRIMARIAS = [['estado', 'Estado'], ['aj', 'Ajustes']];
@@ -229,7 +233,8 @@ let ultima = 'estado'; // la última pestaña principal, a la que vuelve «‹»
 let filtro = 'todas';
 let abiertas = null; // secciones plegables abiertas; la primera vez, la de la pantalla donde se está
 try { tab = localStorage.getItem('cab-tab3') || 'estado'; abiertas = JSON.parse(localStorage.getItem('cab-abiertas') || 'null'); } catch { /* sin storage */ }
-if (![...PRIMARIAS, ...EQUIPO].some(([k]) => k === tab)) tab = 'estado';
+if (![...PRIMARIAS, ...EQUIPO, ['insp']].some(([k]) => k === tab)) tab = 'estado';
+if (tab === 'insp' && !devActivo()) tab = 'estado';
 if (PRIMARIAS.some(([k]) => k === tab)) ultima = tab;
 btn.onclick = () => { const o = panel.classList.toggle('open'); btn.setAttribute('aria-expanded', o); document.body.classList.toggle('panel-open', o); if (o) render(); };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -258,9 +263,14 @@ function render() {
   const dayTitle = S.hoy < 0 ? 'Antes del 28 de noviembre' : S.hoy === 0 ? '28 de noviembre' : S.hoy > GRACIA_FIN ? 'Camino cerrado' : S.hoy >= 27 ? `Gracia · ${cuentaGracia(true)}` : `Día ${S.hoy} de 26`;
   const daySub = S.hoy < 0 ? 'El camino aún no empieza' : S.hoy === 0 ? 'Un día antes · se abre el intro' : S.hoy > GRACIA_FIN ? 'Desde el 7 de enero' : S.hoy >= 27 ? (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })() : (() => { const f = dateOf(S.hoy); return `${f.dow.toLowerCase()} ${f.dd} de ${f.mes.toLowerCase()}`; })();
   const tema = `<span class="seg p-tema" role="group" aria-label="Tema">${[['claro', 'Día', ICON.sol], ['oscuro', 'Noche', ICON.luna]].map(([v, l, d]) => `<button data-tema="${v}" aria-pressed="${S.tema === v}" aria-label="${l}" title="${l}">${svg(d, 18)}</button>`).join('')}</span>`;
-  const head = `<header class="p-head">
-    <div class="p-title"><h1>Adviento</h1><span class="p-tag">MVP</span><span class="p-tools">${tema}<button class="p-icon" data-act="share" aria-label="Copiar enlace a este estado" title="Copiar enlace a este estado">${svg(ICON.enlace)}</button></span></div>
-    <small class="p-now-screen">Estás en: <b>${esc(name)}</b></small>
+  // modo developer: una sola fila arriba (el día, día/noche, inspeccionar, enlace y salir); lo que importa es lo que se inspecciona
+  const diaCorto = S.hoy < 0 ? 'Antes del 28' : S.hoy === 0 ? '28 nov' : S.hoy > GRACIA_FIN ? 'Recuerdo' : S.hoy >= 27 ? 'Gracia' : `Día ${S.hoy}`;
+  const head = devActivo() ? `<header class="p-head p-head-dev"><div class="p-devbar">
+    <div class="p-dia-mini"><button class="p-arrow" data-act="dayMinus" aria-label="Día anterior" ${S.hoy <= -1 ? 'disabled' : ''}>‹</button><b title="${dayTitle} · ${daySub} · ${progTxt}">${diaCorto}</b><button class="p-arrow" data-act="dayPlus" aria-label="Día siguiente" ${S.hoy > GRACIA_FIN ? 'disabled' : ''}>›</button></div>
+    <span class="p-tools">${tema}<button class="p-icon" data-act="inspeccionar" aria-pressed="${!usandoApp()}" aria-label="Inspeccionar (I)" title="Inspeccionar · I">${svg(ICON.cursor)}</button><button class="p-icon" data-act="share" aria-label="Copiar enlace a este estado" title="Copiar enlace a este estado">${svg(ICON.enlace)}</button><button class="p-icon p-dev" data-act="dev" aria-pressed="true" aria-label="Salir del modo developer (⇧D)" title="Salir del modo developer · ⇧D">${svg(ICON.dev)}</button></span>
+  </div></header>` : `<header class="p-head">
+    <div class="p-title"><h1>Adviento</h1><span class="p-tag">MVP</span><span class="p-tools">${tema}<button class="p-icon p-dev" data-act="dev" aria-pressed="false" aria-label="Modo developer (⇧D)" title="Modo developer · ⇧D">${svg(ICON.dev)}</button><button class="p-icon" data-act="share" aria-label="Copiar enlace a este estado" title="Copiar enlace a este estado">${svg(ICON.enlace)}</button></span></div>
+    ${devActivo() ? '' : `<small class="p-now-screen">Estás en: <b>${esc(name)}</b></small>`}
     <div class="p-day">
       <button class="p-arrow" data-act="dayMinus" aria-label="Día anterior" ${S.hoy <= -1 ? 'disabled' : ''}>‹</button>
       <div><b>${dayTitle}</b><small>${daySub} · ${progTxt}</small></div>
@@ -268,9 +278,10 @@ function render() {
     </div>
     <div class="seg p-prim" role="tablist" aria-label="Panel">${PRIMARIAS.map(([k, l]) => `<button role="tab" id="pt-${k}" aria-controls="pbody" aria-selected="${tab === k}" data-tab="${k}">${svg(ICON[k], 18)}${l}</button>`).join('')}</div>
   </header>`;
-  const equipo = `<nav class="p-foot" aria-label="Para el equipo">${EQUIPO.map(([k, l]) => `<button id="pt-${k}" data-tab="${k}" ${tab === k ? 'aria-current="page"' : ''}>${svg(ICON[k], 16)}<span>${l}</span>${k === 'notas' && S.huecos.length ? `<i class="p-badge" aria-label="${S.huecos.length} huecos">${S.huecos.length}</i>` : ''}</button>`).join('')}</nav>`;
+  const equipo = `<nav class="p-foot ${devActivo() ? 'p-foot2' : ''}" aria-label="Para el equipo">${EQUIPO.filter(([k]) => !devActivo() || k !== 'notas').map(([k, l]) => `<button id="pt-${k}" data-tab="${k}" ${tab === k ? 'aria-current="page"' : ''}>${svg(ICON[k], 16)}<span>${l}</span>${k === 'notas' && S.huecos.length ? `<i class="p-badge" aria-label="${S.huecos.length} huecos">${S.huecos.length}</i>` : ''}</button>`).join('')}</nav>`;
   const enEquipo = EQUIPO.find(([k]) => k === tab);
-  const volver = enEquipo ? `<div class="p-sub"><button class="p-back" data-tab="${ultima}">${svg(ICON.atras, 18)}${PRIMARIAS.find(([k]) => k === ultima)[1]}</button><h2>${enEquipo[1]}</h2></div>` : '';
+  const atras = devActivo() ? ['insp', 'Inspector'] : PRIMARIAS.find(([k]) => k === ultima);
+  const volver = enEquipo ? `<div class="p-sub"><button class="p-back" data-tab="${atras[0]}">${svg(ICON.atras, 18)}${atras[1]}</button><h2>${enEquipo[1]}</h2></div>` : '';
   abiertas ??= [`rec-${sec?.[0] ?? 2}`, `pant-${sec?.[0] ?? 2}`];
   const pct = Math.round(cov.seenN / cov.total * 100);
   const cobertura = link => `<div class="p-cov"><div class="p-cov-top"><b>${cov.seenN} de ${cov.total} pantallas del lienzo vistas</b>${link ? '<button class="p-link" data-tab="pant" data-filtro="faltan">Ver las que faltan</button>' : ''}</div><div class="p-bar"><span style="width:${pct}%"></span></div></div>`;
@@ -343,7 +354,13 @@ function render() {
   }
   const scroll = panel.querySelector('.p-body')?.scrollTop || 0;
   const sameTab = panel.dataset.tab === tab;
-  panel.innerHTML = head + `<div class="p-body" id="pbody" role="tabpanel" aria-labelledby="pt-${tab}">${volver}${body}</div>` + equipo;
+  const insp = devActivo() && tab === 'insp';
+  panel.innerHTML = head + `<div class="p-body ${insp ? 'dv' : ''}" id="pbody" role="tabpanel" aria-labelledby="pt-${tab}">${insp ? '' : volver + body}</div>` + equipo;
+  if (insp) {
+    // el inspector del modo developer: la pantalla (sus assets y capas) o la capa elegida con sus estados
+    const variantes = Object.entries(manifest()).filter(([f]) => cur?.file && logical(f) === logical(cur.file)).sort((x, y) => x[1].dark - y[1].dark);
+    pintarDev(panel.querySelector('#pbody'), { nombre: NAMES[cur?.name] || cur?.name || 'Pantalla', archivo: cur?.name === 'estatica' ? cur.params?.file : cur?.file, lienzo: variantes.map(([f, m]) => [f, `Ver en el lienzo · ${m.dark ? 'noche' : 'día'}`]) });
+  }
   panel.dataset.tab = tab;
   if (sameTab) panel.querySelector('.p-body').scrollTop = scroll;
 }
@@ -373,6 +390,8 @@ panel.addEventListener('click', e => {
   if (t.dataset.go) { go(t.dataset.go, {}, 'fade'); closeMobile(); return; }
   if (t.dataset.file) { go('estatica', { file: t.dataset.file, back: cur?.name !== 'estatica' ? cur?.name : 'hoy', backParams: cur?.params }, 'fade'); closeMobile(); return; }
   const a = t.dataset.act;
+  if (a === 'dev') modoDev();
+  if (a === 'inspeccionar') usarApp(!usandoApp() ? true : false);
   if (a === 'mid') advance(1);
   if (a === 'week') advance(7);
   if (a === 'dayPlus') advance(1);
@@ -428,6 +447,9 @@ const syncIphone = () => {
   document.body.classList.toggle('con-isla', S.isla !== false); document.body.classList.toggle('con-zonas', !!S.zonas);
 };
 let rT; onChange(() => { syncTheme(); syncIphone(); clearTimeout(rT); rT = setTimeout(() => { if (document.activeElement?.id !== 'note' && document.activeElement?.id !== 'nPan') render(); }, 60); });
+
+// el modo developer repinta el panel cuando cambia la capa elegida (o se entra y se sale con la tecla D)
+alCambiar(() => { if (devActivo() && panel.dataset.dev !== '1') tab = 'insp'; if (!devActivo() && tab === 'insp') tab = ultima; panel.dataset.dev = devActivo() ? '1' : ''; render(); });
 
 // ---------- Arranque ----------
 (async () => {

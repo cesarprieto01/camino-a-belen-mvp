@@ -46,6 +46,14 @@ function cargarLib() {
 const texto = nombre => (textos[nombre] ??= fetch(`anim/${nombre}.json`).then(r => r.ok ? r.text() : Promise.reject(new Error(nombre))).catch(e => { delete textos[nombre]; throw e; }));
 /** Baja la librería y la animación antes de usarlas (el paso del mapa no espera). */
 export const precargar = anim => Promise.all([cargarLib(), texto(anim.nombre)]).catch(() => {});
+/** Miniatura de una animación (modo developer): en bucle dentro de «padre», o quieta con movimiento reducido. */
+export async function miniatura(padre, nombre) {
+  try {
+    const [L, t] = await Promise.all([cargarLib(), texto(nombre)]);
+    if (!padre.isConnected) return null;
+    return L.loadAnimation({ container: padre, renderer: 'svg', loop: true, autoplay: !reduced(), animationData: JSON.parse(t), rendererSettings: { preserveAspectRatio: 'xMidYMid meet' } });
+  } catch { return null; }
+}
 
 /** Una caja con Teodoro animado: los pies en (cx, pies) y «alto» lo que mide él de pie. Devuelve { caja, anim } ya pintado, o null.
  *  Sin «autoplay» queda cargada e invisible, lista para mostrarla y darle play. */
@@ -54,6 +62,7 @@ export async function teoAnimado(padre, anim, { cx, pies, alto, loop = true, cla
     const [L, t] = await Promise.all([cargarLib(), texto(anim.nombre)]);
     const k = alto / anim.pie, w = anim.w * k, h = anim.h * k; // por defecto Teodoro va centrado con los pies en el borde de abajo
     const caja = document.createElement('div'); caja.className = `teo-anim ${clase}`.trim(); caja.setAttribute('aria-hidden', 'true');
+    caja.dataset.anim = anim.nombre; // el modo developer lee de aquí qué JSON es
     caja.style.cssText = `left:${cx - (anim.x ?? anim.w / 2) * k}px;top:${pies - (anim.suelo ?? anim.h) * k}px;width:${w}px;height:${h}px;opacity:0`;
     padre.append(caja);
     const a = L.loadAnimation({ container: caja, renderer: 'svg', loop, autoplay, animationData: JSON.parse(t), rendererSettings: { preserveAspectRatio: 'xMidYMax meet' } });
