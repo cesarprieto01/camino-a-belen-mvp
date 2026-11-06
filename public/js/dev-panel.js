@@ -1,5 +1,5 @@
 // Modo developer · el inspector del panel (solo prototipo, solo lo de Adviento).
-// Sin capa elegida: la pantalla, su paquete para Xcode, sus assets y sus capas. Con una capa: arriba qué es y dónde está; luego
+// Sin capa elegida: la pantalla, su paquete (imágenes y animaciones), sus assets y sus capas. Con una capa: arriba qué es y dónde está; luego
 // lo que la define (asset, animación o texto), sus medidas, todos los estados de su componente, sus colores y lo demás plegado.
 // Cada valor se copia con un clic, como valor o como SwiftUI. Nombres y PNG salen de Drive («01 PARA LA APP», copiado en dev/app/);
 // los estados, de dev/componentes.json; lo que no es de Adviento, de dev/fuera.json y del catálogo.
@@ -64,7 +64,7 @@ const lienzoLinks = files => {
 };
 const assetChip = r => /\.json$/.test(r)
   ? `<button class="dv-sasset" data-bajar="${esc(r)}" title="Descargar animación"><span class="dv-mini" data-mini="${esc(r.split('/').pop().replace('.json', ''))}"></span><span>${esc(r.split('/').pop().replace('.json', ''))}</span></button>`
-  : `<button class="dv-sasset" data-xcode="${esc(r)}" title="Descargar imagen">${miniatura(r)}<span>${esc(infoAsset(r).nombre)}</span></button>`;
+  : `<button class="dv-sasset" data-png="${esc(r)}" data-k="3" title="Descargar ${esc(infoAsset(r).nombre)}@3x.png">${miniatura(r)}<span>${esc(infoAsset(r).nombre)}</span></button>`;
 let estadoSel = -1, selAnterior = null;
 function estadosHtml(m) {
   const est = m.c.estados || []; if (est.length < 2) return '';
@@ -128,10 +128,11 @@ function capaHtml(el) {
       <button class="dv-btn main dv-wide" data-bajar="${esc(lot.ruta)}">${ico(I.bajar)}Descargar animación</button><p class="dv-pie">${esc(lot.el.dataset.anim)}.json para lottie-ios${/^teo-trivia-/.test(lot.el.dataset.anim) ? ' · <button class="dv-link" data-trivia8>las 8 de la trivia</button>' : ''}</p>
       ${cuandoSale(lot.el.dataset.anim)}
       ${como ? `<details class="dv-mas"><summary>Cómo se reproduce</summary><p>${esc(como)}</p></details>` : ''}
-      ${quieto ? `<div class="dv-quieto"><h3>Sin animación</h3><div class="dv-fila-asset">${miniatura(quieto.ruta)}<span><b>${esc(infoAsset(quieto.ruta).nombre)}</b><small>Se ve con «Reducir movimiento» y mientras carga la animación. Mismos pies y alto de Teodoro que la animación.</small></span></div><button class="dv-link" data-xcode="${esc(quieto.ruta)}">Descargar imagen</button></div>` : ''}`;
+      ${quieto ? `<div class="dv-quieto"><h3>Sin animación</h3><div class="dv-fila-asset">${miniatura(quieto.ruta)}<span><b>${esc(infoAsset(quieto.ruta).nombre)}</b><small>Se ve con «Reducir movimiento» y mientras carga la animación. Mismos pies y alto de Teodoro que la animación.</small></span></div><button class="dv-link" data-png="${esc(quieto.ruta)}" data-k="3">Descargar imagen</button></div>` : ''}`;
   } else if (img) {
     const noche = parNoche(img.ruta), corto = i.px && i.pt && i.px[0] < i.pt[0] * 3 - 2 ? ` · el original alcanza hasta @${Math.max(1, Math.floor(i.px[0] / i.pt[0]))}x` : '';
-    obra = `<button class="dv-btn main dv-wide" data-xcode="${esc(img.ruta)}">${ico(I.bajar)}Descargar imagen</button><p class="dv-pie">${esc(i.nombre)} · @2x y @3x${noche ? ' · día y noche' : ''}${corto} · <button class="dv-link" data-png="${esc(img.ruta)}" data-k="3">PNG @3x</button></p>`;
+    // un solo archivo: el PNG @3x; @2x y la versión de noche, al lado
+    obra = `<button class="dv-btn main dv-wide" data-png="${esc(img.ruta)}" data-k="3">${ico(I.bajar)}Descargar imagen</button><p class="dv-pie">${esc(i.nombre)}@3x.png${corto} · <button class="dv-link" data-png="${esc(img.ruta)}" data-k="2">@2x</button>${noche ? ` · <button class="dv-link" data-png="${esc(noche)}" data-k="3">versión de noche</button>` : ''}</p>`;
   } else if (sf) {
     obra = `<button class="dv-btn main dv-wide" data-copia="${sf}">${ico(I.copiar)}Copiar «${sf}»</button><p class="dv-pie">SF Symbol · ${pt(fi.h)} pt · ${pesoSF(svgEl)}</p>`;
   } else if (svgEl) {
@@ -139,7 +140,7 @@ function capaHtml(el) {
   } else {
     // un componente que lleva imágenes adentro (el día del mapa con su ícono): lo importante es descargarlas
     const dentro = [...new Map(todas(el).flatMap(h => assetsDe(h)).filter(x => x.tipo !== 'svg' && !x.quieto && deAdviento(x.ruta)).map(x => [x.ruta, x])).values()];
-    if (dentro.length) obra = `${dentro.length === 1 ? `<button class="dv-btn main dv-wide" ${dentro[0].tipo === 'lottie' ? 'data-bajar' : 'data-xcode'}="${esc(dentro[0].ruta)}">${ico(I.bajar)}Descargar ${dentro[0].tipo === 'lottie' ? 'animación' : 'imagen'}</button><p class="dv-pie">${esc(dentro[0].tipo === 'lottie' ? dentro[0].el.dataset.anim : infoAsset(dentro[0].ruta).nombre)} · @2x y @3x</p>` : `<p class="dv-pie dv-pie-top">Lleva ${dentro.length} imágenes</p>`}${dentro.length > 1 ? `<div class="dv-sassets">${dentro.map(x => assetChip(x.ruta)).join('')}</div>` : ''}`;
+    if (dentro.length) obra = `${dentro.length === 1 ? `<button class="dv-btn main dv-wide" ${dentro[0].tipo === 'lottie' ? 'data-bajar' : 'data-png'}="${esc(dentro[0].ruta)}" data-k="3">${ico(I.bajar)}Descargar ${dentro[0].tipo === 'lottie' ? 'animación' : 'imagen'}</button><p class="dv-pie">${dentro[0].tipo === 'lottie' ? `${esc(dentro[0].el.dataset.anim)}.json` : `${esc(infoAsset(dentro[0].ruta).nombre)}@3x.png · <button class="dv-link" data-png="${esc(dentro[0].ruta)}" data-k="2">@2x</button>`}</p>` : `<p class="dv-pie dv-pie-top">Lleva ${dentro.length} imágenes</p>`}${dentro.length > 1 ? `<div class="dv-sassets">${dentro.map(x => assetChip(x.ruta)).join('')}</div>` : ''}`;
   }
   // 2 · medidas para construirla en SwiftUI
   const pc = padre ? cajaPantalla(padre) : null, her = padre ? hijosCapa(padre).filter(h => h !== el).map(h => [h, cajaPantalla(h)]) : [];
@@ -208,7 +209,7 @@ function pantallaHtml(info) {
   compsEls = comps.map(x => x.els[0]);
   return `<p class="dv-guia">${ico(I.cursor, 18)}<span>Elige algo en el teléfono.</span></p>
   <div class="dv-hero dv-hero-p"><div class="dv-ident"><h2>${esc(info.nombre)}</h2><p>${comps.length ? `${comps.length} componentes · ` : ''}${assets.length} ${assets.length === 1 ? 'imagen o animación' : 'imágenes y animaciones'}</p></div></div>
-  ${assets.length ? `<div class="dv-obra"><button class="dv-btn main dv-wide" data-zip>${ico(I.bajar)}Descargar pantalla</button><p class="dv-pie">.zip para Xcode: imágenes @2x y @3x, animaciones y medidas de cada capa</p></div>` : ''}
+  ${assets.length ? `<div class="dv-obra"><button class="dv-btn main dv-wide" data-zip>${ico(I.bajar)}Descargar pantalla</button><p class="dv-pie">.zip con las imágenes (@2x y @3x) y las animaciones</p></div>` : ''}
   ${comps.length ? `<section class="dv-grupo"><h3>Componentes</h3><ul class="dv-comps">${comps.map((x, k) => `<li><button data-comp="${k}"><span>${esc(x.c.nombre)}${x.els.length > 1 ? ` <small>×${x.els.length}</small>` : ''}</span><small>${(x.c.estados || []).length > 1 ? `${x.c.estados.length} estados` : ''}</small></button></li>`).join('')}</ul></section>` : ''}
   ${assets.length ? `<section class="dv-grupo"><h3>Imágenes y animaciones</h3><div class="dv-agrid">${assets.map((a, k) => `<button class="dv-acard" data-ver-asset="${k}" title="${esc(a.nombre)}">${a.tipo === 'lottie' ? `<span class="dv-mini" data-mini="${esc(a.el.dataset.anim)}"></span><i class="dv-badge">Lottie</i>` : miniatura(a.ruta)}<span>${esc(a.nombre)}</span></button>`).join('')}</div></section>` : ''}
   <details class="dv-mas"><summary>Capas</summary><div class="dv-layers">${capasHtml(pantallaActual())}</div></details>
@@ -261,18 +262,8 @@ async function pngDe(r, k, el) {
   const f = el && ficha(el), [w, h] = i.pt || (f ? [f.w, f.h] : [0, 0]);
   const out = await png(r, w, h, k); return { blob: out.blob, nombre: `${i.nombre}@${k}x.png`, corto: out.corto, w: out.w };
 }
-// la variante de noche de una imagen de día (mismo nombre con -oscuro), para el imageset con apariencia oscura
+// la versión de noche de una imagen de día (mismo nombre con -oscuro)
 const parNoche = r => { const i = infoAsset(r); if (!/-claro$/.test(i.nombre)) return null; const n = i.nombre.replace(/-claro$/, '-oscuro'); return Object.keys(CAT || {}).find(k => CAT[k].nombre === n) || null; };
-/** Un imageset de Xcode: @2x y @3x (y de noche si la hay) con su Contents.json */
-async function imagesetDe(r, el) {
-  const noche = parNoche(r), n = noche ? infoAsset(r).nombre.replace(/-claro$/, '') : infoAsset(r).nombre; // con par de noche, un solo imageset con las dos apariencias
-  const archivos = [], images = [{ idiom: 'universal', scale: '1x' }];
-  for (const k of [2, 3]) { const p = await pngDe(r, k, el); const fn = `${n}@${k}x.png`; archivos.push({ nombre: `${n}.imageset/${fn}`, datos: p.blob }); images.push({ filename: fn, idiom: 'universal', scale: `${k}x` }); }
-  if (noche) for (const k of [2, 3]) { const p = await pngDe(noche, k, null); const fn = `${n}-oscuro@${k}x.png`; archivos.push({ nombre: `${n}.imageset/${fn}`, datos: p.blob }); images.push({ appearances: [{ appearance: 'luminosity', value: 'dark' }], filename: fn, idiom: 'universal', scale: `${k}x` }); }
-  archivos.push({ nombre: `${n}.imageset/Contents.json`, datos: JSON.stringify({ images, info: { author: 'xcode', version: 1 } }, null, 2) });
-  return { n, archivos };
-}
-const svgImageset = (n, s) => [{ nombre: `${n}.imageset/${n}.svg`, datos: s }, { nombre: `${n}.imageset/Contents.json`, datos: JSON.stringify({ images: [{ filename: `${n}.svg`, idiom: 'universal' }], info: { author: 'xcode', version: 1 }, properties: { 'preserves-vector-representation': true, 'template-rendering-intent': 'template' } }, null, 2) }];
 
 async function clic(ev, cont, info) {
   const b = ev.target.closest('button'); if (!b || b.disabled) return;
@@ -300,35 +291,25 @@ async function clic(ev, cont, info) {
   const el = elegida();
   if (b.dataset.bajar) return conBoton(b, async () => { const r = b.dataset.bajar; bajar(await traer(r), `${infoAsset(r).nombre}.${ext(r)}`); });
   if (b.dataset.png) return conBoton(b, async () => { const p = await pngDe(b.dataset.png, +b.dataset.k, el); bajar(p.blob, p.nombre); return p.corto ? `Descargado a ${p.w} px` : 'Descargado'; });
-  if (b.dataset.xcode) return conBoton(b, async () => { const { n, archivos } = await imagesetDe(b.dataset.xcode, el); bajar(await zip(archivos), `${n}.imageset.zip`); });
   if (b.dataset.dl === 'svg' && el) return conBoton(b, async () => { const sv = el.matches('svg') ? el : el.querySelector('svg'); bajar(new Blob([svgTexto(sv)], { type: 'image/svg+xml' }), `${slug(nombreDe(el))}.svg`); });
-  if (b.dataset.dl === 'svg-xcode' && el) return conBoton(b, async () => { const n = slug(nombreDe(el)); bajar(await zip(svgImageset(n, svgTexto(el))), `${n}.imageset.zip`); });
   if (b.dataset.dl === 'svg-png' && el) return conBoton(b, async () => { const k = +b.dataset.k, f = ficha(el), u = URL.createObjectURL(new Blob([svgTexto(el)], { type: 'image/svg+xml' })); const out = await png(u, f.w, f.h, k); URL.revokeObjectURL(u); bajar(out.blob, `${slug(nombreDe(el))}@${k}x.png`); });
   if ('trivia8' in b.dataset) return conBoton(b, async () => { const ns = ['mapa', 'farol', 'celebra', 'mapa-a-farol', 'farol-a-mapa', 'mapa-a-celebra', 'farol-a-celebra', 'celebra-a-mapa'].map(x => `teo-trivia-${x}`); bajar(await zip(await Promise.all(ns.map(async n => ({ nombre: `teo-trivia/${n}.json`, datos: await traer(`anim/${n}.json`) })))), 'teo-trivia.zip'); });
   if ('zip' in b.dataset) return conBoton(b, set => paquete(info, set));
 }
 
-// ---------- El paquete de la pantalla ----------
+// ---------- El paquete de la pantalla: imagenes/ (PNG @2x y @3x) y animaciones/ (JSON de Lottie); carpetas sin tilde: se abren bien en cualquier descompresor ----------
 async function paquete(info, avance) {
   const assets = assetsPantalla(), base = 'adviento-' + slug(info.nombre), archivos = [], usados = new Set(), faltan = [];
   const unico = n => { let x = n, k = 2; while (usados.has(x)) x = `${n}-${k++}`; usados.add(x); return x; };
-  const capas = todas().map(el => { const f = ficha(el), m = componenteDe(el); return { nombre: f.nombre, tipo: nombreTipo(f.tipo), x: +f.x.toFixed(1), y: +f.y.toFixed(1), ancho: +f.w.toFixed(1), alto: +f.h.toFixed(1), radio: f.radio || undefined, relleno: f.relleno?.hex, borde: f.borde ? `${f.borde.ancho} ${f.borde.color?.hex}` : undefined, sombra: f.sombra || undefined, texto: f.texto || undefined, fuente: f.fuente ? { postscript: postscript(f.fuente.familia, f.fuente.peso), tamano: f.fuente.tam, interlineado: f.fuente.alto, tracking: f.fuente.tracking || undefined, color: f.fuente.color?.hex } : undefined, asset: f.assets.filter(a => a.tipo !== 'svg' && deAdviento(a.ruta)).map(a => a.tipo === 'lottie' ? a.el.dataset.anim : infoAsset(a.ruta).nombre).join(', ') || undefined, sfSymbol: f.tipo === 'svg' ? sfSymbol(el) || 'ícono propio' : undefined, componente: m && !m.d ? m.c.id : undefined }; });
-  const lista = [];
   for (const [i, a] of assets.entries()) {
     avance(`Preparando ${i + 1} de ${assets.length}…`);
     try {
-      if (a.tipo === 'lottie') { const n = unico(a.el.dataset.anim); archivos.push({ nombre: `Lottie/${n}.json`, datos: await traer(a.ruta) }); lista.push({ archivo: `Lottie/${n}.json`, descripcion: infoAsset(a.ruta).descripcion, cuandoSale: logicaDe(a.el.dataset.anim, cur?.name).map(l => ({ donde: l.titulo, filas: l.filas.map(f => ({ si: f.si, clips: f.clips, nota: f.nota })), reglas: l.reglas })) }); continue; }
-      if (a.tipo === 'svg') { const n = unico(slug(a.nombre)); svgImageset(n, svgTexto(a.el)).forEach(x => archivos.push({ ...x, nombre: `Assets.xcassets/${x.nombre}` })); lista.push({ archivo: `${n}.imageset`, pt: [+a.w.toFixed(1), +a.h.toFixed(1)] }); continue; }
-      const { n, archivos: set } = await imagesetDe(a.ruta, a.el); if (usados.has(n)) continue; usados.add(n);
-      set.forEach(x => archivos.push({ ...x, nombre: `Assets.xcassets/${x.nombre}` }));
-      const inf = infoAsset(a.ruta); lista.push({ archivo: `${n}.imageset`, descripcion: inf.descripcion, pt: inf.pt || [+a.w.toFixed(1), +a.h.toFixed(1)], drive: inf.drive || undefined });
+      if (a.tipo === 'lottie') { archivos.push({ nombre: `animaciones/${unico(a.el.dataset.anim)}.json`, datos: await traer(a.ruta) }); continue; }
+      const n = unico(infoAsset(a.ruta).nombre);
+      for (const k of [3, 2]) archivos.push({ nombre: `imagenes/${n}@${k}x.png`, datos: (await pngDe(a.ruta, k, a.sel)).blob });
     } catch (e) { console.warn('paquete', a, e); faltan.push(a.nombre); }
   }
-  const comps = (COMP || []).filter(c => { try { return pantallaActual()?.querySelector(c.selector) || pantallaActual()?.matches(c.selector); } catch { return false; } });
-  archivos.push({ nombre: 'Assets.xcassets/Contents.json', datos: JSON.stringify({ info: { author: 'xcode', version: 1 } }, null, 2) });
-  archivos.push({ nombre: 'manifest.json', datos: JSON.stringify({ pantalla: info.nombre, lienzo: info.archivo, tema: oscuro() ? 'noche' : 'día', tamano_pt: [390, 844], assets: lista, componentes: comps, capas }, null, 1) });
   if (faltan.length) archivos.push({ nombre: 'FALTAN.txt', datos: `No se pudieron preparar:\n${faltan.map(x => '- ' + x).join('\n')}\n` });
-  archivos.push({ nombre: 'LEEME.md', datos: `# Adviento · ${info.nombre}\n\nExportado del MVP (modo developer) el ${new Date().toLocaleString('es')}, tema ${oscuro() ? 'noche' : 'día'}.\n\n- **Assets.xcassets/**: arrastra la carpeta a Xcode. Cada imagen trae @2x y @3x (los mismos PNG de «01 PARA LA APP» del Drive) y, si existe, su variante de noche. Los íconos de interfaz no van: son SF Symbols (el manifest dice cuál).\n- **Lottie/**: las animaciones (lottie-ios).\n- **manifest.json**: cada capa con posición y tamaño en pt (pantalla de 390 × 844), colores, fuente (nombre PostScript) y su componente; y los componentes de la pantalla con todos sus estados.\n\nTodo en pt. Ver en vivo: https://camino-a-belen-mvp.vercel.app/app.html (⇧D abre el modo developer).\n` });
   bajar(await zip(archivos), `${base}${oscuro() ? '-noche' : ''}.zip`);
   return faltan.length ? `Descargado · faltan ${faltan.length}` : 'Descargado';
 }
