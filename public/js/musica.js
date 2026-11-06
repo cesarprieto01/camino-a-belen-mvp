@@ -1,17 +1,25 @@
 // Sonido del reto (propuesta de diseño sonoro aprobada por César el 4-nov-2026; Drive «Adviento 2026/05 MUSICA/Propuesta logica sonora…»):
-// la canción de Teodoro, que se aparta cuando algo importa, las reacciones de voz de Teodoro con sus reglas,
+// la canción de Teodoro en el mapa y la ambiental en las actividades, que se pasan la una a la otra y se apartan cuando algo importa, las reacciones de voz de Teodoro con sus reglas,
 // efectos sintetizados en Sol pentatónico y el motivo de Adviento. Todo en Web Audio, sin librerías.
 import { S, save, cur, onChange, reduced } from './core.js';
 
 const PISTAS = {
   // «Burrito Sabanero» de Teodoro (master del 6-nov-2026, recortado a 141,08 s: el mismo final de la versión con Eduardo, sin el silencio de cola).
-  // César la pidió siempre, en el mapa y en las actividades (ya no va «Quiet Snow Village»), igual de día y de noche y al 25 % de su volumen.
+  // Va siempre en el mapa, igual de día y de noche. Volumen: César la pidió al 25 % del master y luego a la mitad («debe sentirse muy ambiental»),
+  // con el mismo EQ que tenía la versión con Eduardo (le quita el cuerpo que la hacía pesada).
   // Es la misma mezcla de la versión con Eduardo 0,188 s antes, así que los tiempos son los de entonces corridos: tiene voz casi todo el tiempo
   // y diálogos hablados; las vueltas empiezan en el hueco antes de «Soy el burrito sabanero» (7 s), así el saludo «¡Hola, amigos!» suena solo
   // la primera vez; las puertas son comienzos de frase cantada y en los tramos hablados Teodoro nunca habla encima
-  burrito: { archivo: 'audio/burrito-sabanero-teodoro.m4a', vol: 0.25, bucle: 7, conVoz: true,
+  burrito: { archivo: 'audio/burrito-sabanero-teodoro.m4a', vol: 0.125, bucle: 7, conVoz: true,
     puertas: [7, 17.31, 35.41, 44.41, 58.41, 81.61, 90.41, 113.41], delDia: [7, 81.61], reposo: [45, 150], cierre: [134.81, 141.08],
-    hablado: [[0, 7.21], [26.61, 35.61], [72.61, 81.81], [101.61, 108.81], [127.61, 141.08]] },
+    hablado: [[0, 7.21], [26.61, 35.61], [72.61, 81.81], [101.61, 108.81], [127.61, 141.08]],
+    eq: { type: 'peaking', frequency: 250, Q: 1, gain: -3 } },
+  // «Quiet Snow Village», ambiental (trivias, juegos y actividades): sin los silencios de las puntas y con la cola final (se apaga en 3,5 s)
+  // sonando sobre el comienzo, que entra suave; la vuelta dura 6977266 muestras a 48 kHz y el archivo trae 1 s más del comienzo, así se repite
+  // de 0,5 s a 0,5 s + vuelta y el relleno del AAC nunca suena. Volumen: se igualó a la canción con Eduardo (0,17) y César la pidió un 25 % más baja
+  nieve: { archivo: 'audio/quiet-snow-village.m4a', vol: 0.1275, desde: 0.5, vuelta: 6977266 / 48000,
+    puertas: [0.5, 10.4, 37.8, 90.9], delDia: [0.5, 10.4, 37.8, 90.9], reposo: [75, 240],
+    eq: { type: 'lowshelf', frequency: 180, gain: -4 } },
 };
 // el mapa y los pop-ups que salen sobre él
 const CAMINO = new Set(['mapa', 'cerrado', 'ruletaPop', 'ruletaPremio', 'premioCuarto']);
@@ -35,7 +43,7 @@ const VOZ = 0.65;
 const noche = () => S.tema === 'oscuro' || new Date().getHours() + new Date().getMinutes() / 60 >= 19.5;
 
 // en «Mañana seguimos» la canción se despide con su final («Tuki por aquí… Hasta mañana») y queda en silencio
-const pistaDe = nombre => nombre === 'cerrado' ? 'cierre' : CAMINO.has(nombre) || ACTIVIDADES.has(nombre) ? 'burrito' : null;
+const pistaDe = nombre => nombre === 'cerrado' ? 'cierre' : CAMINO.has(nombre) ? 'burrito' : ACTIVIDADES.has(nombre) ? 'nieve' : null;
 
 // ---------- El motor ----------
 // pistas → EQ → cruce → filtro → nivel de pantalla → evento (ruleta, voz que lee) → voz de Teodoro → hueco para su voz → reposo → salida
@@ -54,7 +62,7 @@ function montar() {
   lp.connect(gNivel); gNivel.connect(gEvento); gEvento.connect(gVozDuck); gVozDuck.connect(hueco); hueco.connect(gReposo); gReposo.connect(ctx.destination);
   busVoz.gain.value = VOZ; busVoz.connect(ctx.destination); busSfx.connect(ctx.destination);
   for (const id in PISTAS) {
-    const { type, ...o } = PISTAS[id].eq || {}, eq = type ? filtro(type, o) : gan(), g = gan(0); // sin eq: tal como viene el master
+    const { type, ...o } = PISTAS[id].eq, eq = filtro(type, o), g = gan(0);
     eq.connect(g); g.connect(lp);
     est[id] = { eq, g, buffer: null, cargando: null, fuente: null, parar: null, pos: null, en: 0, t0: 0, p0: 0 };
   }
@@ -285,7 +293,7 @@ export function teoDice(momento, { tras = 0 } = {}) {
   tras > 0 ? setTimeout(decir, tras * 1000) : decir();
   return tras + dur;
 }
-// ---------- Efectos y motivo (sintetizados, en Sol pentatónico: suenan bien sobre la canción) ----------
+// ---------- Efectos y motivo (sintetizados, en Sol pentatónico: suenan bien sobre las dos pistas) ----------
 const HZ = { G3: 196, G4: 392, B4: 493.88, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, B5: 987.77, D6: 1174.66, G6: 1567.98 };
 // celesta / caja de música: la nota y dos parciales que se apagan antes
 function campanita(nota, t, vol = 0.06, dur = 1) {
@@ -353,7 +361,7 @@ export function motivo(cual, tras = 0) {
 const desbloquear = () => {
   if (desbloqueado) return;
   desbloqueado = true; montar(); ctx?.resume?.();
-  if (ctx) { cargar('burrito'); cargarVoces(); }
+  if (ctx) { cargar(pistaDe(cur?.name) === 'nieve' ? 'nieve' : 'burrito'); cargarVoces(); }
   removeEventListener('pointerdown', desbloquear, true); removeEventListener('keydown', desbloquear, true);
   musicaPara();
 };
