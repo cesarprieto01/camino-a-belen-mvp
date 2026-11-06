@@ -43,7 +43,7 @@ public/            la app (HTML, CSS y JavaScript sin framework)
     poster/        los 7 pósters de temporada del destacado del inicio
     ruleta/ inicio/ tabbar/   ruleta de 8 casillas, fondos del destacado y pestañas
     *.webp/png     el resto, con el código del lienzo como nombre (el índice con nombres legibles está en Drive)
-  audio/           «Quiet Snow Village» (actividades y, por defecto, el mapa), «Burrito Sabanero» con Eduardo (mapa, opción 2) y teo/ (9 reacciones de voz de Teodoro)
+  audio/           «Burrito Sabanero» de Teodoro (mapa y actividades) y teo/ (9 reacciones de voz de Teodoro)
   anim/            las animaciones Lottie de Teodoro (ver «Teodoro animado»)
   braze/slides-reto/  el in-app de Braze con los slides del reto (al unirse): braze.html se pega en Braze; ver su LEEME.md
 tools/             SOLO PROTOTIPO: pruebas de recorrido y capturas (Playwright); no van a la app
@@ -100,7 +100,7 @@ Las animaciones son Lottie (lottie-web 5.12.2, versión light, en `vendor/`) hec
 - **Free y Premium (igual en US y LATAM):** gratis los días 0, 1, 4, 8, 11, 15, 18, 22, 25 y 26; el resto con Theo Premium o el Pase de Adviento (US$19,99, pago único).
 - **Destacado del inicio:** del 29 de noviembre al 6 de enero es el póster de la temporada (Esperanza, Paz, Alegría, Amor, Nochebuena, «¡Feliz Navidad!» solo el 25 y Tiempo de Navidad). La energía de Teodoro se ve en la pieza grande de Hoy y en el tab Teodoro.
 - Al terminar cada video o canción: «¿Te gustó…?» con 5 estrellas y Compartir.
-- **Sonido** (propuesta de diseño sonoro en Drive «05 MUSICA»): las trivias y actividades con «Quiet Snow Village»; el mapa, con la misma (opción 1, la de por defecto) o con «Burrito Sabanero» con Eduardo (opción 2), en panel › Ajustes › «Canción del mapa». En modo noche el ícono de silencio queda blanco también al tocarlo. La música se aparta cuando habla Teodoro o gira la ruleta, baja sola si nadie toca y calla donde habla la familia (adivinanza, «Busquen la estrella»). Ritual del día: Teodoro camina en silencio, dice «¡Vamos a la aventura!» y entra la canción; en «Mañana seguimos» se despide con su final. 9 reacciones de voz de Teodoro, sin globos de texto, con reglas (una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma seguida, nunca encima de un diálogo de la canción), 8 efectos sintetizados y el motivo «La estrella de Teodoro». El botón de silencio calla solo la música.
+- **Sonido** (propuesta de diseño sonoro en Drive «05 MUSICA»): el mapa, las trivias y las actividades con «Burrito Sabanero» de Teodoro, siempre la misma, igual de día y de noche, al 25 % del volumen del master. En modo noche el ícono de silencio queda blanco también al tocarlo. La música se aparta cuando habla Teodoro o gira la ruleta, baja sola si nadie toca y calla donde habla la familia (adivinanza, «Busquen la estrella»). Ritual del día: Teodoro camina en silencio, dice «¡Vamos a la aventura!» y entra la canción; en «Mañana seguimos» se despide con su final. 9 reacciones de voz de Teodoro, sin globos de texto, con reglas (una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma seguida, nunca encima de un diálogo de la canción), 8 efectos sintetizados y el motivo «La estrella de Teodoro». El botón de silencio calla la música y las reacciones de voz de Teodoro (los efectos siguen).
 
 ## Pruebas
 

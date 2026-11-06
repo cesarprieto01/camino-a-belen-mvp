@@ -2,7 +2,7 @@
 // El panel sigue el orden del lienzo (secciones 1 a 8) para que diseño y prueba hablen el mismo idioma.
 import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, activeDay, isDone, doneCount, lastDay, fase, GRACIA_FIN, cuentaGracia, vistos, puedeDia, prefetch, logical, flowScreens, sections } from './core.js';
 import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf, hasTrivia } from './data.js';
-import { musicaPara } from './musica.js';
+import './musica.js'; // el sonido del reto se monta solo
 import './flow.js';
 import './map.js';
 import './games.js';
@@ -224,8 +224,6 @@ const ICON = {
 };
 // acceso rápido: Estado y Ajustes. Recorridos, Pantallas y Notas se usan poco: van discretas al pie y se vuelve con «‹»
 const PRIMARIAS = [['estado', 'Estado'], ['aj', 'Ajustes']];
-// la canción del mapa (panel › Ajustes): S.musicaMapa
-const MUSICA_MAPA = [['juegos', 'Opción 1', 'La música de las trivias y los juegos'], ['original', 'Opción 2', 'La canción original del mapa']];
 const EQUIPO = [['rec', 'Recorridos'], ['pant', 'Pantallas'], ['notas', 'Notas']];
 let tab = 'estado';
 let ultima = 'estado'; // la última pestaña principal, a la que vuelve «‹»
@@ -333,10 +331,7 @@ function render() {
     ${plegable('notas-pend', 'Pendientes del lienzo', `<ul class="p-list">${PENDIENTES_LIENZO.map(t => `<li><small>${esc(t)}</small></li>`).join('')}</ul>`, { n: PENDIENTES_LIENZO.length })}
     ${plegable('notas-dec', 'Decisiones del MVP para revisar', `<ul class="p-list">${DECISIONES.map(t => `<li><small>${esc(t)}</small></li>`).join('')}</ul>`, { n: DECISIONES.length })}`;
   } else {
-    const mus = S.musicaMapa === 'original' ? 'original' : 'juegos';
-    body = `${grupo('Variantes',
-      `<div class="p-row p-stack"><span class="p-row-t">Canción del mapa</span><div class="p-radio" role="radiogroup" aria-label="Canción del mapa">${MUSICA_MAPA.map(([v, l, d]) => `<button role="radio" aria-checked="${mus === v}" data-musica="${v}"><span><b>${l}</b><small>${d}</small></span>${svg(ICON.ok, 18)}</button>`).join('')}</div></div>`)}
-    ${grupo('Ruleta',
+    body = `${grupo('Ruleta',
       `<div class="p-row p-stack"><span class="p-row-t">Qué sale al girar</span><div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['regalo', 'Regalo (prenda al azar)'], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div></div>`
       + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
     ${grupo('iPhone',
@@ -381,7 +376,6 @@ panel.addEventListener('click', e => {
   if (t.dataset.sw === 'ins') { S.inscrito = !S.inscrito; save(); go('hoy', {}, 'fade'); return; }
   if (t.dataset.sw === 'isla') { S.isla = S.isla === false; save(); return; }
   if (t.dataset.sw === 'zonas') { S.zonas = !S.zonas; save(); return; }
-  if (t.dataset.musica) { S.musicaMapa = t.dataset.musica; save(); musicaPara(); render(); const [, l, d] = MUSICA_MAPA.find(([v]) => v === S.musicaMapa); nota(`Canción del mapa: ${l.toLowerCase()}`, d); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
   if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }

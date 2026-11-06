@@ -1,25 +1,19 @@
 // Sonido del reto (propuesta de diseño sonoro aprobada por César el 4-nov-2026; Drive «Adviento 2026/05 MUSICA/Propuesta logica sonora…»):
-// dos pistas de música que se pasan la una a la otra y se apartan cuando algo importa, las reacciones de voz de Teodoro con sus reglas,
+// la canción de Teodoro, que se aparta cuando algo importa, las reacciones de voz de Teodoro con sus reglas,
 // efectos sintetizados en Sol pentatónico y el motivo de Adviento. Todo en Web Audio, sin librerías.
 import { S, save, cur, onChange, reduced } from './core.js';
 
 const PISTAS = {
-  // «Burrito Sabanero» con Eduardo (master final V6), recortada a 1,8–143,0 s del master. Volumen: se igualó al piano de antes en 0,275,
-  // César la pidió a la mitad (sonaba muy dura) y luego un 25 % menos. Tiene voz casi todo el tiempo y diálogos hablados (en uno habla Teodoro):
-  // las vueltas empiezan en «Soy el burrito sabanero» (7,1 s), así el saludo «¡Hola, amigos!» suena solo la primera vez; las puertas son
-  // comienzos de frase cantada (±1 s, sacados de una transcripción) y en los tramos hablados Teodoro nunca habla encima
-  burrito: { archivo: 'audio/burrito-sabanero-eduardo.m4a', vol: 0.103, bucle: 7.1, conVoz: true,
-    puertas: [7.1, 17.5, 35.6, 44.6, 58.6, 81.8, 90.6, 113.6], delDia: [7.1, 81.8], reposo: [45, 150], cierre: [135, 141.3],
-    hablado: [[0, 7.4], [26.8, 35.8], [72.8, 82], [101.8, 109], [127.8, 141.3]],
-    eq: { type: 'peaking', frequency: 250, Q: 1, gain: -3 } }, // le quita el cuerpo que la hacía pesada
-  // «Quiet Snow Village», ambiental: sin los silencios de las puntas y con la cola final (se apaga en 3,5 s) sonando sobre el comienzo, que entra
-  // suave; la vuelta dura 6977266 muestras a 48 kHz y el archivo trae 1 s más del comienzo, así se repite de 0,5 s a 0,5 s + vuelta y el relleno
-  // del AAC nunca suena. Volumen: se igualó a la canción con Eduardo (0,17) y César la pidió un 25 % más baja
-  nieve: { archivo: 'audio/quiet-snow-village.m4a', vol: 0.1275, desde: 0.5, vuelta: 6977266 / 48000,
-    puertas: [0.5, 10.4, 37.8, 90.9], delDia: [0.5, 10.4, 37.8, 90.9], reposo: [75, 240],
-    eq: { type: 'lowshelf', frequency: 180, gain: -4 } },
+  // «Burrito Sabanero» de Teodoro (master del 6-nov-2026, recortado a 141,08 s: el mismo final de la versión con Eduardo, sin el silencio de cola).
+  // César la pidió siempre, en el mapa y en las actividades (ya no va «Quiet Snow Village»), igual de día y de noche y al 25 % de su volumen.
+  // Es la misma mezcla de la versión con Eduardo 0,188 s antes, así que los tiempos son los de entonces corridos: tiene voz casi todo el tiempo
+  // y diálogos hablados; las vueltas empiezan en el hueco antes de «Soy el burrito sabanero» (7 s), así el saludo «¡Hola, amigos!» suena solo
+  // la primera vez; las puertas son comienzos de frase cantada y en los tramos hablados Teodoro nunca habla encima
+  burrito: { archivo: 'audio/burrito-sabanero-teodoro.m4a', vol: 0.25, bucle: 7, conVoz: true,
+    puertas: [7, 17.31, 35.41, 44.41, 58.41, 81.61, 90.41, 113.41], delDia: [7, 81.61], reposo: [45, 150], cierre: [134.81, 141.08],
+    hablado: [[0, 7.21], [26.61, 35.61], [72.61, 81.81], [101.61, 108.81], [127.61, 141.08]] },
 };
-// el mapa y los pop-ups que salen sobre él: la canción original (opción 1), la de las actividades (2) o las dos por turnos (3; panel › Avanzado)
+// el mapa y los pop-ups que salen sobre él
 const CAMINO = new Set(['mapa', 'cerrado', 'ruletaPop', 'ruletaPremio', 'premioCuarto']);
 // trivias, juegos y actividades del día, y Nochebuena. No suena en la adivinanza ni en «Busquen la estrella»: ahí habla la familia (César);
 // tampoco en los videos y canciones (traen su sonido), en el paywall ni en las pantallas de Theo
@@ -40,9 +34,8 @@ const dB = d => 10 ** (d / 20);
 const VOZ = 0.65;
 const noche = () => S.tema === 'oscuro' || new Date().getHours() + new Date().getMinutes() / 60 >= 19.5;
 
-const delMapa = () => S.musicaMapa === 'original' ? 'burrito' : 'nieve'; // opción 1: la de las trivias y los juegos · opción 2: la canción original
 // en «Mañana seguimos» la canción se despide con su final («Tuki por aquí… Hasta mañana») y queda en silencio
-const pistaDe = nombre => CAMINO.has(nombre) ? (nombre === 'cerrado' && delMapa() === 'burrito' ? 'cierre' : delMapa()) : ACTIVIDADES.has(nombre) ? 'nieve' : null;
+const pistaDe = nombre => nombre === 'cerrado' ? 'cierre' : CAMINO.has(nombre) || ACTIVIDADES.has(nombre) ? 'burrito' : null;
 
 // ---------- El motor ----------
 // pistas → EQ → cruce → filtro → nivel de pantalla → evento (ruleta, voz que lee) → voz de Teodoro → hueco para su voz → reposo → salida
@@ -61,7 +54,7 @@ function montar() {
   lp.connect(gNivel); gNivel.connect(gEvento); gEvento.connect(gVozDuck); gVozDuck.connect(hueco); hueco.connect(gReposo); gReposo.connect(ctx.destination);
   busVoz.gain.value = VOZ; busVoz.connect(ctx.destination); busSfx.connect(ctx.destination);
   for (const id in PISTAS) {
-    const { type, ...o } = PISTAS[id].eq, eq = filtro(type, o), g = gan(0);
+    const { type, ...o } = PISTAS[id].eq || {}, eq = type ? filtro(type, o) : gan(), g = gan(0); // sin eq: tal como viene el master
     eq.connect(g); g.connect(lp);
     est[id] = { eq, g, buffer: null, cargando: null, fuente: null, parar: null, pos: null, en: 0, t0: 0, p0: 0 };
   }
@@ -156,9 +149,9 @@ function arrancar(id, nombre) {
   if (dormir) { clearTimeout(dormir); dormir = null; }
   ctx.resume?.();
   actual = id;
-  // nivel de la pantalla; de noche y con menos movimiento, 3 dB más baja (y de noche más opaca)
-  ir(gNivel.gain, dB((NIVEL[nombre] ?? 0) + (noche() ? -3 : 0) + (reduced() ? -3 : 0)), 0.15);
-  ir(lp.frequency, Math.min(FILTRO[nombre] || 20000, noche() ? 6000 : 20000), 0.13);
+  // nivel de la pantalla (igual de día y de noche); con menos movimiento, 3 dB más baja
+  ir(gNivel.gain, dB((NIVEL[nombre] ?? 0) + (reduced() ? -3 : 0)), 0.15);
+  ir(lp.frequency, FILTRO[nombre] || 20000, 0.13);
   for (const otra in est) if (otra !== id) bajar(otra, otra === 'burrito' && id === 'cierre' ? 0.27 : 0.2);
   subir(id);
 }
@@ -254,16 +247,12 @@ export const restoVoz = () => Math.max(0, finVoz - performance.now());
 /** Teodoro reacciona. Devuelve cuánto falta para que termine (s), o 0 si esta vez se calla.
  *  Reglas: una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma dos veces seguidas, nunca encima de un diálogo de la canción. */
 export function teoDice(momento, { tras = 0 } = {}) {
-  const m = MOMENTOS[momento]; if (!m || !ctx || !desbloqueado) return 0;
+  const m = MOMENTOS[momento]; if (!m || !ctx || !desbloqueado || S.musica === false) return 0; // silenciada la música, Teodoro también calla
   let e; try { e = JSON.parse(localStorage.getItem('cab-voces')) || {}; } catch { e = {}; }
   if (e.dia !== S.hoy) e = { dia: S.hoy, n: 0, por: {}, rot: {}, ult: e.ult, inc: e.inc };
   const ahora = performance.now();
   if (m.p > 1 && (vozActual || ahora - ultimaVoz < (m.hueco ?? 8) * 1000 || (!m.sinTope && e.n >= 6))) return 0;
   if (m.dia && (e.por[momento] || 0) >= m.dia) return 0;
-  // música apagada 2 días seguidos: solo lo importante, y más bajito
-  let apagadaDesde = null; try { apagadaDesde = localStorage.getItem('cab-musica-off'); } catch { /* */ }
-  const discreta = S.musica === false && apagadaDesde != null && S.hoy - +apagadaDesde >= 2;
-  if (discreta && m.p > 2) return 0;
   const k = e.rot[momento] || 0; let id = m.ids[k % m.ids.length];
   if (id === e.ult) id = m.ids.length > 1 ? m.ids[(k + 1) % m.ids.length] : (m.p === 3 ? null : id);
   if (id == null || (id === 81 && e.inc === S.hoy) || !voz[id]) return 0;
@@ -279,7 +268,7 @@ export function teoDice(momento, { tras = 0 } = {}) {
   const decir = () => {
     if (capa && !capa.isConnected) return; // ya se fue de la pantalla
     ctx.resume?.(); if (m.p === 1) vozActual?.cortar();
-    const t = ctx.currentTime + 0.08, src = ctx.createBufferSource(), g = ctx.createGain(), gv = v.g * (noche() ? 0.79 : 1) * (discreta ? 0.71 : 1);
+    const t = ctx.currentTime + 0.08, src = ctx.createBufferSource(), g = ctx.createGain(), gv = v.g * (noche() ? 0.79 : 1);
     src.buffer = voz[id]; src.connect(g); g.connect(busVoz);
     g.gain.setValueAtTime(gv, t); g.gain.setValueAtTime(gv, t + dur - 0.06); g.gain.linearRampToValueAtTime(0, t + dur);
     src.start(t, v.i, dur);
@@ -296,7 +285,7 @@ export function teoDice(momento, { tras = 0 } = {}) {
   tras > 0 ? setTimeout(decir, tras * 1000) : decir();
   return tras + dur;
 }
-// ---------- Efectos y motivo (sintetizados, en Sol pentatónico: suenan bien sobre las dos pistas) ----------
+// ---------- Efectos y motivo (sintetizados, en Sol pentatónico: suenan bien sobre la canción) ----------
 const HZ = { G3: 196, G4: 392, B4: 493.88, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, B5: 987.77, D6: 1174.66, G6: 1567.98 };
 // celesta / caja de música: la nota y dos parciales que se apagan antes
 function campanita(nota, t, vol = 0.06, dur = 1) {
@@ -364,7 +353,7 @@ export function motivo(cual, tras = 0) {
 const desbloquear = () => {
   if (desbloqueado) return;
   desbloqueado = true; montar(); ctx?.resume?.();
-  if (ctx) { cargar(pistaDe(cur?.name) === 'nieve' ? 'nieve' : 'burrito'); cargarVoces(); }
+  if (ctx) { cargar('burrito'); cargarVoces(); }
   removeEventListener('pointerdown', desbloquear, true); removeEventListener('keydown', desbloquear, true);
   musicaPara();
 };
@@ -385,13 +374,13 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) vozAc
 const ICO_ON = '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
 const ICO_OFF = '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
 
-/** Conecta el botón de música de una pantalla: alterna, guarda y cambia ícono y etiqueta. */
+/** Conecta el botón de música de una pantalla: alterna (también la voz de Teodoro), guarda y cambia ícono y etiqueta. */
 export function bindMute(btn) {
   if (!btn) return;
   const pintar = () => {
     const on = S.musica !== false;
     btn.setAttribute('aria-pressed', String(on));
-    btn.setAttribute('aria-label', on ? 'Música de fondo activada. Toca para silenciarla' : 'Música de fondo silenciada. Toca para activarla');
+    btn.setAttribute('aria-label', on ? 'Música de fondo y voz de Teodoro activadas. Toca para silenciarlas' : 'Música de fondo y voz de Teodoro silenciadas. Toca para activarlas');
     const old = btn.querySelector('svg');
     const tpl = document.createElement('template'); tpl.innerHTML = on ? ICO_ON : ICO_OFF;
     const ico = tpl.content.firstElementChild;
@@ -404,7 +393,7 @@ export function bindMute(btn) {
   btn.addEventListener('click', ev => {
     ev.preventDefault(); ev.stopPropagation();
     S.musica = S.musica === false; save();
-    try { if (S.musica === false) localStorage.setItem('cab-musica-off', String(S.hoy)); else localStorage.removeItem('cab-musica-off'); } catch { /* navegador privado */ }
+    if (S.musica === false) vozActual?.cortar();
     desbloquear(); pintar(); musicaPara();
   });
   pintar();

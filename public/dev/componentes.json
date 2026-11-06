@@ -468,7 +468,7 @@
         "id": "activada",
         "nombre": "Música activada",
         "cuando": "Cuando la música está activada",
-        "visual": "Altavoz relleno con dos ondas. Accesibilidad: «Música de fondo activada. Toca para silenciarla», presionado = sí.",
+        "visual": "Altavoz relleno con dos ondas. Accesibilidad: «Música de fondo y voz de Teodoro activadas. Toca para silenciarlas», presionado = sí.",
         "assets": [],
         "lienzo": [
           "S-03-Mapa",
@@ -481,11 +481,11 @@
         "id": "silenciada",
         "nombre": "Música silenciada",
         "cuando": "Cuando la silenciaron (se recuerda)",
-        "visual": "Altavoz relleno con una ✕ en lugar de las ondas. Accesibilidad: «Música de fondo silenciada. Toca para activarla», presionado = no.",
+        "visual": "Altavoz relleno con una ✕ en lugar de las ondas. Accesibilidad: «Música de fondo y voz de Teodoro silenciadas. Toca para activarlas», presionado = no.",
         "assets": [],
         "lienzo": [],
         "probar": "Toca el botón.",
-        "codigo": "ICO_OFF, aria-pressed=\"false\", S.musica === false y localStorage «cab-musica-off»."
+        "codigo": "ICO_OFF, aria-pressed=\"false\", S.musica === false: calla la música y las reacciones de voz de Teodoro."
       },
       {
         "id": "claro",
