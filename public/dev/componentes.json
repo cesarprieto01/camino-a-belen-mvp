@@ -1,0 +1,3499 @@
+[
+  {
+    "id": "teo-trivia",
+    "nombre": "Teodoro en la trivia (animado)",
+    "pantallas": [
+      "trivia"
+    ],
+    "selector": "#viewport .layer[data-screen=trivia] :is(.teo-anim, img[alt=\"Teodoro pregunta\"])",
+    "descripcion": "Teodoro sobre la pregunta: piensa con su mapa, saca el farol si se equivocan y salta si aciertan, con transiciones entre una pose y otra.",
+    "medidas": "Dibujo de base: en preguntas de texto (o de 3 líneas) 170 × 170 pt en x 110, y 54; en preguntas de imagen 111 × 214 pt en x 140, y 46. La animación usa un lienzo de 426 × 600 con Teodoro de 532 de alto y los pies en (266,6; 591,3): con el dibujo de 170 mide 136,1 × 191,7 pt; con el de 214, 171,4 × 241,3 pt; mismos pies y mismo alto que el dibujo. Sombra drop-shadow(0 12 18 rgba(8,93,111,.18)); en oscuro rgba(4,14,36,.45).",
+    "estados": [
+      {
+        "id": "piensa",
+        "nombre": "Piensa con su mapa (bucle)",
+        "cuando": "Al abrir cada pregunta",
+        "visual": "Animación teo-trivia-mapa en bucle con reposo: repite su gesto quieto (cuadros 0–25, ~1 s) cuatro veces y luego la actuación completa de 5 s. Cuadros donde puede empezar un cambio: 0–6, 17–18, 21–26 y 116–120.",
+        "assets": [
+          "anim/teo-trivia-mapa.json",
+          "assets/cd7abd57ac6154597b18285ae710d7ba.webp"
+        ],
+        "lienzo": [
+          "V2-06a-Trivia-sin-elegir-claro",
+          "V2-06a-Trivia-sin-elegir",
+          "V2-06c-Trivia-varias-claro",
+          "V2-06c-Trivia-varias"
+        ],
+        "probar": "Panel › Recorridos › «Un día con trivia» (día 17) o «Equivocarse en la trivia».",
+        "codigo": "games.js mount → pensar(root, MAPA_PIENSA); teo-anim.js reposar() con reposo { hasta: 25, vueltas: 4 }."
+      },
+      {
+        "id": "fallo-farol",
+        "nombre": "Saca el farol (pista)",
+        "cuando": "Cuando eligen una respuesta equivocada",
+        "visual": "Transición teo-trivia-mapa-a-farol (solo los cuadros 2–31, ~1 s) y bucle teo-trivia-farol (2,8 s). Tras 2 vueltas (~5,6 s) vuelve solo al mapa con teo-trivia-farol-a-mapa. Si ya tenía el farol, sigue igual. Suena «casi» y Teodoro dice «¡Inténtalo de nuevo!» o «¡Tú puedes!» a los 0,15 s.",
+        "assets": [
+          "anim/teo-trivia-mapa-a-farol.json",
+          "anim/teo-trivia-farol.json",
+          "anim/teo-trivia-farol-a-mapa.json",
+          "assets/12a860faaeb0bce3b45192bde1b48d63.webp"
+        ],
+        "lienzo": [
+          "V2-08-Pista-claro",
+          "V2-08-Pista"
+        ],
+        "probar": "Recorrido «Equivocarse en la trivia»: toca una respuesta mala.",
+        "codigo": "games.js wrong() → setTeo(IMG.tFarol) → alFarol() → pasarA(teo, MAPA_A_FAROL, FAROL); a las 2 vueltas pasarA(teo, FAROL_A_MAPA, MAPA_PIENSA)."
+      },
+      {
+        "id": "acierta-celebra",
+        "nombre": "Suelta el mapa (o el farol) y salta",
+        "cuando": "Cuando aciertan la respuesta",
+        "visual": "Transición teo-trivia-mapa-a-celebra (o farol-a-celebra si tenía el farol) a 1,3× (~0,9 s) y bucle teo-trivia-celebra (1,6 s) que entra en su cuadro 2, sin pausa entre el gesto y el salto. Suena «acierto».",
+        "assets": [
+          "anim/teo-trivia-mapa-a-celebra.json",
+          "anim/teo-trivia-farol-a-celebra.json",
+          "anim/teo-trivia-celebra.json",
+          "assets/a98be2e11e018975563512bddc52be5a.webp"
+        ],
+        "lienzo": [
+          "V2-07-Correcto-claro",
+          "V2-07-Correcto",
+          "V2-08b-Reintento-claro",
+          "V2-08b-Reintento"
+        ],
+        "probar": "Día 1, pregunta 1: toca «La primera vela».",
+        "codigo": "games.js correct() → setTeo(IMG.tCelebra) → alFestejo() → pasarA(teo, MAPA_A_FESTEJA | FAROL_A_FESTEJA, FESTEJA)."
+      },
+      {
+        "id": "entra-celebrando",
+        "nombre": "Llega celebrando a la pregunta siguiente",
+        "cuando": "Al tocar «Siguiente» mientras Teodoro celebra",
+        "visual": "La pregunta nueva arranca con la transición teo-trivia-celebra-a-mapa (1,3×) y después el bucle de mapa; el dibujo quieto no se llega a ver.",
+        "assets": [
+          "anim/teo-trivia-celebra-a-mapa.json"
+        ],
+        "lienzo": [],
+        "probar": "Acierta una pregunta y toca «Siguiente».",
+        "codigo": "params.teo = \"festeja\" → pensar(root, MAPA_PIENSA, FESTEJA_A_MAPA)."
+      },
+      {
+        "id": "respingo",
+        "nombre": "Respingo (cambio a mitad de un gesto)",
+        "cuando": "Si responden cuando Teodoro está a mitad de un gesto",
+        "visual": "Si el próximo punto de cambio está a 0,5 s o menos, espera y funde en 80 ms. Si no, el dibujo de antes se encoge a escala (1,06; 0,9) en 105 ms (ease-in) y desaparece, y el nuevo aparece encogido y se estira (.97; 1,04) → normal en 250 ms (ease-out), con el origen en los pies.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Responde muy rápido mientras Teodoro lee el mapa.",
+        "codigo": "teo-anim.js pasarA() → respingo(viejo, nuevo)."
+      },
+      {
+        "id": "pausado",
+        "nombre": "Quieto bajo el resultado",
+        "cuando": "Cuando se abre el resultado de la trivia encima",
+        "visual": "Se congela; la pantalla de la trivia queda borrosa debajo del velo (blur 10 pt).",
+        "assets": [],
+        "lienzo": [
+          "V2-Trivia-fin-claro",
+          "V2-Trivia-fin"
+        ],
+        "probar": "Responde la 5.ª pregunta y toca «Ver resultado».",
+        "codigo": "games.js triviaFin → pausar(debajo); app.css .layer.under[data-screen=trivia] * { animation-play-state: paused }."
+      },
+      {
+        "id": "sin-animacion",
+        "nombre": "Sin animación",
+        "cuando": "Con «Reducir movimiento» activado o si la animación no carga",
+        "visual": "Queda el dibujo quieto y se cambia de imagen: con su mapa (flota 4 pt, 3,6 s), con el farol al fallar y celebrando al acertar (salta 14 pt tres veces y luego flota).",
+        "assets": [
+          "assets/cd7abd57ac6154597b18285ae710d7ba.webp",
+          "assets/12a860faaeb0bce3b45192bde1b48d63.webp",
+          "assets/a98be2e11e018975563512bddc52be5a.webp"
+        ],
+        "lienzo": [
+          "V2-06-Trivia-claro",
+          "V2-06-Trivia"
+        ],
+        "probar": "Activa «Reducir movimiento» en el sistema y abre la trivia.",
+        "codigo": "reduced() o fallo de lottie: setTeo() cambia src y aplica a-bob / a-hop."
+      }
+    ]
+  },
+  {
+    "id": "trivia-opcion",
+    "nombre": "Opción de respuesta",
+    "pantallas": [
+      "trivia"
+    ],
+    "selector": "#viewport .layer[data-screen=trivia] [role=group] > *",
+    "descripcion": "Cada respuesta de la trivia: en lista de texto (una o varias correctas) o en grilla 2 × 2 con imagen.",
+    "medidas": "Texto: 350 × 56 pt (alto mínimo), radio 18 pt, separación 8 pt, padding 8 × 14 pt, círculo o casilla de 30 pt a la izquierda y texto 18/22 pt; si tras responder el aviso no cabe, la lista se compacta a 46 pt con 6 pt de separación. Imagen (4 opciones): 170 × 124 pt, radio 28 pt, separación 10 pt, dibujo 78 × 78 pt, nombre 700 17 pt. Las opciones empiezan 12 pt debajo de la tarjeta de la pregunta.",
+    "estados": [
+      {
+        "id": "texto-sin-elegir",
+        "nombre": "Texto · sin elegir",
+        "cuando": "Pregunta de texto con una sola respuesta correcta, antes de responder",
+        "visual": "Fondo #FFFFFF, borde interior 2 pt #D3E6EC, sombra 0 4 12 rgba(8,93,111,.08), texto #0B748A 400 18/22 pt Neue Montreal, círculo vacío de 30 pt con aro interior 2,5 pt #B7D3DC. Oscuro: fondo #22585E, borde interior 2 pt rgba(255,255,255,.16), texto #FFFFFF, aro rgba(255,255,255,.45). Al aparecer, cada una sube 18 pt con fundido (0,4 s), escalonadas 0,08 s.",
+        "assets": [],
+        "lienzo": [
+          "V2-06b-Trivia-4-opciones-claro",
+          "V2-06b-Trivia-4-opciones"
+        ],
+        "probar": "Día 1, pregunta 1.",
+        "codigo": "games.js mount: plantilla txtOff, role=\"button\"."
+      },
+      {
+        "id": "texto-correcta",
+        "nombre": "Texto · correcta",
+        "cuando": "Al tocar la respuesta correcta",
+        "visual": "Fondo #F5DB78, aro exterior 3 pt #FFFFFF + sombra 0 10 22 rgba(184,134,42,.35), texto #0B748A 500, círculo de 30 pt relleno #0B748A con ✓ blanco (trazo 3,4, 17 pt). Igual en claro y oscuro. entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)). Aparecen destellos que titilan alrededor.",
+        "assets": [],
+        "lienzo": [
+          "V2-07-Correcto-claro",
+          "V2-07-Correcto"
+        ],
+        "probar": "Día 1, pregunta 1: toca «La primera vela».",
+        "codigo": "games.js correct(): reemplaza la opción por la plantilla txtOn (de V2-06c) y le pone a-pop."
+      },
+      {
+        "id": "texto-descartada",
+        "nombre": "Texto · equivocada («no es»)",
+        "cuando": "Al tocar una respuesta equivocada; tocarla de nuevo no cuenta otro fallo",
+        "visual": "Fondo #FFF1EF (oscuro rgba(200,70,63,.18)), borde interior 2 pt #C8463F, sin apagarse (se tiene que leer), círculo de 30 pt #C8463F con «✕» blanco 900 15 pt. se sacude a los lados (−8 / +7 / −5 / +3 pt, 0,45 s); si la vuelven a tocar, solo se sacude.",
+        "assets": [],
+        "lienzo": [
+          "V2-08-Pista-claro",
+          "V2-08-Pista"
+        ],
+        "probar": "Día 1, pregunta 1: toca «Todas las velas».",
+        "codigo": "games.js wrong() → marcarMala(): data-bad, aria-disabled."
+      },
+      {
+        "id": "texto-apagada",
+        "nombre": "Texto · las demás tras acertar",
+        "cuando": "Las opciones que quedaron sin tocar cuando aciertan",
+        "visual": "En gris: filtro grayscale(.4). El lienzo además las baja a opacidad .45; en el MVP la animación de entrada la deja en 1 y hoy solo se ve el gris. Para iOS usar opacidad .45 + gris .4.",
+        "assets": [],
+        "lienzo": [
+          "V2-07-Correcto-claro",
+          "V2-07-Correcto"
+        ],
+        "probar": "Acierta cualquier pregunta de texto.",
+        "codigo": "correct(): el.style.opacity = .45 y filter grayscale(.4); la animación rise «both» pisa la opacidad (error del MVP)."
+      },
+      {
+        "id": "imagen-sin-elegir",
+        "nombre": "Imagen · sin elegir",
+        "cuando": "Pregunta de imágenes, antes de responder",
+        "visual": "Fondo #FFFFFF, borde interior 1,5 pt #D3DFE8, texto #0B748A. Oscuro: fondo rgba(255,255,255,.06), borde interior 1,5 pt rgba(255,255,255,.18), texto #FFFFFF. Grilla 2 × 2.",
+        "assets": [],
+        "lienzo": [
+          "V2-06a-Trivia-sin-elegir-claro",
+          "V2-06a-Trivia-sin-elegir"
+        ],
+        "probar": "Día 1, pregunta 3 («¿A quién esperamos en Adviento?»).",
+        "codigo": "Plantilla neutra de V2-06a; grid con clase pic4."
+      },
+      {
+        "id": "imagen-correcta",
+        "nombre": "Imagen · correcta",
+        "cuando": "Al tocar la imagen correcta",
+        "visual": "Fondo #E3F3F7 (oscuro rgba(108,195,214,.16)), aro 3 pt #1E8DA5 (oscuro #37ABC4) + sombra 0 10 22 rgba(23,129,154,.25); insignia ✓ de 32 pt #1E8DA5 con aro 3 pt #FFFFFF (oscuro #011439), arriba a la derecha, salida 6 pt. entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)).",
+        "assets": [],
+        "lienzo": [
+          "V2-07-Correcto-claro",
+          "V2-07-Correcto"
+        ],
+        "probar": "Día 1, pregunta 3: toca «Jesús».",
+        "codigo": "Plantilla picOk de V2-07 (trae translateY(-4) scale(1.03), que la animación pop deja en none)."
+      },
+      {
+        "id": "imagen-descartada",
+        "nombre": "Imagen · descartada",
+        "cuando": "Al tocar una imagen equivocada",
+        "visual": "Fondo #F1F4F7 (oscuro #1F4473), sin borde, texto #5F5F5F (oscuro #FFF6DD); el dibujo con opacidad .45 y en gris total; insignia de 28 pt #9AA9BA (oscuro #4F6B93) con ✕ blanco de 13 pt y aro 3 pt #FFFFFF (oscuro #011439). se sacude a los lados (−8 / +7 / −5 / +3 pt, 0,45 s).",
+        "assets": [],
+        "lienzo": [
+          "V2-08-Pista-claro",
+          "V2-08-Pista"
+        ],
+        "probar": "Día 1, pregunta 3: toca «Los Reyes».",
+        "codigo": "Plantilla picBad de V2-08. Error del MVP: su aria-label queda «José: descartada» sea cual sea la opción."
+      },
+      {
+        "id": "varias-sin-marcar",
+        "nombre": "Varias correctas · sin marcar",
+        "cuando": "Pregunta de varias respuestas correctas, casilla sin marcar",
+        "visual": "Fondo #FFFFFF, borde interior 2 pt #D3E6EC, sombra 0 4 12 rgba(8,93,111,.08), texto #0B748A 400 18/22 pt Neue Montreal, círculo vacío de 30 pt con aro interior 2,5 pt #B7D3DC. Oscuro: fondo #22585E, borde interior 2 pt rgba(255,255,255,.16), texto #FFFFFF, aro rgba(255,255,255,.45). Al aparecer, cada una sube 18 pt con fundido (0,4 s), escalonadas 0,08 s. Abajo aparece «Comprobar».",
+        "assets": [],
+        "lienzo": [
+          "V2-06c-Trivia-varias-claro",
+          "V2-06c-Trivia-varias"
+        ],
+        "probar": "Día 1, pregunta 5.",
+        "codigo": "q.a es una lista; role=\"checkbox\", aria-checked=\"false\"."
+      },
+      {
+        "id": "varias-marcada",
+        "nombre": "Varias correctas · marcada",
+        "cuando": "Al tocar una casilla; tocarla otra vez la desmarca",
+        "visual": "Igual que «correcta»: fondo #F5DB78, aro 3 pt #FFFFFF, casilla #0B748A con ✓ blanco, texto 500. entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)).",
+        "assets": [],
+        "lienzo": [
+          "V2-06c-Trivia-varias-claro",
+          "V2-06c-Trivia-varias"
+        ],
+        "probar": "Día 1, pregunta 5: toca una opción.",
+        "codigo": "Delegación de clic en el grupo; alterna entre las plantillas txtOn y txtOff; aria-checked."
+      },
+      {
+        "id": "varias-descartada",
+        "nombre": "Varias correctas · marcada mal",
+        "cuando": "Al tocar «Comprobar» con alguna incorrecta marcada",
+        "visual": "La incorrecta se desmarca y queda como «no es»: fondo #FFF1EF (oscuro rgba(200,70,63,.18)), borde 2 pt #C8463F, círculo ✕ #C8463F. se sacude a los lados (−8 / +7 / −5 / +3 pt, 0,45 s). Cuenta un fallo.",
+        "assets": [],
+        "lienzo": [
+          "V2-08-Pista-claro",
+          "V2-08-Pista"
+        ],
+        "probar": "Día 1, pregunta 5: marca «Haciendo travesuras» y toca «Comprobar».",
+        "codigo": "«Comprobar» → marcarMala() en las incorrectas y wrong(-1)."
+      }
+    ]
+  },
+  {
+    "id": "trivia-progreso",
+    "nombre": "Progreso de la trivia (puntitos)",
+    "pantallas": [
+      "trivia"
+    ],
+    "selector": "#viewport .layer[data-screen=trivia] [role=progressbar]",
+    "descripcion": "Píldora arriba con 5 puntitos: en qué pregunta van y cómo les fue en cada una.",
+    "medidas": "Píldora 90 × 28 pt en x 215, y 64, radio 14 pt, fondo rgba(255,255,255,.72) con desenfoque 12 (oscuro rgba(4,14,36,.36)). Puntitos 7 × 7 pt, radio 4 pt, 5 pt de separación; el actual se estira a 18 × 7 pt. El ancho y el color cambian en 0,3 s.",
+    "estados": [
+      {
+        "id": "actual",
+        "nombre": "Pregunta actual",
+        "cuando": "La pregunta que están respondiendo",
+        "visual": "Puntito ancho de 18 × 7 pt, #0B748A (oscuro #FFF6DD).",
+        "assets": [],
+        "lienzo": [
+          "V2-06a-Trivia-sin-elegir-claro",
+          "V2-06a-Trivia-sin-elegir"
+        ],
+        "probar": "Panel › Recorridos › «Un día con trivia» (día 17) o «Equivocarse en la trivia».",
+        "codigo": "k === i."
+      },
+      {
+        "id": "hecha-primera",
+        "nombre": "Hecha a la primera",
+        "cuando": "Pregunta anterior acertada al primer intento",
+        "visual": "7 × 7 pt, #0B748A (oscuro #FFF6DD).",
+        "assets": [],
+        "lienzo": [
+          "V2-06-Trivia-claro",
+          "V2-06-Trivia"
+        ],
+        "probar": "Acierta la 1.ª a la primera y pasa a la 2.ª.",
+        "codigo": "k < i y p.h[k] === \"1\"."
+      },
+      {
+        "id": "hecha-reintento",
+        "nombre": "Hecha al reintento",
+        "cuando": "Pregunta anterior que acertaron después de fallar",
+        "visual": "7 × 7 pt, ámbar oscuro #B8731A (igual en oscuro).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Falla y luego acierta una pregunta; mira el puntito en la siguiente.",
+        "codigo": "k < i y p.h[k] === \"0\"."
+      },
+      {
+        "id": "pendiente",
+        "nombre": "Pendiente",
+        "cuando": "Preguntas que aún no llegan",
+        "visual": "Transparente con aro interior 2 pt #7A8A94 (oscuro rgba(255,255,255,.55)).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Panel › Recorridos › «Un día con trivia» (día 17) o «Equivocarse en la trivia».",
+        "codigo": "k > i."
+      }
+    ]
+  },
+  {
+    "id": "trivia-pregunta",
+    "nombre": "Tarjeta de la pregunta",
+    "pantallas": [
+      "trivia"
+    ],
+    "selector": "#viewport .layer[data-screen=trivia] .root > div > div.a-rise:not([role])",
+    "descripcion": "Tarjeta blanca con el texto de la pregunta y el botón «Escuchar».",
+    "medidas": "Ancho 350 pt (x 20), radio 28 pt, sombra 0 8 22 rgba(8,93,111,.14). Oscuro: fondo #274E7C, borde 1 pt rgba(255,255,255,.12). Arriba en y 262 (preguntas de imagen) o y 222 (texto o pregunta de 3 líneas, con Teodoro más chico). Botón «Escuchar» 112 × 44 pt, radio 17 pt, fondo #DDF0F6, texto #0B748A. Al aparecer sube 18 pt con fundido (0,42 s, cubic-bezier(.23,1,.32,1)).",
+    "estados": [
+      {
+        "id": "normal",
+        "nombre": "Pregunta",
+        "cuando": "Siempre, con el texto de la pregunta",
+        "visual": "Texto de la pregunta; botón «Escuchar» con ícono de altavoz.",
+        "assets": [],
+        "lienzo": [
+          "V2-06a-Trivia-sin-elegir-claro",
+          "V2-06a-Trivia-sin-elegir"
+        ],
+        "probar": "Panel › Recorridos › «Un día con trivia» (día 17) o «Equivocarse en la trivia»."
+      },
+      {
+        "id": "leyendo",
+        "nombre": "Leyendo en voz alta",
+        "cuando": "Al tocar «Escuchar», mientras se lee la pregunta",
+        "visual": "El botón pasa a «Parar» con un cuadrado relleno (11 × 11, radio 2,2) en lugar del altavoz; al terminar vuelve a «Escuchar». La música baja mientras lee y, desde entonces, la pista y el acierto también se leen.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca «Escuchar» en cualquier pregunta.",
+        "codigo": "listenButton(): speechSynthesis es-MX, rate .95; agacha(\"tts\", −10); aria-pressed."
+      }
+    ]
+  },
+  {
+    "id": "trivia-aviso",
+    "nombre": "Aviso bajo las respuestas (indicación, ¡Correcto!, pista)",
+    "pantallas": [
+      "trivia"
+    ],
+    "selector": "#viewport .layer[data-screen=trivia] :is(.tv-pill, .tv-status, .tv-note)",
+    "descripcion": "La línea debajo de las opciones: qué hacer, el acierto o la pista tras fallar. Siempre 14 pt debajo de las opciones, nunca encima.",
+    "medidas": "Ancho 350 pt (x 20). Indicación: 30 pt de alto, 16 pt, sin fondo. «¡Correcto!»: fila de mín. 40 pt con círculo ✓ de 30 pt #1E8DA5, «¡Correcto!» 700 22 pt y el texto del acierto 500 16 pt. Pista: píldora de 38 pt (crece si baja de línea), radio 19 pt, 700 15 pt, con el farol; debajo «¡Casi! Toca otra respuesta» 500 14 pt.",
+    "estados": [
+      {
+        "id": "indicacion",
+        "nombre": "Indicación",
+        "cuando": "Antes de responder",
+        "visual": "«Toca la respuesta» (una correcta) o «Elige todas las correctas» (varias). Texto #0B748A (oscuro #FFFFFF).",
+        "assets": [],
+        "lienzo": [
+          "V2-06a-Trivia-sin-elegir-claro",
+          "V2-06c-Trivia-varias-claro"
+        ],
+        "probar": "Panel › Recorridos › «Un día con trivia» (día 17) o «Equivocarse en la trivia»."
+      },
+      {
+        "id": "correcto",
+        "nombre": "¡Correcto!",
+        "cuando": "Al acertar",
+        "visual": "«¡Correcto!» #1E8DA5 (oscuro #37ABC4) y el texto del acierto #5F5F5F (oscuro #FFF6DD). entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)). Si salió a la primera, aparece un «¡Bien!» flotante que sube y se desvanece (1,4 s).",
+        "assets": [],
+        "lienzo": [
+          "V2-07-Correcto-claro",
+          "V2-07-Correcto",
+          "V2-08b-Reintento-claro",
+          "V2-08b-Reintento"
+        ],
+        "probar": "Acierta una pregunta.",
+        "codigo": "Plantilla [role=status] de V2-07 con clase tv-status."
+      },
+      {
+        "id": "pista",
+        "nombre": "Pista",
+        "cuando": "Al fallar (en preguntas de varias correctas, solo la píldora)",
+        "visual": "Píldora fondo #DDF0F6 (oscuro #1F4473), texto #5F5F5F (oscuro #FFF6DD): «Pista: …» con el farol. Línea «¡Casi! Toca otra respuesta». sube 18 pt con fundido (0,42 s, cubic-bezier(.23,1,.32,1)).",
+        "assets": [
+          "assets/8f9cd03fb68bac90ed249fa5d45f0828.webp"
+        ],
+        "lienzo": [
+          "V2-08-Pista-claro",
+          "V2-08-Pista"
+        ],
+        "probar": "Falla una pregunta.",
+        "codigo": "Plantilla [role=note] de V2-08 con clase tv-note."
+      }
+    ]
+  },
+  {
+    "id": "trivia-boton",
+    "nombre": "Botón de la trivia (Comprobar / Siguiente / Ver resultado)",
+    "pantallas": [
+      "trivia"
+    ],
+    "selector": "#viewport .layer[data-screen=trivia] .root > div > a:not([aria-label])",
+    "descripcion": "El botón amarillo de abajo en la trivia.",
+    "medidas": "Ancho 350 pt (x 20). «Siguiente» / «Ver resultado»: 58 pt de alto, radio 20 pt, en y 752 (sube si el aviso no cabe). «Comprobar»: 60 pt, radio 22 pt, a 24 pt del borde de abajo. Fondo #F5DB78, texto #0B748A 700 20–21 pt Neue Montreal; igual en oscuro.",
+    "estados": [
+      {
+        "id": "comprobar",
+        "nombre": "Comprobar",
+        "cuando": "Preguntas de varias correctas, antes de acertar",
+        "visual": "Si no marcaron nada, se sacude a los lados (−8 / +7 / −5 / +3 pt, 0,45 s) y no cuenta como fallo; si faltan correctas: aviso «¡Casi! Falta una» y se sacude.",
+        "assets": [],
+        "lienzo": [
+          "V2-06c-Trivia-varias-claro",
+          "V2-06c-Trivia-varias"
+        ],
+        "probar": "Día 1, pregunta 5."
+      },
+      {
+        "id": "siguiente",
+        "nombre": "Siguiente",
+        "cuando": "Tras acertar las preguntas 1 a 4",
+        "visual": "Aparece y sube 18 pt con fundido (0,42 s, cubic-bezier(.23,1,.32,1)).",
+        "assets": [],
+        "lienzo": [
+          "V2-07-Correcto-claro",
+          "V2-07-Correcto"
+        ],
+        "probar": "Acierta una pregunta."
+      },
+      {
+        "id": "ver-resultado",
+        "nombre": "Ver resultado",
+        "cuando": "Tras acertar la 5.ª pregunta",
+        "visual": "Mismo botón con «Ver resultado»; abre el resultado encima.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Acierta la 5.ª pregunta."
+      }
+    ]
+  },
+  {
+    "id": "boton-musica",
+    "nombre": "Botón de música",
+    "pantallas": [
+      "mapa",
+      "trivia",
+      "triviaFin"
+    ],
+    "selector": "#viewport .layer button[aria-label^=\"Música de fondo\"]",
+    "descripcion": "Activa o silencia la música de fondo (solo la música; las voces y los efectos siguen).",
+    "medidas": "Mapa: 40 × 40 pt dibujados (44 de área), redondo, en x 282, y 58; fondo #FFFFFF con sombra 0 2 8 rgba(8,93,111,.1); oscuro fondo #274E7C, sombra rgba(4,14,36,.22). Trivia: 44 × 44 pt en x 317, y 56, fondo rgba(255,255,255,.86) con desenfoque 16 (oscuro rgba(4,14,36,.42)). Ícono 20 × 20 pt (trazo 2,2) #0B748A; en oscuro #FFFFFF, también al tocarlo.",
+    "estados": [
+      {
+        "id": "activada",
+        "nombre": "Música activada",
+        "cuando": "Cuando la música está activada",
+        "visual": "Altavoz relleno con dos ondas. Accesibilidad: «Música de fondo activada. Toca para silenciarla», presionado = sí.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "S-03-Mapa-oscuro"
+        ],
+        "probar": "Mapa o trivia con la música encendida.",
+        "codigo": "musica.js bindMute → pintar(): ICO_ON, aria-pressed=\"true\", S.musica !== false."
+      },
+      {
+        "id": "silenciada",
+        "nombre": "Música silenciada",
+        "cuando": "Cuando la silenciaron (se recuerda)",
+        "visual": "Altavoz relleno con una ✕ en lugar de las ondas. Accesibilidad: «Música de fondo silenciada. Toca para activarla», presionado = no.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca el botón.",
+        "codigo": "ICO_OFF, aria-pressed=\"false\", S.musica === false y localStorage «cab-musica-off»."
+      },
+      {
+        "id": "claro",
+        "nombre": "Tema claro",
+        "cuando": "Con el tema de día",
+        "visual": "Mapa: círculo blanco, ícono #0B748A. Trivia: vidrio blanco al 86 %, ícono #0B748A.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "V2-06-Trivia-claro"
+        ],
+        "probar": "Panel › Día/Noche."
+      },
+      {
+        "id": "oscuro",
+        "nombre": "Tema oscuro",
+        "cuando": "Con el tema de noche",
+        "visual": "Mapa: círculo #274E7C, ícono #FFFFFF. Trivia: vidrio rgba(4,14,36,.42), ícono #FFFFFF.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa-oscuro",
+          "V2-06-Trivia"
+        ],
+        "probar": "Panel › Día/Noche.",
+        "codigo": "app.css :root[data-theme=dark] … button[aria-label^=\"Música\"]."
+      }
+    ]
+  },
+  {
+    "id": "trivia-resultado",
+    "nombre": "Resultado de la trivia (pop-up)",
+    "pantallas": [
+      "triviaFin"
+    ],
+    "selector": "#viewport .layer[data-screen=triviaFin] > .root > div > :not(.ov-scrim):not(.ov-body)",
+    "descripcion": "Ventana sobre la última pregunta con las estrellas, los panes y qué sigue (la ventana y todo lo que lleva encima).",
+    "medidas": "Ventana 350 × 456 pt en x 20, y 236, radio 32 pt, fondo #FFFFFF (oscuro #274E7C), sombra 0 24 60 rgba(8,93,111,.32) (oscuro rgba(0,8,43,.5)). Velo rgba(2,37,79,.42) (oscuro rgba(0,8,43,.6)) con desenfoque 10 pt sobre la trivia. Título 700 32/33,6 pt; «N de 5 a la primera» 500 16 pt; píldora «+10 panes» 127 × 38 pt, radio 19 pt, fondo #E2F3F7 (oscuro #1F4473). Botón principal 310 × 60 pt radio 22 pt; secundario 310 × 44 pt. Teodoro celebra encima (animación de 115 × 200 pt en y 58).",
+    "estados": [
+      {
+        "id": "perfecta",
+        "nombre": "¡Trivia perfecta! (3 estrellas)",
+        "cuando": "Acertaron las 5 preguntas a la primera",
+        "visual": "Título «¡Trivia perfecta!», confeti de 60 piezas y Teodoro dice «triviaPerfecta».",
+        "assets": [
+          "anim/teo-celebra.json"
+        ],
+        "lienzo": [
+          "V2-Trivia-fin-claro",
+          "V2-Trivia-fin"
+        ],
+        "probar": "Acierta las 5 a la primera.",
+        "codigo": "finishTrivia: est = 3."
+      },
+      {
+        "id": "gran",
+        "nombre": "¡Gran trivia! (2 estrellas)",
+        "cuando": "3 o 4 aciertos a la primera",
+        "visual": "Título «¡Gran trivia!», confeti de 30 piezas.",
+        "assets": [],
+        "lienzo": [
+          "V2-Trivia-fin-claro",
+          "V2-Trivia-fin"
+        ],
+        "probar": "Falla 1 o 2 preguntas.",
+        "codigo": "est = 2."
+      },
+      {
+        "id": "intento",
+        "nombre": "¡Buen intento! (1 estrella)",
+        "cuando": "2 aciertos a la primera o menos",
+        "visual": "Título «¡Buen intento!», sin confeti.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Falla 3 o más preguntas.",
+        "codigo": "est = 1."
+      },
+      {
+        "id": "sin-panes",
+        "nombre": "Sin panes",
+        "cuando": "Al repetir la trivia sin mejorar estrellas, y en el intro",
+        "visual": "La píldora «+10 panes» no aparece. Si mejoraron al repetir: aviso «¡Mejoraste tus estrellas!» +10 panes.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca un día hecho en el mapa › Trivia › juega otra vez.",
+        "codigo": "gana = false; día 0 no da panes."
+      },
+      {
+        "id": "normal",
+        "nombre": "Botones de un día normal",
+        "cuando": "El día no tiene juego sorpresa pendiente",
+        "visual": "«Volver al camino» (al mapa; si ya no queda nada, sale «Mañana seguimos») y «Jugar otra vez».",
+        "assets": [],
+        "lienzo": [
+          "V2-Trivia-fin-claro",
+          "V2-Trivia-fin"
+        ],
+        "probar": "Panel › Recorridos › «Un día con trivia» (día 17) o «Equivocarse en la trivia»."
+      },
+      {
+        "id": "sorpresa",
+        "nombre": "Con juego sorpresa",
+        "cuando": "El día trae juego sorpresa y aún no lo juegan",
+        "visual": "Aviso 310 × 64 pt, radio 20 pt, fondo #E2F3F7, con el dorso de las cartas: «¡Hoy hay juego sorpresa!» y el nombre del juego; botones «Ir al juego sorpresa» y «Ahora no».",
+        "assets": [
+          "assets/834fcca7dd481ce118a38c73d90f02cc.jpg"
+        ],
+        "lienzo": [
+          "V2-Trivia-fin-sorpresa-claro",
+          "V2-Trivia-fin-sorpresa",
+          "V2-Trivia-fin-sorpresa-adivinanza-claro",
+          "V2-Trivia-fin-sorpresa-desafio-claro"
+        ],
+        "probar": "Recorrido «Memorama» (día 3).",
+        "codigo": "RULES.sorpresa[día] y S.sorpresas[día] !== \"hecha\" (días 3, 9, 18 y 24 con trivia)."
+      }
+    ]
+  },
+  {
+    "id": "estrellas-resultado",
+    "nombre": "Estrellas del resultado",
+    "pantallas": [
+      "triviaFin"
+    ],
+    "selector": "#viewport .layer[data-screen=triviaFin] [role=img][aria-label^=\"Ganaste\"]",
+    "descripcion": "Las 3 estrellas grandes del resultado: se encienden las ganadas.",
+    "medidas": "Caja 390 × 120 pt en y 334. Tres estrellas de 78 pt: la 1.ª girada −10°, la del centro sin giro y 18 pt más arriba, la 3.ª +10°. Ganada: relleno #F7C948 con brillo #FFF3C4 y sombra drop-shadow(0 6 10 rgba(184,134,42,.35)); vacía: #D6E2EA (oscuro rgba(255,255,255,.16)).",
+    "estados": [
+      {
+        "id": "3",
+        "nombre": "3 de 3",
+        "cuando": "5 de 5 a la primera",
+        "visual": "Las tres doradas. Aparecen con rebote (escala .85 → 1, 0,5 s, cubic-bezier(.2,.9,.3,1.4)) a los 0,35 / 0,57 / 0,79 s; cada una suena al aparecer (sol, si, re).",
+        "assets": [],
+        "lienzo": [
+          "V2-Trivia-fin-claro",
+          "V2-Trivia-fin"
+        ],
+        "probar": "Acierta las 5 a la primera."
+      },
+      {
+        "id": "2",
+        "nombre": "2 de 3",
+        "cuando": "3 o 4 de 5 a la primera",
+        "visual": "Dos doradas y la 3.ª vacía.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Falla 1 o 2."
+      },
+      {
+        "id": "1",
+        "nombre": "1 de 3",
+        "cuando": "Menos de 3 de 5 (nunca hay 0 estrellas)",
+        "visual": "Una dorada y dos vacías.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Falla 3 o más."
+      }
+    ]
+  },
+  {
+    "id": "mapa-dia",
+    "nombre": "Día del mapa (nodo)",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] .dz-dia",
+    "descripcion": "Cada uno de los 27 círculos de vidrio del camino (intro + días 1 a 26), en su posición del Figma «Mapa Diozen».",
+    "medidas": "Círculo de 76 pt (hoy 96 pt; día 26 104 pt) sobre un mapa de 390 × 3600 pt; centros en las posiciones del Figma (de abajo arriba: intro (214, 3244), día 1 (142,1, 3094) … día 26 (137,5, 351)). Vidrio: relleno en degradado, aro interior con degradado (1,75 pt; 3 pt en hoy y en el 26), sombra 0 8 18 −2 + brillos interiores, desenfoque 8. Ícono del día 44 × 44 pt arriba (y 5); número Fredoka 600 19/20 pt en y 49 (hecho: 21/22 en y 43). Los días que vienen van por encima de Teodoro.",
+    "estados": [
+      {
+        "id": "hecho",
+        "nombre": "Hecho",
+        "cuando": "El día ya se hizo (cuento visto y, si tiene trivia, terminada)",
+        "visual": "Relleno degradado rgba(71,198,218,.78) → rgba(11,116,138,.88), aro blanco, número blanco 21 pt con sombra, ✓ blanco de 30 pt (trazo 4) arriba. Si el día tiene trivia: píldora de estrellas 63 × 22 pt, radio 11 pt, 31 pt bajo el centro, fondo #FFFFFF (oscuro #274E7C), estrellas 15/17/15 pt #F7C948 (vacías #D3DDE5; oscuro rgba(255,255,255,.24)). Igual en oscuro.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "S-03-Mapa-oscuro",
+          "V2-Mapa-completo-claro"
+        ],
+        "probar": "Recorrido «Repetir un día ya hecho» (día 10).",
+        "codigo": "map.js pintarDia(el, n, \"hecho\"); isDone(n)."
+      },
+      {
+        "id": "trivia-pendiente",
+        "nombre": "Cuento visto, falta la trivia",
+        "cuando": "Vieron el cuento de un día con trivia pero no la jugaron",
+        "visual": "Mismo vidrio azul verdoso y ✓ que «hecho», sin píldora de estrellas. Accesibilidad: «Día N: cuento visto, falta la trivia».",
+        "assets": [],
+        "lienzo": [
+          "S-03b-Mapa-trivia",
+          "S-03b-Mapa-trivia-oscuro"
+        ],
+        "probar": "Ve el cuento de un día con trivia y sal sin jugarla.",
+        "codigo": "contentDone(n) && !isDone(n) → \"trivia\"."
+      },
+      {
+        "id": "hoy",
+        "nombre": "Hoy (Teodoro encima)",
+        "cuando": "Es el día del calendario (donde está Teodoro)",
+        "visual": "96 pt, relleno dorado rgba(255,241,184,.85) → rgba(242,193,78,.85), aro 3 pt de blanco a dorado, sin ícono ni número (los tapa Teodoro; el número va en la píldora a sus pies). Anillo dorado que respira: sombra de 0 a 22 pt rgba(245,219,120,.75 → 0), 1,8 s en bucle.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "S-03-Mapa-oscuro"
+        ],
+        "probar": "Cualquier recorrido del camino › mapa.",
+        "codigo": "n === teoDay() o S.pasoAnimado; span .a-pulse."
+      },
+      {
+        "id": "atrasado",
+        "nombre": "Abierto, sin hacer (van atrasados)",
+        "cuando": "Un día que ya pasó y no han hecho",
+        "visual": "Vidrio claro rgba(255,255,255,.62) → rgba(191,231,241,.42) (oscuro rgba(94,141,194,.45) → rgba(27,59,102,.6), número blanco), ícono del día y contorno punteado de 3 pt #F5DB78 separado 3 pt.",
+        "assets": [
+          "assets/dia-icono/estrella.webp",
+          "assets/dia-icono/luna.webp",
+          "assets/dia-icono/vela.webp",
+          "assets/dia-icono/burro.webp",
+          "assets/dia-icono/pergamino.webp",
+          "assets/dia-icono/notas.webp",
+          "assets/dia-icono/casa.webp",
+          "assets/dia-icono/rompecabezas.webp",
+          "assets/dia-icono/carta.webp",
+          "assets/dia-icono/regalo.webp",
+          "assets/dia-icono/corazon.webp",
+          "assets/dia-icono/video.webp"
+        ],
+        "lienzo": [
+          "S-01-Hoy-atrasado"
+        ],
+        "probar": "Recorrido «Va atrasado».",
+        "codigo": "n <= lastDay() → \"abierto\"."
+      },
+      {
+        "id": "cerrado",
+        "nombre": "Cerrado (aún no llega)",
+        "cuando": "Un día que todavía no llega",
+        "visual": "Vidrio claro (oscuro azul), ícono con opacidad .5 y saturación .6, candado de 30 pt abajo a la derecha (−4, −2) con sombra drop-shadow(0 2 3 rgba(2,37,79,.25)). Al tocarlo sale el globo «Se abre el …» y el día se sacude a los lados (−8 / +7 / −5 / +3 pt, 0,45 s).",
+        "assets": [
+          "assets/candado.webp",
+          "assets/dia-icono/estrella.webp",
+          "assets/dia-icono/luna.webp",
+          "assets/dia-icono/vela.webp",
+          "assets/dia-icono/burro.webp",
+          "assets/dia-icono/pergamino.webp",
+          "assets/dia-icono/notas.webp",
+          "assets/dia-icono/casa.webp",
+          "assets/dia-icono/rompecabezas.webp",
+          "assets/dia-icono/carta.webp",
+          "assets/dia-icono/regalo.webp",
+          "assets/dia-icono/corazon.webp",
+          "assets/dia-icono/video.webp"
+        ],
+        "lienzo": [
+          "S-03d-Mapa-dia-cerrado",
+          "S-03d-Mapa-dia-cerrado-oscuro"
+        ],
+        "probar": "Recorrido «Tocar un día cerrado».",
+        "codigo": "n > lastDay() → \"cerrado\"."
+      },
+      {
+        "id": "pago-free",
+        "nombre": "De pago (familia free)",
+        "cuando": "Familia free en un día de pago que ya se abrió y no han visto",
+        "visual": "Como «abierto» pero sin el contorno punteado y con el candado de 30 pt. Accesibilidad: «…, con Premium o el Pase de Adviento». Al tocarlo se abre su hoja con «Desbloquear el día». Días gratis: 0, 1, 4, 8, 11, 15, 18, 22, 25 y 26.",
+        "assets": [
+          "assets/candado.webp"
+        ],
+        "lienzo": [
+          "V2-24-Dia-completo-claro"
+        ],
+        "probar": "Recorrido «Free · día de pago».",
+        "codigo": "map.js paso 2b: !puedeDia(n) && !contentDone(n), outline none."
+      },
+      {
+        "id": "recuerdo",
+        "nombre": "Recuerdo (desde el 7 de enero)",
+        "cuando": "Desde el 7 de enero, en los días que no se hicieron",
+        "visual": "Vidrio claro con opacidad .6. Al tocarlo: aviso «El camino de este año terminó».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Recuerdo · 7 de enero».",
+        "codigo": "fase() === \"recuerdo\"."
+      },
+      {
+        "id": "intro",
+        "nombre": "Intro (día 0, en la casa)",
+        "cuando": "El intro: se abre el 28 de noviembre, un día antes del día 1",
+        "visual": "El mismo nodo con «Intro» en lugar del número; el 28 es el día de hoy (dorado, 96 pt, píldora «Intro» de 54 pt). Antes del 28 está cerrado y su globo dice la fecha.",
+        "assets": [],
+        "lienzo": [
+          "V2-Mapa-dia0-claro",
+          "V2-Mapa-dia0"
+        ],
+        "probar": "Recorrido «El intro (28 de noviembre)».",
+        "codigo": "n === 0; S.hoy >= 0."
+      },
+      {
+        "id": "dia-26",
+        "nombre": "Día 26 · Belén",
+        "cuando": "Siempre en el día 26 (Belén)",
+        "visual": "104 pt, aro dorado de 3 pt (#FFF4C2 → #E9B53E), número 25/26 pt #0E7F97 en y 62, ícono de 52 pt; candado de 34 pt mientras está cerrado.",
+        "assets": [
+          "assets/dia-icono/estrella.webp"
+        ],
+        "lienzo": [
+          "V2-Mapa-d24-claro",
+          "V2-Mapa-oscuro"
+        ],
+        "probar": "Recorrido «Nochebuena».",
+        "codigo": "Clase dz-26."
+      },
+      {
+        "id": "elegido",
+        "nombre": "Día elegido",
+        "cuando": "Al tocar un día pasado o atrasado (la hoja muestra ese día)",
+        "visual": "Anillo 5 pt #F5DB78 + halo 12 pt rgba(245,219,120,.35) + sombra 0 10 18 rgba(2,37,79,.2), y entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)).",
+        "assets": [],
+        "lienzo": [
+          "S-03c-Mapa-dia-pasado",
+          "S-03c-Mapa-dia-pasado-oscuro"
+        ],
+        "probar": "Toca un día con ✓.",
+        "codigo": "params.dia o showPast(): box-shadow del lienzo S-03c."
+      },
+      {
+        "id": "recien-hecho",
+        "nombre": "Recién completado",
+        "cuando": "Al volver al mapa justo después de terminar ese día",
+        "visual": "A los 450 ms cambia a «hecho» (o «falta la trivia») y entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Termina el contenido de hoy y vuelve al mapa.",
+        "codigo": "S.pasoAnimado === n."
+      }
+    ]
+  },
+  {
+    "id": "teo-mapa",
+    "nombre": "Teodoro en el mapa",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] :is(img.dz-teo, .dz-teo-anim)",
+    "descripcion": "Teodoro de pie sobre su día (siempre el día del calendario, aunque la familia vaya atrasada); camina por el sendero cuando avanza el calendario.",
+    "medidas": "En el día de hoy: 108 × 104 pt, con los pies 29 pt bajo el centro del día. En un día de 76 pt (al volver en la gracia): 85,5 × 82,3 pt, pies 28 pt bajo el centro. Dibujo apoyado abajo; sombra drop-shadow(0 6 8 rgba(8,93,111,.25)). Quieto, flota 4 pt arriba y abajo (3,6 s, en bucle).",
+    "estados": [
+      {
+        "id": "energia",
+        "nombre": "Según la energía",
+        "cuando": "Siempre: el dibujo depende de la energía de Teodoro (0 a 5)",
+        "visual": "Seis dibujos: 0 Dormido · 1 Cabeceando · 2 Agotado · 3 Tranquilo · 4 Travieso · 5 Feliz.",
+        "assets": [
+          "assets/55c6a5fd9cf68d7041920d65829c3c80.webp",
+          "assets/976c9b59c0fcc1d60682381e421591ee.webp",
+          "assets/52ba38f10b723e04ad04beea396aba0c.webp",
+          "assets/7bfff4a8f40290f70de7fc8e49ee7d4d.webp",
+          "assets/64167d45da19875626c545019275e29c.webp",
+          "assets/345591e97560d37b84ead12837ff9c75.webp"
+        ],
+        "lienzo": [
+          "Teodoro-Energia",
+          "S-01-Energia"
+        ],
+        "probar": "Panel › Estado › energía de Teodoro.",
+        "codigo": "teodoroImg(S.bateria) → TEODORO_IDS."
+      },
+      {
+        "id": "camina",
+        "nombre": "Camina al día nuevo",
+        "cuando": "Al abrir el mapa en un día nuevo del calendario (camina un solo paso)",
+        "visual": "Animación teo-caminando (lienzo 324 × 600, pies en 592) a 1,15× por las piedras del sendero entre el día anterior y el de hoy: dura el largo del camino × 11 ms (entre 1500 y 2400 ms), curva cubic-bezier(.4,.1,.6,.9); se voltea cuando el sendero gira 10 pt o más; crece de 79 % a 100 % si venía de un día pequeño. Un «toc» de cascos cada 705 ms. Al llegar: se aplasta (1,06; .94) 220 ms, el día rebota, suena el motivo corto y Teodoro dice «¡Vamos a la aventura!» (en Belén «¡Increíble!») a 1,1 s.",
+        "assets": [
+          "anim/teo-caminando.json"
+        ],
+        "lienzo": [
+          "V2-Mapa-completo-claro"
+        ],
+        "probar": "Panel › día ›: pasa un día y abre el mapa.",
+        "codigo": "map.js mount paso 7 → caminar(r, fin, SENDERO[n], desdeK); S.teoMapa < teoDay()."
+      },
+      {
+        "id": "celebra",
+        "nombre": "Celebra (terminó el día de hoy)",
+        "cuando": "Al volver al mapa después de terminar el día de hoy",
+        "visual": "Animación teo-celebra (lienzo 875 × 1522, pies en 1167) en bucle sobre su día con los mismos pies; Teodoro dice «celebraDia» a 0,35 s.",
+        "assets": [
+          "anim/teo-celebra.json"
+        ],
+        "lienzo": [],
+        "probar": "Termina el contenido de hoy.",
+        "codigo": "S.pasoAnimado === teoDay()."
+      },
+      {
+        "id": "despierta",
+        "nombre": "Despierta",
+        "cuando": "Al volver tras días sin caminar (desde «¡Te guardé el camino!»)",
+        "visual": "A los 500 ms cambia al dibujo de energía 3 o más y salta 14 pt tres veces (0,7 s cada salto) y luego flota.",
+        "assets": [],
+        "lienzo": [
+          "V2-10-Regreso"
+        ],
+        "probar": "Recorrido «Regreso tras una semana» › «Empezar por hoy».",
+        "codigo": "params.despierta."
+      },
+      {
+        "id": "recarga",
+        "nombre": "Recarga",
+        "cuando": "Terminaron el día con la pila baja",
+        "visual": "Se ve con su energía de antes; al llenarse la pila pasa al dibujo feliz y salta 14 pt tres veces (0,7 s cada salto) y luego flota.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Teodoro cansado»: termina el contenido.",
+        "codigo": "S.recarga; recargarPila()."
+      },
+      {
+        "id": "oculto",
+        "nombre": "Aún no está en el mapa",
+        "cuando": "Antes del 28 de noviembre",
+        "visual": "No se muestra, ni su píldora.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Ya inscrito» › mapa.",
+        "codigo": "S.hoy < 0 → teo.hidden."
+      },
+      {
+        "id": "sin-animacion",
+        "nombre": "Sin animación",
+        "cuando": "Con «Reducir movimiento» o si la animación no carga",
+        "visual": "Avanza a saltitos: se desplaza en 1100 ms cubic-bezier(.65,0,.35,1) con dos rebotes de 16 y 12 pt. Para celebrar, salta 14 pt tres veces.",
+        "assets": [
+          "assets/67947142d31d9fb5442ef113320694e6.webp"
+        ],
+        "lienzo": [],
+        "probar": "Reducir movimiento activado."
+      }
+    ]
+  },
+  {
+    "id": "pildora-dia-teo",
+    "nombre": "Número del día a los pies de Teodoro",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] .dz-hoy-num",
+    "descripcion": "Píldora con el número del día de hoy debajo de Teodoro.",
+    "medidas": "30 × 26 pt (intro: 54 pt de ancho), radio 13 pt, centrada en el día, 32 pt bajo su centro (en el 26, 38). Fondo #FFFFFF, texto #0B748A Fredoka 600 15 pt; oscuro fondo #274E7C, texto #FFFFFF. Sombra 0 3 8 rgba(2,37,79,.2).",
+    "estados": [
+      {
+        "id": "numero",
+        "nombre": "Día N",
+        "cuando": "Teodoro está en el día de hoy",
+        "visual": "Muestra el número del día.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "S-03-Mapa-oscuro"
+        ],
+        "probar": "Cualquier día del camino › mapa."
+      },
+      {
+        "id": "intro",
+        "nombre": "Intro",
+        "cuando": "El 28 de noviembre, con Teodoro esperando en el intro",
+        "visual": "Texto «Intro», 54 pt de ancho.",
+        "assets": [],
+        "lienzo": [
+          "V2-Mapa-dia0-claro"
+        ],
+        "probar": "Recorrido «El intro»."
+      },
+      {
+        "id": "oculta",
+        "nombre": "Oculta",
+        "cuando": "Teodoro está en un día que no es hoy (gracia) o antes del 28",
+        "visual": "No se muestra.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Gracia · a medias»."
+      }
+    ]
+  },
+  {
+    "id": "mapa-que-habra",
+    "nombre": "«¿Qué habrá aquí?»",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] .dz-que",
+    "descripcion": "Etiqueta junto al día que viene, para dar curiosidad.",
+    "medidas": "Hasta 144 pt de ancho, 34 pt de alto, radio 17 pt, a 46 pt del centro del día (a la derecha o a la izquierda, donde no tape una ruleta ni a Teodoro). Fondo rgba(255,255,255,.95), texto #0B748A Fredoka 500 13 pt con un destello #F5DB78 de 12 pt; oscuro fondo rgba(39,78,124,.95), texto #FFFFFF. Sombra 0 6 14 rgba(0,8,43,.18). No se toca.",
+    "estados": [
+      {
+        "id": "visible",
+        "nombre": "Visible",
+        "cuando": "Durante el camino, junto al día siguiente a Teodoro, si cabe sin tapar nada",
+        "visual": "Una sola etiqueta.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Cualquier día del camino › mapa."
+      },
+      {
+        "id": "oculta",
+        "nombre": "No sale",
+        "cuando": "Si no cabe, en el día 26, en la gracia o en el recuerdo",
+        "visual": "No se muestra.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Nochebuena»."
+      }
+    ]
+  },
+  {
+    "id": "mapa-globo-cerrado",
+    "nombre": "Globo «Se abre el…»",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] [data-bubble]",
+    "descripcion": "Globo que sale encima de un día cerrado al tocarlo.",
+    "medidas": "Globo de 48 pt de alto (ancho según el texto, ~246 pt), radio 24 pt, fondo #FFFFFF (oscuro rgba(39,78,124,.97)), texto #0B748A (oscuro #FFFFFF), sombra 0 10 24 rgba(0,8,43,.28); flecha de 22 × 14 pt que apunta al día; 64 pt por encima del día y siempre dentro de la pantalla (12 pt de margen).",
+    "estados": [
+      {
+        "id": "visible",
+        "nombre": "Visible",
+        "cuando": "Al tocar un día que aún no llega (o el intro antes del 28)",
+        "visual": "Texto «Se abre el {día} de {mes}». Entra en 220 ms (fundido, sube 6 pt, escala .94 → 1) y se va solo a los 2,6 s (fundido de 250 ms).",
+        "assets": [],
+        "lienzo": [
+          "S-03d-Mapa-dia-cerrado",
+          "S-03d-Mapa-dia-cerrado-oscuro"
+        ],
+        "probar": "Recorrido «Tocar un día cerrado».",
+        "codigo": "map.js showBubble()."
+      }
+    ]
+  },
+  {
+    "id": "mapa-ruleta",
+    "nombre": "Ruleta del mapa",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] .dz-ruleta",
+    "descripcion": "Las 4 ruletas dibujadas junto al camino (días 4, 11, 18 y 24); solo se juegan tocándolas aquí.",
+    "medidas": "Semanas 1 y 3: ruleta con pie de 121,5 × 170,1 pt en (269,5, 2525,9) y (278,5, 989,9). Semanas 2 y 4: ruleta dibujada de 107,1 × 149,4 pt en (281,9, 1771,6) y (−19,7, 336,6). Etiqueta de 26 pt de alto, radio 13 pt, fondo rgba(39,78,124,.97), texto #FFFFFF Fredoka 500 12 pt, sombra 0 4 10 rgba(4,14,36,.26) (igual en oscuro).",
+    "estados": [
+      {
+        "id": "lista",
+        "nombre": "¡Gírala!",
+        "cuando": "Ya llegó su día y vieron el cuento de ese día; aún no la giran",
+        "visual": "Rueda a color que late (escala 1 → 1,06, 2,2 s en bucle, origen 50 % 90 %); etiqueta «¡Gírala!» con un destello #E9B949. Al tocarla rebota y se abre la ruleta.",
+        "assets": [
+          "assets/mapa/ruleta-pie.webp",
+          "assets/mapa/ruleta-dibujada.webp"
+        ],
+        "lienzo": [
+          "S-03f-Mapa-dia11",
+          "S-03f-Mapa-dia11-oscuro"
+        ],
+        "probar": "Recorrido «Día de ruleta» (día 11)."
+      },
+      {
+        "id": "girada",
+        "nombre": "Ya la giraste",
+        "cuando": "Ya la giraron",
+        "visual": "Sin etiqueta; insignia de vidrio de 40 pt (degradado rgba(71,198,218,.95) → rgba(11,116,138,.97), aro 2,5 pt blanco) con ✓ blanco de 20 pt en el borde de arriba, del lado del sendero. Al tocarla: aviso con el premio.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Gira la del día 11 y vuelve al mapa."
+      },
+      {
+        "id": "termina-dia",
+        "nombre": "Termina el día N",
+        "cuando": "Ya llegó su día pero no han visto el cuento",
+        "visual": "Rueda apagada (opacidad .55, saturación .35) con candado de 34 pt al centro; etiqueta «Termina el día N». Al tocarla: «Después la giras aquí».",
+        "assets": [
+          "assets/candado.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Día de ruleta» antes de ver el cuento."
+      },
+      {
+        "id": "proxima",
+        "nombre": "Mañana / Faltan N días",
+        "cuando": "Es la próxima ruleta y su día aún no llega",
+        "visual": "Apagada con candado; etiqueta «Mañana» o «Faltan N días».",
+        "assets": [
+          "assets/candado.webp"
+        ],
+        "lienzo": [],
+        "probar": "Día 9 › mapa (la del 11 dice «Faltan 2 días»)."
+      },
+      {
+        "id": "futura",
+        "nombre": "Día N",
+        "cuando": "Ruletas más lejanas",
+        "visual": "Apagada con candado; etiqueta «Día 18», «Día 24». Al tocarla: «Se abre el {día} de {mes}».",
+        "assets": [
+          "assets/candado.webp"
+        ],
+        "lienzo": [],
+        "probar": "Cualquier día temprano."
+      },
+      {
+        "id": "cerrada",
+        "nombre": "Cerrada",
+        "cuando": "Desde el 7 de enero, si no la giraron",
+        "visual": "Apagada con candado; etiqueta «Cerrada».",
+        "assets": [
+          "assets/candado.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Recuerdo · 7 de enero»."
+      }
+    ]
+  },
+  {
+    "id": "hoja-dia",
+    "nombre": "Hoja del día (mapa)",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] [data-sheet]",
+    "descripcion": "Hoja de vidrio abajo del mapa con el día que propone (o el tocado) y sus actividades; se minimiza a una barra tipo mini reproductor.",
+    "medidas": "Abierta: x 10, 370 pt de ancho, a 10 pt del borde de abajo, alto según contenido (~354 pt con 3 filas), radio 34 pt, padding 12/18/22 pt, 8 pt entre elementos. Fondo rgba(255,255,255,.58) con desenfoque 19 y saturación 1,3; oscuro rgba(39,78,124,.7) con desenfoque 10, saturación 1,2 y borde 1 pt rgba(255,255,255,.12). Sombra 0 −10 24 rgba(0,8,43,.12) + 0 14 40 rgba(8,93,111,.2). Rayita 38 × 5 pt #D7DDE3 (oscuro rgba(255,255,255,.3)). Antetítulo Nunito 800 12 pt #5F5F5F (oscuro #FFF6DD); título Fredoka 600 22/25 pt #0B748A (oscuro #FFFFFF); cita del domingo 500 14/18 pt. Botón para minimizar 44 × 44 pt, radio 22, fondo rgba(11,116,138,.08) (oscuro rgba(255,255,255,.1)). Minimizada: 370 × 90 pt, padding 16 × 12 pt.",
+    "estados": [
+      {
+        "id": "abierta",
+        "nombre": "Abierta (hoy)",
+        "cuando": "Al abrir el mapa: el día de hoy, o el primero que tengan pendiente",
+        "visual": "Antetítulo «HOY · DÍA N», «DÍA N», «DÍA N · LISTO», «CAMINO TERMINADO» o «INTRO». Filas del día; el botón principal vive en la barra minimizada (en la hoja abierta se toca la fila). Sube desde abajo en 0,36 s cubic-bezier(.32,.72,0,1).",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "S-03-Mapa-oscuro",
+          "S-03b-Mapa-trivia",
+          "S-03b-Mapa-trivia-oscuro"
+        ],
+        "probar": "Cualquier recorrido › mapa.",
+        "codigo": "map.js paintSheet(); walkDay()."
+      },
+      {
+        "id": "mini",
+        "nombre": "Minimizada (barra)",
+        "cuando": "Al tocar ⌄, la rayita o deslizar hacia abajo; sale así en el intro y el día 1",
+        "visual": "Barra: ícono del día en caja de 58 × 58 pt, radio 18, fondo #E2F3F7 (oscuro rgba(255,255,255,.1)), imagen de 46 pt; punto naranja de 14 pt #E8A33D con aro 3 pt blanco (oscuro #12305A) si hay trivias pendientes; «Día N» Fredoka 600 17 pt; botón de 44 pt, radio 22, #F5DB78 texto #0A6070 (máx. 170 pt) con ▶ si es un contenido; el ⌄ gira 180°. La hoja se encoge desde donde está en 360 ms cubic-bezier(.32,.72,0,1) y la barra sube 6 pt con fundido (0,3 s).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca ⌄ en la hoja.",
+        "codigo": "sheetDrag(): arrastre > 60 pt abajo minimiza, < −30 pt arriba abre; un toque en la rayita alterna; clase mini."
+      },
+      {
+        "id": "dia-elegido",
+        "nombre": "Otro día elegido",
+        "cuando": "Al tocar un día atrasado o con la trivia pendiente",
+        "visual": "Igual que abierta con «DÍA N» o «DÍA N · TRIVIA PENDIENTE»; acción secundaria «Volver con Teodoro · Día N».",
+        "assets": [],
+        "lienzo": [
+          "S-03c-Mapa-dia-pasado"
+        ],
+        "probar": "Recorrido «Va atrasado» › toca un día atrasado.",
+        "codigo": "params.dia."
+      },
+      {
+        "id": "pasado",
+        "nombre": "Día ya hecho",
+        "cuando": "Al tocar un día que ya hicieron",
+        "visual": "Antetítulo «YA LO HICISTE · DÍA N». Filas de 52 pt, radio 16: el contenido «Ya lo viste» con la píldora «Ver otra vez» (borde 1,5 pt #1E8DA5, 32 pt de alto), la trivia con sus estrellas y «+10 panes si mejoras tus estrellas» o «¡Ya tienes las 3 estrellas!», el imprimible y el juego sorpresa si quedó para después.",
+        "assets": [],
+        "lienzo": [
+          "S-03c-Mapa-dia-pasado",
+          "S-03c-Mapa-dia-pasado-oscuro"
+        ],
+        "probar": "Recorrido «Repetir un día ya hecho».",
+        "codigo": "map.js showPast()."
+      },
+      {
+        "id": "energia",
+        "nombre": "Energía de Teodoro",
+        "cuando": "Al tocar la batería de arriba",
+        "visual": "300 pt de alto: «LA ENERGÍA DE TEODORO», título según el nivel (0 «Teodoro se quedó dormido» … 5 «Teodoro está feliz y con ganas»), Teodoro de 64 × 96 pt que flota 4 pt arriba y abajo (3,6 s, en bucle), la batería de 92 × 46 pt y «Cada día que caminan juntos lo llena.»; botón con la acción del día.",
+        "assets": [
+          "assets/55c6a5fd9cf68d7041920d65829c3c80.webp",
+          "assets/976c9b59c0fcc1d60682381e421591ee.webp",
+          "assets/52ba38f10b723e04ad04beea396aba0c.webp",
+          "assets/7bfff4a8f40290f70de7fc8e49ee7d4d.webp",
+          "assets/64167d45da19875626c545019275e29c.webp",
+          "assets/345591e97560d37b84ead12837ff9c75.webp",
+          "assets/27bb485f436b46be2a2d653b3a20bf3f.webp",
+          "assets/deac36cce020e374cf7f482297f2082d.webp",
+          "assets/cf767fcbf0222668adbf6d034ac727a3.webp",
+          "assets/0c32fdbef8718a32c8591f2e1f735206.webp",
+          "assets/1026bcf94b07418de82a878d671104b2.webp",
+          "assets/4b563b5c264cac11814acc731db9db86.webp"
+        ],
+        "lienzo": [
+          "S-03e-Mapa-energia",
+          "S-03e-Mapa-energia-oscuro"
+        ],
+        "probar": "Recorrido «Teodoro cansado» › toca la batería.",
+        "codigo": "map.js showEnergy(); ENERGY_TITLE."
+      },
+      {
+        "id": "antes-de-salir",
+        "nombre": "Antes de salir",
+        "cuando": "Antes del 28 de noviembre",
+        "visual": "«ANTES DE SALIR · Salimos el 29 de noviembre», la fila del día 1 y el botón «Invitar amigos» + «Volver al inicio».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Ya inscrito» › mapa."
+      },
+      {
+        "id": "nochebuena",
+        "nombre": "Nochebuena",
+        "cuando": "El día 26, mientras no hayan visto el nacimiento",
+        "visual": "Hoja especial del lienzo: «Hoy nace Jesús» (en el recuerdo «El nacimiento») con su botón para empezar.",
+        "assets": [],
+        "lienzo": [
+          "V2-Mapa-d24-claro",
+          "V2-Mapa-oscuro"
+        ],
+        "probar": "Recorrido «Nochebuena».",
+        "codigo": "act === 26 && !contentDone(26): plantilla V2-Mapa-d24."
+      },
+      {
+        "id": "pago",
+        "nombre": "Día de pago (free)",
+        "cuando": "Familia free en un día de pago que no han visto",
+        "visual": "Todas las filas con candado; «Desbloquear el día» se queda visible en la hoja abierta (abre Premium o el Pase).",
+        "assets": [
+          "assets/candado.webp"
+        ],
+        "lienzo": [
+          "V2-24-Dia-completo-claro"
+        ],
+        "probar": "Recorrido «Free · día de pago»."
+      },
+      {
+        "id": "bajo-popup",
+        "nombre": "Bajo un pop-up",
+        "cuando": "Mientras hay un pop-up encima del mapa",
+        "visual": "La hoja y «Tu día» desaparecen con fundido de 0,2 s.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Abre la ruleta del mapa.",
+        "codigo": "app.css .layer.under [data-sheet]."
+      }
+    ]
+  },
+  {
+    "id": "hoja-fila",
+    "nombre": "Fila de la hoja del día",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] [data-sheet] > :is(.sheet-row, div[role=button])",
+    "descripcion": "Cada actividad del día en la hoja: contenido, trivia, imprimible y juego sorpresa. En la hoja abierta se toca la fila.",
+    "medidas": "334 pt de ancho, 58 pt de alto (día ya hecho: 52), radio 18 pt (16), padding 0 12 0 8, 12 pt entre ícono y texto. Fondo rgba(243,250,252,.7) (oscuro rgba(255,255,255,.08)). Ícono en caja de 42 × 42 pt, radio 13 pt, #E2F3F7 (oscuro #1F4473), imagen de 32 pt. Título Fredoka 500 16/20 pt #0B748A (oscuro #FFFFFF); subtítulo Nunito 600 13/17 pt #5F5F5F. Píldoras de la derecha de 26 pt de alto, radio 13 pt, Fredoka 500 12 pt.",
+    "estados": [
+      {
+        "id": "ahora",
+        "nombre": "Ahora",
+        "cuando": "La actividad que toca hacer ahora",
+        "visual": "Borde interior 2 pt rgba(245,219,120,.9) y píldora «Ahora» fondo #F5DB78, texto #06325A.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "S-03b-Mapa-trivia"
+        ],
+        "probar": "Cualquier día › mapa."
+      },
+      {
+        "id": "bloqueada",
+        "nombre": "Bloqueada",
+        "cuando": "La trivia antes de ver el contenido, o un día de pago",
+        "visual": "Sin borde; candado de 24 pt a la derecha. Al tocarla se sacude a los lados (−8 / +7 / −5 / +3 pt, 0,45 s) y avisa «Primero el video» (en un día de pago, abre el pago).",
+        "assets": [
+          "assets/candado.webp",
+          "assets/b408611b336918df9f593ecfc3f68cfd.webp",
+          "assets/d9df161d957255d7b42cf74bb0f20a89.webp"
+        ],
+        "lienzo": [
+          "S-03-Mapa"
+        ],
+        "probar": "Cualquier día con trivia antes de ver el cuento."
+      },
+      {
+        "id": "hecha",
+        "nombre": "Hecha",
+        "cuando": "Contenido visto o trivia jugada",
+        "visual": "Sin borde; ✓ a la derecha, o las estrellas (★ 17 pt #F5C33B; vacías #C9D6DF, oscuro rgba(255,255,255,.25)). Subtítulo «Ya lo viste» / «Ya la jugaste».",
+        "assets": [],
+        "lienzo": [
+          "S-03b-Mapa-trivia"
+        ],
+        "probar": "Termina el día y vuelve a abrir su hoja."
+      },
+      {
+        "id": "jugar-otra-vez",
+        "nombre": "Juego · jugar otra vez",
+        "cuando": "Juegos en familia (días 7, 14 y 21) ya jugados",
+        "visual": "Píldora «Jugar otra vez» en lugar del ✓.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Teodoro dice» después de terminar."
+      },
+      {
+        "id": "imprimible",
+        "nombre": "Imprimible del día",
+        "cuando": "Todos los días desde el 1",
+        "visual": "Ícono del pergamino; título del descargable («Corona de Adviento», «Pesebre para colorear», «Reto del día» o «Imprimible del día»); píldora «Abrir» fondo #E2F3F7 (oscuro rgba(255,255,255,.16)) con ícono de descarga; en los retos de acción, una flecha ›.",
+        "assets": [
+          "assets/8325ca235ba2fb8f0fd97f515b622ffc.webp"
+        ],
+        "lienzo": [
+          "S-03-Mapa"
+        ],
+        "probar": "Cualquier día › mapa."
+      },
+      {
+        "id": "sorpresa",
+        "nombre": "¡Hoy hay juego sorpresa!",
+        "cuando": "El día ya se hizo y su juego sorpresa sigue pendiente",
+        "visual": "Fila «Ahora» con el regalo y «Hoy toca Memorama / Adivinanza en familia / Desafío en familia».",
+        "assets": [
+          "assets/40de1cf55d4441bd10615c06350dde30.webp"
+        ],
+        "lienzo": [],
+        "probar": "Día 6 › termina la historia › «Ahora no» › vuelve a la hoja."
+      }
+    ]
+  },
+  {
+    "id": "hoja-boton",
+    "nombre": "Botón principal del día en el mapa",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] :is([data-sheet] > a, .mb-cta)",
+    "descripcion": "La acción principal del día: vive en la barra minimizada; en la hoja abierta solo se ve cuando no hay fila que tocar.",
+    "medidas": "En la hoja: 334 × 56 pt, radio 20 pt, #F5DB78, texto #0B748A Fredoka 600 20 pt con ▶ de 18 pt si es un contenido. En la barra: 44 pt de alto, radio 22 pt, padding 0 14, texto #0A6070 Fredoka 600 16 pt, sombra 0 4 10 rgba(245,219,120,.45), máx. 170 pt, con textos cortos («Escuchar», «Jugar», «Invitar»…). Igual en oscuro.",
+    "estados": [
+      {
+        "id": "contenido",
+        "nombre": "Ver video / Escuchar canción / Ver el reto / Jugar / Comenzar",
+        "cuando": "Todavía no han visto el contenido del día (el 26: «Comenzar»)",
+        "visual": "Con ▶.",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa"
+        ],
+        "probar": "Cualquier día › mapa.",
+        "codigo": "flow.js ctaLabel(): TYPES[tipo].verbo."
+      },
+      {
+        "id": "trivia",
+        "nombre": "Jugar la trivia",
+        "cuando": "Vieron el contenido y falta la trivia",
+        "visual": "Sin ▶.",
+        "assets": [],
+        "lienzo": [
+          "S-03b-Mapa-trivia"
+        ],
+        "probar": "Ve el cuento y vuelve al mapa sin jugar."
+      },
+      {
+        "id": "sorpresa",
+        "nombre": "Ir al juego sorpresa",
+        "cuando": "El día está hecho y queda el juego sorpresa",
+        "visual": "Sin ▶; en la barra dice «Jugar».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Día 6 o 9 tras «Ahora no»."
+      },
+      {
+        "id": "seguir",
+        "nombre": "Seguir al día N",
+        "cuando": "El día está hecho y queda otro día pendiente",
+        "visual": "Sin ▶; se queda visible en la hoja abierta.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Va atrasado» tras hacer un día."
+      },
+      {
+        "id": "hasta-manana",
+        "nombre": "Hasta mañana",
+        "cuando": "Hicieron todo hasta hoy",
+        "visual": "Sin ▶; vuelve a Hoy.",
+        "assets": [],
+        "lienzo": [
+          "V2-Cerrado"
+        ],
+        "probar": "Termina el día de hoy."
+      },
+      {
+        "id": "nacimiento",
+        "nombre": "Ver el nacimiento",
+        "cuando": "Todo hecho desde el día 26, o en el recuerdo",
+        "visual": "Con ▶ en el recuerdo.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Terminó completo»."
+      },
+      {
+        "id": "desbloquear",
+        "nombre": "Desbloquear el día",
+        "cuando": "Familia free en un día de pago",
+        "visual": "Sin ▶; abre la hoja de Premium.",
+        "assets": [],
+        "lienzo": [
+          "V2-24-Dia-completo-claro"
+        ],
+        "probar": "Recorrido «Free · día de pago»."
+      },
+      {
+        "id": "invitar",
+        "nombre": "Invitar amigos",
+        "cuando": "Antes del 28 (hoja «Antes de salir»)",
+        "visual": "Sin ▶; abre la invitación.",
+        "assets": [],
+        "lienzo": [
+          "V2-Invitacion-claro"
+        ],
+        "probar": "Recorrido «Ya inscrito» › mapa."
+      }
+    ]
+  },
+  {
+    "id": "hoja-accion-secundaria",
+    "nombre": "Acción secundaria de la hoja",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] .sheet-alt",
+    "descripcion": "Un botón de contorno bajo el principal (máximo uno por hoja) con lo que quedó pendiente.",
+    "medidas": "334 pt de ancho, mín. 48 pt de alto, radio 24 pt, borde 2 pt #CFE8EE, fondo #FFFFFF, texto #0B748A Fredoka 600 16 pt, ícono a la izquierda y › a la derecha (opacidad .7). Chip de día de 26 pt, radio 13, #FFF1D2, texto #8A5A0E 800 12 pt. Oscuro: fondo rgba(255,255,255,.06), borde rgba(159,224,238,.35), texto #9FE0EE; chip rgba(232,163,61,.2) / #F5C77A.",
+    "estados": [
+      {
+        "id": "volver-teodoro",
+        "nombre": "Volver con Teodoro · Día N",
+        "cuando": "La hoja muestra otro día y no el de Teodoro",
+        "visual": "Ícono de casa.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca un día atrasado."
+      },
+      {
+        "id": "trivias-pendientes",
+        "nombre": "Trivia pendiente / N trivias pendientes",
+        "cuando": "Quedan trivias de días anteriores sin jugar",
+        "visual": "Ícono de pregunta y chip «Día N» con el primero; si el botón principal ya es de trivia: «N trivia(s) más».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Va atrasado»."
+      },
+      {
+        "id": "sorpresa-pendiente",
+        "nombre": "Juego sorpresa · {juego}",
+        "cuando": "Dejaron un juego sorpresa para después en un día anterior",
+        "visual": "Dorso de las cartas y chip «Día N».",
+        "assets": [
+          "assets/834fcca7dd481ce118a38c73d90f02cc.jpg"
+        ],
+        "lienzo": [],
+        "probar": "Día 3: «Ahora no» en la sorpresa; luego pasa al día 4."
+      },
+      {
+        "id": "volver-inicio",
+        "nombre": "Volver al inicio",
+        "cuando": "Antes del 28 (hoja «Antes de salir»)",
+        "visual": "Ícono de casa.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Ya inscrito» › mapa."
+      }
+    ]
+  },
+  {
+    "id": "tu-dia",
+    "nombre": "Píldora «Tu día N»",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] .back-hoy",
+    "descripcion": "Píldora flotante sobre la hoja que lleva de vuelta al día de Teodoro cuando sale de la vista.",
+    "medidas": "40 pt de alto, ~100 pt de ancho, radio 20 pt, padding 0 14 0 10, centrada 58 pt por encima de la hoja (se mueve con ella). Fondo #FFFFFF, texto #0B748A Mulish 900 15 pt, flecha ↑/↓ 900 16 pt; sombra 0 6 16 rgba(8,93,111,.22). Oscuro: fondo #274E7C, texto #FFFFFF, borde 1 pt rgba(255,255,255,.12).",
+    "estados": [
+      {
+        "id": "oculta",
+        "nombre": "Oculta",
+        "cuando": "El día de Teodoro está a la vista, o hay otro día elegido",
+        "visual": "Transparente y 8 pt más abajo; no se toca.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Mapa recién abierto."
+      },
+      {
+        "id": "visible",
+        "nombre": "Visible",
+        "cuando": "Al desplazar el mapa y dejar el día de Teodoro fuera de la vista",
+        "visual": "Aparece y sube a su lugar en 0,2 s cubic-bezier(.23,1,.32,1); flecha ↑ si el día quedó arriba, ↓ si abajo; «Tu día N» o «Intro». Al tocarla, el mapa se desplaza suave hasta el día.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Haz scroll en el mapa."
+      }
+    ]
+  },
+  {
+    "id": "mapa-dia-cabecera",
+    "nombre": "Píldora del día en la cabecera del mapa",
+    "pantallas": [
+      "mapa"
+    ],
+    "selector": "#viewport .layer[data-screen=mapa] .map-chip",
+    "descripcion": "Arriba al centro del mapa: en qué día va el camino.",
+    "medidas": "40 pt de alto (~96 pt de ancho), radio 20 pt, en y 58, centrada. Fondo #FFFFFF, sombra 0 2 8 rgba(8,93,111,.1), Fredoka 600 18 pt #1E8DA5; «Día» 500 14 pt al 70 %, «/ 26» 500 14 pt #5F5F5F. Oscuro: fondo #274E7C, texto #FFFFFF, «/ 26» #FFF6DD.",
+    "estados": [
+      {
+        "id": "dia",
+        "nombre": "Día N / 26",
+        "cuando": "Durante el camino",
+        "visual": "«Día 9 / 26».",
+        "assets": [],
+        "lienzo": [
+          "S-03-Mapa",
+          "S-03-Mapa-oscuro"
+        ],
+        "probar": "Cualquier día."
+      },
+      {
+        "id": "gracia",
+        "nombre": "Quedan N días",
+        "cuando": "Del 25 de diciembre al 6 de enero, si les faltan cuentos",
+        "visual": "Texto 800 16 pt #0B748A (oscuro #F5DB78), en una línea; el 6 de enero «Último día».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Gracia · a medias»."
+      },
+      {
+        "id": "antes",
+        "nombre": "Sale el 29",
+        "cuando": "Hasta el 28 de noviembre",
+        "visual": "800, #0B748A (oscuro #F5DB78).",
+        "assets": [],
+        "lienzo": [
+          "V2-Mapa-dia0-claro"
+        ],
+        "probar": "Recorrido «El intro»."
+      }
+    ]
+  },
+  {
+    "id": "bateria",
+    "nombre": "Batería / energía de Teodoro",
+    "pantallas": [
+      "mapa",
+      "hoy",
+      "teodoro"
+    ],
+    "selector": "#viewport .layer [aria-label^=\"Energía de Teodoro\"]",
+    "descripcion": "La pila de 5 rayitas con la energía de Teodoro: en la cabecera del mapa y en la pieza de Adviento de Hoy y del tab Teodoro.",
+    "medidas": "Mapa: área de 46 × 40 pt arriba a la derecha (x 332, y 58), imagen de 53,4 × 30,2 pt. Pieza de Hoy: 44 × 36 pt en (302, 12) de la tarjeta, imagen de 51,1 × 28,8 pt, sombra drop-shadow(0 1 3 rgba(0,8,43,.55)). Una imagen por nivel. Igual en claro y oscuro.",
+    "estados": [
+      {
+        "id": "nivel",
+        "nombre": "Nivel 0 a 5",
+        "cuando": "Siempre: un contenido la llena (5) y cada día sin caminar baja una rayita",
+        "visual": "Imagen de la pila con 0 a 5 rayitas. Accesibilidad: «Energía de Teodoro: N de 5».",
+        "assets": [
+          "assets/27bb485f436b46be2a2d653b3a20bf3f.webp",
+          "assets/deac36cce020e374cf7f482297f2082d.webp",
+          "assets/cf767fcbf0222668adbf6d034ac727a3.webp",
+          "assets/0c32fdbef8718a32c8591f2e1f735206.webp",
+          "assets/1026bcf94b07418de82a878d671104b2.webp",
+          "assets/4b563b5c264cac11814acc731db9db86.webp"
+        ],
+        "lienzo": [
+          "S-01-Energia",
+          "S-01-Energia-oscuro",
+          "Teodoro-Energia"
+        ],
+        "probar": "Panel › Estado › energía.",
+        "codigo": "S.bateria; BATTERY_IDS; app.js advance()."
+      },
+      {
+        "id": "recarga",
+        "nombre": "Se recarga",
+        "cuando": "Al volver al mapa tras terminar el día con la pila baja",
+        "visual": "Tres chispas (estrella de 28 pt #FFD54A con borde #FFF7D6) vuelan en arco del día a la batería (680 ms, 90 ms entre una y otra); la batería brilla (drop-shadow 0 0 9 rgba(71,198,218,.95)) y sube una rayita cada 170 ms con un pulso a 1,16 (220 ms) y sonido; al llenarse aparece «¡Al 100 %!» debajo (píldora #F5DB78, texto #06325A 800 13 pt, radio 12, 1,5 s) y Teodoro salta.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Teodoro cansado»: termina el contenido.",
+        "codigo": "map.js recargarPila()."
+      },
+      {
+        "id": "tocar-mapa",
+        "nombre": "Tocar en el mapa",
+        "cuando": "Al tocarla en el mapa",
+        "visual": "Abre la hoja «La energía de Teodoro».",
+        "assets": [],
+        "lienzo": [
+          "S-03e-Mapa-energia"
+        ],
+        "probar": "Mapa › toca la batería."
+      },
+      {
+        "id": "tocar-pieza",
+        "nombre": "Tocar en la pieza",
+        "cuando": "Al tocarla en la pieza de Hoy o del tab Teodoro",
+        "visual": "Aviso «Energía de Teodoro: N de 5 · Está {pose}. Cada día que caminan juntos lo llena.».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Hoy › toca la batería de la pieza."
+      },
+      {
+        "id": "oculta",
+        "nombre": "Oculta",
+        "cuando": "Si no se unieron y el camino ya empezó, y en Navidad o el recuerdo",
+        "visual": "No se muestra.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Se une tarde»."
+      }
+    ]
+  },
+  {
+    "id": "card-adviento",
+    "nombre": "Card (pieza) de Adviento",
+    "pantallas": [
+      "hoy",
+      "teodoro"
+    ],
+    "selector": "#viewport .layer:is([data-screen=hoy], [data-screen=teodoro]) .root div[aria-label^=\"Adviento\"]:not(.theo-heroe *), #viewport .layer:is([data-screen=hoy], [data-screen=teodoro]) .vidrio-zona",
+    "descripcion": "La pieza grande de Adviento en Hoy y en el tab Teodoro (siempre la misma): antes del 29 con vidrio empañado o limpia; durante el camino con la escena de Teodoro, su energía y el progreso.",
+    "medidas": "Hoy: 358 × 402 pt en x 16, radio 32 pt (antes del 29: 28 pt), fondo #FFFFFF (oscuro #274E7C con borde 1 pt rgba(255,255,255,.12)), sombra 0 16 36 rgba(8,93,111,.16) (oscuro rgba(4,14,36,.35)). Tab Teodoro: 366 × 402 pt en x 12, radio 26 pt, fondo #0A2350. Durante el camino: escena a todo lo ancho (recorte desde arriba al centro); panel de vidrio de 334 × 156 pt en (12, 234), radio 26 pt, degradado rgba(8,28,66,.46) → .58, desenfoque 22 y saturación 1,7, padding 14, 12 pt entre filas; «Adviento» 700 19 pt #FFFFFF y «Día N de 26» 500 15 pt #F5DB78; barra de 10 pt, radio 5 (fondo rgba(255,255,255,.34), relleno #F5D46A → #F5DB78) con Teodoro de 28 pt (aro 2,5 pt blanco) y Belén de 26 pt al final; botón de 306 × 48 pt.",
+    "estados": [
+      {
+        "id": "vidrio-empanado",
+        "nombre": "Vidrio empañado (antes del 29, sin unirse)",
+        "cuando": "Antes del 29, si la familia no se ha unido al reto",
+        "visual": "Escena de 358 × 201 pt (fondo + Teodoro de espaldas de 144 × 210 pt) tapada por el vidrio empañado; degradado blanco de 50 pt abajo. Debajo: «Adviento» 700 24/28 pt #00516D, «Del 29 de noviembre a Navidad», avatares «2.418 familias», cuenta regresiva (56 pt, radio 16, #EEF6F8) y botón «Únete al reto». La zona para limpiar ocupa todo el ancho y empieza 10 pt más arriba del vidrio.",
+        "assets": [
+          "assets/ffc14384b753c2d8d87872f172d05946.webp",
+          "assets/601dffc99f4046212c443d9f68cffa56.webp",
+          "assets/1f3fd4be1e19dc04ca6f72efef34263e.webp"
+        ],
+        "lienzo": [
+          "P-Hoy-antes-d",
+          "P-Hoy-antes-d-oscuro"
+        ],
+        "probar": "Recorrido «Sin inscribirse» › baja hasta la card.",
+        "codigo": "cardState key 1; flow.js vidrioConDedo() cambia la imagen empañada por un canvas."
+      },
+      {
+        "id": "limpiando",
+        "nombre": "Limpiando con el dedo",
+        "cuando": "Al arrastrar el dedo sobre el vidrio (en cualquier dirección)",
+        "visual": "Lo que pasa el dedo se despeja: pincel redondo de 33,6 pt con borde suave (difuminado 21,6). El vidrio se divide en 14 × 8 = 112 celdas y vibra 4 ms cada 6 celdas. Al despejar 47 celdas (~42 %) el vidrio se va (700 ms, desenfoque 0 → 8), Teodoro sube 6 pt (800 ms) y a los 950 ms se abre «¡Ya estás dentro!». Un toque sin arrastrar (< 10 pt) abre el pop-up. Referencia nativa: ios/VidrioEmpanado.swift.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Sin inscribirse»: arrastra el dedo por el vidrio.",
+        "codigo": "vidrioConDedo(): R 24, lineWidth R × 1,4, META 47 de 112."
+      },
+      {
+        "id": "pista-dedo",
+        "nombre": "Pista del dedo fantasma",
+        "cuando": "Si el vidrio está a la vista 0,9 s y nadie lo toca",
+        "visual": "Un círculo blanco de 40 pt limpia una franja tenue (al 45 %) en onda durante 1,5 s y se va; no cuenta para unirse.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Deja la card a la vista sin tocarla."
+      },
+      {
+        "id": "se-limpia",
+        "nombre": "Se limpia sola (recién unida)",
+        "cuando": "La primera vez que se ve la card después de unirse",
+        "visual": "Se baja hasta la card; el vidrio se funde (opacidad 1 → 0 y desenfoque 0 → 6 pt, 1400 ms, empieza a 1 s) y Teodoro aparece (opacidad .4 → 1, sube 10 pt, escala .96 → 1, 900 ms, empieza a 1,5 s). Si lo limpiaron con el dedo, solo la entrada de Teodoro (empieza a 0,6 s).",
+        "assets": [
+          "assets/ffc14384b753c2d8d87872f172d05946.webp"
+        ],
+        "lienzo": [
+          "P-Hoy-despues-d",
+          "P-Hoy-despues-d-oscuro"
+        ],
+        "probar": "«Únete al reto» › «Ver mi mundo» › vuelve a Hoy.",
+        "codigo": "S.vidrioPendiente; flow.js vidrio()."
+      },
+      {
+        "id": "ya-dentro",
+        "nombre": "Limpia (ya dentro, antes del 29)",
+        "cuando": "Antes del 29, con la familia ya unida",
+        "visual": "Teodoro de espaldas mirando el pesebre, «Empieza el 29 de noviembre», cuenta regresiva y botón «Saber más» (el 28: «Ver el intro»).",
+        "assets": [
+          "assets/601dffc99f4046212c443d9f68cffa56.webp",
+          "assets/1f3fd4be1e19dc04ca6f72efef34263e.webp"
+        ],
+        "lienzo": [
+          "P-Hoy-despues-d",
+          "P-Hoy-despues-d-oscuro"
+        ],
+        "probar": "Recorrido «Ya inscrito».",
+        "codigo": "cardState key 2."
+      },
+      {
+        "id": "camino",
+        "nombre": "Durante el camino",
+        "cuando": "Del 29 de noviembre al 24 de diciembre, con la familia unida",
+        "visual": "Escena de Teodoro según su energía, batería, «Adviento · Día N de 26», barra con los cuentos vistos (se llena desde 0 en 1 s, cubic-bezier(.2,.8,.2,1)) y botón «Iniciar la aventura» (ningún cuento visto) o «Continuar la aventura».",
+        "assets": [
+          "assets/2d41caa3dd19950f431a9f9941201ab3.jpg",
+          "assets/04b65469de83c633bcfd3d5b259c4699.webp"
+        ],
+        "lienzo": [
+          "R-Hoy-completo",
+          "R-Hoy-completo-oscuro",
+          "V3-Teodoro",
+          "V3-Teodoro-oscuro"
+        ],
+        "probar": "Recorrido «Hoy, tab Teodoro y Mundos».",
+        "codigo": "cardState key 3; paintCaminoCard()."
+      },
+      {
+        "id": "sorpresa",
+        "nombre": "Juego sorpresa pendiente",
+        "cuando": "Hicieron todo hoy menos el juego sorpresa",
+        "visual": "Botón «Ir al juego sorpresa».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Día 6: termina la historia y elige «Ahora no».",
+        "codigo": "key 3 con sorpresa."
+      },
+      {
+        "id": "dia-hecho",
+        "nombre": "Día hecho",
+        "cuando": "Hicieron todo lo de hoy",
+        "visual": "Botón «Ver el camino».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Termina el día de hoy y vuelve a Hoy.",
+        "codigo": "key 3 done."
+      },
+      {
+        "id": "sin-unirse",
+        "nombre": "Sin unirse con el camino en marcha",
+        "cuando": "El camino ya empezó y la familia no se ha unido",
+        "visual": "Subtítulo «Aún llegas a Belén»; sin batería ni barra; botón «Unirme gratis».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Se une tarde».",
+        "codigo": "key 4."
+      },
+      {
+        "id": "gracia",
+        "nombre": "Gracia (25 dic – 6 ene)",
+        "cuando": "Del 25 de diciembre al 6 de enero, si les faltan cuentos",
+        "visual": "Subtítulo «Quedan N días» (el 6: «¡Último día!»), barra y «Continuar la aventura».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Gracia · a medias».",
+        "codigo": "key 6."
+      },
+      {
+        "id": "navidad",
+        "nombre": "Llegaste a Belén",
+        "cuando": "Vieron los 26 cuentos",
+        "visual": "Título «¡Feliz Navidad!» (solo el 25) o «Adviento» y «¡Llegaste a Belén!»; escena del nacimiento (recorte al 35 % desde arriba) sin Teodoro; botón «Ver el nacimiento».",
+        "assets": [
+          "assets/455d2635515c50327d1e7cc360590069.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Terminó completo».",
+        "codigo": "key 5."
+      },
+      {
+        "id": "recuerdo",
+        "nombre": "Recuerdo (desde el 7 de enero)",
+        "cuando": "Desde el 7 de enero",
+        "visual": "«Nos vemos el próximo año» + «Ver el nacimiento», o «Caminaste N días con Teodoro» + «Ver tu camino».",
+        "assets": [
+          "assets/455d2635515c50327d1e7cc360590069.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Recuerdo · 7 de enero».",
+        "codigo": "key 7 / 8."
+      }
+    ]
+  },
+  {
+    "id": "teo-energia",
+    "nombre": "Teodoro según la energía (escena)",
+    "pantallas": [
+      "hoy",
+      "teodoro"
+    ],
+    "selector": "#viewport .layer:is([data-screen=hoy], [data-screen=teodoro]) .root div[aria-label^=\"Adviento\"]:not(.theo-heroe *) a[aria-label=\"Ver el camino\"] > img:first-child",
+    "descripcion": "La escena de Teodoro dentro de la pieza de Adviento: cambia con los días sin caminar, de la fiesta a una tragedia chistosa que termina congelado.",
+    "medidas": "Una imagen cuadrada por paso, de día y de noche, que llena la pieza: 100 % × 100 % con recorte desde arriba al centro. El dibujo suelto de Teodoro y su sombra se ocultan. Con la pila llena o a medias, el paso es 5 − la energía; con la pila en 0, los días sin caminar (5 a 10).",
+    "estados": [
+      {
+        "id": "paso-0",
+        "nombre": "0 · Feliz a reventar",
+        "cuando": "Energía 5 de 5",
+        "visual": "Escena dias-0.",
+        "assets": [
+          "assets/pila/dias-0-dia.webp",
+          "assets/pila/dias-0-noche.webp"
+        ],
+        "lienzo": [
+          "S-01-Energia",
+          "Teodoro-Energia"
+        ],
+        "probar": "Panel › energía 5.",
+        "codigo": "pasoTeodoro() = 5 − S.bateria."
+      },
+      {
+        "id": "paso-1",
+        "nombre": "1 · En marcha hacia la aventura",
+        "cuando": "Energía 4 de 5",
+        "visual": "Escena dias-1.",
+        "assets": [
+          "assets/pila/dias-1-dia.webp",
+          "assets/pila/dias-1-noche.webp"
+        ],
+        "lienzo": [
+          "S-01-Energia"
+        ],
+        "probar": "Panel › energía 4."
+      },
+      {
+        "id": "paso-2",
+        "nombre": "2 · Listo para salir",
+        "cuando": "Energía 3 de 5",
+        "visual": "Escena dias-2.",
+        "assets": [
+          "assets/pila/dias-2-dia.webp",
+          "assets/pila/dias-2-noche.webp"
+        ],
+        "lienzo": [
+          "S-01-Energia"
+        ],
+        "probar": "Panel › energía 3."
+      },
+      {
+        "id": "paso-3",
+        "nombre": "3 · Tomando café, serio, esperándote",
+        "cuando": "Energía 2 de 5",
+        "visual": "Escena dias-3.",
+        "assets": [
+          "assets/pila/dias-3-dia.webp",
+          "assets/pila/dias-3-noche.webp"
+        ],
+        "lienzo": [
+          "S-01-Energia"
+        ],
+        "probar": "Panel › energía 2."
+      },
+      {
+        "id": "paso-4",
+        "nombre": "4 · Impaciente, mirando el reloj",
+        "cuando": "Energía 1 de 5",
+        "visual": "Escena dias-4.",
+        "assets": [
+          "assets/pila/dias-4-dia.webp",
+          "assets/pila/dias-4-noche.webp"
+        ],
+        "lienzo": [
+          "S-01-Energia"
+        ],
+        "probar": "Panel › energía 1."
+      },
+      {
+        "id": "paso-5",
+        "nombre": "5 · Dormido en el suelo, sin energía",
+        "cuando": "Pila en 0 (hasta 5 días sin caminar)",
+        "visual": "Escena dias-5.",
+        "assets": [
+          "assets/pila/dias-5-dia.webp",
+          "assets/pila/dias-5-noche.webp"
+        ],
+        "lienzo": [
+          "S-01-Energia"
+        ],
+        "probar": "Recorrido «Pila en 0».",
+        "codigo": "S.bateria === 0 → max(5, min(10, S.sinCaminar))."
+      },
+      {
+        "id": "paso-6",
+        "nombre": "6 · Envuelto en telarañas",
+        "cuando": "Pila en 0 y 6 días sin caminar",
+        "visual": "Escena dias-6.",
+        "assets": [
+          "assets/pila/dias-6-dia.webp",
+          "assets/pila/dias-6-noche.webp"
+        ],
+        "lienzo": [],
+        "probar": "Panel › saltar días con la pila en 0."
+      },
+      {
+        "id": "paso-7",
+        "nombre": "7 · Cubierto de musgo",
+        "cuando": "Pila en 0 y 7 días sin caminar",
+        "visual": "Escena dias-7.",
+        "assets": [
+          "assets/pila/dias-7-dia.webp",
+          "assets/pila/dias-7-noche.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Regreso tras una semana»."
+      },
+      {
+        "id": "paso-8",
+        "nombre": "8 · Atrapado en una ventisca",
+        "cuando": "Pila en 0 y 8 días sin caminar",
+        "visual": "Escena dias-8.",
+        "assets": [
+          "assets/pila/dias-8-dia.webp",
+          "assets/pila/dias-8-noche.webp"
+        ],
+        "lienzo": [],
+        "probar": "Panel › saltar días."
+      },
+      {
+        "id": "paso-9",
+        "nombre": "9 · Lleno de carámbanos",
+        "cuando": "Pila en 0 y 9 días sin caminar",
+        "visual": "Escena dias-9.",
+        "assets": [
+          "assets/pila/dias-9-dia.webp",
+          "assets/pila/dias-9-noche.webp"
+        ],
+        "lienzo": [],
+        "probar": "Panel › saltar días."
+      },
+      {
+        "id": "paso-10",
+        "nombre": "10 · Congelado en un bloque de hielo",
+        "cuando": "Pila en 0 y 10 días o más sin caminar",
+        "visual": "Escena dias-10.",
+        "assets": [
+          "assets/pila/dias-10-dia.webp",
+          "assets/pila/dias-10-noche.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «10 días sin caminar»."
+      },
+      {
+        "id": "reactivado",
+        "nombre": "Recargándose de golpe",
+        "cuando": "La primera vez que se ve la pieza después de que la pila subió",
+        "visual": "Escena «reactivado».",
+        "assets": [
+          "assets/pila/reactivado-dia.webp",
+          "assets/pila/reactivado-noche.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Teodoro cansado»: termina el contenido y vuelve a Hoy.",
+        "codigo": "S.bateria > S.pilaVista."
+      },
+      {
+        "id": "dia-noche",
+        "nombre": "Día / noche",
+        "cuando": "Con el tema de día usa la escena de día; con el de noche, la de noche",
+        "visual": "Misma escena en versión de noche.",
+        "assets": [],
+        "lienzo": [
+          "S-01-Energia-oscuro"
+        ],
+        "probar": "Panel › Día/Noche."
+      }
+    ]
+  },
+  {
+    "id": "boton-principal-adviento",
+    "nombre": "Botón principal del día (inicio)",
+    "pantallas": [
+      "hoy",
+      "teodoro"
+    ],
+    "selector": "#viewport .layer:is([data-screen=hoy], [data-screen=teodoro]) :is(.hp-boton, [aria-label*=\"Adviento\"][role=group] a:not([aria-label]), div[aria-label^=\"Adviento\"] a:not([aria-label]))",
+    "descripcion": "El botón amarillo de Adviento en el destacado y en la pieza: dice lo que va a pasar.",
+    "medidas": "Pieza de Hoy: 306 × 48 pt, radio 18 pt (antes del 29: 326 × 52, radio 16). Tab Teodoro: 314 × 56 pt, radio 18 pt. Destacado: 228 × 48 pt, radio 16 pt, a 14 pt de los bordes, 700 16 pt. Fondo #F5DB78, texto #0B748A (destacado y pre registro #06325A); flecha → de 18 pt cuando es para seguir. Igual en oscuro.",
+    "estados": [
+      {
+        "id": "unete",
+        "nombre": "Únete al reto",
+        "cuando": "Antes del 29, si no se han unido (póster y card)",
+        "visual": "Al tocarlo: se dibuja un ✓ (0,35 s) con «¡Listo!», el botón entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)) y a los 750 ms se abre «¡Ya estás dentro!».",
+        "assets": [],
+        "lienzo": [
+          "P-Hoy-antes-d",
+          "P-Hoy-antes-d-oscuro"
+        ],
+        "probar": "Recorrido «Sin inscribirse»."
+      },
+      {
+        "id": "saber-mas",
+        "nombre": "Saber más / Ver el intro",
+        "cuando": "Antes del 29 ya unidos; el 28 dice «Ver el intro» (lleva al mapa)",
+        "visual": "Con flecha →.",
+        "assets": [],
+        "lienzo": [
+          "P-Hoy-despues-d"
+        ],
+        "probar": "Recorrido «Ya inscrito»."
+      },
+      {
+        "id": "unirme",
+        "nombre": "Unirme gratis",
+        "cuando": "El camino ya empezó y no se han unido (también en la gracia)",
+        "visual": "Sin flecha.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Se une tarde»."
+      },
+      {
+        "id": "iniciar",
+        "nombre": "Iniciar la aventura",
+        "cuando": "Unidos, sin ningún cuento visto",
+        "visual": "Con flecha.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Primer día»."
+      },
+      {
+        "id": "continuar",
+        "nombre": "Continuar la aventura / Seguir la aventura",
+        "cuando": "Con días vistos (pieza: «Continuar»; destacado: «Seguir»)",
+        "visual": "Con flecha.",
+        "assets": [],
+        "lienzo": [
+          "R-Hoy-completo",
+          "V3-Teodoro"
+        ],
+        "probar": "Recorrido «Hoy, tab Teodoro y Mundos»."
+      },
+      {
+        "id": "sorpresa",
+        "nombre": "Ir al juego sorpresa",
+        "cuando": "Queda el juego sorpresa de hoy",
+        "visual": "Sin cambios de estilo.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Día 6 tras «Ahora no»."
+      },
+      {
+        "id": "ver-camino",
+        "nombre": "Ver el camino",
+        "cuando": "Hicieron todo lo de hoy",
+        "visual": "Sin cambios de estilo.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Termina el día y vuelve a Hoy."
+      },
+      {
+        "id": "nacimiento",
+        "nombre": "Ver el nacimiento / Ver tu camino",
+        "cuando": "Llegaron a Belén, o en el recuerdo",
+        "visual": "Abre el video del nacimiento (o el mapa).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Terminó completo»."
+      }
+    ]
+  },
+  {
+    "id": "destacado-adviento",
+    "nombre": "Destacado de Adviento (póster del inicio)",
+    "pantallas": [
+      "hoy"
+    ],
+    "selector": "#viewport .layer[data-screen=hoy] :is(.theo-heroe [role=group][aria-label*=\"Adviento\"], .root > div > [role=group][aria-label^=\"El Adviento más grande\"])",
+    "descripcion": "La tarjeta grande de arriba de Hoy: póster del evento hasta que la familia empieza; después, el póster de la semana.",
+    "medidas": "256 × 330 pt, centrada (x 67, y 116), radio 22 pt, fondo #274E7C, sombra 0 14 30 rgba(4,14,36,.35); igual en claro y oscuro. Degradado oscuro de 160 pt abajo; texto centrado a 74 pt del borde: antetítulo 700 11/14 pt #F5DB78 en mayúsculas con espaciado .16 em y destellos; «Adviento» 700 28/32 pt #FFFFFF; botón de 228 × 48 pt. En el carrusel, las tarjetas de los lados se ven al 71,5 % y al tocarlas pasan al centro.",
+    "estados": [
+      {
+        "id": "evento-sin-unirse",
+        "nombre": "Póster del evento · sin unirse (antes del 29)",
+        "cuando": "Antes del 29, si no se han unido",
+        "visual": "Fondo del evento, Teodoro salta con su bastón (113 × 168 pt), logo «El Adviento más grande del mundo» (136 × 93 pt) y botón «Únete al reto». Va solo, sin carrusel.",
+        "assets": [
+          "assets/601dffc99f4046212c443d9f68cffa56.webp",
+          "assets/ddcd96b7b0531f31e8ebc37e0f5321aa.webp",
+          "assets/3ce248aa665a1c01adeab9e01253dd6d.webp"
+        ],
+        "lienzo": [
+          "P-Hoy-antes-d",
+          "P-Hoy-antes-d-oscuro"
+        ],
+        "probar": "Recorrido «Sin inscribirse»."
+      },
+      {
+        "id": "evento-dentro",
+        "nombre": "Póster del evento · ya dentro (antes del 29)",
+        "cuando": "Antes del 29, ya unidos",
+        "visual": "El mismo póster en el carrusel con «Saber más» (el 28: «Ver el intro»).",
+        "assets": [
+          "assets/601dffc99f4046212c443d9f68cffa56.webp",
+          "assets/ddcd96b7b0531f31e8ebc37e0f5321aa.webp",
+          "assets/3ce248aa665a1c01adeab9e01253dd6d.webp"
+        ],
+        "lienzo": [
+          "P-Hoy-despues-d",
+          "P-Hoy-despues-d-oscuro"
+        ],
+        "probar": "Recorrido «Ya inscrito»."
+      },
+      {
+        "id": "evento-sin-empezar",
+        "nombre": "Póster del evento · sin empezar",
+        "cuando": "Ya empezó el camino y no se han unido o no han visto ningún cuento",
+        "visual": "Póster del evento con «Unirme gratis» (sin flecha) o «Iniciar la aventura».",
+        "assets": [
+          "assets/601dffc99f4046212c443d9f68cffa56.webp",
+          "assets/3ce248aa665a1c01adeab9e01253dd6d.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Se une tarde» o «Primer día»."
+      },
+      {
+        "id": "semana-1",
+        "nombre": "1.ª semana · Esperanza",
+        "cuando": "Del 29 nov al 5 dic, con cuentos vistos",
+        "visual": "Fondo «estela»; Teodoro con el farol (71 % desde la izquierda, 14,5 % desde arriba).",
+        "assets": [
+          "assets/poster/s1-estela.webp",
+          "assets/c0b753e9a2d8d857108e5116baf8e8cc.webp"
+        ],
+        "lienzo": [],
+        "probar": "Día 3 con días hechos."
+      },
+      {
+        "id": "semana-2",
+        "nombre": "2.ª semana · Paz",
+        "cuando": "Del 6 al 12 de diciembre",
+        "visual": "Fondo «mapa» anclado abajo; Teodoro con su mapa (27 % desde la izquierda).",
+        "assets": [
+          "assets/poster/s2-mapa.webp",
+          "assets/2a0a0137c06293e31b84c587a73c958c.webp"
+        ],
+        "lienzo": [
+          "R-Hoy-completo"
+        ],
+        "probar": "Día 9."
+      },
+      {
+        "id": "semana-3",
+        "nombre": "3.ª semana · Alegría",
+        "cuando": "Del 13 al 19 de diciembre",
+        "visual": "Fondo de los pastores.",
+        "assets": [
+          "assets/poster/s3-pastores.webp",
+          "assets/ceb3307f345f840e51bb2c383aae1f04.webp"
+        ],
+        "lienzo": [],
+        "probar": "Día 17."
+      },
+      {
+        "id": "semana-4",
+        "nombre": "4.ª semana · Amor",
+        "cuando": "Del 20 al 23 de diciembre",
+        "visual": "Fondo de la puerta de Belén anclado abajo.",
+        "assets": [
+          "assets/poster/s4-puerta.webp",
+          "assets/57acbcf795f5e41b9eee8c841c7e2fcc.webp"
+        ],
+        "lienzo": [],
+        "probar": "Día 23."
+      },
+      {
+        "id": "nochebuena",
+        "nombre": "Nochebuena",
+        "cuando": "El 24 de diciembre",
+        "visual": "Fondo de Nochebuena; Teodoro con su mapa, animado.",
+        "assets": [
+          "assets/poster/nochebuena.webp",
+          "assets/cd7abd57ac6154597b18285ae710d7ba.webp",
+          "anim/teo-trivia-mapa.json"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Nochebuena» › Hoy."
+      },
+      {
+        "id": "navidad",
+        "nombre": "¡Feliz Navidad! / Tiempo de Navidad",
+        "cuando": "El 25 de diciembre «¡Feliz Navidad!»; hasta el 6 de enero «Tiempo de Navidad»",
+        "visual": "Fondo de Navidad (Teodoro celebra junto al pesebre); del 31 de diciembre al 6 de enero, fondo de enero (Teodoro con su mapa sigue la estrella).",
+        "assets": [
+          "assets/poster/navidad.webp",
+          "assets/poster/enero.webp",
+          "assets/a98be2e11e018975563512bddc52be5a.webp",
+          "assets/42fcde792c2c52338da55536a09cafd0.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Terminó completo»."
+      },
+      {
+        "id": "recuerdo",
+        "nombre": "Recuerdo sin empezar",
+        "cuando": "Desde el 7 de enero, si no vieron ningún cuento",
+        "visual": "Escena de fiesta (días impares) o el cielo con Teodoro y el farol (días pares); «Nos vemos el próximo año» + «Ver el nacimiento».",
+        "assets": [
+          "assets/pila/dias-0-dia.webp",
+          "assets/pila/dias-0-noche.webp",
+          "assets/inicio/card-superior-noche.webp",
+          "assets/c0b753e9a2d8d857108e5116baf8e8cc.webp"
+        ],
+        "lienzo": [],
+        "probar": "Panel › día 41 sin días hechos."
+      }
+    ]
+  },
+  {
+    "id": "mision-mundos",
+    "nombre": "Misión «Mundos» (Misiones Diarias)",
+    "pantallas": [
+      "hoy"
+    ],
+    "selector": "#viewport .layer[data-screen=hoy] a[aria-label^=\"Mundos\"]",
+    "descripcion": "La tarjeta de Mundos en Misiones Diarias: la puerta a Adviento desde Hoy; aparece al unirse al reto.",
+    "medidas": "232 × 240 pt, radio 22 pt, borde 5 pt #E3CF9A, fondo #E1FFFD, sombra 0 8 20 rgba(0,81,109,.12) (oscuro: fondo #0C244C, borde #E3D4B6, sombra rgba(0,4,20,.45)). Ícono de Mundos de 150 × 150 pt; «Mundos» 500 16 pt #00516D; chip de 28 pt, radio 10, padding 0 16, #F5DB78, texto #06325A 700 14 pt.",
+    "estados": [
+      {
+        "id": "dia",
+        "nombre": "Día N",
+        "cuando": "Unidos, con el día de hoy pendiente",
+        "visual": "Chip «Día N».",
+        "assets": [
+          "assets/mundos.webp"
+        ],
+        "lienzo": [
+          "R-Misiones",
+          "R-Misiones-oscuro"
+        ],
+        "probar": "Recorrido «Hoy, tab Teodoro y Mundos»."
+      },
+      {
+        "id": "hecha",
+        "nombre": "✓ Hecha",
+        "cuando": "Hicieron todo lo de hoy (o llegaron a Belén)",
+        "visual": "Chip «✓ Hecha» fondo #0A8445, texto #FFFFFF.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Termina el día de hoy."
+      },
+      {
+        "id": "sorpresa",
+        "nombre": "Juego sorpresa",
+        "cuando": "Queda el juego sorpresa de hoy",
+        "visual": "Chip «Juego sorpresa».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Día 6 tras «Ahora no»."
+      },
+      {
+        "id": "volver-a-ver",
+        "nombre": "Volver a ver",
+        "cuando": "Desde el 7 de enero",
+        "visual": "Chip «Volver a ver».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Recuerdo»."
+      },
+      {
+        "id": "no-esta",
+        "nombre": "No está",
+        "cuando": "Si no se han unido (las demás misiones se corren a la izquierda)",
+        "visual": "No se muestra.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Se une tarde»."
+      }
+    ]
+  },
+  {
+    "id": "mision-evangelio-domingo",
+    "nombre": "Misión «Evangelio del Día» en domingo",
+    "pantallas": [
+      "hoy"
+    ],
+    "selector": "#viewport .layer[data-screen=hoy] a[aria-label^=\"Evangelio del Día:\"]",
+    "descripcion": "Los domingos del camino, la misión «Evangelio del Día» de Theo es el mismo Evangelio de Adviento: lleva al camino y no se hace dos veces.",
+    "medidas": "La misma tarjeta de misión (232 × 240 pt, radio 22, borde 5 pt). Chip de 22 pt, radio 7 pt.",
+    "estados": [
+      {
+        "id": "pendiente",
+        "nombre": "Adviento · Día N",
+        "cuando": "Domingo del camino (días 1, 8, 15 y 22), unidos y sin verlo",
+        "visual": "Chip «Adviento · Día N» fondo #0A8445, texto blanco. Al tocarla entra al mapa.",
+        "assets": [
+          "assets/arte.webp"
+        ],
+        "lienzo": [],
+        "probar": "Panel › día 8."
+      },
+      {
+        "id": "hecho",
+        "nombre": "✓ Hecho",
+        "cuando": "Domingo con el Evangelio ya visto",
+        "visual": "Chip «✓ Hecho».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Día 8: mira el Evangelio y vuelve a Hoy."
+      }
+    ]
+  },
+  {
+    "id": "regreso",
+    "nombre": "Pop-up «¡Te guardé el camino!»",
+    "pantallas": [
+      "hoy"
+    ],
+    "selector": "#viewport .layer[data-screen=hoy] > .root > div:has(> [role=dialog]) > :not(:has(> nav.theo-tabbar)):not(div:empty)",
+    "descripcion": "Al volver tras 5 días o más sin caminar: Teodoro guardó el camino y muestra los días que esperan (la ventana y todo lo que lleva encima).",
+    "medidas": "Ventana de 350 × 380 pt en x 20, y 300, radio 30 pt, fondo #FFFFFF, sombra 0 24 60 rgba(8,93,111,.3). Teodoro feliz (animación de 180 × 313 pt) asoma por encima. Tres cajas de días de 58 pt con su ícono y número, y «+N». Botón «Empezar por hoy» / «Seguir al día N» de 310 × 60 pt, radio 22; «Ver el mapa» de 44 pt; cerrar 36 × 36 pt rgba(255,255,255,.3) con desenfoque 10.",
+    "estados": [
+      {
+        "id": "visible",
+        "nombre": "Visible",
+        "cuando": "Al abrir la app tras 5 días o más sin caminar (una vez por ausencia)",
+        "visual": "Las cajas de días entran con rebote (0,45 s) escalonadas 0,15 s desde los 0,3 s. «Empezar por hoy» y «Ver el mapa» llevan al mapa, donde Teodoro despierta.",
+        "assets": [
+          "anim/teo-celebra.json"
+        ],
+        "lienzo": [
+          "V2-10-Regreso",
+          "V2-10-Regreso-oscuro"
+        ],
+        "probar": "Recorrido «Regreso tras una semana».",
+        "codigo": "S.regreso (app.js advance: sinCaminar ≥ 5, regresoAvisado); no en el recuerdo."
+      }
+    ]
+  },
+  {
+    "id": "premios-cuarto",
+    "nombre": "Premios en el cuarto de Teodoro",
+    "pantallas": [
+      "teodoro"
+    ],
+    "selector": "#viewport .layer[data-screen=teodoro] :is(.cuarto-patch.prenda, .cuarto-patch[aria-label$=\" panes\"])",
+    "descripcion": "Lo ganado en el reto que se ve en el cuarto: las prendas puestas y el contador de panes.",
+    "medidas": "Prendas sobre Teodoro: gorro de 84 pt en (150, 96) girado −8°; bufanda de 102 pt en (140, 222); bolso de 62 pt en (236, 268) girado 10° (en el piso, (262, 330), si Teodoro está cansado); cama de paja de 100 pt en (268, 312). Sombra drop-shadow(0 3 4 rgba(0,8,43,.25)). Panes: 40 × 24 pt en (336, 520), fondo rgb(251,242,229), texto #4A2E14 800 15 pt.",
+    "estados": [
+      {
+        "id": "prendas",
+        "nombre": "Prendas",
+        "cuando": "Cuando ganaron prendas en la ruleta",
+        "visual": "Gorro y bufanda solo si Teodoro está de pie (energía 3 o más, o en el cuarto clásico).",
+        "assets": [
+          "assets/28a067c47bf9134f91f26a009e0465b5.webp",
+          "assets/ed7f054b6f0d602d40b41b8d2706379a.webp",
+          "assets/5395dc871861741f74c551c3a1031492.webp",
+          "assets/98a7495c73f5fff24bb7130fa01efe67.webp"
+        ],
+        "lienzo": [
+          "V3-Teodoro-nazaret",
+          "V3-Teodoro-nazaret-oscuro"
+        ],
+        "probar": "Recorrido «Día de ruleta» › «Ver el cuarto de Teodoro»."
+      },
+      {
+        "id": "panes",
+        "nombre": "Panes",
+        "cuando": "Siempre",
+        "visual": "Número de panes ganados.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Tab Teodoro."
+      },
+      {
+        "id": "cuarto-nuevo",
+        "nombre": "Cuarto de Nazaret",
+        "cuando": "Cuando ganaron el cuarto nuevo en la ruleta",
+        "visual": "Fondo del cuarto nuevo; Teodoro suelto con la pose de su energía.",
+        "assets": [
+          "assets/16ea87b5ecae2048c4c2210e6f0daf32.webp"
+        ],
+        "lienzo": [
+          "V3-Teodoro-nazaret",
+          "V3-Teodoro-nazaret-oscuro"
+        ],
+        "probar": "Recorrido «Premio: cuarto nuevo»."
+      }
+    ]
+  },
+  {
+    "id": "mundo-adviento",
+    "nombre": "Mundo de Adviento (ventana Mundos)",
+    "pantallas": [
+      "mundos"
+    ],
+    "selector": "#viewport .layer[data-screen=mundos] a[aria-label^=\"Adviento:\"]",
+    "descripcion": "La isla de Adviento en Mundos: más grande y centrada; antes del 29 con candado y cuenta regresiva.",
+    "medidas": "Área de 390 × 400 pt en y 262. Isla de 334 × 334 pt en (28, 40). Camino: Teodoro explorador de 104 × 156 pt que flota, y etiqueta de 302 × 68 pt (márgenes 44, top 322), radio 24 pt, #F5DB78: «Adviento» 500 26 pt, «Adviento · Día N de 26» 500 14 pt #06325A, círculo blanco de 48 pt con ▶ #0B748A; sombra 0 10 24 rgba(4,14,36,.14) (oscuro .35). Antes del 29: candado de 72 pt en (159, 96) y panel de 234 × 98 pt (márgenes 78) rgba(255,255,255,.94), radio 22 pt, con «EMPIEZA EN» y días / h / min 500 20 pt #0B748A.",
+    "estados": [
+      {
+        "id": "antes-sin-unirse",
+        "nombre": "Antes del 29 · sin unirse",
+        "cuando": "Antes del 29, si no se han unido",
+        "visual": "Isla con saturación .75 y opacidad .9, candado y cuenta regresiva en vivo. Debajo «Únete al reto» y «Volver al inicio». Al tocarla se hunde y rebota (.95 → 1,02 → 1 en 320 ms) y abre el pop-up.",
+        "assets": [
+          "assets/30e9a5e1af04caa8950aa97de2e7ae0e.webp",
+          "assets/00f7a592458d7385cc2cf5ed2e521144.webp",
+          "assets/5ccde4723b1875be781f49ba96a9cdde.webp"
+        ],
+        "lienzo": [
+          "V2-02-Mundos-pre-claro",
+          "V2-02-Mundos-pre"
+        ],
+        "probar": "Recorrido «Sin inscribirse» › Teodoro › Mundos."
+      },
+      {
+        "id": "antes-dentro",
+        "nombre": "Antes del 29 · ya dentro",
+        "cuando": "Antes del 29, ya unidos",
+        "visual": "Igual, con la insignia «✓ Ya estás dentro» (26 pt, radio 13, #1F7F95, texto blanco 800 12 pt) en y 158 y el botón «Invitar amigos». Al tocarla: «¡Ya estás dentro!».",
+        "assets": [],
+        "lienzo": [
+          "V2-02-Mundos-pre-claro",
+          "V2-02-Mundos-pre"
+        ],
+        "probar": "Recorrido «Ya inscrito» › «Saber más»."
+      },
+      {
+        "id": "recien-unida",
+        "nombre": "Recién unida (resaltada)",
+        "cuando": "Al llegar desde «¡Ya estás dentro!» › «Ver mi mundo»",
+        "visual": "A los 350 ms late (escala 1,04, 700 ms), brilla dorado (resplandor 12 pt rgba(255,214,90,.95) + 26 pt blanco, 1800 ms) y entra la insignia (320 ms).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "«Únete al reto» › «Ver mi mundo»."
+      },
+      {
+        "id": "camino",
+        "nombre": "Durante el camino",
+        "cuando": "Desde el 28 de noviembre, ya unidos",
+        "visual": "Etiqueta «Adviento · Día N de 26» (el 28: «Intro»). Al tocarla entra al mapa.",
+        "assets": [
+          "assets/30e9a5e1af04caa8950aa97de2e7ae0e.webp",
+          "assets/00f7a592458d7385cc2cf5ed2e521144.webp",
+          "assets/42fcde792c2c52338da55536a09cafd0.webp"
+        ],
+        "lienzo": [
+          "V2-02-Mundos-claro",
+          "V2-02-Mundos",
+          "R-Mundos",
+          "R-Mundos-oscuro"
+        ],
+        "probar": "Recorrido «Hoy, tab Teodoro y Mundos»."
+      }
+    ]
+  },
+  {
+    "id": "mundos-acciones",
+    "nombre": "Acciones bajo Adviento en Mundos (antes del 29)",
+    "pantallas": [
+      "mundos"
+    ],
+    "selector": "#viewport .layer[data-screen=mundos] :is(.mundos-accion, .mundos-volver)",
+    "descripcion": "El botón principal bajo la isla y «Volver al inicio», antes del 29.",
+    "medidas": "Principal: márgenes 78 pt (234 pt de ancho), y 542, 54 pt de alto, radio 18 pt, #F5DB78, texto #06325A 700 18 pt, sombra 0 8 20 rgba(4,14,36,.16). «Volver al inicio»: centrado en y 608, 44 pt, radio 22 pt, rgba(255,255,255,.94), texto #0B748A 700 15 pt (oscuro rgba(39,78,124,.94), texto #FFFFFF). Al presionar, escala .97.",
+    "estados": [
+      {
+        "id": "unete",
+        "nombre": "Únete al reto",
+        "cuando": "Si no se han unido",
+        "visual": "Solo texto.",
+        "assets": [],
+        "lienzo": [
+          "V2-02-Mundos-pre-claro",
+          "V2-02-Mundos-pre"
+        ],
+        "probar": "Recorrido «Sin inscribirse» › Mundos."
+      },
+      {
+        "id": "invitar",
+        "nombre": "Invitar amigos",
+        "cuando": "Ya unidos",
+        "visual": "Ícono de persona con + de 22 pt.",
+        "assets": [],
+        "lienzo": [
+          "V2-02-Mundos-pre-claro"
+        ],
+        "probar": "Recorrido «Ya inscrito» › Mundos."
+      }
+    ]
+  },
+  {
+    "id": "teaser",
+    "nombre": "Pop-up de Adviento (cuenta regresiva)",
+    "pantallas": [
+      "teaser"
+    ],
+    "selector": "#viewport .layer[data-screen=teaser] [role=dialog]",
+    "descripcion": "La invitación al reto: sale sola al abrir la app antes del 29 (una vez) y desde el póster, la card o Mundos.",
+    "medidas": "Ventana de 350 × 698 pt en x 20, y 72, radio 36 pt, fondo #FFFFFF (oscuro #274E7C con borde 1 pt rgba(255,255,255,.12)), sombra 0 30 70 rgba(4,14,36,.45). Velo rgba(0,8,43,.42) (oscuro rgba(4,14,36,.55)) con desenfoque 14. Arriba 350 pt de escena (fondo, Teodoro salta con su bastón de 140 × 208 pt que flota, logo de 196 × 134 pt); «Adviento» 700 28 pt; cuenta regresiva de 306 × 92 pt, radio 22, fondo #EEF6F8 (oscuro rgba(255,255,255,.1)) con la píldora «EMPIEZA EN» #F5DB78; botón «Únete al reto» de 306 × 58 pt, radio 20, #F5DB78, texto #06325A; «Ahora no» de 40 pt, texto #3E5F6B (oscuro #FFF6DD); cerrar 36 × 36 pt rgba(4,14,36,.38).",
+    "estados": [
+      {
+        "id": "antes",
+        "nombre": "Antes del 29",
+        "cuando": "Al abrir la app antes del 29 sin unirse (una vez), o desde el póster, la card o Mundos",
+        "visual": "Cuenta regresiva en vivo; cuando cambia un número, rueda desde arriba (−45 % → 0, 380 ms).",
+        "assets": [
+          "assets/601dffc99f4046212c443d9f68cffa56.webp",
+          "assets/ddcd96b7b0531f31e8ebc37e0f5321aa.webp",
+          "assets/3ce248aa665a1c01adeab9e01253dd6d.webp"
+        ],
+        "lienzo": [
+          "P-Teaser-a",
+          "P-Teaser-a-oscuro"
+        ],
+        "probar": "Recorrido «Sin inscribirse»."
+      },
+      {
+        "id": "unido",
+        "nombre": "¡Listo!",
+        "cuando": "Al tocar «Únete al reto»",
+        "visual": "El botón cambia a ✓ «¡Listo!» (el ✓ se dibuja en 0,35 s), entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)) y a los 750 ms se abre «¡Ya estás dentro!» (o los slides, si están prendidos).",
+        "assets": [],
+        "lienzo": [
+          "P-Listo-a"
+        ],
+        "probar": "Toca «Únete al reto»."
+      },
+      {
+        "id": "tarde",
+        "nombre": "¡Ya salimos! ¿Vienes?",
+        "cuando": "Ya empezó el camino y no se han unido (una vez); en la gracia «¡Aún llegas a Belén!»",
+        "visual": "Sin cuenta regresiva (la ventana se acorta lo que medía); texto «Aún llegas a Belén. Teodoro te espera en el camino.»; el botón entra directo al mapa.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Se une tarde»."
+      },
+      {
+        "id": "vista-previa",
+        "nombre": "Vista de tu amigo",
+        "cuando": "Desde la invitación, «Vista previa del enlace»",
+        "visual": "Al tocar el botón avisa «Aquí tu amigo se inscribe».",
+        "assets": [],
+        "lienzo": [
+          "V2-Invitacion-claro"
+        ],
+        "probar": "«Invitar amigos» › «Vista previa del enlace»."
+      }
+    ]
+  },
+  {
+    "id": "ya-estas-dentro",
+    "nombre": "Pantalla «¡Ya estás dentro!»",
+    "pantallas": [
+      "listo"
+    ],
+    "selector": "#viewport .layer[data-screen=listo] .root > div",
+    "descripcion": "Confirmación al unirse al reto antes del 29 (y cuando, ya dentro, tocan Adviento en Mundos).",
+    "medidas": "Pantalla completa (390 × 844 pt): escena arriba (487 pt), bloque de texto en y 446 («¡Ya estás dentro!», «Teodoro te espera el 29 de noviembre», cuenta regresiva); botón «Ver mi mundo» de 342 × 56 pt en y 724, radio 18, #F5DB78, texto #06325A con flecha →; «Invitar amigos» de 34 pt, texto #00516D (oscuro #FFFFFF).",
+    "estados": [
+      {
+        "id": "nueva",
+        "nombre": "Recién unida",
+        "cuando": "Justo después de unirse",
+        "visual": "Destellos que titilan, confeti de 28 piezas, motivo corto y Teodoro dice «unirse» a 1,1 s. «Ver mi mundo» abre Mundos con Adviento resaltada.",
+        "assets": [],
+        "lienzo": [
+          "P-Listo-a",
+          "P-Listo-a-oscuro"
+        ],
+        "probar": "Recorrido «Sin inscribirse» › «Únete al reto»."
+      },
+      {
+        "id": "ya-dentro",
+        "nombre": "Ya estaba dentro",
+        "cuando": "Desde Mundos, si ya estaban unidos",
+        "visual": "Sin festejo; «Ver mi mundo» vuelve a Mundos.",
+        "assets": [],
+        "lienzo": [
+          "P-Listo-a"
+        ],
+        "probar": "Recorrido «Ya inscrito» › Mundos › Adviento."
+      }
+    ]
+  },
+  {
+    "id": "slides-reto",
+    "nombre": "Slides del reto",
+    "pantallas": [
+      "retoSlides",
+      "teaser"
+    ],
+    "selector": "#viewport .layer:is([data-screen=retoSlides], [data-screen=teaser]) [role=dialog].rs",
+    "descripcion": "Cuatro slides que explican el reto al unirse (versión posterior; se prenden en el panel › Ajustes › «Slides del reto»).",
+    "medidas": "La misma ventana de la invitación: 350 × 698 pt, radio 36; claro fondo #FFFFFF, oscuro #05204E con cielo de estrellas. Cada slide de 350 pt de ancho; texto en y 478: título 700 28/1,08 pt (claro #00516D, oscuro #FFFFFF), texto 400 17/1,45 pt (claro #3E5F6B, oscuro rgba(255,255,255,.82)). Puntitos en y 590: 7 × 7 pt, 8 pt de separación, el actual de 22 pt de ancho (claro #0B748A sobre rgba(0,81,109,.2); oscuro #F5DB78 sobre rgba(255,255,255,.35)). Botón de 302 × 58 pt a 28 pt del borde, radio 20, #F5DB78, texto #06325A 700 20 pt. Cerrar de 36 pt (44 de área).",
+    "estados": [
+      {
+        "id": "pesebre",
+        "nombre": "1 · ¡Jesús está por llegar!",
+        "cuando": "Primer slide",
+        "visual": "El pesebre vacío se acerca (escala 1,1 → 1, 1500 ms) y la estrella se enciende (900 ms, empieza a 0,7 s).",
+        "assets": [
+          "assets/slides/pesebre-dia.webp",
+          "assets/slides/pesebre-noche.webp"
+        ],
+        "lienzo": [],
+        "probar": "Panel › Ajustes › Slides del reto › «Únete al reto»."
+      },
+      {
+        "id": "camino",
+        "nombre": "2 · ¡Rumbo a Belén!",
+        "cuando": "Segundo slide",
+        "visual": "El mapa sube desde el día 9 hasta Teodoro, que salta (animado) en el día de hoy; aparecen «Hecho», el aro y «Hoy».",
+        "assets": [
+          "assets/slides/mapa-dia.webp",
+          "assets/slides/mapa-noche.webp",
+          "assets/345591e97560d37b84ead12837ff9c75.webp",
+          "anim/teo-celebra.json"
+        ],
+        "lienzo": [],
+        "probar": "Desliza."
+      },
+      {
+        "id": "aprende",
+        "nombre": "3 · Mira, juega, canta… y ama",
+        "cuando": "Tercer slide",
+        "visual": "Tres cartas (cuento, nacimiento y trivia) salen del centro y se abren en abanico ±9° con su mazo detrás.",
+        "assets": [
+          "assets/183c744879d8ae7dd89b10934cde465c.webp",
+          "assets/poster/navidad.webp",
+          "assets/ruleta/sorpresa.webp"
+        ],
+        "lienzo": [],
+        "probar": "Desliza."
+      },
+      {
+        "id": "gana",
+        "nombre": "4 · ¡Gira la ruleta y gana!",
+        "cuando": "Último slide",
+        "visual": "La ruleta gira (−300° → 0 en 1700 ms) y frena; el puntero rebota; salen los premios con confeti. El botón dice «¡Vamos!».",
+        "assets": [
+          "assets/ruleta/rueda8.webp",
+          "assets/slides/premio-gorro.webp",
+          "assets/slides/premio-bufanda.webp",
+          "assets/slides/premio-trivia.webp"
+        ],
+        "lienzo": [],
+        "probar": "Desliza hasta el último."
+      },
+      {
+        "id": "arrastre",
+        "nombre": "Pasar de slide",
+        "cuando": "Al deslizar con el dedo (sigue al dedo y se resiste en los bordes)",
+        "visual": "Pasa si va a más de 300 pt/s o si se corrió más de ¼ del ancho; transición de 380 ms cubic-bezier(.2,.9,.25,1).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Desliza con el dedo."
+      }
+    ]
+  },
+  {
+    "id": "reproductor",
+    "nombre": "Reproductor del contenido del día",
+    "pantallas": [
+      "reproductor"
+    ],
+    "selector": "#viewport .layer[data-screen=reproductor] :is([aria-label=\"Pausar\"], [aria-label=\"Reproducir\"], [role=slider], button[aria-label=\"Bajar el reproductor\"])",
+    "descripcion": "Controles del video o la canción del día (el reproductor de Theo): play/pausa, barra de avance y bajar.",
+    "medidas": "Play de 60 × 60 pt, radio 30, fondo #FFFFFF (y 652), ícono de pausa #0B748A. Barra de 326 pt (x 32, y 605) con 15 pt de área arriba y abajo: pista de 5 pt rgba(255,255,255,.3) (oscuro .42), relleno #FFFFFF, perilla de 14 × 14 pt. Bajar: 44 × 44 pt, radio 22, rgba(0,8,43,.55) con ⌄ blanco. Texto / Voz / Repetir de 64 × 66 pt: activo con círculo blanco e ícono #0B748A; inactivo rgba(255,255,255,.2) con ícono blanco.",
+    "estados": [
+      {
+        "id": "reproduciendo",
+        "nombre": "Reproduciendo",
+        "cuando": "Al abrir el contenido del día",
+        "visual": "Ícono de pausa; la escena hace un zoom lento a 1,06.",
+        "assets": [],
+        "lienzo": [
+          "S-05-Reproductor",
+          "S-05-Reproductor-oscuro"
+        ],
+        "probar": "Mapa › «Ver video».",
+        "codigo": "El MVP simula el contenido completo en 9 s."
+      },
+      {
+        "id": "pausado",
+        "nombre": "Pausado",
+        "cuando": "Al tocar pausa",
+        "visual": "Ícono de play; accesibilidad «Reproducir».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca pausa."
+      },
+      {
+        "id": "termina",
+        "nombre": "Termina",
+        "cuando": "Cuando termina el contenido",
+        "visual": "Cuenta el día y abre «¡Terminaste…!» (o vuelve al mapa si estaban repitiendo).",
+        "assets": [],
+        "lienzo": [
+          "S-06-Completado"
+        ],
+        "probar": "Espera a que termine."
+      }
+    ]
+  },
+  {
+    "id": "jugamos",
+    "nombre": "«¡Terminaste…!» (¿Jugamos?)",
+    "pantallas": [
+      "completado"
+    ],
+    "selector": "#viewport .layer[data-screen=completado] .root > div",
+    "descripcion": "Pantalla al terminar el contenido del día: invita a la trivia o cierra el día.",
+    "medidas": "Pantalla completa. Antetítulo «¡Terminaste el video!» (según el tipo de contenido) 17 pt blanco. Botón principal de 350 × 64 pt en y 676, radio 22, #F5DB78, texto #0B748A 700 23 pt. Píldora de panes arriba a la derecha de 72 × 36 pt, radio 18, rgba(4,52,84,.42) con desenfoque 12 (oscuro rgba(0,8,43,.45)). Teodoro con su mapa (animado, 252 × 355 pt).",
+    "estados": [
+      {
+        "id": "con-trivia",
+        "nombre": "Con trivia: ¿Jugamos?",
+        "cuando": "El día tiene trivia",
+        "visual": "«?» grande, «5 preguntas», «¡A jugar!» y «Ahora no»; encima, la fila para calificar.",
+        "assets": [
+          "anim/teo-trivia-mapa.json"
+        ],
+        "lienzo": [
+          "S-06-Completado",
+          "S-06-Completado-oscuro"
+        ],
+        "probar": "Recorrido «Un día con trivia»."
+      },
+      {
+        "id": "sin-trivia",
+        "nombre": "Un paso más hacia Belén",
+        "cuando": "El día no tiene trivia ni juego sorpresa",
+        "visual": "Título «Un paso más hacia Belén», botón «Volver al camino» en y 636, sin «Ahora no»; Teodoro baja 40 pt.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Un día sin trivia»."
+      },
+      {
+        "id": "sorpresa",
+        "nombre": "Hoy toca {juego}",
+        "cuando": "El día no tiene trivia y sí juego sorpresa",
+        "visual": "«Hoy toca Memorama / Adivinanza / Desafío», «Un juego sorpresa para hoy» e «Ir al juego sorpresa».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Adivinanza» (día 6)."
+      },
+      {
+        "id": "panes",
+        "nombre": "Panes ganados",
+        "cuando": "La primera vez que terminan el contenido (el intro no da panes)",
+        "visual": "Píldora «+15» (Premium o Pase) o «+7» (free) que entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)), y «+N» flotante.",
+        "assets": [
+          "assets/5bab1fe48e4c5009d62da468a9d7f69f.webp"
+        ],
+        "lienzo": [],
+        "probar": "Cualquier día."
+      }
+    ]
+  },
+  {
+    "id": "calificar",
+    "nombre": "Fila «¿Te gustó…?» (calificar y compartir)",
+    "pantallas": [
+      "completado"
+    ],
+    "selector": "#viewport .layer[data-screen=completado] .rate-row",
+    "descripcion": "Fila discreta sobre el botón: 5 estrellas opcionales y Compartir.",
+    "medidas": "350 × 84 pt, radio 20 pt, padding 8 × 14, fondo rgba(255,255,255,.85) con desenfoque 12, sombra 0 6 18 rgba(8,93,111,.12) (oscuro rgba(18,48,92,.72) con borde interior 1 pt rgba(255,255,255,.16)). Pregunta 500 16/22 pt. Estrellas: botones de 36 × 44 pt con estrella de 30 pt, 8 pt de separación. Compartir: 44 × 44 pt, redondo, #0B748A (oscuro rgba(255,255,255,.16)).",
+    "estados": [
+      {
+        "id": "sin-calificar",
+        "nombre": "Sin calificar",
+        "cuando": "Aún no califican ese contenido",
+        "visual": "«¿Te gustó el video?» (o «la canción», «el Evangelio», «el juego»); estrellas solo con contorno #0B748A (oscuro #FFFFFF).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Termina un video."
+      },
+      {
+        "id": "calificada",
+        "nombre": "Calificada",
+        "cuando": "Al tocar una estrella (se guarda)",
+        "visual": "Hasta la tocada: relleno #F5DB78, contorno #D9A53A (oscuro #F5DB78), con rebote de 0,35 s escalonado 0,04 s; el texto cambia a «¡Gracias!» con rebote.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca la 4.ª estrella."
+      }
+    ]
+  },
+  {
+    "id": "manana-seguimos",
+    "nombre": "«Mañana seguimos» (día cerrado)",
+    "pantallas": [
+      "cerrado"
+    ],
+    "selector": "#viewport .layer[data-screen=cerrado] [role=dialog]",
+    "descripcion": "Hoja al cerrar el día cuando ya no queda nada: Teodoro duerme y dice cuándo se abre el siguiente.",
+    "medidas": "Sube como hoja sobre el mapa. Calendario con el mes (500 14 pt blanco) y el día (700 56 pt #0B748A; oscuro blanco) que entra con rebote; «z» que suben y se desvanecen (2,4 s, 0,8 s entre una y otra); «Mañana seguimos» 700 28/32 pt; texto 17/24,65 pt #5F5F5F (oscuro #FFF6DD); botón «Hasta mañana» de 326 × 56 pt en y 754, radio 18, #F5DB78.",
+    "estados": [
+      {
+        "id": "visible",
+        "nombre": "Visible",
+        "cuando": "Al volver al mapa cuando ya no queda nada por hacer hoy",
+        "visual": "«El día N se abre a medianoche.» y «Faltan H h M min» en vivo. El 24: «¡Llegamos a Belén! Mañana es Navidad.».",
+        "assets": [],
+        "lienzo": [
+          "V2-Cerrado",
+          "V2-Cerrado-oscuro"
+        ],
+        "probar": "Recorrido «Un día con trivia» hasta el final.",
+        "codigo": "map.js: params.thenCerrado && activeDay() === null, a los 600–700 ms."
+      }
+    ]
+  },
+  {
+    "id": "free-pago",
+    "nombre": "Hoja de Premium / Pase de Adviento",
+    "pantallas": [
+      "free"
+    ],
+    "selector": "#viewport .layer[data-screen=free] .root > div",
+    "descripcion": "Paywall del día de pago para familias free (y de los descargables).",
+    "medidas": "Hoja de página: sube dejando 46 pt arriba, radio 16 16 0 0; la pantalla de abajo se achica a .94 y se oscurece (brillo .62). «Hazte Premium» de 350 × 60 pt en y 646, radio 22, #F5DB78, texto #0B748A 700 23 pt; «Pase de Adviento · US$19,99» de 350 × 56 pt con borde 2 pt (claro #0B748A, oscuro #FFFFFF), 700 19 pt; «Ahora no» de 44 pt. Teodoro celebra (animado).",
+    "estados": [
+      {
+        "id": "dia-de-pago",
+        "nombre": "Día de pago",
+        "cuando": "Familia free que toca un día de pago",
+        "visual": "Texto «Los 26 días de Adviento con Teodoro, y todo Theo para tu familia» y dos opciones (Premium y Pase). En el MVP la compra es simulada y abre el día.",
+        "assets": [],
+        "lienzo": [
+          "V2-24-Dia-completo-claro",
+          "V2-24-Dia-completo"
+        ],
+        "probar": "Recorrido «Free · día de pago» › «Desbloquear el día»."
+      },
+      {
+        "id": "descargable",
+        "nombre": "Descargable",
+        "cuando": "Familia free que toca el imprimible o la canción del reto",
+        "visual": "Solo «Hazte Premium» (el paywall de Theo) y «Ahora no».",
+        "assets": [],
+        "lienzo": [
+          "V2-24-Dia-completo-claro"
+        ],
+        "probar": "Recorrido «Free · día gratis» › imprimible."
+      }
+    ]
+  },
+  {
+    "id": "ruleta-giro",
+    "nombre": "Ruleta (pop-up de giro)",
+    "pantallas": [
+      "ruletaPop"
+    ],
+    "selector": "#viewport .layer[data-screen=ruletaPop] > .root > div > :not(.ov-scrim):not(.ov-body), #viewport .layer[data-screen=ruletaPop] .ov-body > *",
+    "descripcion": "La rueda de 8 casillas que se gira tocando la ruleta del mapa (días 4, 11, 18 y 24), con su botón y todo lo que lleva encima.",
+    "medidas": "Velo rgba(0,20,50,.8) con desenfoque 6. «Semana N» 17 pt blanco. Rueda de 330 × 330 pt en (30, 246) con 8 casillas cada 45° desde arriba, a 26,2 % del ancho desde el centro: sorpresa dorada (cuarto nuevo, 60 pt), panes, regalo, panes, prenda de la semana, panes, «otra vez», panes (46 pt). Puntero de 50 × 60 pt arriba. «¡Girar!» de 350 × 64 pt en y 664, radio 22, #F5DB78, 700 23 pt; «Más tarde» de 44 pt en blanco; cerrar 44 × 44 pt rgba(255,255,255,.18) arriba a la derecha. Igual en oscuro.",
+    "estados": [
+      {
+        "id": "lista",
+        "nombre": "Lista para girar",
+        "cuando": "Al tocar la ruleta «¡Gírala!» en el mapa",
+        "visual": "La rueda entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)).",
+        "assets": [
+          "assets/ruleta/rueda8.webp",
+          "assets/ruleta/sorpresa.webp",
+          "assets/ruleta/otra-vez.webp",
+          "assets/5bab1fe48e4c5009d62da468a9d7f69f.webp",
+          "assets/40de1cf55d4441bd10615c06350dde30.webp",
+          "assets/3fdb655b7743b5a7a821153429c4d733.webp",
+          "assets/28a067c47bf9134f91f26a009e0465b5.webp",
+          "assets/ed7f054b6f0d602d40b41b8d2706379a.webp",
+          "assets/5395dc871861741f74c551c3a1031492.webp",
+          "assets/98a7495c73f5fff24bb7130fa01efe67.webp"
+        ],
+        "lienzo": [
+          "S-05b-Ruleta-pop",
+          "S-05b-Ruleta-pop-oscuro"
+        ],
+        "probar": "Recorrido «Día de ruleta» › toca la ruleta."
+      },
+      {
+        "id": "girando",
+        "nombre": "Girando",
+        "cuando": "Al tocar «¡Girar!»",
+        "visual": "Se echa atrás 10° (180 ms) y gira 6 vueltas más la casilla (±10°) en 4,2 s cubic-bezier(.12,.68,.08,1); el puntero golpea −16° en cada casilla con un «tic»; el botón queda al 60 % sin toque; «Más tarde» y cerrar se ocultan; la música baja.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca «¡Girar!»."
+      },
+      {
+        "id": "otra-oportunidad",
+        "nombre": "¡Otra oportunidad!",
+        "cuando": "Cae en «otra vez» (solo puede pasar en el primer giro)",
+        "visual": "Cartel centrado de 269 × 77 pt, radio 22, #F5DB78 con aro 4 pt blanco, texto #02254F: «¡Otra oportunidad!» 800 26 pt + «Gira de nuevo» 600 15 pt; entra con rebote (escala .6 → 1, 0,45 s). El botón vuelve y entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Panel › Ajustes › forzar premio «otra»."
+      },
+      {
+        "id": "premio",
+        "nombre": "Premio",
+        "cuando": "Cae en cualquier otra casilla",
+        "visual": "A los 300 ms se abre el premio (cuarto nuevo o «Premio de la ruleta»).",
+        "assets": [],
+        "lienzo": [
+          "S-05c-Ruleta-premio"
+        ],
+        "probar": "Gira."
+      }
+    ]
+  },
+  {
+    "id": "premio-ruleta",
+    "nombre": "Premio de la ruleta (pop-up)",
+    "pantallas": [
+      "ruletaPremio",
+      "premioCuarto"
+    ],
+    "selector": "#viewport .layer:is([data-screen=ruletaPremio], [data-screen=premioCuarto]) > .root > div > :not(.ov-scrim):not(.ov-body), #viewport .layer:is([data-screen=ruletaPremio], [data-screen=premioCuarto]) .ov-body > *",
+    "descripcion": "Ventana con lo que salió en la ruleta (la ventana y todo lo que lleva encima).",
+    "medidas": "Prenda / panes: 350 × 548 pt (panes 520) en x 20, y 170, radio 32 pt, fondo #FFFFFF (oscuro #274E7C), sombra 0 24 60 rgba(0,8,43,.4). Premio de 180 × 180 pt que entra girando (−180° → 0 y escala .3 → 1, 0,7 s) y luego flota (2,4 s en bucle); «¡Ganaste / {premio}!» 500 32 pt; subtítulo 16 pt #5F5F5F (oscuro #FFF6DD); «Volver al camino» de 310 × 60 pt, radio 22; cerrar 44 × 44 pt rgba(11,116,138,.1) (oscuro rgba(255,255,255,.14)). Cuarto nuevo: 350 × 680 pt en y 82, degradado #FFFFFF → #E2F3F7 (oscuro radial #1E4A7E → #02254F → #00082B), título 700 34 pt, «Volver al camino» de 310 × 58, radio 20, y «Ver el cuarto de Teodoro».",
+    "estados": [
+      {
+        "id": "prenda",
+        "nombre": "Prenda",
+        "cuando": "Sale la prenda de la semana o el regalo (una prenda que aún no tienen)",
+        "visual": "«¡Ganaste un gorro / una bufanda / un bolso / una cama de paja!», «Teodoro ya la tiene puesta»; «¡Nuevo!» flotante; «Ver el cuarto de Teodoro» dentro de la ventana.",
+        "assets": [
+          "assets/28a067c47bf9134f91f26a009e0465b5.webp",
+          "assets/ed7f054b6f0d602d40b41b8d2706379a.webp",
+          "assets/5395dc871861741f74c551c3a1031492.webp",
+          "assets/98a7495c73f5fff24bb7130fa01efe67.webp"
+        ],
+        "lienzo": [
+          "S-05c-Ruleta-premio",
+          "S-05c-Ruleta-premio-oscuro"
+        ],
+        "probar": "Recorrido «Día de ruleta»."
+      },
+      {
+        "id": "panes",
+        "nombre": "Panes",
+        "cuando": "Salen panes (o el regalo cuando ya tienen todas las prendas)",
+        "visual": "«¡Ganaste 20 panes!», «Ya están en la canasta de Teodoro», «+20» flotante con el pan; sin «Ver el cuarto».",
+        "assets": [
+          "assets/5bab1fe48e4c5009d62da468a9d7f69f.webp"
+        ],
+        "lienzo": [],
+        "probar": "Gira hasta caer en panes."
+      },
+      {
+        "id": "cuarto",
+        "nombre": "Cuarto nuevo",
+        "cuando": "Sale la sorpresa dorada (el cuarto nuevo; no se repite)",
+        "visual": "Tarjeta con el cuarto de Nazaret que entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)), «La próxima ruleta, el día N» y confeti de 50 piezas.",
+        "assets": [
+          "assets/16ea87b5ecae2048c4c2210e6f0daf32.webp"
+        ],
+        "lienzo": [
+          "S-09-Premio-cuarto",
+          "S-09-Premio-cuarto-oscuro"
+        ],
+        "probar": "Recorrido «Premio: cuarto nuevo»."
+      },
+      {
+        "id": "celebracion",
+        "nombre": "Celebración",
+        "cuando": "Siempre que se abre un premio",
+        "visual": "Confeti de 36 piezas, motivo largo y Teodoro dice «premio» («premioGrande» en el cuarto); la música vuelve 1,5 s después. En oscuro el halo dorado pasa a luz clara rgba(255,246,221,.22).",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Gira la ruleta."
+      }
+    ]
+  },
+  {
+    "id": "memorama-carta",
+    "nombre": "Carta del memorama",
+    "pantallas": [
+      "memorama"
+    ],
+    "selector": "#viewport .layer[data-screen=memorama] .mm-card",
+    "descripcion": "Las 12 cartas (6 parejas) del memorama.",
+    "medidas": "96 × 131 pt en grilla de 3 columnas con 12 pt de separación, desde y 172. Dorso: dibujo de cartas, radio 16. Frente: fondo #FFFFFF, radio 14, aro 3 pt #8FD0A3 y sombra 0 8 18 rgba(0,0,0,.25), personaje de 84 × 100 pt (Teodoro 108). Igual en claro y oscuro. Entran con rebote (0,4 s), escalonadas 0,035 s.",
+    "estados": [
+      {
+        "id": "boca-abajo",
+        "nombre": "Boca abajo",
+        "cuando": "Al empezar el juego",
+        "visual": "Dorso. Accesibilidad: «Carta N, boca abajo».",
+        "assets": [
+          "assets/834fcca7dd481ce118a38c73d90f02cc.jpg"
+        ],
+        "lienzo": [
+          "V2-Memorama-claro",
+          "V2-Memorama"
+        ],
+        "probar": "Recorrido «Memorama»."
+      },
+      {
+        "id": "volteada",
+        "nombre": "Volteada",
+        "cuando": "Al tocar una carta",
+        "visual": "Gira 180° en 0,45 s cubic-bezier(.3,.7,.3,1.2) y muestra el personaje; pista «¿Dónde está el otro / la otra …?».",
+        "assets": [
+          "assets/8afe2c2bcf5059804b51f40a1a7885f8.webp",
+          "assets/3b63e04a9185489b1a91612a3907c6b4.webp",
+          "assets/f2c3d1af29c060c91efbf35ede368c80.webp",
+          "assets/543f9314fe9fabc594275985114d3d36.webp",
+          "assets/c1e5ee9a1f2c5bbdc81016b68efe050b.webp",
+          "assets/c3a74965b1ac9e159c6556947a68d3a5.webp"
+        ],
+        "lienzo": [
+          "V2-Memorama-claro"
+        ],
+        "probar": "Toca una carta."
+      },
+      {
+        "id": "pareja",
+        "nombre": "Pareja encontrada",
+        "cuando": "Las dos cartas volteadas son iguales",
+        "visual": "Aro 3 pt #3FAE6B con brillo dorado que pulsa dos veces (1,4 s) y ✓ de 24 pt #2E8B57 arriba a la derecha (6 pt); vibra 20 ms; «¡Pareja! {nombre}».",
+        "assets": [],
+        "lienzo": [
+          "V2-Memorama-claro"
+        ],
+        "probar": "Encuentra una pareja."
+      },
+      {
+        "id": "no-pareja",
+        "nombre": "No son pareja",
+        "cuando": "Las dos cartas volteadas son distintas",
+        "visual": "Se quedan 1,3 s y vuelven a girar; «Casi… ¡otra vez!».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Voltea dos distintas."
+      }
+    ]
+  },
+  {
+    "id": "adivinanza-carta",
+    "nombre": "Carta de la adivinanza",
+    "pantallas": [
+      "adivinanza"
+    ],
+    "selector": "#viewport .layer[data-screen=adivinanza] :is(.adv-gate, .root > div > div[style*=\"top: 282px\"])",
+    "descripcion": "La palabra a adivinar (solo la ve quien da las pistas), tapada al principio por «¿Listos?».",
+    "medidas": "342 × 286 pt en (24, 282). Carta: fondo #FFFFFF, radio 32, aro 5 pt rgba(245,212,106,.4) y sombra 0 24 50 rgba(0,0,0,.4); píldora «SOLO TÚ LA VES» de 26 pt #0B748A (oscuro #01153B); dibujo de 110 × 110 pt; palabra 700 42 pt; franja de abajo de 64 pt #FDF1E4 con «NO DIGAS» #A8323F y dos palabras prohibidas en píldoras blancas con borde 1,5 pt #E7A5AC.",
+    "estados": [
+      {
+        "id": "listos",
+        "nombre": "¿Listos? (tapada)",
+        "cuando": "Antes de ver cada palabra",
+        "visual": "Tapa de 342 × 286 pt, radio 26, degradado 160° #0B748A → #085D6F, sombra 0 12 28 rgba(8,93,111,.3): «¿Listos?» 800 34 pt, «Que solo mire quien da las pistas» (en las siguientes «Pásale el celular…») 700 16 pt, píldora «Toca para ver la palabra» de 36 pt #F5DB78, texto #085D6F. Los botones esperan al 45 % (oscuro: «¡La adivinaron!» #3A4F6E con texto #A9B8CC).",
+        "assets": [],
+        "lienzo": [
+          "V2-Adivinanza-intro-claro"
+        ],
+        "probar": "Recorrido «Adivinanza»."
+      },
+      {
+        "id": "en-juego",
+        "nombre": "Palabra visible",
+        "cuando": "Al tocar «¿Listos?» (arranca el reloj de 45 s)",
+        "visual": "La tapa se va en 0,22 s (escala .96); la carta entra con rebote (la primera) o deslizándose desde la derecha (las siguientes, 0,35 s).",
+        "assets": [],
+        "lienzo": [
+          "V2-Adivinanza-claro",
+          "V2-Adivinanza"
+        ],
+        "probar": "Toca «¿Listos?»."
+      },
+      {
+        "id": "adivinada",
+        "nombre": "¡La adivinaron!",
+        "cuando": "Al tocar «¡La adivinaron!»",
+        "visual": "La carta sale a la derecha (420 pt, girando 12°, 320 ms) con «¡Sí!» flotante y sonido.",
+        "assets": [],
+        "lienzo": [
+          "V2-Adivinanza-siguiente-claro"
+        ],
+        "probar": "Toca «¡La adivinaron!»."
+      },
+      {
+        "id": "pasada",
+        "nombre": "Pasar a otra palabra",
+        "cuando": "Al tocar «Pasar a otra palabra»",
+        "visual": "La carta sale a la izquierda (−420 pt, −12°).",
+        "assets": [],
+        "lienzo": [
+          "V2-Adivinanza-pasar-claro"
+        ],
+        "probar": "Toca «Pasar»."
+      }
+    ]
+  },
+  {
+    "id": "adivinanza-reloj",
+    "nombre": "Reloj de la adivinanza",
+    "pantallas": [
+      "adivinanza"
+    ],
+    "selector": "#viewport .layer[data-screen=adivinanza] div[aria-label^=\"Quedan\"]",
+    "descripcion": "Barra de 45 segundos sobre la carta.",
+    "medidas": "Fila de 342 pt en (24, 246): reloj de arena de 20 pt (#9A6E14; oscuro #F5D46A), barra de 10 pt, radio 5 (fondo #D6E2EA; oscuro rgba(255,255,255,.16)), segundos 700 20 pt #1E8DA5 (oscuro #F5DB78).",
+    "estados": [
+      {
+        "id": "corriendo",
+        "nombre": "Corriendo",
+        "cuando": "Desde que tocan «¿Listos?»",
+        "visual": "El relleno baja de 100 % a 0 % en 45 s; vibra a los 10, 3, 2 y 1 s.",
+        "assets": [],
+        "lienzo": [
+          "V2-Adivinanza-claro"
+        ],
+        "probar": "Toca «¿Listos?»."
+      },
+      {
+        "id": "ultimos-10",
+        "nombre": "Últimos 10 s",
+        "cuando": "En los últimos 10 segundos",
+        "visual": "Relleno en degradado 90° #E0565B → #F5A35B.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Espera 35 s."
+      },
+      {
+        "id": "se-acabo",
+        "nombre": "Se acabó el tiempo",
+        "cuando": "Al llegar a 0",
+        "visual": "Se abre «¡Se acabó el tiempo!» con una campanita.",
+        "assets": [],
+        "lienzo": [
+          "V2-Adivinanza-tiempo-claro",
+          "V2-Adivinanza-tiempo"
+        ],
+        "probar": "Espera 45 s."
+      }
+    ]
+  },
+  {
+    "id": "desafio-carta",
+    "nombre": "Carta del desafío en familia",
+    "pantallas": [
+      "desafio"
+    ],
+    "selector": "#viewport .layer[data-screen=desafio] .root > div > div[style*=\"top: 360px\"]",
+    "descripcion": "El reto en familia escrito en un pergamino; se sella al hacerlo.",
+    "medidas": "Área de 390 × 300 pt en y 360: pergamino de 382 × 300 pt con sombra drop-shadow(0 18 30 rgba(0,0,0,.4)); dentro (márgenes 70 / 58 pt) ícono de 46 pt, reto 700 26 pt #0B748A y frase 500 15 pt en cursiva #6B4A2B. Igual en oscuro. «Sacar otra carta» de 178 × 42 pt pegado debajo (y 650); «¡Lo hicimos!» de 350 × 58 pt en y 704; «Más tarde» de 350 × 50 pt en y 770.",
+    "estados": [
+      {
+        "id": "carta",
+        "nombre": "Carta",
+        "cuando": "Al abrir el desafío (cada día de desafío empieza en otra carta)",
+        "visual": "Entra con rebote (0,5 s).",
+        "assets": [
+          "assets/8325ca235ba2fb8f0fd97f515b622ffc.webp"
+        ],
+        "lienzo": [
+          "V2-Desafio-claro",
+          "V2-Desafio"
+        ],
+        "probar": "Recorrido «Desafío en familia» (día 9)."
+      },
+      {
+        "id": "otra-carta",
+        "nombre": "Otra carta",
+        "cuando": "Al tocar «Sacar otra carta»",
+        "visual": "Se da vuelta (90°, escala .9, 200 ms), cambia y vuelve (260 ms).",
+        "assets": [],
+        "lienzo": [
+          "V2-Desafio-carta2-claro",
+          "V2-Desafio-carta2"
+        ],
+        "probar": "Toca «Sacar otra carta»."
+      },
+      {
+        "id": "sellada",
+        "nombre": "Hecho en familia",
+        "cuando": "Al tocar «¡Lo hicimos!»",
+        "visual": "Sello redondo de 104 pt arriba a la derecha (16 pt del borde, −6 arriba) girado 10°: degradado 160° #F5D46A → #F5DB78 → #D9A93A (oscuro #E2BE55), aro 5 pt #FFFFFF (oscuro #02254F), ✓ de 32 pt y «HECHO EN FAMILIA» 600 12 pt (#0B748A; oscuro #02254F). Cae (escala 2,8 → .9 → 1,05 → 1, 520 ms) con una onda de 4 pt #F5D46A; la carta se hunde 6 pt; confeti de 60 piezas y Teodoro festeja; a los 1,6 s (o al tocar) pasa al final.",
+        "assets": [
+          "assets/a98be2e11e018975563512bddc52be5a.webp"
+        ],
+        "lienzo": [
+          "V2-Desafio-fin-claro",
+          "V2-Desafio-fin"
+        ],
+        "probar": "Toca «¡Lo hicimos!»."
+      }
+    ]
+  },
+  {
+    "id": "juego-familia-carta",
+    "nombre": "Carta de los juegos en familia",
+    "pantallas": [
+      "juegoCarta"
+    ],
+    "selector": "#viewport .layer[data-screen=juegoCarta] .root > div > [style*=\"top: 240px\"][style*=\"width: 342px\"]",
+    "descripcion": "El mazo de «Teodoro dice» (día 7), «Teléfono roto con la Biblia» (día 14) y «Busquen la estrella» (día 21).",
+    "medidas": "342 × 352 pt en (24, 240), radio 32, fondo #FFFFFF, aro 5 pt rgba(245,212,106,.4) y sombra 0 24 50 rgba(0,0,0,.4) (igual en claro y oscuro). Píldora de arriba de 28 pt, radio 14, 700 12 pt con espaciado .1 em; texto principal 700 34/36 pt #06325A en mayúsculas (teléfono 46/48; encontrada 28/30); franja de abajo de 64 pt. Botón principal de 350 × 60 pt, radio 20, #F5DB78, texto #06325A con sombra sólida 0 6 0 #E2BE55.",
+    "estados": [
+      {
+        "id": "orden",
+        "nombre": "Teodoro dice · orden",
+        "cuando": "Día 7, una orden normal (van dos normales y una con truco)",
+        "visual": "Píldora «TEODORO DICE» #01153B con estrella; Teodoro celebrando de 101 × 132 pt; franja #EEF6F8 «Empieza con «Teodoro dice…»». Arriba: «Tú eres Teodoro».",
+        "assets": [
+          "assets/a98be2e11e018975563512bddc52be5a.webp"
+        ],
+        "lienzo": [
+          "J-teodoro-carta",
+          "J-teodoro-carta-oscuro"
+        ],
+        "probar": "Recorrido «Teodoro dice»."
+      },
+      {
+        "id": "truco",
+        "nombre": "Teodoro dice · con truco",
+        "cuando": "Día 7, cada tercera carta: la orden se dice sin «Teodoro dice»",
+        "visual": "Píldora «¡CON TRUCO!» #C2414A con «!»; Teodoro travieso de 77 × 116 pt; franja #FDF1E4 «Sin «Teodoro dice»… ¡nadie se mueve!» #A8323F. Arriba: «¡Ojo, carta con truco!».",
+        "assets": [
+          "assets/64167d45da19875626c545019275e29c.webp"
+        ],
+        "lienzo": [
+          "J-teodoro-especial",
+          "J-teodoro-especial-oscuro"
+        ],
+        "probar": "Toca «Otra orden» dos veces."
+      },
+      {
+        "id": "tapada",
+        "nombre": "Tapada (mantén para ver)",
+        "cuando": "Días 14 y 21, mientras no la presionan",
+        "visual": "Dorso de las cartas en toda la carta, aro rgba(245,212,106,.6); píldora blanca de 56 pt, radio 18, «Mantén para ver» con una mano de 22 pt.",
+        "assets": [
+          "assets/834fcca7dd481ce118a38c73d90f02cc.jpg"
+        ],
+        "lienzo": [
+          "J-telefono-carta",
+          "J-estrella-carta"
+        ],
+        "probar": "Recorrido «Teléfono roto»."
+      },
+      {
+        "id": "vista-telefono",
+        "nombre": "Teléfono roto · palabra",
+        "cuando": "Día 14, mientras mantienen presionada la carta",
+        "visual": "Se da vuelta en 160 ms: «PALABRA DE LA BIBLIA», ícono de 150 × 128 pt, «PALABRA» entre comillas 700 46/48 pt, franja «ESTÁ EN» + la cita. Al soltar se tapa.",
+        "assets": [],
+        "lienzo": [
+          "J-telefono-ver",
+          "J-telefono-ver-oscuro"
+        ],
+        "probar": "Mantén la carta."
+      },
+      {
+        "id": "vista-estrella",
+        "nombre": "Busquen la estrella · escondite",
+        "cuando": "Día 21, mientras mantienen presionada la carta",
+        "visual": "«ESCÓNDELA {lugar}».",
+        "assets": [],
+        "lienzo": [
+          "J-estrella-ver",
+          "J-estrella-ver-oscuro"
+        ],
+        "probar": "Recorrido «Busquen la estrella»."
+      },
+      {
+        "id": "encontrada",
+        "nombre": "¡Encontrada!",
+        "cuando": "Día 21, al tocar «¡La encontraron!»",
+        "visual": "Píldora «¡ENCONTRADA!» #0A8445; Teodoro celebrando salta; algo bonito que contar (700 28/30 pt); franja #E6F5EC «Al terminar, la ponen junto al pesebre» #0A6B38; confeti de 40 piezas.",
+        "assets": [
+          "assets/a98be2e11e018975563512bddc52be5a.webp"
+        ],
+        "lienzo": [
+          "J-estrella-especial",
+          "J-estrella-especial-oscuro"
+        ],
+        "probar": "Toca «¡La encontraron!»."
+      },
+      {
+        "id": "girar",
+        "nombre": "Siguiente carta",
+        "cuando": "Al tocar el botón principal («Otra orden», «Otra palabra», «Otro escondite»)",
+        "visual": "La carta se da vuelta (90°, escala .92, 180 ms) y vuelve (240 ms cubic-bezier(.2,.9,.3,1.2)); vibra 15 ms.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Toca el botón principal."
+      }
+    ]
+  },
+  {
+    "id": "hub-reto",
+    "nombre": "Pasos del reto en familia",
+    "pantallas": [
+      "hub"
+    ],
+    "selector": "#viewport .layer[data-screen=hub] .hub-pasos",
+    "descripcion": "Los 2 o 3 pasos del reto o juego del día (días de reto: 6, 13 y 19).",
+    "medidas": "Caja del lienzo, padding 18 / 20 / 16, fondo #FFFFFF (oscuro #274E7C), 14 pt entre elementos. Etiqueta «Reto en familia · 10 min» de 28 pt, radio 14, #E2F3F7 (oscuro rgba(255,255,255,.14)). Pasos numerados en círculo de 32 pt #F5DB78, número #0B748A 700 16 pt; texto 500 17/1,3 pt #06325A (oscuro #FFFFFF).",
+    "estados": [
+      {
+        "id": "pasos",
+        "nombre": "Pasos",
+        "cuando": "Días de reto o juego en familia con pasos",
+        "visual": "Lista numerada; «¡Lo hicimos!» cierra el día.",
+        "assets": [],
+        "lienzo": [
+          "S-04-Hub-familia",
+          "S-04-Hub-familia-oscuro"
+        ],
+        "probar": "Recorrido «Reto en familia» (día 13)."
+      },
+      {
+        "id": "premium",
+        "nombre": "Extras con Premium",
+        "cuando": "Familia free",
+        "visual": "Píldora «Premium» (#F5DB78, 800 12 pt) en el imprimible y la canción.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Free · día gratis»."
+      }
+    ]
+  },
+  {
+    "id": "juego-sorpresa-pantallas",
+    "nombre": "Inicio y final de los juegos sorpresa",
+    "pantallas": [
+      "memoramaReglas",
+      "adivinanzaIntro",
+      "desafioIntro",
+      "memoramaFin",
+      "adivinanzaFin",
+      "desafioFin",
+      "adivinanzaTiempo"
+    ],
+    "selector": "#viewport .layer:is([data-screen=memoramaReglas], [data-screen=adivinanzaIntro], [data-screen=desafioIntro], [data-screen=memoramaFin], [data-screen=adivinanzaFin], [data-screen=desafioFin], [data-screen=adivinanzaTiempo]) .root > div",
+    "descripcion": "Las pantallas antes y después de cada juego sorpresa, y «¡Se acabó el tiempo!» de la adivinanza.",
+    "medidas": "Pantallas del lienzo a pantalla completa (entran con fundido). El final suma +15 panes una sola vez: el pan grande con rebote y «+15» flotante desde el pan, confeti de 44 piezas, Teodoro celebra (animado) y dice «finJuego».",
+    "estados": [
+      {
+        "id": "reglas",
+        "nombre": "Antes de jugar",
+        "cuando": "Al abrir un juego sorpresa",
+        "visual": "«¡A jugar!» / «¡Vamos!» (Teodoro dice «empezar»); «Ahora no» deja el juego para después.",
+        "assets": [],
+        "lienzo": [
+          "V2-Memorama-reglas-claro",
+          "V2-Adivinanza-intro-claro",
+          "V2-Desafio-intro-claro"
+        ],
+        "probar": "Recorridos «Memorama», «Adivinanza», «Desafío»."
+      },
+      {
+        "id": "fin",
+        "nombre": "Final (+15 panes)",
+        "cuando": "La primera vez que terminan el juego sorpresa de ese día",
+        "visual": "Memorama: «Encontraste las 6 parejas». Adivinanza: fichas ✓ / → por palabra y título según aciertos (4 o más «¡Qué buen equipo!», 2 o más «¡Bien jugado!», si no «¡Buen intento!»). Desafío: la carta sellada.",
+        "assets": [
+          "assets/5bab1fe48e4c5009d62da468a9d7f69f.webp",
+          "anim/teo-celebra.json"
+        ],
+        "lienzo": [
+          "V2-Memorama-fin-claro",
+          "V2-Adivinanza-fin-claro",
+          "V2-Desafio-fin-claro"
+        ],
+        "probar": "Termina un juego sorpresa."
+      },
+      {
+        "id": "repetido",
+        "nombre": "Ya jugado",
+        "cuando": "Al repetirlo (o en el recuerdo)",
+        "visual": "«Ya ganaste estos panes», sin «+15».",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Repite el juego."
+      },
+      {
+        "id": "tiempo",
+        "nombre": "Se acabó el tiempo",
+        "cuando": "En la adivinanza, al terminarse los 45 s",
+        "visual": "Pop-up con la palabra y «Siguiente».",
+        "assets": [],
+        "lienzo": [
+          "V2-Adivinanza-tiempo-claro",
+          "V2-Adivinanza-tiempo"
+        ],
+        "probar": "Deja correr el reloj."
+      }
+    ]
+  },
+  {
+    "id": "teo-animado-pantallas",
+    "nombre": "Teodoro animado fuera de la trivia y del mapa",
+    "pantallas": [
+      "triviaFin",
+      "completado",
+      "free",
+      "hoy",
+      "juegoIntro",
+      "juegoPasos",
+      "juegoFin",
+      "desafioIntro",
+      "memoramaFin",
+      "adivinanzaFin",
+      "desafioFin",
+      "retoSlides"
+    ],
+    "selector": "#viewport .layer:not([data-screen=trivia]):not([data-screen=mapa]) .teo-anim",
+    "descripcion": "Donde hay un Teodoro quieto celebrando o con su mapa, se pone su animación en bucle con los mismos pies y el mismo alto.",
+    "medidas": "La animación mide lo que mide el dibujo de pie (celebra: 96 % del alto del dibujo, lienzo 875 × 1522 con pies en 1167; mapa: lienzo 426 × 600 con Teodoro de 532). Copia la sombra del dibujo, que queda oculto debajo.",
+    "estados": [
+      {
+        "id": "celebra",
+        "nombre": "Celebra (salta)",
+        "cuando": "Resultado de la trivia, fin de juegos, regreso, paywall, slides y juegos en familia",
+        "visual": "Animación teo-celebra en bucle.",
+        "assets": [
+          "anim/teo-celebra.json",
+          "assets/a98be2e11e018975563512bddc52be5a.webp"
+        ],
+        "lienzo": [
+          "V2-Trivia-fin-claro",
+          "V2-10-Regreso"
+        ],
+        "probar": "Termina una trivia.",
+        "codigo": "teo-anim.js celebrar()."
+      },
+      {
+        "id": "piensa",
+        "nombre": "Con su mapa",
+        "cuando": "En «¿Jugamos?», la portada de «Teléfono roto» y el póster de Nochebuena",
+        "visual": "Animación teo-trivia-mapa (actuación completa de 5 s en bucle).",
+        "assets": [
+          "anim/teo-trivia-mapa.json",
+          "assets/cd7abd57ac6154597b18285ae710d7ba.webp"
+        ],
+        "lienzo": [
+          "S-06-Completado"
+        ],
+        "probar": "Termina un video con trivia.",
+        "codigo": "teo-anim.js pensar(root, MAPA)."
+      },
+      {
+        "id": "pausado",
+        "nombre": "Bajo un pop-up",
+        "cuando": "Mientras hay un pop-up encima",
+        "visual": "Quieto en su primer cuadro.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Abre un pop-up sobre una pantalla con Teodoro animado."
+      },
+      {
+        "id": "sin-animacion",
+        "nombre": "Sin animación",
+        "cuando": "Con «Reducir movimiento» o si la animación no carga",
+        "visual": "Queda el dibujo quieto, que salta o flota.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Reducir movimiento."
+      }
+    ]
+  },
+  {
+    "id": "nochebuena",
+    "nombre": "Llegada a Belén (Nochebuena)",
+    "pantallas": [
+      "final"
+    ],
+    "selector": "#viewport .layer[data-screen=final] .root > div",
+    "descripcion": "La pantalla del día 26: la familia llegó a Belén.",
+    "medidas": "Pantalla completa. «DÍA 26 · NOCHEBUENA» 500 13 pt (#0B748A; oscuro #F5D46A); «¡Llegamos a Belén!» 700 38 pt; «· Lc 2,11»; «26 de 26 días» (número 700 30 pt); «{nombre} y su familia caminaron juntos» 500 14 pt. «Ver el nacimiento» de 350 × 58 pt en y 690, radio 20, #F5DB78; «Compartir con la familia» de 350 × 50 pt.",
+    "estados": [
+      {
+        "id": "primera-vez",
+        "nombre": "Primera vez",
+        "cuando": "Al terminar el día 26 con los 26 cuentos vistos",
+        "visual": "La escena entra con fundido y escala 1,04 → 1 (1200 ms); los botones suben 14 pt (420 ms, empiezan a 0,6 s); lluvia dorada (34 piezas #F5DB78 / #F5D46A / #FFF6DD) a los 0,6 y 1,4 s; 1,2 s de silencio, el motivo que se resuelve en «Noche de paz» y Teodoro dice «¡Gran aventura!».",
+        "assets": [],
+        "lienzo": [
+          "V2-Final-claro",
+          "V2-Final"
+        ],
+        "probar": "Recorrido «Nochebuena»."
+      },
+      {
+        "id": "otra-vez",
+        "nombre": "Volver a verla",
+        "cuando": "Si ya la vieron antes",
+        "visual": "Sin animación de entrada.",
+        "assets": [],
+        "lienzo": [
+          "V2-Final-claro"
+        ],
+        "probar": "Mapa › día 26 hecho."
+      },
+      {
+        "id": "faltan-cuentos",
+        "nombre": "Faltan cuentos",
+        "cuando": "Si les faltan cuentos por ver",
+        "visual": "No se muestra: aviso «¡Jesús nació! · Teodoro te espera en el día N» y vuelve al mapa.",
+        "assets": [],
+        "lienzo": [],
+        "probar": "Recorrido «Terminó incompleto» › día 26."
+      }
+    ]
+  }
+]

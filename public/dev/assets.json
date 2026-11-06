@@ -1,0 +1,4651 @@
+{
+ "anim/teo-caminando.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 39,
+  "descripcion": "Teodoro camina por el mapa al llegar un día nuevo (bucle; mira a la derecha)",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-teodoro-caminando",
+  "segundos": 1.62,
+  "tipo": "lottie",
+  "w": 324
+ },
+ "anim/teo-celebra.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 121,
+  "descripcion": "Teodoro celebra con saltos (bucle)",
+  "fps": 24,
+  "h": 1522,
+  "nombre": "animacion-teodoro-celebra",
+  "segundos": 5.04,
+  "tipo": "lottie",
+  "w": 875
+ },
+ "anim/teo-trivia-celebra-a-mapa.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 36,
+  "descripcion": "Trivia: transición, aterriza y vuelve al mapa",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-celebra-a-mapa",
+  "segundos": 1.5,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "anim/teo-trivia-celebra.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 39,
+  "descripcion": "Trivia: Teodoro salta al acertar (bucle)",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-teodoro-celebra",
+  "segundos": 1.62,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "anim/teo-trivia-farol-a-celebra.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 36,
+  "descripcion": "Trivia: transición, suelta el farol y abre los brazos",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-farol-a-celebra",
+  "segundos": 1.5,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "anim/teo-trivia-farol-a-mapa.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 36,
+  "descripcion": "Trivia: transición, guarda el farol y vuelve al mapa",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-farol-a-mapa",
+  "segundos": 1.5,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "anim/teo-trivia-farol.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 67,
+  "descripcion": "Trivia: Teodoro con el farol, tras fallar (bucle)",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-teodoro-con-farol",
+  "segundos": 2.79,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "anim/teo-trivia-mapa-a-celebra.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 36,
+  "descripcion": "Trivia: transición, suelta el mapa y abre los brazos",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-mapa-a-celebra",
+  "segundos": 1.5,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "anim/teo-trivia-mapa-a-farol.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 36,
+  "descripcion": "Trivia: transición, guarda el mapa y saca el farol",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-mapa-a-farol",
+  "segundos": 1.5,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "anim/teo-trivia-mapa.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 121,
+  "descripcion": "Trivia: Teodoro piensa con su mapa (bucle)",
+  "fps": 24,
+  "h": 600,
+  "nombre": "animacion-trivia-teodoro-piensa-con-mapa",
+  "segundos": 5.04,
+  "tipo": "lottie",
+  "w": 426
+ },
+ "assets/00f7a592458d7385cc2cf5ed2e521144.webp": {
+  "adviento": true,
+  "categoria": "mundos",
+  "descripcion": "Isla del Mundo Adviento (camino al pesebre) en la pantalla Mundos, tema oscuro",
+  "drive": "08 mundos/pantalla-mundos-isla-adviento-oscuro@3x.png",
+  "nombre": "pantalla-mundos-isla-adviento-oscuro",
+  "pantallas": [
+   "08 mundos"
+  ],
+  "pt": [
+   273,
+   273
+  ],
+  "px": [
+   820,
+   820
+  ]
+ },
+ "assets/01b7d95b9bfce11df9fbbb29914bcce5.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 10: María visita a Isabel",
+  "drive": "04 el dia/1 Reproductor/dia-10-la-visita-a-isabel@3x.png",
+  "nombre": "dia-10-la-visita-a-isabel",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/0379fd70721f131c8b3d2576470ed921.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 23: Belén de noche bajo la estrella",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-23-la-estrella-brilla@3x.png",
+  "nombre": "dia-23-la-estrella-brilla",
+  "pantallas": [
+   "1 Hoy",
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/03d290f66f190f6fdfce7f3a66405c9d.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono del nodo del día 8 en el mapa (sobre con corazón), tema claro",
+  "drive": null,
+  "nombre": "dia-08-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   512,
+   512
+  ]
+ },
+ "assets/04b65469de83c633bcfd3d5b259c4699.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono del día 26 (estrella guía) en el mapa, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-26-nochebuena-nacimiento-claro@3x.png",
+  "nombre": "dia-26-nochebuena-nacimiento-claro",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   26,
+   36
+  ],
+  "px": [
+   644,
+   902
+  ]
+ },
+ "assets/051c86fc29996045399b56fe346c156f.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Teodoro de espaldas mira el camino a Belén de noche; arte de «¡Ya estás dentro!» sin el logo",
+  "drive": null,
+  "nombre": "pre-registro-ya-estas-dentro-sin-logo",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1122,
+   1402
+  ]
+ },
+ "assets/0573721cfb9c2522ea349da0934be5c8.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Isabel, personaje de la trivia",
+  "drive": "05 trivia/1 Pregunta/personaje-isabel@3x.png",
+  "nombre": "personaje-isabel",
+  "pantallas": [
+   "1 Pregunta",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   107,
+   119
+  ],
+  "px": [
+   576,
+   640
+  ]
+ },
+ "assets/0670d7ef993fb020b2b69fbffc00bdfa.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro sentado y aburrido, pose de estado de ánimo",
+  "drive": null,
+  "nombre": "teodoro-aburrido",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   414,
+   700
+  ]
+ },
+ "assets/06d17746a01e5a05a453fdf6f0e24b1d.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Pesebre bajo la estrella al final del mapa, tema oscuro; también vista previa para colorear",
+  "drive": "01 inicio (Hoy)/1 Hoy/mapa-pesebre-estrella-oscuro@3x.png",
+  "nombre": "mapa-pesebre-estrella-oscuro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   66,
+   60
+  ],
+  "px": [
+   902,
+   821
+  ]
+ },
+ "assets/07387b5a2813a7a9856f73e1b92245ac.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Captura del reproductor (Meditación de la Escucha) usada de fondo tras el pop-up de la ruleta, oscuro",
+  "drive": null,
+  "nombre": "captura-reproductor-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   390,
+   844
+  ]
+ },
+ "assets/0c32fdbef8718a32c8591f2e1f735206.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Indicador de energía 3 de 5, en uso",
+  "drive": "01 inicio (Hoy)/1 Hoy/bateria-3-en-uso@3x.png",
+  "nombre": "bateria-3-en-uso",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "1 Mapa del camino",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   53,
+   30
+  ],
+  "px": [
+   636,
+   358
+  ]
+ },
+ "assets/0d049f877f2860fe1dc09aa39d108984.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Ruleta sorpresa del camino (bienvenida y mapa), tema claro",
+  "drive": null,
+  "nombre": "ruleta-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   456,
+   640
+  ]
+ },
+ "assets/0e2ac7008bee999603cf5ee6ca250ccf.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Batería genérica con rayo, recargando",
+  "drive": null,
+  "nombre": "bateria-recargando",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   610,
+   666
+  ]
+ },
+ "assets/0e59b25dee307817e656b0cec35214e7.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de meditación (vela) para los días 2, 9 y 17, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-02-meditacion-claro@3x.png",
+  "nombre": "dia-02-meditacion-claro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   34,
+   61
+  ],
+  "px": [
+   426,
+   768
+  ]
+ },
+ "assets/0e6c81df9801f8cf6adb52bfb5bddf26.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de minijuego (pieza de puzle) para los días 7, 14 y 21, tema claro",
+  "drive": "01 inicio (Hoy)/5 Invitacion a Premium/dia-07-juego-claro@3x.png",
+  "nombre": "dia-07-juego-claro",
+  "pantallas": [
+   "5 Invitacion a Premium"
+  ],
+  "pt": [
+   79,
+   81
+  ],
+  "px": [
+   747,
+   768
+  ]
+ },
+ "assets/100f533b2f183b7df18a437e6ffff089.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro saluda, versión para tema oscuro (Cuarto de Nazaret)",
+  "drive": null,
+  "nombre": "teodoro-saluda-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   368,
+   640
+  ]
+ },
+ "assets/1026bcf94b07418de82a878d671104b2.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Indicador de energía 4 de 5, en uso",
+  "drive": "10 interfaz comun/bateria-4-en-uso@3x.png",
+  "nombre": "bateria-4-en-uso",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "1 Mapa del camino",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   53,
+   30
+  ],
+  "px": [
+   634,
+   358
+  ]
+ },
+ "assets/12a860faaeb0bce3b45192bde1b48d63.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro con su farol, de pie en el día actual del mapa, tema claro",
+  "drive": "05 trivia/1 Pregunta/teodoro-farol-claro@3x.png",
+  "nombre": "teodoro-farol-claro",
+  "pantallas": [
+   "1 Pregunta"
+  ],
+  "pt": [
+   144,
+   213
+  ],
+  "px": [
+   433,
+   640
+  ]
+ },
+ "assets/13d1bc33c606eff78972b95d35fce382.jpg": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo azul noche de la pantalla de historia",
+  "drive": "04 el dia/1 Reproductor/fondo-historia@3x.jpg",
+  "nombre": "fondo-historia",
+  "pantallas": [
+   "1 Reproductor",
+   "3 Desafio en familia",
+   "1 Llegamos a Belen"
+  ],
+  "pt": [
+   284,
+   615
+  ],
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/1529466222277b40de85bc9f1c132aed.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 7: el ángel Gabriel anuncia a María",
+  "drive": "04 el dia/1 Reproductor/dia-07-el-anuncio-a-maria@3x.png",
+  "nombre": "dia-07-el-anuncio-a-maria",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/159e005b01f8e32191bbf3fe1358c5a7.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 5: el olivo",
+  "drive": "04 el dia/1 Reproductor/dia-05-la-paz-del-olivo@3x.png",
+  "nombre": "dia-05-la-paz-del-olivo",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/16bd749815fc4408d1b50b7c8bd433f3.otf": {
+  "adviento": true,
+  "categoria": "tipografias",
+  "descripcion": "Tipografía Neue Montreal Medium",
+  "drive": "11 tipografias/NeueMontreal-Medium.otf",
+  "nombre": "NeueMontreal-Medium",
+  "tipo": "fuente"
+ },
+ "assets/16ea87b5ecae2048c4c2210e6f0daf32.webp": {
+  "adviento": true,
+  "categoria": "mundos",
+  "descripcion": "Fondo del Cuarto de Nazaret de Teodoro",
+  "drive": "07 ruleta y premios/1 Ruleta/cuarto-de-nazaret@3x.jpg",
+  "nombre": "cuarto-de-nazaret",
+  "pantallas": [
+   "1 Ruleta",
+   "2 Premio",
+   "3 Cuarto nuevo"
+  ],
+  "pt": [
+   187,
+   281
+  ],
+  "px": [
+   780,
+   1170
+  ]
+ },
+ "assets/17e0fc8eb9eeb07c2f73b41d96a0c4ef.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono del nodo del día 1 (luna) en el mapa, tema claro",
+  "drive": null,
+  "nombre": "dia-01-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   512,
+   512
+  ]
+ },
+ "assets/183c744879d8ae7dd89b10934cde465c.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 18: un pastor cuida a la oveja",
+  "drive": "04 el dia/1 Reproductor/dia-18-cuidar-a-la-oveja@3x.png",
+  "nombre": "dia-18-cuidar-a-la-oveja",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/1977b473eeef718dad110ac5ae865e71.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de minijuego para los días 7, 14 y 21, tema oscuro",
+  "drive": "01 inicio (Hoy)/5 Invitacion a Premium/dia-07-juego-oscuro@3x.png",
+  "nombre": "dia-07-juego-oscuro",
+  "pantallas": [
+   "5 Invitacion a Premium"
+  ],
+  "pt": [
+   79,
+   81
+  ],
+  "px": [
+   750,
+   768
+  ]
+ },
+ "assets/1dde499990ab604651c12d5caa558d94.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Casa de Nazaret, decoración del inicio del mapa, tema oscuro",
+  "drive": null,
+  "nombre": "mapa-casa-nazaret-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   640
+  ]
+ },
+ "assets/1f1d140ea84f62a9a87329d2a4167dd4.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Imagen de vista previa del enlace de invitación (1200x630) con el título Camino a Belén",
+  "drive": "01 inicio (Hoy)/4 Invitacion a un amigo/imagen-invitacion@3x.jpg",
+  "nombre": "imagen-invitacion",
+  "pantallas": [
+   "4 Invitacion a un amigo"
+  ],
+  "pt": [
+   271,
+   142
+  ],
+  "px": [
+   1200,
+   630
+  ]
+ },
+ "assets/1f3fd4be1e19dc04ca6f72efef34263e.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro de espaldas con su bastón, capa suelta del pre registro",
+  "drive": null,
+  "nombre": "teodoro-de-espaldas-con-baston",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   548,
+   800
+  ]
+ },
+ "assets/209dadda6ec89387ba94391283a82819.webp": {
+  "adviento": true,
+  "categoria": "objetos",
+  "descripcion": "Corona de Adviento; vista previa para colorear del Domingo de la Esperanza",
+  "drive": "06 juegos sorpresa/2 Adivinanza/corona-de-adviento@3x.png",
+  "nombre": "corona-de-adviento",
+  "pantallas": [
+   "2 Adivinanza"
+  ],
+  "pt": [
+   213,
+   158
+  ],
+  "px": [
+   640,
+   473
+  ]
+ },
+ "assets/24147b3850486cfdb61b1d4f0fcd265a.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Palmera decorativa del mapa, tema claro",
+  "drive": null,
+  "nombre": "mapa-palmera-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   798,
+   902
+  ]
+ },
+ "assets/24ae11b11e2c10840ee5a20bb9851453.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro tirado en el suelo haciendo drama",
+  "drive": null,
+  "nombre": "teodoro-drama",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   700,
+   454
+  ]
+ },
+ "assets/24d524879208f2af76f2598f0c34fb48.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Pozo decorativo del mapa, tema claro",
+  "drive": null,
+  "nombre": "mapa-pozo-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   678
+  ]
+ },
+ "assets/27bb485f436b46be2a2d653b3a20bf3f.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Indicador de energía 0 de 5, en uso",
+  "drive": "01 inicio (Hoy)/1 Hoy/bateria-0-en-uso@3x.png",
+  "nombre": "bateria-0-en-uso",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "1 Mapa del camino",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   56,
+   31
+  ],
+  "px": [
+   640,
+   360
+  ]
+ },
+ "assets/28a067c47bf9134f91f26a009e0465b5.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Gorro para Teodoro; prenda premio y respuesta de trivia",
+  "drive": "02 teodoro/Tab Teodoro/4-prenda-de-la-semana-gorro@3x.png",
+  "nombre": "4-prenda-de-la-semana-gorro",
+  "pantallas": [
+   "Tab Teodoro",
+   "1 Pregunta",
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   96,
+   107
+  ],
+  "px": [
+   480,
+   534
+  ]
+ },
+ "assets/2a0a0137c06293e31b84c587a73c958c.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro de pie con su mapa en el Cuarto, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-con-mapa-claro@3x.png",
+  "nombre": "teodoro-con-mapa-claro",
+  "pantallas": [
+   "1 Hoy",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   125,
+   213
+  ],
+  "px": [
+   375,
+   640
+  ]
+ },
+ "assets/2b9cfae9ccc8d224702a18b852fe0a5f.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Acceso del cuarto: Teodoro (con aviso rojo)",
+  "drive": "02 teodoro/Tab Teodoro/acceso-teodoro@3x.png",
+  "nombre": "acceso-teodoro",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   48,
+   52
+  ],
+  "px": [
+   146,
+   160
+  ]
+ },
+ "assets/2bb0de082801d78845a10d4a1569d305.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Ruleta sorpresa del camino (bienvenida y mapa), tema oscuro",
+  "drive": null,
+  "nombre": "ruleta-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   458,
+   640
+  ]
+ },
+ "assets/2d41caa3dd19950f431a9f9941201ab3.jpg": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Avatar cuadrado de Teodoro (256x256)",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-avatar@3x.jpg",
+  "nombre": "teodoro-avatar",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "1 Memorama"
+  ],
+  "pt": [
+   48,
+   48
+  ],
+  "px": [
+   256,
+   256
+  ]
+ },
+ "assets/30e9a5e1af04caa8950aa97de2e7ae0e.webp": {
+  "adviento": true,
+  "categoria": "mundos",
+  "descripcion": "Isla del Mundo Adviento en la pantalla Mundos, tema claro",
+  "drive": "08 mundos/pantalla-mundos-isla-adviento-claro@3x.png",
+  "nombre": "pantalla-mundos-isla-adviento-claro",
+  "pantallas": [
+   "08 mundos"
+  ],
+  "pt": [
+   273,
+   273
+  ],
+  "px": [
+   820,
+   820
+  ]
+ },
+ "assets/3419e3c4ca7d11a9b7d64e2c8dac84ba.otf": {
+  "adviento": true,
+  "categoria": "tipografias",
+  "descripcion": "Tipografía Neue Montreal Bold",
+  "drive": "11 tipografias/NeueMontreal-Bold.otf",
+  "nombre": "NeueMontreal-Bold",
+  "tipo": "fuente"
+ },
+ "assets/345591e97560d37b84ead12837ff9c75.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro feliz saludando: energía 5",
+  "drive": "03 mapa/1 Mapa del camino/teodoro-energia-5-feliz@3x.png",
+  "nombre": "teodoro-energia-5-feliz",
+  "pantallas": [
+   "1 Mapa del camino",
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza"
+  ],
+  "pt": [
+   122,
+   213
+  ],
+  "px": [
+   367,
+   640
+  ]
+ },
+ "assets/36dfdfd71e0d6b4b3ee01f1b2e695b96.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro triste haciendo puchero",
+  "drive": null,
+  "nombre": "teodoro-puchero",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   514,
+   700
+  ]
+ },
+ "assets/3984c2ba67df6c6b11d589dc7fcd41e1.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Imagen de vista previa del enlace de invitación (1200x630) con el título Adviento",
+  "drive": null,
+  "nombre": "imagen-invitacion-adviento",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1200,
+   630
+  ]
+ },
+ "assets/3a28599643b3da40c8f344e45a590c34.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Cara de Teodoro poco convencido; opción de calificación «¿Te gustó la historia?»",
+  "drive": null,
+  "nombre": "teodoro-cara-seria",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   416,
+   420
+  ]
+ },
+ "assets/3b63e04a9185489b1a91612a3907c6b4.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "José, personaje de la trivia",
+  "drive": "04 el dia/2 Terminaste/personaje-jose@3x.png",
+  "nombre": "personaje-jose",
+  "pantallas": [
+   "2 Terminaste",
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   114,
+   119
+  ],
+  "px": [
+   611,
+   640
+  ]
+ },
+ "assets/3bb0e09e1e66a4278d0817efdbb43ecf.webp": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Ícono de la misión diaria El cuento de hoy (teatrito)",
+  "drive": "02 teodoro/Tab Teodoro/mision-cuento-de-hoy@3x.png",
+  "nombre": "mision-cuento-de-hoy",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   71,
+   54
+  ],
+  "px": [
+   215,
+   163
+  ]
+ },
+ "assets/3ce248aa665a1c01adeab9e01253dd6d.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Logo «El Adviento más grande del mundo · Para niños»",
+  "drive": null,
+  "nombre": "logo-el-adviento-mas-grande-del-mundo",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1057,
+   724
+  ]
+ },
+ "assets/3f78f8c4c23783039be06bea2955bc98.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Ruleta colocada en el mapa, tema oscuro",
+  "drive": null,
+  "nombre": "ruleta-mapa-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   462,
+   640
+  ]
+ },
+ "assets/3fada372c4437f1127990caad6534612.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono del día 26 (estrella guía) en el mapa, tema oscuro",
+  "drive": null,
+  "nombre": "dia-26-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   646,
+   902
+  ]
+ },
+ "assets/3fdb655b7743b5a7a821153429c4d733.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Puntero de la ruleta sorpresa",
+  "drive": "07 ruleta y premios/1 Ruleta/puntero@3x.png",
+  "nombre": "puntero",
+  "pantallas": [
+   "1 Ruleta"
+  ],
+  "pt": [
+   50,
+   60
+  ],
+  "px": [
+   300,
+   362
+  ]
+ },
+ "assets/40de1cf55d4441bd10615c06350dde30.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Regalo rojo; premio y también ícono del día 15 (claro)",
+  "drive": "03 mapa/1 Mapa del camino/regalo@3x.png",
+  "nombre": "regalo",
+  "pantallas": [
+   "1 Mapa del camino",
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   46,
+   46
+  ],
+  "px": [
+   512,
+   512
+  ]
+ },
+ "assets/4256cd32ac3fe17e26c6c478db755173.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Arbustos con rocas, decoración del mapa, tema claro",
+  "drive": null,
+  "nombre": "mapa-arbustos-rocas-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   568
+  ]
+ },
+ "assets/42fcde792c2c52338da55536a09cafd0.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro explorador leyendo su mapa (pantalla Mundos)",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-explorador@3x.png",
+  "nombre": "teodoro-explorador",
+  "pantallas": [
+   "1 Hoy",
+   "08 mundos"
+  ],
+  "pt": [
+   116,
+   174
+  ],
+  "px": [
+   420,
+   630
+  ]
+ },
+ "assets/44a68e1577a41718d4e0278853580f78.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Acceso del cuarto: ropero",
+  "drive": "02 teodoro/Tab Teodoro/acceso-ropero@3x.png",
+  "nombre": "acceso-ropero",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   40,
+   51
+  ],
+  "px": [
+   121,
+   152
+  ]
+ },
+ "assets/455d2635515c50327d1e7cc360590069.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 26: María, José y el Niño Jesús en el pesebre",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-26-el-nacimiento-de-jesus@3x.png",
+  "nombre": "dia-26-el-nacimiento-de-jesus",
+  "pantallas": [
+   "1 Hoy",
+   "1 Mapa del camino",
+   "1 Reproductor",
+   "6 Compartir",
+   "1 Llegamos a Belen"
+  ],
+  "pt": [
+   240,
+   240
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/46f3f3019ffe7e189c230d710bde97ec.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Niño Jesús en el pesebre, personaje de la trivia",
+  "drive": "05 trivia/1 Pregunta/personaje-nino-jesus@3x.png",
+  "nombre": "personaje-nino-jesus",
+  "pantallas": [
+   "1 Pregunta",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   96,
+   78
+  ],
+  "px": [
+   640,
+   521
+  ]
+ },
+ "assets/47459af67a4b5599e33f6147ecedf0f3.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 24: el ángel anuncia a los pastores",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-24-una-buena-noticia@3x.png",
+  "nombre": "dia-24-una-buena-noticia",
+  "pantallas": [
+   "1 Hoy",
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/4b563b5c264cac11814acc731db9db86.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Indicador de energía 5 de 5, en uso",
+  "drive": "01 inicio (Hoy)/1 Hoy/bateria-5-en-uso@3x.png",
+  "nombre": "bateria-5-en-uso",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "1 Mapa del camino",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   53,
+   30
+  ],
+  "px": [
+   634,
+   358
+  ]
+ },
+ "assets/4f3e96e09f6508129e4e839b7f10a700.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Letrero de madera vacío del mapa, tema oscuro",
+  "drive": null,
+  "nombre": "mapa-letrero-vacio-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   864,
+   902
+  ]
+ },
+ "assets/5214d6df9b587c0d4d6b80232993ed38.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la pestaña Hoy (capilla), inactivo",
+  "drive": null,
+  "nombre": "tab-hoy",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   128,
+   167
+  ]
+ },
+ "assets/52339f7266525f4d78e67e3237495780.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Arbustos con rocas, decoración del mapa, tema oscuro",
+  "drive": null,
+  "nombre": "mapa-arbustos-rocas-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   560
+  ]
+ },
+ "assets/52a6d304b2788dd70960c8db3c3e12e5.otf": {
+  "adviento": true,
+  "categoria": "tipografias",
+  "descripcion": "Tipografía Neue Montreal Regular",
+  "drive": "11 tipografias/NeueMontreal-Regular.otf",
+  "nombre": "NeueMontreal-Regular",
+  "tipo": "fuente"
+ },
+ "assets/52ba38f10b723e04ad04beea396aba0c.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro agotado bostezando: energía 2",
+  "drive": "02 teodoro/Tab Teodoro/teodoro-energia-2-agotado@3x.png",
+  "nombre": "teodoro-energia-2-agotado",
+  "pantallas": [
+   "Tab Teodoro",
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   167,
+   233
+  ],
+  "px": [
+   500,
+   700
+  ]
+ },
+ "assets/5395dc871861741f74c551c3a1031492.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Bolso (alforja) para Teodoro; prenda premio",
+  "drive": "07 ruleta y premios/1 Ruleta/4-prenda-de-la-semana-bolso@3x.png",
+  "nombre": "4-prenda-de-la-semana-bolso",
+  "pantallas": [
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   187,
+   161
+  ],
+  "px": [
+   560,
+   483
+  ]
+ },
+ "assets/543f9314fe9fabc594275985114d3d36.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Oveja, personaje de la trivia",
+  "drive": "05 trivia/1 Pregunta/personaje-oveja@3x.png",
+  "nombre": "personaje-oveja",
+  "pantallas": [
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza"
+  ],
+  "pt": [
+   110,
+   128
+  ],
+  "px": [
+   549,
+   640
+  ]
+ },
+ "assets/55a8fbeeef883e5d3d7d6f081d8bd168.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 20: las casas de Belén",
+  "drive": "04 el dia/1 Reproductor/dia-20-las-casas-de-belen@3x.png",
+  "nombre": "dia-20-las-casas-de-belen",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/55ad9d67c51d58ca8d0e0eb76dce96a5.jpg": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Textura de fondo del mapa (variante noche), tema claro",
+  "drive": "06 juegos sorpresa/1 Memorama/mapa-fondo-noche-claro@3x.jpg",
+  "nombre": "mapa-fondo-noche-claro",
+  "pantallas": [
+   "1 Memorama"
+  ],
+  "pt": [
+   284,
+   615
+  ],
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/55c6a5fd9cf68d7041920d65829c3c80.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro dormido: energía 0",
+  "drive": "02 teodoro/Tab Teodoro/teodoro-energia-0-dormido@3x.png",
+  "nombre": "teodoro-energia-0-dormido",
+  "pantallas": [
+   "Tab Teodoro",
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   233,
+   147
+  ],
+  "px": [
+   700,
+   442
+  ]
+ },
+ "assets/57acbcf795f5e41b9eee8c841c7e2fcc.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro camina con su campanita hacia el día actual, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-camina-oscuro@3x.png",
+  "nombre": "teodoro-camina-oscuro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   90,
+   145
+  ],
+  "px": [
+   396,
+   640
+  ]
+ },
+ "assets/5bab1fe48e4c5009d62da468a9d7f69f.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Pan, moneda de premio de la app («20 panes»)",
+  "drive": "04 el dia/2 Terminaste/2-panes@3x.png",
+  "nombre": "2-panes",
+  "pantallas": [
+   "2 Terminaste",
+   "4 Reto en familia (hub)",
+   "2 Resultado",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia",
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   160,
+   150
+  ],
+  "px": [
+   480,
+   450
+  ]
+ },
+ "assets/5ccde4723b1875be781f49ba96a9cdde.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Candado del Mundo Enero bloqueado, tema oscuro",
+  "drive": "08 mundos/candado-oscuro@3x.png",
+  "nombre": "candado-oscuro",
+  "pantallas": [
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   72,
+   72
+  ],
+  "px": [
+   220,
+   220
+  ]
+ },
+ "assets/5f04c169d8f5f406a9d1a2d96cf54e55.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Rueda de 10 casillas de la ruleta sorpresa",
+  "drive": null,
+  "nombre": "ruleta-rueda",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1254,
+   1254
+  ]
+ },
+ "assets/601dffc99f4046212c443d9f68cffa56.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Paisaje del camino a Belén de noche, sin Teodoro; fondo de la tarjeta del pre registro",
+  "drive": null,
+  "nombre": "pre-registro-escena-belen-de-noche",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1672,
+   941
+  ]
+ },
+ "assets/625a2e782b64daf3e319ddf4d9acb47d.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Casas de Belén, decoración del final del mapa, tema claro",
+  "drive": null,
+  "nombre": "mapa-casas-belen-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   520
+  ]
+ },
+ "assets/641044c4e0d7d7c08e0922364396cba6.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 22: José y María preparan el pesebre",
+  "drive": "04 el dia/1 Reproductor/dia-22-preparar-el-pesebre@3x.png",
+  "nombre": "dia-22-preparar-el-pesebre",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/64167d45da19875626c545019275e29c.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro travieso guiñando el ojo: energía 4",
+  "drive": "02 teodoro/Tab Teodoro/teodoro-energia-4-travieso@3x.png",
+  "nombre": "teodoro-energia-4-travieso",
+  "pantallas": [
+   "Tab Teodoro",
+   "1 Mapa del camino",
+   "1 Memorama"
+  ],
+  "pt": [
+   155,
+   233
+  ],
+  "px": [
+   466,
+   700
+  ]
+ },
+ "assets/65a006d5f167a80d65e7e4a86120652f.webp": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Captura del bloque Misiones diarias del tab Teodoro",
+  "drive": "02 teodoro/Tab Teodoro/captura-misiones-diarias@3x.jpg",
+  "nombre": "captura-misiones-diarias",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   390,
+   181
+  ],
+  "px": [
+   1206,
+   560
+  ]
+ },
+ "assets/67947142d31d9fb5442ef113320694e6.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro camina con su campanita hacia el día actual, tema claro",
+  "drive": "04 el dia/1 Reproductor/teodoro-camina-claro@3x.png",
+  "nombre": "teodoro-camina-claro",
+  "pantallas": [
+   "1 Reproductor"
+  ],
+  "pt": [
+   132,
+   213
+  ],
+  "px": [
+   395,
+   640
+  ]
+ },
+ "assets/696f6175ba1ac021a4c82e5f54c9b6cb.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la pestaña Teodoro (cabeza a color), activo",
+  "drive": null,
+  "nombre": "tab-teodoro-activo",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   130,
+   159
+  ]
+ },
+ "assets/6a1c6af45330c5d04911e94a184c1454.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de historia bíblica (pergamino) para los días 4, 11, 18, 24 y 25, tema claro",
+  "drive": null,
+  "nombre": "icono-historia-biblica-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   768,
+   570
+  ]
+ },
+ "assets/6df2148c948b9e13282e803016c2035c.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Textura de fondo del mapa (variante día), tema oscuro",
+  "drive": null,
+  "nombre": "mapa-fondo-dia-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/6e92187eb364b89efd0d37223e75c141.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Manzana; premio y respuesta de trivia",
+  "drive": "05 trivia/1 Pregunta/manzana@3x.png",
+  "nombre": "manzana",
+  "pantallas": [
+   "1 Pregunta",
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   78,
+   88
+  ],
+  "px": [
+   499,
+   560
+  ]
+ },
+ "assets/6e9680d0ae100d326c71b2f2f18c6e26.webp": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Ícono de la misión diaria Evangelio del día (Biblia)",
+  "drive": "02 teodoro/Tab Teodoro/mision-evangelio-del-dia@3x.png",
+  "nombre": "mision-evangelio-del-dia",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   73,
+   41
+  ],
+  "px": [
+   218,
+   124
+  ]
+ },
+ "assets/6eea6dd0d175e24b79b43c33ebf60edb.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Banner de campaña: Teodoro camina hacia Belén bajo la estrella",
+  "drive": null,
+  "nombre": "banner-campana",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1200,
+   502
+  ]
+ },
+ "assets/6fd57032840014e77e98d35d8201b13b.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 3: preparar el camino",
+  "drive": "04 el dia/1 Reproductor/dia-03-preparar-el-camino@3x.png",
+  "nombre": "dia-03-preparar-el-camino",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/72e4ecc7a70c4a87c47c5217d97ada27.jpg": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Textura de fondo del mapa (variante tarde), tema oscuro",
+  "drive": null,
+  "nombre": "mapa-fondo-tarde-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/73cca7aa92f067c05cf345a46f19ce08.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de meditación (vela) para los días 2, 9 y 17, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-02-meditacion-oscuro@3x.png",
+  "nombre": "dia-02-meditacion-oscuro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   34,
+   61
+  ],
+  "px": [
+   429,
+   768
+  ]
+ },
+ "assets/73e5670cc25fd480c259a7d7a02a8aef.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Isla del Mundo Enero (bloqueado) en la pantalla Mundos",
+  "drive": "08 mundos/pantalla-mundos-isla-enero@3x.png",
+  "nombre": "pantalla-mundos-isla-enero",
+  "pantallas": [
+   "08 mundos"
+  ],
+  "pt": [
+   180,
+   180
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/754aaa67478974e4f605127bcb1da288.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Olivo decorativo del mapa, tema claro",
+  "drive": "04 el dia/4 Reto en familia (hub)/mapa-olivo-claro@3x.png",
+  "nombre": "mapa-olivo-claro",
+  "pantallas": [
+   "4 Reto en familia (hub)"
+  ],
+  "pt": [
+   150,
+   138
+  ],
+  "px": [
+   902,
+   828
+  ]
+ },
+ "assets/76a177dad4742576b64fd84db6016e57.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Pastores con sus ovejas, decoración del mapa, tema oscuro",
+  "drive": null,
+  "nombre": "mapa-pastores-ovejas-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   814
+  ]
+ },
+ "assets/78a055f73ee6e1fc8c14f39bb931fc77.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 14: José y María en oración",
+  "drive": "04 el dia/1 Reproductor/dia-14-un-momento-de-oracion@3x.png",
+  "nombre": "dia-14-un-momento-de-oracion",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/796e378fbc9e02868e9ac6ba0816ddb1.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la pestaña Biblia, inactivo",
+  "drive": null,
+  "nombre": "tab-biblia",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   130,
+   141
+  ]
+ },
+ "assets/798640cbf6addc920577fd9d6af1c2dd.jpg": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Textura de fondo del mapa (variante noche), tema oscuro",
+  "drive": "06 juegos sorpresa/1 Memorama/mapa-fondo-noche-oscuro@3x.jpg",
+  "nombre": "mapa-fondo-noche-oscuro",
+  "pantallas": [
+   "1 Memorama"
+  ],
+  "pt": [
+   284,
+   615
+  ],
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/7ac790601d18386a2acd1f6a138d959e.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Pozo decorativo del mapa, tema oscuro",
+  "drive": null,
+  "nombre": "mapa-pozo-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   677
+  ]
+ },
+ "assets/7bfff4a8f40290f70de7fc8e49ee7d4d.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro tranquilo: energía 3",
+  "drive": "02 teodoro/Tab Teodoro/teodoro-energia-3-tranquilo@3x.png",
+  "nombre": "teodoro-energia-3-tranquilo",
+  "pantallas": [
+   "Tab Teodoro",
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   108,
+   189
+  ],
+  "px": [
+   401,
+   700
+  ]
+ },
+ "assets/7cea3fd81143db91671d52e690804348.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la pestaña Favoritos (corazón), inactivo",
+  "drive": null,
+  "nombre": "tab-favoritos",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   118,
+   107
+  ]
+ },
+ "assets/7d3214b886e03aa17d5641dfa15fbc56.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro duerme en la paja, tema oscuro",
+  "drive": "03 mapa/2 Manana seguimos (hoja de cierre)/teodoro-reposo-oscuro@3x.png",
+  "nombre": "teodoro-reposo-oscuro",
+  "pantallas": [
+   "2 Manana seguimos (hoja de cierre)"
+  ],
+  "pt": [
+   120,
+   102
+  ],
+  "px": [
+   640,
+   546
+  ]
+ },
+ "assets/7ead1713049abedde16949d11d7eda82.webp": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Ícono de la misión diaria La afirmación de hoy (cofre)",
+  "drive": "02 teodoro/Tab Teodoro/mision-afirmacion-de-hoy@3x.png",
+  "nombre": "mision-afirmacion-de-hoy",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   53,
+   47
+  ],
+  "px": [
+   160,
+   142
+  ]
+ },
+ "assets/7fd0b6da0f3db8283d60acaffc952eaf.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Los Reyes Magos, personajes de la trivia",
+  "drive": "05 trivia/1 Pregunta/personaje-reyes-magos@3x.png",
+  "nombre": "personaje-reyes-magos",
+  "pantallas": [
+   "1 Pregunta",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   104,
+   78
+  ],
+  "px": [
+   640,
+   480
+  ]
+ },
+ "assets/820efb309760e51dbb7b8ece269ba43e.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de evangelio (Biblia abierta) para nodos del mapa, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/icono-evangelio-claro@3x.png",
+  "nombre": "icono-evangelio-claro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   59,
+   34
+  ],
+  "px": [
+   768,
+   441
+  ]
+ },
+ "assets/8325ca235ba2fb8f0fd97f515b622ffc.webp": {
+  "adviento": true,
+  "categoria": "juegos",
+  "descripcion": "Pergamino del desafío familiar",
+  "drive": "01 inicio (Hoy)/5 Invitacion a Premium/pergamino@3x.png",
+  "nombre": "pergamino",
+  "pantallas": [
+   "5 Invitacion a Premium",
+   "1 Mapa del camino",
+   "1 Pregunta",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   450,
+   257
+  ],
+  "px": [
+   1350,
+   772
+  ]
+ },
+ "assets/832e6416715007c87bf50f5330cb8eff.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 21: una bienvenida sencilla en el establo",
+  "drive": "04 el dia/1 Reproductor/dia-21-una-bienvenida-sencilla@3x.png",
+  "nombre": "dia-21-una-bienvenida-sencilla",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/834fcca7dd481ce118a38c73d90f02cc.jpg": {
+  "adviento": true,
+  "categoria": "juegos",
+  "descripcion": "Dorso de las cartas boca abajo (juego de cartas)",
+  "drive": "05 trivia/2 Resultado/dorso-carta@3x.jpg",
+  "nombre": "dorso-carta",
+  "pantallas": [
+   "2 Resultado",
+   "1 Memorama",
+   "2 Adivinanza"
+  ],
+  "pt": [
+   173,
+   237
+  ],
+  "px": [
+   520,
+   710
+  ]
+ },
+ "assets/83988f1014aa164cda81619d4d403dd2.webp": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo de cielo nocturno con nubes (Mundos, hub, completado), oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/fondo-cielo-noche@3x.jpg",
+  "nombre": "fondo-cielo-noche",
+  "pantallas": [
+   "1 Hoy",
+   "5 Invitacion a Premium",
+   "2 Terminaste",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia",
+   "08 mundos"
+  ],
+  "pt": [
+   296,
+   591
+  ],
+  "px": [
+   887,
+   1774
+  ]
+ },
+ "assets/8443431e60e9d714950074bad5e9bcbe.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Palmera decorativa del mapa, tema oscuro",
+  "drive": null,
+  "nombre": "mapa-palmera-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   799,
+   902
+  ]
+ },
+ "assets/85e2117ea1a0620e71abd274548f8bd9.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la pestaña Hoy (capilla a color), activo",
+  "drive": null,
+  "nombre": "tab-hoy-activo",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   128,
+   167
+  ]
+ },
+ "assets/8afe2c2bcf5059804b51f40a1a7885f8.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "María, personaje de la trivia",
+  "drive": "04 el dia/2 Terminaste/personaje-maria@3x.png",
+  "nombre": "personaje-maria",
+  "pantallas": [
+   "2 Terminaste",
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   104,
+   132
+  ],
+  "px": [
+   505,
+   640
+  ]
+ },
+ "assets/8e27df48092d2327bb8cc307af28b786.webp": {
+  "adviento": true,
+  "categoria": "mundos",
+  "descripcion": "Imagen del Mundo Adviento: Teodoro con su mapa junto al pesebre",
+  "drive": null,
+  "nombre": "mundo-adviento",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1200,
+   637
+  ]
+ },
+ "assets/8f9cd03fb68bac90ed249fa5d45f0828.webp": {
+  "adviento": true,
+  "categoria": "objetos",
+  "descripcion": "Farol de Teodoro, tema claro",
+  "drive": "05 trivia/1 Pregunta/farol-claro@3x.png",
+  "nombre": "farol-claro",
+  "pantallas": [
+   "1 Pregunta"
+  ],
+  "pt": [
+   16,
+   28
+  ],
+  "px": [
+   520,
+   902
+  ]
+ },
+ "assets/9417433556f3814adcf8c1adfde5fe70.webp": {
+  "adviento": true,
+  "categoria": "objetos",
+  "descripcion": "Farol de Teodoro, tema oscuro",
+  "drive": null,
+  "nombre": "farol-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   520,
+   902
+  ]
+ },
+ "assets/94c109fd005c77040cfb763d579d1d25.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la pestaña Música, inactivo",
+  "drive": null,
+  "nombre": "tab-musica",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   112,
+   115
+  ]
+ },
+ "assets/94d6219a727fe9d41c61f182518b24dd.jpg": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Textura de fondo del mapa (variante tarde), tema claro",
+  "drive": null,
+  "nombre": "mapa-fondo-tarde-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/9518776a45427486600d3d6f9abf3e1f.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Olivo decorativo del mapa, tema oscuro",
+  "drive": "04 el dia/4 Reto en familia (hub)/mapa-olivo-oscuro@3x.png",
+  "nombre": "mapa-olivo-oscuro",
+  "pantallas": [
+   "4 Reto en familia (hub)"
+  ],
+  "pt": [
+   150,
+   138
+  ],
+  "px": [
+   902,
+   828
+  ]
+ },
+ "assets/976c9b59c0fcc1d60682381e421591ee.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro cabeceando: energía 1",
+  "drive": "02 teodoro/Tab Teodoro/teodoro-energia-1-cabeceando@3x.png",
+  "nombre": "teodoro-energia-1-cabeceando",
+  "pantallas": [
+   "Tab Teodoro",
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   169,
+   233
+  ],
+  "px": [
+   507,
+   700
+  ]
+ },
+ "assets/97879a4449b58b7743e234a05a36a876.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de desafío familiar (casa) para los días 6, 13 y 19, tema oscuro",
+  "drive": null,
+  "nombre": "icono-desafio-familiar-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   768,
+   645
+  ]
+ },
+ "assets/98a7495c73f5fff24bb7130fa01efe67.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Cama de paja (fardo de heno) para Teodoro; premio",
+  "drive": "05 trivia/1 Pregunta/4-prenda-de-la-semana-cama-de-paja@3x.png",
+  "nombre": "4-prenda-de-la-semana-cama-de-paja",
+  "pantallas": [
+   "1 Pregunta",
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   187,
+   129
+  ],
+  "px": [
+   560,
+   388
+  ]
+ },
+ "assets/9a0f0f25c30652f0366d5725ba49158f.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 8: el sí de María",
+  "drive": "04 el dia/1 Reproductor/dia-08-el-si-de-maria@3x.png",
+  "nombre": "dia-08-el-si-de-maria",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/9c5323977b16daf5e2eb5168fa1bb177.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 12: niños comparten el pan",
+  "drive": "04 el dia/1 Reproductor/dia-12-compartir-el-pan@3x.png",
+  "nombre": "dia-12-compartir-el-pan",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/9caf33a9fc36d0b8f6f7803571fa85a3.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 16: descanso junto al pozo",
+  "drive": "04 el dia/1 Reproductor/dia-16-descansar-y-cuidarse@3x.png",
+  "nombre": "dia-16-descansar-y-cuidarse",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/9d904f428d9aada460901faf51e16ac3.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Acceso del cuarto: teatro (con aviso rojo)",
+  "drive": "02 teodoro/Tab Teodoro/acceso-teatro@3x.png",
+  "nombre": "acceso-teatro",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   53,
+   52
+  ],
+  "px": [
+   159,
+   157
+  ]
+ },
+ "assets/9fd7143ecbfb0b490fd9361dca302424.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Captura del reproductor usada de fondo tras el pop-up de la ruleta, claro",
+  "drive": null,
+  "nombre": "captura-reproductor-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   390,
+   844
+  ]
+ },
+ "assets/a4f5ea9d4d3e425a8233219fcfba77a0.jpg": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Textura de fondo del mapa (variante día), tema claro",
+  "drive": null,
+  "nombre": "mapa-fondo-dia-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/a5b2d9b5253b019d168bf54b7b58def1.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro duerme en la paja, tema claro",
+  "drive": "03 mapa/2 Manana seguimos (hoja de cierre)/teodoro-reposo-claro@3x.png",
+  "nombre": "teodoro-reposo-claro",
+  "pantallas": [
+   "2 Manana seguimos (hoja de cierre)"
+  ],
+  "pt": [
+   120,
+   102
+  ],
+  "px": [
+   640,
+   545
+  ]
+ },
+ "assets/a5d461bf538560e60d90171da6dfd1a6.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Casa de Nazaret, decoración del inicio del mapa, tema claro",
+  "drive": null,
+  "nombre": "mapa-casa-nazaret-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   639
+  ]
+ },
+ "assets/a69d49b1f9eb36dbba8ba97393e63a07.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Cara feliz de Teodoro (completado y calificación)",
+  "drive": null,
+  "nombre": "teodoro-cara-feliz",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   416,
+   420
+  ]
+ },
+ "assets/a8f25293f207dc7eab99b4a2491972c9.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 17: los pastores",
+  "drive": "04 el dia/1 Reproductor/dia-17-los-pastores@3x.png",
+  "nombre": "dia-17-los-pastores",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/a98be2e11e018975563512bddc52be5a.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro celebra bailando, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-celebra-claro@3x.png",
+  "nombre": "teodoro-celebra-claro",
+  "pantallas": [
+   "1 Hoy",
+   "5 Invitacion a Premium",
+   "1 Pregunta",
+   "2 Resultado",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia",
+   "2 Compartir la llegada"
+  ],
+  "pt": [
+   162,
+   213
+  ],
+  "px": [
+   487,
+   640
+  ]
+ },
+ "assets/aea7792c9bd18835bc1f919ca1cdbb61.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de canción (notas) para los días 5, 12 y 20, tema claro",
+  "drive": "04 el dia/4 Reto en familia (hub)/dia-05-cancion-claro@3x.png",
+  "nombre": "dia-05-cancion-claro",
+  "pantallas": [
+   "4 Reto en familia (hub)"
+  ],
+  "pt": [
+   39,
+   34
+  ],
+  "px": [
+   768,
+   675
+  ]
+ },
+ "assets/arte.webp": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Tira (sprite) con los íconos de misiones diarias, racha y regalo; en Drive van sueltos (mision-icono-*, racha-llama*)",
+  "drive": null,
+  "nombre": "tira-iconos-misiones-y-racha",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   4205,
+   400
+  ]
+ },
+ "assets/avatar.jpg": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Avatar del perfil (inicio de Theo)",
+  "drive": "01 inicio (Hoy)/1 Hoy/avatar-del-perfil@3x.jpg",
+  "nombre": "avatar-del-perfil",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   27,
+   27
+  ],
+  "px": [
+   80,
+   80
+  ]
+ },
+ "assets/b34a653a0741412db3fe8cef287d6bfc.webp": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Captura de la fila de accesos y barra de nivel del tab Teodoro",
+  "drive": null,
+  "nombre": "captura-tab-teodoro-accesos",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1206,
+   460
+  ]
+ },
+ "assets/b3f6a9c88f4b32088adc3c722526ce4c.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 11: abrir la puerta",
+  "drive": "04 el dia/1 Reproductor/dia-11-abrir-la-puerta@3x.png",
+  "nombre": "dia-11-abrir-la-puerta",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/b408611b336918df9f593ecfc3f68cfd.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de trivia (signo de pregunta), tema claro",
+  "drive": "03 mapa/1 Mapa del camino/icono-trivia-claro@3x.png",
+  "nombre": "icono-trivia-claro",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   32,
+   32
+  ],
+  "px": [
+   768,
+   762
+  ]
+ },
+ "assets/b433aee4f61b8ec914f3f8ab27792834.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Pastores con sus ovejas, decoración del mapa, tema claro",
+  "drive": null,
+  "nombre": "mapa-pastores-ovejas-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   812
+  ]
+ },
+ "assets/b49abdd6d504b88864781f6ac6190e29.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de historia de Teodoro para los días 3, 10, 16 y 23, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-03-historia-de-teodoro-oscuro@3x.png",
+  "nombre": "dia-03-historia-de-teodoro-oscuro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   34,
+   34
+  ],
+  "px": [
+   768,
+   768
+  ]
+ },
+ "assets/b659da213d62a83172057eeee795e7fa.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la pestaña Teodoro, inactivo",
+  "drive": null,
+  "nombre": "tab-teodoro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   130,
+   159
+  ]
+ },
+ "assets/b85f9b79229a77969426c0a2d6e503da.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de canción (notas) para los días 5, 12 y 20, tema oscuro",
+  "drive": "04 el dia/4 Reto en familia (hub)/dia-05-cancion-oscuro@3x.png",
+  "nombre": "dia-05-cancion-oscuro",
+  "pantallas": [
+   "4 Reto en familia (hub)"
+  ],
+  "pt": [
+   39,
+   34
+  ],
+  "px": [
+   768,
+   669
+  ]
+ },
+ "assets/bb73cb2ea409f507dd68ea3132809231.webp": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo de cielo de día de la pantalla hub",
+  "drive": "04 el dia/1 Reproductor/fondo-hub-dia@3x.jpg",
+  "nombre": "fondo-hub-dia",
+  "pantallas": [
+   "1 Reproductor",
+   "1 Pregunta",
+   "2 Adivinanza",
+   "3 Desafio en familia",
+   "1 Llegamos a Belen"
+  ],
+  "pt": [
+   284,
+   615
+  ],
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/bee66125ed73e9b2ad8c06e0e1515703.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Pesebre bajo la estrella al final del mapa, tema claro; también vista previa para colorear",
+  "drive": "01 inicio (Hoy)/1 Hoy/mapa-pesebre-estrella-claro@3x.png",
+  "nombre": "mapa-pesebre-estrella-claro",
+  "pantallas": [
+   "1 Hoy",
+   "5 Imprimible"
+  ],
+  "pt": [
+   267,
+   243
+  ],
+  "px": [
+   902,
+   821
+  ]
+ },
+ "assets/c0b753e9a2d8d857108e5116baf8e8cc.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro con su farol, de pie en el día actual del mapa, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-farol-oscuro@3x.png",
+  "nombre": "teodoro-farol-oscuro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   98,
+   145
+  ],
+  "px": [
+   433,
+   640
+  ]
+ },
+ "assets/c1e5ee9a1f2c5bbdc81016b68efe050b.webp": {
+  "adviento": true,
+  "categoria": "trivia",
+  "descripcion": "Estrella; respuesta de trivia",
+  "drive": "05 trivia/1 Pregunta/estrella@3x.png",
+  "nombre": "estrella",
+  "pantallas": [
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza",
+   "1 Llegamos a Belen"
+  ],
+  "pt": [
+   104,
+   146
+  ],
+  "px": [
+   457,
+   640
+  ]
+ },
+ "assets/c3a74965b1ac9e159c6556947a68d3a5.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Ángel Gabriel, personaje de la trivia",
+  "drive": "05 trivia/1 Pregunta/personaje-gabriel@3x.png",
+  "nombre": "personaje-gabriel",
+  "pantallas": [
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   110,
+   110
+  ],
+  "px": [
+   640,
+   640
+  ]
+ },
+ "assets/c4ccddc6600cba02966d74b4e5937ac8.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 19: María y José buscan refugio",
+  "drive": "04 el dia/1 Reproductor/dia-19-buscar-refugio@3x.png",
+  "nombre": "dia-19-buscar-refugio",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/c4cda489118dd9efcaa414709b7c8ffd.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Casas de Belén, decoración del final del mapa, tema oscuro",
+  "drive": null,
+  "nombre": "mapa-casas-belen-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   902,
+   522
+  ]
+ },
+ "assets/c75692c2770a124c81efef3b4c6f3ae9.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de desafío familiar (casa) para los días 6, 13 y 19, tema claro",
+  "drive": "06 juegos sorpresa/3 Desafio en familia/dia-06-reto-en-familia-claro@3x.png",
+  "nombre": "dia-06-reto-en-familia-claro",
+  "pantallas": [
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   40,
+   34
+  ],
+  "px": [
+   768,
+   648
+  ]
+ },
+ "assets/candado.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Candado de lo que aún no se abre",
+  "drive": "03 mapa/1 Mapa del camino/candado@3x.png",
+  "nombre": "candado",
+  "pantallas": [
+   "1 Mapa del camino",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   34,
+   40
+  ],
+  "px": [
+   101,
+   120
+  ]
+ },
+ "assets/cba48c50b2291a53680ba08e575b8cdb.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Cara de Teodoro sonriendo suave; opción de calificación",
+  "drive": null,
+  "nombre": "teodoro-cara-tranquila",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   350,
+   420
+  ]
+ },
+ "assets/cd7abd57ac6154597b18285ae710d7ba.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro pensativo con su mapa: invita a la trivia",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-pregunta@3x.png",
+  "nombre": "teodoro-pregunta",
+  "pantallas": [
+   "1 Hoy",
+   "2 Terminaste",
+   "1 Pregunta"
+  ],
+  "pt": [
+   111,
+   213
+  ],
+  "px": [
+   332,
+   640
+  ]
+ },
+ "assets/ceb3307f345f840e51bb2c383aae1f04.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro celebra bailando, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-celebra-oscuro@3x.png",
+  "nombre": "teodoro-celebra-oscuro",
+  "pantallas": [
+   "1 Hoy",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   163,
+   213
+  ],
+  "px": [
+   489,
+   640
+  ]
+ },
+ "assets/cf767fcbf0222668adbf6d034ac727a3.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Indicador de energía 2 de 5, en uso",
+  "drive": "01 inicio (Hoy)/1 Hoy/bateria-2-en-uso@3x.png",
+  "nombre": "bateria-2-en-uso",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "1 Mapa del camino",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   53,
+   30
+  ],
+  "px": [
+   636,
+   358
+  ]
+ },
+ "assets/d033c6a2403c27d416eed13191f777a3.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 6: un hogar en Nazaret",
+  "drive": "04 el dia/1 Reproductor/dia-06-un-hogar-en-nazaret@3x.png",
+  "nombre": "dia-06-un-hogar-en-nazaret",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/d800d0f4a9fe7ec2f631ee8f4fb2ebd4.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 13: ayudar con amor",
+  "drive": "04 el dia/1 Reproductor/dia-13-ayudar-con-amor@3x.png",
+  "nombre": "dia-13-ayudar-con-amor",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/d8eb2bc12316a1e94f670288bb6e136a.webp": {
+  "adviento": true,
+  "categoria": "trivia",
+  "descripcion": "Lámpara de aceite; respuesta de trivia «Un farol»",
+  "drive": "05 trivia/1 Pregunta/lampara-de-aceite@3x.png",
+  "nombre": "lampara-de-aceite",
+  "pantallas": [
+   "1 Pregunta"
+  ],
+  "pt": [
+   95,
+   78
+  ],
+  "px": [
+   640,
+   525
+  ]
+ },
+ "assets/d9df161d957255d7b42cf74bb0f20a89.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de trivia (signo de pregunta), tema oscuro",
+  "drive": "03 mapa/1 Mapa del camino/icono-trivia-oscuro@3x.png",
+  "nombre": "icono-trivia-oscuro",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   33,
+   32
+  ],
+  "px": [
+   768,
+   759
+  ]
+ },
+ "assets/da416f4ac491b3653c8e7cc89700e3ce.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Acceso del cuarto: juguetes (patito, con aviso rojo)",
+  "drive": "02 teodoro/Tab Teodoro/acceso-juguetes@3x.png",
+  "nombre": "acceso-juguetes",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   47,
+   53
+  ],
+  "px": [
+   144,
+   161
+  ]
+ },
+ "assets/daef56d3b28590da72e7b3e8f4bec672.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono del nodo del día 22 (corazón) en el mapa, tema claro",
+  "drive": null,
+  "nombre": "dia-22-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   512,
+   512
+  ]
+ },
+ "assets/dd50c62b93c5ef94e29b2a40e81eed05.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de evangelio (Biblia abierta) para nodos del mapa, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/icono-evangelio-oscuro@3x.png",
+  "nombre": "icono-evangelio-oscuro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   59,
+   34
+  ],
+  "px": [
+   768,
+   441
+  ]
+ },
+ "assets/ddcd96b7b0531f31e8ebc37e0f5321aa.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro de frente, alegre, salta con su bastón",
+  "drive": null,
+  "nombre": "teodoro-salta-con-baston",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   538,
+   800
+  ]
+ },
+ "assets/ddf338f5a6e7927c731d0260dad3a607.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Captura del cuarto clásico de Teodoro (tab Teodoro, semanas 1 y 2)",
+  "drive": "02 teodoro/Tab Teodoro/cuarto-clasico@3x.jpg",
+  "nombre": "cuarto-clasico",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   390,
+   560
+  ],
+  "px": [
+   1206,
+   1730
+  ]
+ },
+ "assets/deac36cce020e374cf7f482297f2082d.webp": {
+  "adviento": true,
+  "categoria": "interfaz",
+  "descripcion": "Indicador de energía 1 de 5, en uso",
+  "drive": "01 inicio (Hoy)/1 Hoy/bateria-1-en-uso@3x.png",
+  "nombre": "bateria-1-en-uso",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "1 Mapa del camino",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   53,
+   30
+  ],
+  "px": [
+   634,
+   358
+  ]
+ },
+ "assets/df4355763b6d438e06588af5207667a3.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Letrero de madera vacío del mapa, tema claro",
+  "drive": null,
+  "nombre": "mapa-letrero-vacio-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   856,
+   902
+  ]
+ },
+ "assets/dfafe8f73571847478c3f2b85e09216b.webp": {
+  "adviento": true,
+  "categoria": "trivia",
+  "descripcion": "Fondo nocturno de la pantalla de trivia",
+  "drive": "01 inicio (Hoy)/1 Hoy/fondo-trivia-noche@3x.jpg",
+  "nombre": "fondo-trivia-noche",
+  "pantallas": [
+   "1 Hoy",
+   "1 Pregunta",
+   "2 Adivinanza",
+   "2 Compartir la llegada"
+  ],
+  "pt": [
+   284,
+   615
+  ],
+  "px": [
+   852,
+   1846
+  ]
+ },
+ "assets/dia-icono/burro.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo burro (el mismo de día y de noche)",
+  "drive": "01 inicio (Hoy)/1 Hoy/icono-dia-burro@3x.png",
+  "nombre": "icono-dia-burro",
+  "pantallas": [
+   "1 Hoy",
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/carta.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo carta (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-carta@3x.png",
+  "nombre": "icono-dia-carta",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/casa.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo casa (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-casa@3x.png",
+  "nombre": "icono-dia-casa",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   46,
+   46
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/corazon.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo corazon (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-corazon@3x.png",
+  "nombre": "icono-dia-corazon",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/estrella.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo estrella (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-estrella@3x.png",
+  "nombre": "icono-dia-estrella",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   48,
+   48
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/luna.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo luna (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-luna@3x.png",
+  "nombre": "icono-dia-luna",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/notas.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo notas (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-notas@3x.png",
+  "nombre": "icono-dia-notas",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/pergamino.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo pergamino (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-pergamino@3x.png",
+  "nombre": "icono-dia-pergamino",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/regalo.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo regalo (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-regalo@3x.png",
+  "nombre": "icono-dia-regalo",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/rompecabezas.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo rompecabezas (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-rompecabezas@3x.png",
+  "nombre": "icono-dia-rompecabezas",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/vela.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo vela (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-vela@3x.png",
+  "nombre": "icono-dia-vela",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/dia-icono/video.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de los días tipo video (el mismo de día y de noche)",
+  "drive": "03 mapa/1 Mapa del camino/icono-dia-video@3x.png",
+  "nombre": "icono-dia-video",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   44,
+   44
+  ],
+  "px": [
+   144,
+   144
+  ]
+ },
+ "assets/e07f6af93fb16342d996ee67fc5a4f85.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Pastor, personaje de la trivia",
+  "drive": "05 trivia/1 Pregunta/personaje-pastor@3x.png",
+  "nombre": "personaje-pastor",
+  "pantallas": [
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia"
+  ],
+  "pt": [
+   104,
+   133
+  ],
+  "px": [
+   502,
+   640
+  ]
+ },
+ "assets/e16ce1a55e8eb21a1ab24e4d8e12f35b.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Imagen del Mundo Enero, bloqueado",
+  "drive": null,
+  "nombre": "mundo-enero",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1200,
+   446
+  ]
+ },
+ "assets/e48575034ecd499a3ebe4494f5d5f060.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de historia bíblica (pergamino) para los días 4, 11, 18, 24 y 25, tema oscuro",
+  "drive": null,
+  "nombre": "icono-historia-biblica-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   768,
+   570
+  ]
+ },
+ "assets/e4af479bafabf113744a6756fa475411.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro desesperado pide auxilio porque se queda sin pilas",
+  "drive": null,
+  "nombre": "teodoro-desesperado",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   464,
+   700
+  ]
+ },
+ "assets/e5c590902fea7da50e33cf7584629163.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 9: José, el carpintero, prepara un bastón",
+  "drive": "04 el dia/1 Reproductor/dia-09-jose-cuida@3x.png",
+  "nombre": "dia-09-jose-cuida",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   300,
+   300
+  ],
+  "px": [
+   900,
+   900
+  ]
+ },
+ "assets/e61f3266236935daf349df4ae724951b.webp": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo de cielo de día con nubes (Mundos, hub, completado), claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/fondo-cielo-dia@3x.jpg",
+  "nombre": "fondo-cielo-dia",
+  "pantallas": [
+   "1 Hoy",
+   "5 Invitacion a Premium",
+   "2 Terminaste",
+   "1 Memorama",
+   "2 Adivinanza",
+   "3 Desafio en familia",
+   "08 mundos"
+  ],
+  "pt": [
+   296,
+   591
+  ],
+  "px": [
+   887,
+   1774
+  ]
+ },
+ "assets/e7f682b970adabda92b49f1e7f8d04f5.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 15: María y José comienzan el viaje",
+  "drive": "04 el dia/1 Reproductor/dia-15-comienza-el-viaje@3x.png",
+  "nombre": "dia-15-comienza-el-viaje",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/e7fdd588c7e34d6e4c14be5fd8c0b25d.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Acceso del cuarto: comida (sandía, con aviso rojo)",
+  "drive": "02 teodoro/Tab Teodoro/acceso-comida@3x.png",
+  "nombre": "acceso-comida",
+  "pantallas": [
+   "Tab Teodoro"
+  ],
+  "pt": [
+   53,
+   51
+  ],
+  "px": [
+   159,
+   154
+  ]
+ },
+ "assets/ed7f054b6f0d602d40b41b8d2706379a.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Bufanda para Teodoro; prenda premio y respuesta de trivia",
+  "drive": "07 ruleta y premios/1 Ruleta/4-prenda-de-la-semana-bufanda@3x.png",
+  "nombre": "4-prenda-de-la-semana-bufanda",
+  "pantallas": [
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   48,
+   46
+  ],
+  "px": [
+   560,
+   533
+  ]
+ },
+ "assets/evangelio.webp": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Tarjeta del destacado «Evangelio del día» del inicio de Theo (trae su texto)",
+  "drive": "01 inicio (Hoy)/1 Hoy/destacado-evangelio-del-dia@3x.jpg",
+  "nombre": "destacado-evangelio-del-dia",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   186,
+   237
+  ],
+  "px": [
+   794,
+   1010
+  ]
+ },
+ "assets/f2c3d1af29c060c91efbf35ede368c80.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro de cuerpo entero saludando; respuesta de trivia «El burrito»",
+  "drive": "03 mapa/1 Mapa del camino/teodoro-energia-5-feliz@3x.png",
+  "nombre": "teodoro-energia-5-feliz",
+  "pantallas": [
+   "1 Mapa del camino",
+   "1 Pregunta",
+   "1 Memorama",
+   "2 Adivinanza"
+  ],
+  "pt": [
+   122,
+   213
+  ],
+  "px": [
+   367,
+   640
+  ]
+ },
+ "assets/f32fdcdc86233fa9b456d4c52a4a73f0.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 4: una luz de esperanza",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-04-una-luz-de-esperanza@3x.png",
+  "nombre": "dia-04-una-luz-de-esperanza",
+  "pantallas": [
+   "1 Hoy",
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/f7099fe3d8b77bb2187d1fa3828c8d21.webp": {
+  "adviento": true,
+  "categoria": "iconos",
+  "descripcion": "Ícono de historia de Teodoro para los días 3, 10, 16 y 23, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/dia-03-historia-de-teodoro-claro@3x.png",
+  "nombre": "dia-03-historia-de-teodoro-claro",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   34,
+   34
+  ],
+  "px": [
+   768,
+   768
+  ]
+ },
+ "assets/f7bdde30d6a1e81dd52a1540cd408558.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Ruleta colocada en el mapa, tema claro",
+  "drive": null,
+  "nombre": "ruleta-mapa-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   460,
+   640
+  ]
+ },
+ "assets/f8a85ffa04b3136c421b30d04f8cae67.otf": {
+  "adviento": true,
+  "categoria": "tipografias",
+  "descripcion": "Tipografía Neue Montreal Medium Italic",
+  "drive": "11 tipografias/NeueMontreal-MediumItalic.otf",
+  "nombre": "NeueMontreal-MediumItalic",
+  "tipo": "fuente"
+ },
+ "assets/ff5ba60d05369d61e404403a80c98628.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "Escena del día 25: los pastores llegan al establo con un regalo",
+  "drive": "04 el dia/1 Reproductor/dia-25-un-regalo-de-amor@3x.png",
+  "nombre": "dia-25-un-regalo-de-amor",
+  "pantallas": [
+   "1 Reproductor",
+   "6 Compartir"
+  ],
+  "pt": [
+   150,
+   150
+  ],
+  "px": [
+   720,
+   720
+  ]
+ },
+ "assets/ffc14384b753c2d8d87872f172d05946.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Pieza unida del pre registro (el degradado va en código)",
+  "drive": "01 inicio (Hoy)/1 Hoy/pre-registro-vidrio-empanado@3x.jpg",
+  "nombre": "pre-registro-vidrio-empanado",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   358,
+   200
+  ],
+  "px": [
+   1074,
+   603
+  ]
+ },
+ "assets/inicio/card-superior-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo de Belén de noche del slider en el recuerdo (sin empezar el reto), con teodoro-farol-oscuro encima",
+  "drive": "01 inicio (Hoy)/1 Hoy/recuerdo-fondo-belen-de-noche@3x.jpg",
+  "nombre": "recuerdo-fondo-belen-de-noche",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   213,
+   285
+  ],
+  "px": [
+   640,
+   854
+  ]
+ },
+ "assets/mapa/dia-0.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 1 de 6 (de arriba abajo), tema claro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-dia-tira-1-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-dia-tira-1-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/dia-1.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 2 de 6 (de arriba abajo), tema claro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-dia-tira-2-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-dia-tira-2-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/dia-2.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 3 de 6 (de arriba abajo), tema claro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-dia-tira-3-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-dia-tira-3-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/dia-3.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 4 de 6 (de arriba abajo), tema claro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-dia-tira-4-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-dia-tira-4-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/dia-4.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 5 de 6 (de arriba abajo), tema claro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-dia-tira-5-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-dia-tira-5-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/dia-5.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 6 de 6 (de arriba abajo), tema claro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-dia-tira-6-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-dia-tira-6-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/noche-0.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 1 de 6 (de arriba abajo), tema oscuro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-noche-tira-1-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-noche-tira-1-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/noche-1.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 2 de 6 (de arriba abajo), tema oscuro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-noche-tira-2-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-noche-tira-2-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/noche-2.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 3 de 6 (de arriba abajo), tema oscuro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-noche-tira-3-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-noche-tira-3-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/noche-3.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 4 de 6 (de arriba abajo), tema oscuro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-noche-tira-4-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-noche-tira-4-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/noche-4.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 5 de 6 (de arriba abajo), tema oscuro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-noche-tira-5-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-noche-tira-5-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/noche-5.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Paisaje del mapa, tira 6 de 6 (de arriba abajo), tema oscuro",
+  "drive": "03 mapa/1 Mapa del camino/mapa-paisaje-noche-tira-6-de-6@2x.jpg",
+  "nombre": "mapa-paisaje-noche-tira-6-de-6",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   390,
+   600
+  ],
+  "px": [
+   780,
+   1200
+  ]
+ },
+ "assets/mapa/ruleta-dibujada.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Ruleta de los días 11 y 24 en el mapa",
+  "drive": "03 mapa/1 Mapa del camino/mapa-ruleta-dibujada@3x.png",
+  "nombre": "mapa-ruleta-dibujada",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   71,
+   99
+  ],
+  "px": [
+   238,
+   331
+  ]
+ },
+ "assets/mapa/ruleta-pie.webp": {
+  "adviento": true,
+  "categoria": "mapa",
+  "descripcion": "Ruleta de los días 4 y 18 en el mapa",
+  "drive": "03 mapa/1 Mapa del camino/mapa-ruleta-con-pie@3x.png",
+  "nombre": "mapa-ruleta-con-pie",
+  "pantallas": [
+   "1 Mapa del camino"
+  ],
+  "pt": [
+   81,
+   113
+  ],
+  "px": [
+   270,
+   378
+  ]
+ },
+ "assets/miniaturas.webp": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Tira (sprite) de miniaturas de contenidos del inicio de Theo; en Drive van sueltas (miniatura-*)",
+  "drive": null,
+  "nombre": "tira-miniaturas-contenidos",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   3374,
+   420
+  ]
+ },
+ "assets/mundos.webp": {
+  "adviento": false,
+  "categoria": "mundos",
+  "descripcion": "Ícono oficial de Mundos: el planeta (SIEMPRE este, nunca la isla)",
+  "drive": "01 inicio (Hoy)/1 Hoy/mundos-icono-planeta@3x.png",
+  "nombre": "mundos-icono-planeta",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   140,
+   140
+  ],
+  "px": [
+   420,
+   420
+  ]
+ },
+ "assets/peek.jpg": {
+  "adviento": false,
+  "categoria": "inicio",
+  "descripcion": "Borde de la tarjeta siguiente del carrusel de destacados",
+  "drive": "01 inicio (Hoy)/1 Hoy/destacado-siguiente-asomandose@3x.jpg",
+  "nombre": "destacado-siguiente-asomandose",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   52,
+   235
+  ],
+  "px": [
+   156,
+   706
+  ]
+ },
+ "assets/pila/dias-0-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 0 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-0-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-0-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-0-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 0 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-0-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-0-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-1-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 1 día sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-1-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-1-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-1-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 1 día sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-1-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-1-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-10-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 10 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-10-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-10-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-10-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 10 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-10-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-10-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-2-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 2 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-2-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-2-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-2-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 2 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-2-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-2-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-3-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 3 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-3-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-3-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-3-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 3 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-3-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-3-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-4-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 4 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-4-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-4-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-4-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 4 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-4-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-4-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-5-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 5 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-5-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-5-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-5-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 5 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-5-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-5-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-6-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 6 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-6-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-6-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-6-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 6 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-6-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-6-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-7-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 7 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-7-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-7-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-7-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 7 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-7-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-7-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-8-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 8 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-8-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-8-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-8-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 8 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-8-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-8-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-9-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 9 días sin caminar, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-9-dias-sin-caminar-dia@3x.jpg",
+  "nombre": "teodoro-escena-9-dias-sin-caminar-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/dias-9-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro tras 9 días sin caminar, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-9-dias-sin-caminar-noche@3x.jpg",
+  "nombre": "teodoro-escena-9-dias-sin-caminar-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/reactivado-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro reactivado al volver, tema claro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-reactivado-dia@3x.jpg",
+  "nombre": "teodoro-escena-reactivado-dia",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/pila/reactivado-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Escena de Teodoro reactivado al volver, tema oscuro",
+  "drive": "01 inicio (Hoy)/1 Hoy/teodoro-escena-reactivado-noche@3x.jpg",
+  "nombre": "teodoro-escena-reactivado-noche",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro"
+  ],
+  "pt": [
+   267,
+   267
+  ],
+  "px": [
+   800,
+   800
+  ]
+ },
+ "assets/poster/enero.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo del póster de temporada del inicio: Tiempo de Navidad",
+  "drive": "01 inicio (Hoy)/1 Hoy/poster-tiempo-de-navidad-fondo@3x.jpg",
+  "nombre": "poster-tiempo-de-navidad-fondo",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   256,
+   341
+  ],
+  "px": [
+   768,
+   1024
+  ]
+ },
+ "assets/poster/navidad.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo del póster de temporada del inicio: Navidad, 25 de diciembre",
+  "drive": "01 inicio (Hoy)/1 Hoy/poster-navidad-25-de-diciembre-fondo@3x.jpg",
+  "nombre": "poster-navidad-25-de-diciembre-fondo",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   256,
+   341
+  ],
+  "px": [
+   768,
+   1024
+  ]
+ },
+ "assets/poster/nochebuena.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo del póster de temporada del inicio: Nochebuena",
+  "drive": "01 inicio (Hoy)/1 Hoy/poster-nochebuena-fondo@3x.jpg",
+  "nombre": "poster-nochebuena-fondo",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   256,
+   341
+  ],
+  "px": [
+   768,
+   1024
+  ]
+ },
+ "assets/poster/s1-estela.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo del póster de temporada del inicio: 1.ª semana, Esperanza",
+  "drive": "01 inicio (Hoy)/1 Hoy/poster-1a-semana-esperanza-fondo@3x.jpg",
+  "nombre": "poster-1a-semana-esperanza-fondo",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   256,
+   341
+  ],
+  "px": [
+   768,
+   1024
+  ]
+ },
+ "assets/poster/s2-mapa.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo del póster de temporada del inicio: 2.ª semana, Paz",
+  "drive": "01 inicio (Hoy)/1 Hoy/poster-2a-semana-paz-fondo@3x.jpg",
+  "nombre": "poster-2a-semana-paz-fondo",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   256,
+   341
+  ],
+  "px": [
+   768,
+   1024
+  ]
+ },
+ "assets/poster/s3-pastores.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo del póster de temporada del inicio: 3.ª semana, Alegría",
+  "drive": "01 inicio (Hoy)/1 Hoy/poster-3a-semana-alegria-fondo@3x.jpg",
+  "nombre": "poster-3a-semana-alegria-fondo",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   256,
+   341
+  ],
+  "px": [
+   768,
+   1024
+  ]
+ },
+ "assets/poster/s4-puerta.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Fondo del póster de temporada del inicio: 4.ª semana, Amor",
+  "drive": "01 inicio (Hoy)/1 Hoy/poster-4a-semana-amor-fondo@3x.jpg",
+  "nombre": "poster-4a-semana-amor-fondo",
+  "pantallas": [
+   "1 Hoy"
+  ],
+  "pt": [
+   256,
+   341
+  ],
+  "px": [
+   768,
+   1024
+  ]
+ },
+ "assets/ruleta/otra-vez.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Premio de la ruleta: gira otra vez",
+  "drive": "07 ruleta y premios/1 Ruleta/ruleta-premio-gira-otra-vez@3x.png",
+  "nombre": "ruleta-premio-gira-otra-vez",
+  "pantallas": [
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   46,
+   46
+  ],
+  "px": [
+   160,
+   160
+  ]
+ },
+ "assets/ruleta/rueda8.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "La rueda de la ruleta, 8 casillas",
+  "drive": "07 ruleta y premios/1 Ruleta/ruleta-rueda-8-casillas@3x.png",
+  "nombre": "ruleta-rueda-8-casillas",
+  "pantallas": [
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   220,
+   220
+  ],
+  "px": [
+   660,
+   660
+  ]
+ },
+ "assets/ruleta/sorpresa.webp": {
+  "adviento": true,
+  "categoria": "ruleta-y-premios",
+  "descripcion": "Premio de la ruleta: sorpresa dorada (fondo nuevo)",
+  "drive": "07 ruleta y premios/1 Ruleta/ruleta-premio-sorpresa-dorada@3x.png",
+  "nombre": "ruleta-premio-sorpresa-dorada",
+  "pantallas": [
+   "1 Ruleta",
+   "2 Premio"
+  ],
+  "pt": [
+   53,
+   53
+  ],
+  "px": [
+   160,
+   160
+  ]
+ },
+ "assets/slides/mapa-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Captura del mapa del camino; slide «el camino» de «Así es el reto», tema claro",
+  "drive": null,
+  "nombre": "slide-reto-mapa-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   780,
+   1000
+  ]
+ },
+ "assets/slides/mapa-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Captura del mapa del camino; slide «el camino» de «Así es el reto», tema oscuro",
+  "drive": null,
+  "nombre": "slide-reto-mapa-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   780,
+   1000
+  ]
+ },
+ "assets/slides/pesebre-dia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Pesebre bajo la estrella; slide de portada de «Así es el reto», tema claro",
+  "drive": null,
+  "nombre": "slide-reto-pesebre-claro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1024,
+   1536
+  ]
+ },
+ "assets/slides/pesebre-noche.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Pesebre bajo la estrella de noche; slide de portada de «Así es el reto», tema oscuro",
+  "drive": null,
+  "nombre": "slide-reto-pesebre-oscuro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   1024,
+   1536
+  ]
+ },
+ "assets/slides/premio-bufanda.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Tarjeta «¡Ganaste una bufanda!»; slide de premios de «Así es el reto»",
+  "drive": null,
+  "nombre": "slide-reto-premio-bufanda",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   692,
+   666
+  ]
+ },
+ "assets/slides/premio-gorro.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Tarjeta «¡Ganaste un gorro!»; slide de premios de «Así es el reto»",
+  "drive": null,
+  "nombre": "slide-reto-premio-gorro",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   692,
+   666
+  ]
+ },
+ "assets/slides/premio-trivia.webp": {
+  "adviento": true,
+  "categoria": "inicio",
+  "descripcion": "Tarjeta «¡Trivia perfecta! 5 de 5 a la primera, +10 panes»; slide de premios de «Así es el reto»",
+  "drive": null,
+  "nombre": "slide-reto-premio-trivia",
+  "pantallas": [],
+  "pt": null,
+  "px": [
+   692,
+   562
+  ]
+ },
+ "assets/tabbar/explorar-off.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: explorar inactiva",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-explorar-inactiva@3x.png",
+  "nombre": "barra-pestanas-explorar-inactiva",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/explorar-on.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: explorar activa",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-explorar-activa@3x.png",
+  "nombre": "barra-pestanas-explorar-activa",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/favoritos-off.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: favoritos inactiva",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-favoritos-inactiva@3x.png",
+  "nombre": "barra-pestanas-favoritos-inactiva",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/favoritos-on.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: favoritos activa",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-favoritos-activa@3x.png",
+  "nombre": "barra-pestanas-favoritos-activa",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/hoy-off.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: hoy inactiva",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-hoy-inactiva@3x.png",
+  "nombre": "barra-pestanas-hoy-inactiva",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/hoy-on.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: hoy activa",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-hoy-activa@3x.png",
+  "nombre": "barra-pestanas-hoy-activa",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/musica-off.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: musica inactiva",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-musica-inactiva@3x.png",
+  "nombre": "barra-pestanas-musica-inactiva",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/musica-on.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: musica activa",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-musica-activa@3x.png",
+  "nombre": "barra-pestanas-musica-activa",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/teodoro-off.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: teodoro inactiva",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-teodoro-inactiva@3x.png",
+  "nombre": "barra-pestanas-teodoro-inactiva",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ },
+ "assets/tabbar/teodoro-on.png": {
+  "adviento": false,
+  "categoria": "interfaz",
+  "descripcion": "Ícono de la barra de pestañas: teodoro activa",
+  "drive": "01 inicio (Hoy)/1 Hoy/barra-pestanas-teodoro-activa@3x.png",
+  "nombre": "barra-pestanas-teodoro-activa",
+  "pantallas": [
+   "1 Hoy",
+   "Tab Teodoro",
+   "08 mundos",
+   "10 interfaz comun"
+  ],
+  "pt": [
+   30,
+   32
+  ],
+  "px": [
+   90,
+   95
+  ]
+ }
+}
