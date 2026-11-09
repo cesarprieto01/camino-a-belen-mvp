@@ -1533,10 +1533,11 @@ const casillas = (caja, prenda) => {
   const ico = { cuarto: 'assets/ruleta/sorpresa-azul.webp', panes: A(IMG.pan), theobox: 'assets/ruleta/theobox-casilla.webp', prenda, otra: 'assets/ruleta/otra-vez.webp' };
   const cx = caja / 2, r = caja * .262, s = caja * .14;
   return SEGMENTS.map((id, i) => {
-    const z = s * (id === 'theobox' ? 1.45 : id === 'cuarto' ? 1.3 : 1); // el gran premio, el más grande; después la sorpresa
+    // la TheoBox, un poco más afuera y del ancho de su casilla (la cuña se angosta hacia el centro: más grande se salía); la sorpresa, más grande
+    const z = s * (id === 'theobox' ? 1.15 : id === 'cuarto' ? 1.3 : 1), rr = id === 'theobox' ? r * 1.13 : r;
     const sombra = id === 'theobox' ? (S.theobox === 'otra' ? 'grayscale(1) opacity(.5)' : 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))')
       : id === 'cuarto' ? 'drop-shadow(0 0 1.5px #055E78) drop-shadow(0 2px 3px rgba(5,94,120,.4))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
-    return `<div style="position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)"><img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-r - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}"></div>`;
+    return `<div style="position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)"><img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-rr - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}"></div>`;
   }).join('');
 };
 register('ruletaPop', {
