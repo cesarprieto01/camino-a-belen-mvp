@@ -4,6 +4,7 @@ import { S, save, reset, boot, go, cur, onChange, nota, manifest, shareURL, A, a
 import { RULES, IMG, PRENDAS, ENERGY_NAMES, TEODORO_IDS, dateOf, hasTrivia } from './data.js';
 import './musica.js'; // el sonido del reto se monta solo
 import './flow.js';
+import './theobox.js';
 import './map.js';
 import './games.js';
 import { devActivo, alCambiar, activar as modoDev, usandoApp, usar as usarApp, reubicando } from './dev.js';
@@ -13,7 +14,7 @@ const NAMES = {
   hoy: 'Hoy', teaser: 'Teaser', retoSlides: 'Slides del reto', listo: '¡Ya estás dentro!', invitacion: 'Invitación',
   teodoro: 'Tab Teodoro', mundos: 'Mundos', mapa: 'Mapa del camino', reproductor: 'Reproductor', hub: 'Reto en familia',
   completado: '¿Jugamos a la trivia?', trivia: 'Trivia', triviaFin: 'Resultado de la trivia', cerrado: 'Mañana seguimos',
-  calificacion: '¿Te gustó?', free: 'Free · descargables', ruletaPop: 'Ruleta', ruletaPremio: 'Premio de la ruleta', premioCuarto: 'Cuarto nuevo',
+  calificacion: '¿Te gustó?', free: 'Free · descargables', ruletaPop: 'Ruleta', ruletaPremio: 'Premio de la ruleta', premioCuarto: 'Cuarto nuevo', tbGano: '¡Ganaste la TheoBox!', tbDatos: 'TheoBox · Quién la recibe', tbDireccion: 'TheoBox · Dirección', tbEnCamino: 'TheoBox · Va en camino', tbCompartir: 'TheoBox · Comparte tu premio',
   memoramaReglas: 'Memorama · antes de jugar', memorama: 'Memorama', memoramaFin: 'Memorama · fin', adivinanzaIntro: 'Adivinanza · antes de jugar',
   adivinanza: 'Adivinanza', adivinanzaTiempo: 'Adivinanza · se acabó el tiempo', adivinanzaFin: 'Adivinanza · fin', desafioIntro: 'Desafío · antes de empezar',
   desafio: 'Desafío en familia', desafioFin: 'Desafío · cumplido', juegoIntro: 'Juego en familia', juegoPasos: 'Juego · así se juega', juegoCarta: 'Juego · a jugar', juegoFin: 'Juego · ¡ganaron todos!', final: 'Nochebuena', estatica: 'Vista del lienzo',
@@ -78,6 +79,7 @@ const REC = [
   { sec: 2, t: 'Repetir un día ya hecho', mira: 'Toca un día con ✓ en el mapa: ver otra vez o repetir la trivia', run: day(10, 9), go: 'mapa', covers: ['S-03c-Mapa-dia-pasado'] },
   { sec: 3, t: 'Día de ruleta', mira: 'Día 11 · toca la ruleta del mapa: gira y da premio; «Volver al camino» deja en el mapa', run: day(11, 10), go: 'mapa', covers: ['S-03f-Mapa-dia11', 'S-05b-Ruleta-pop', 'S-05c-Ruleta-premio'] },
   { sec: 3, t: 'Gran premio: TheoBox', mira: 'Día 24 (última ruleta): cae en la TheoBox, la única del reto. Antes de ese día se ve pero nunca sale; con «Ya tiene dueño» queda apagada', run: () => { day(24, 23, { forzarPremio: 'theobox', theobox: 'libre', plan: 'premium' })(); S.completos[24] = { contenido: true }; save(); }, go: 'mapa', covers: [] },
+  { sec: 3, t: 'TheoBox ganada, sin reclamar', mira: 'Eligieron «Ahora no»: la TheoBox espera encima de la hoja del día, en vidrio, con «Reclamar» (lleva a los datos de envío)', run: () => { day(24, 24, { theobox: 'mia', theoboxReclamada: false, plan: 'premium' })(); S.ruletas[24] = 'theobox'; save(); }, go: 'mapa', covers: [] },
   { sec: 3, t: 'Premio: cuarto nuevo', mira: 'La ruleta cae en la casa: cuarto de Nazaret', run: day(11, 10, { forzarPremio: 'cuarto' }), go: 'mapa', covers: ['S-09-Premio-cuarto', 'V3-Teodoro-nazaret'] },
   { sec: 4, t: 'Memorama', mira: 'Día 3 · tras la trivia: «Hoy toca Memorama»', run: day(3, 2), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-claro', 'V2-Memorama-reglas-claro', 'V2-Memorama-claro', 'V2-Memorama-fin-claro'] },
   { sec: 4, t: 'Adivinanza', mira: 'Día 6 (sin trivia) · tras la historia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
@@ -108,7 +110,7 @@ const REC = [
 ];
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
-  'TheoBox (gran premio de la ruleta, reemplaza al regalo): una sola para todo el reto; se ve en todas las ruletas y solo se gana en la del día 24, una vez (momento ganador al azar decidido por el servidor). Ya ganada, sigue en la rueda apagada y «Ya tiene dueño». Pendiente: el envío (César pasa la info) y revisión legal del sorteo: el día 24 es de pago para free y hacen falta bases en la app, la nota de Apple (5.3) y los datos solo del adulto (COPPA).',
+  'TheoBox (gran premio de la ruleta, reemplaza al regalo): una sola para todo el reto; se ve en todas las ruletas y solo sale en la del día 24, una vez (momento ganador al azar decidido por el servidor). Ya ganada, sigue en la rueda en gris. Al ganarla: la rueda se oscurece menos la casilla dorada, «¡Ganaste la TheoBox!», datos de envío en dos pasos (quién la recibe, para un adulto · dirección, con estado y ciudad según el país), «Va en camino» y «Comparte tu premio» (imagen 1080 × 1920 para historias). Con «Ahora no», espera encima de la hoja del día hasta reclamarla. Pendiente: a qué países se envía, las bases (legal: el día 24 es de pago para free, nota de Apple 5.3, datos solo del adulto por COPPA), el ícono de Theo en la imagen y guardar los datos en el servidor.',
   'Inicio real de Theo (lienzo «Inicio real», 21 oct): el destacado de Adviento va primero en el héroe, que se desliza entre tres destacados; Misiones Diarias y las filas de cuentos se deslizan de lado.',
   'Misiones Diarias: «Mundos» va primera del 29 nov al 26 dic y queda «✓ Hecha» al terminar el día. Abre Mundos desde Hoy; atrás vuelve a Hoy.',
   'Sin mascota (panel: «Sin mascota»): la barra no trae la pestaña Teodoro y todo lo que llevaba a Teodoro lleva a Hoy.',
@@ -335,7 +337,7 @@ function render() {
   } else {
     body = `${grupo('Ruleta',
       `<div class="p-row p-stack"><span class="p-row-t">Qué sale al girar</span><div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['theobox', `TheoBox (solo día ${RULES.ruleta[RULES.ruleta.length - 1]})`], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div></div>`
-      + `<div class="p-row p-stack"><span class="p-row-t">TheoBox (gran premio)<small>Una sola para todo el reto: en la app la gana la primera familia que gira después de un momento al azar del día ${RULES.ruleta[RULES.ruleta.length - 1]}</small></span><div class="p-chips">${[['libre', 'Sin dueño'], ['otra', 'Ya tiene dueño'], ['mia', 'La ganamos']].map(([v, l]) => `<button data-theobox="${v}" aria-pressed="${(S.theobox || 'libre') === v}">${l}</button>`).join('')}</div></div>`
+      + `<div class="p-row p-stack"><span class="p-row-t">TheoBox (gran premio)<small>Una sola para todo el reto: en la app la gana la primera familia que gira después de un momento al azar del día ${RULES.ruleta[RULES.ruleta.length - 1]}</small></span><div class="p-chips">${[['libre', 'Sin dueño'], ['otra', 'Ya tiene dueño'], ['mia', 'La ganamos, sin reclamar'], ['reclamada', 'Ya la reclamamos']].map(([v, l]) => `<button data-theobox="${v}" aria-pressed="${(S.theobox === 'mia' && S.theoboxReclamada ? 'reclamada' : S.theobox || 'libre') === v}">${l}</button>`).join('')}</div></div>`
       + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
     ${grupo('iPhone',
       fila('Isla dinámica', sw('isla', S.isla !== false, 'Isla dinámica'))
@@ -381,7 +383,10 @@ panel.addEventListener('click', e => {
   if (t.dataset.sw === 'zonas') { S.zonas = !S.zonas; save(); return; }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
-  if (t.dataset.theobox) { S.theobox = t.dataset.theobox; save(); render(); return; }
+  if (t.dataset.theobox) {
+    const v = t.dataset.theobox; S.theobox = v === 'reclamada' ? 'mia' : v; S.theoboxReclamada = v === 'reclamada';
+    save(); render(); if (cur?.name === 'mapa') go('mapa', cur.params || {}, 'none', { scrollTop: cur.layer.scrollTop }); return; // el aviso del mapa aparece o se va
+  }
   if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
   if (t.dataset.go) { go(t.dataset.go, {}, 'fade'); closeMobile(); return; }
   if (t.dataset.file) { go('estatica', { file: t.dataset.file, back: cur?.name !== 'estatica' ? cur?.name : 'hoy', backParams: cur?.params }, 'fade'); closeMobile(); return; }

@@ -1637,6 +1637,7 @@ register('ruletaPop', {
       // con la energía llena, Teodoro la guarda para mañana (no se pierde el premio)
       if (premio === 'manzana') { S.manzanaLlena = S.bateria >= 5; if (S.manzanaLlena) S.manzana = true; else setBateria(S.bateria + 1); }
       save();
+      if (premio === 'theobox') { await caeEnLaDorada(root, wheel); if (layer.isConnected) go('tbGano', { day: n }, 'fade', { replace: true }); return; } // theobox.js
       navigator.vibrate?.(30);
       await wait(300);
       go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n }, 'modal', { replace: true });
@@ -1650,6 +1651,18 @@ register('ruletaPop', {
     on(root, 'Más tarde', () => go('mapa', {}, 'down', { replace: true }));
   },
 });
+/** La rueda paró en la TheoBox: todo se oscurece menos la casilla dorada, que brilla, y el título lo dice; luego, el gran premio. */
+async function caeEnLaDorada(root, wheel) {
+  if (!wheel) return;
+  const base = wheel.querySelector(':scope > img'), box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2;
+  const capa = document.createElement('div'); capa.className = 'tb-dorada'; capa.setAttribute('aria-hidden', 'true');
+  capa.style.cssText = `left:${wheel.offsetLeft}px;top:${wheel.offsetTop}px;width:${box}px;height:${box}px`;
+  capa.innerHTML = `<i class="tb-dorada-velo" style="inset:${Math.round(box * .11)}px"></i><i class="tb-dorada-luz" style="left:${cx - 60}px;top:${Math.round(cx - box * .262 * 1.13 - 60)}px"></i>`;
+  wheel.parentElement.appendChild(capa);
+  const tit = textEl(root, /Hoy toca/); if (tit) tit.innerHTML = '¡Cayó en la <span class="tb-oro">dorada</span>!';
+  motivo('corto'); navigator.vibrate?.([20, 40, 20]);
+  await wait(reduced() ? 700 : 1700);
+}
 register('ruletaPremio', {
   files: F('S-05c-Ruleta-premio', 'S-05c-Ruleta-premio-oscuro'),
   mount(root, p, layer) {

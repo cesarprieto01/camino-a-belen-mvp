@@ -26,6 +26,7 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   js/data.js       el contenido y las reglas: los 26 días, la trivia, premios, ruleta, días gratis
   js/core.js       estado, fechas y fases (antes · camino · gracia · recuerdo), navegación, pop-ups y hojas
   js/flow.js       Hoy, destacado y pósters de temporada, tab Teodoro, Mundos, reproductor, retos, premios, ruleta
+  js/theobox.js    TheoBox, el gran premio de la ruleta: «¡Ganaste!», datos de envío en dos pasos, «Va en camino» y «Comparte tu premio» (pantallas screens/TB-*.html)
   js/map.js        el mapa del camino (diseño «Mapa Diozen» del Figma) y la hoja de cada día
   js/games.js      trivia, memorama, adivinanza, desafío en familia y calificación
   js/tabbar.js     la barra de pestañas de Theo
@@ -100,6 +101,7 @@ Las animaciones son Lottie (lottie-web 5.12.2, versión light, en `vendor/`) hec
 - **Free y Premium (igual en US y LATAM):** gratis los días 0, 1, 4, 8, 11, 15, 18, 22, 25 y 26; el resto con Theo Premium o el Pase de Adviento (US$19,99, pago único).
 - **Destacado del inicio:** del 29 de noviembre al 6 de enero es el póster de la temporada (Esperanza, Paz, Alegría, Amor, Nochebuena, «¡Feliz Navidad!» solo el 25 y Tiempo de Navidad). La energía de Teodoro se ve en la pieza grande de Hoy y en el tab Teodoro.
 - Al terminar cada video o canción: «¿Te gustó…?» con 5 estrellas y Compartir.
+- **TheoBox (gran premio de la ruleta):** una sola para todo el reto, en la casilla dorada; solo sale en la ruleta del día 24, una vez (en la app la decide el servidor; en el panel, «Qué sale al girar › TheoBox»). Al salir, la rueda se oscurece menos la casilla dorada («¡Cayó en la dorada!») y se abre «¡Ganaste la TheoBox!» → «Reclamar mi TheoBox» → quién la recibe (para un adulto) → dirección (estado y ciudad según el país) → «Va en camino» → «Comparte tu premio» con la imagen para historias (assets/theobox/historia.jpg, 1080 × 1920; se comparte con las opciones del teléfono o se guarda). Con «Ahora no», la TheoBox espera en vidrio encima de la hoja del día hasta reclamarla. Diseño aprobado en el lienzo «TheoBox · Gran premio».
 - **Sonido** (propuesta de diseño sonoro en Drive «05 MUSICA»): el mapa con «Burrito Sabanero» de Teodoro (al 12,5 % del master, muy ambiental) y las trivias y actividades con «Quiet Snow Village»; igual de día y de noche. En modo noche el ícono de silencio queda blanco también al tocarlo. La música se aparta cuando habla Teodoro o gira la ruleta, baja sola si nadie toca y calla donde habla la familia (adivinanza, «Busquen la estrella»). Ritual del día: Teodoro camina en silencio, dice «¡Vamos a la aventura!» y entra la canción; en «Mañana seguimos» se despide con su final. 9 reacciones de voz de Teodoro, sin globos de texto, con reglas (una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma seguida, nunca encima de un diálogo de la canción), 8 efectos sintetizados y el motivo «La estrella de Teodoro». El botón de silencio calla la música y las reacciones de voz de Teodoro (los efectos siguen).
 
 ## Pruebas

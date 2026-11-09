@@ -789,8 +789,17 @@ function sheetDrag(layer) {
       b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-label', 'Abrir el día');
     }
   };
-  build(layer.querySelector('[data-sheet]'));
-  new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s && !s.querySelector('.sheet-min')) { mini = false; build(s); layer._syncBackHoy?.(); } }).observe(layer, { childList: true });
+  // la TheoBox ganada y sin reclamar espera encima de la hoja del día (no la reemplaza) hasta que la reclamen (theobox.js)
+  const esperaTB = s => {
+    if (!s || S.theobox !== 'mia' || S.theoboxReclamada || s.querySelector(':scope > .tb-espera')) return;
+    const m = document.createElement('div'); m.className = 'tb-espera'; m.setAttribute('role', 'status');
+    m.innerHTML = '<span class="tb-espera-ico" aria-hidden="true"><i></i><img src="assets/ruleta/theobox-casilla.webp" alt=""></span><b>Tu TheoBox te espera</b><button type="button" class="tb-espera-cta" data-bound="1">Reclamar</button>';
+    m.addEventListener('pointerdown', ev => ev.stopPropagation());
+    m.querySelector('button').addEventListener('click', ev => { ev.stopPropagation(); go('tbDatos', {}, 'push'); });
+    s.appendChild(m);
+  };
+  build(layer.querySelector('[data-sheet]')); esperaTB(layer.querySelector('[data-sheet]'));
+  new MutationObserver(() => { const s = layer.querySelector('[data-sheet]'); if (s && !s.querySelector('.sheet-min')) { mini = false; build(s); esperaTB(s); layer._syncBackHoy?.(); } }).observe(layer, { childList: true });
   // arrastrar desde la parte de arriba (o desde la barra compacta)
   layer.addEventListener('pointerdown', ev => {
     sheet = ev.target.closest('[data-sheet]'); if (!sheet) return;

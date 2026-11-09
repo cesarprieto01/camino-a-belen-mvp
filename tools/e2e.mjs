@@ -181,9 +181,39 @@ const flows = {
     if ((await tb())[1]) errs.push('la TheoBox salió antes del día 24');
     await girarTB(24, 'otra'); await p.waitForTimeout(900); await tap('¡Girar!'); await p.waitForTimeout(5400);
     if ((await tb())[1]) errs.push('la TheoBox salió aunque ya tenía dueño');
-    await girarTB(24, 'libre'); await p.waitForTimeout(900); await shot('ruleta-24'); await tap('¡Girar!'); await p.waitForTimeout(5400); await shot('theobox');
+    await girarTB(24, 'libre'); await p.waitForTimeout(900); await shot('ruleta-24'); await tap('¡Girar!'); await p.waitForTimeout(7400); await shot('theobox');
     const [estadoTB, salio] = await tb();
-    if (!salio || estadoTB !== 'mia' || !/TheoBox/.test(await p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.textContent || ''))) errs.push('el día 24 con la TheoBox libre no sale «¡Ganaste la TheoBox!»: ' + estadoTB);
+    if (!salio || estadoTB !== 'mia' || (await screen()) !== 'tbGano') errs.push('el día 24 con la TheoBox libre no lleva a «¡Ganaste la TheoBox!»: ' + estadoTB + ' · ' + await screen());
+  },
+  // TheoBox ganada: reclamarla (datos en dos pasos) → «Va en camino» → «Comparte tu premio»; con «Ahora no», espera en el mapa
+  async theobox() {
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 24, inscrito: true, teaserVisto: true, plan: 'premium', theobox: 'mia', theoboxReclamada: false }); for (let d = 0; d <= 24; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.ruletas[24] = 'theobox'; c.save(); c.clearHistory(); c.go('tbGano', { day: 24 }, 'none'); });
+    await p.waitForTimeout(1500); await shot('gano');
+    await tap('Ahora no'); await p.waitForTimeout(1500);
+    if ((await screen()) !== 'mapa' || !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-espera')))) errs.push('«Ahora no» no deja la TheoBox esperando en el mapa: ' + await screen());
+    await shot('mapa-espera');
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child .tb-espera-cta')?.click()); await p.waitForTimeout(1000);
+    if ((await screen()) !== 'tbDatos') errs.push('«Reclamar» del mapa no abre los datos: ' + await screen());
+    await p.evaluate(() => { document.querySelector('#viewport .layer:last-child #tb-correo').value = ''; });
+    await tap('Continuar'); await p.waitForTimeout(400);
+    if ((await screen()) !== 'tbDatos' || (await p.evaluate(() => document.querySelectorAll('#viewport .layer:last-child .tb-error:not([hidden])').length)) < 3) errs.push('los datos vacíos no muestran sus errores');
+    const L = '#viewport .layer:last-child';
+    await p.fill(L + ' #tb-nombre', 'Ana Martínez'); await p.fill(L + ' #tb-correo', 'ana@correo.com'); await p.fill(L + ' #tb-telefono', '305 555 1234');
+    await tap('Continuar'); await p.waitForTimeout(800);
+    if ((await screen()) !== 'tbDireccion') errs.push('«Continuar» no lleva a la dirección: ' + await screen());
+    await p.selectOption(L + ' #tb-pais', 'Colombia');
+    if ((await p.evaluate(() => document.querySelector('#viewport .layer:last-child label[for=tb-region]').textContent)) !== 'Departamento') errs.push('con Colombia no pide el departamento');
+    await p.selectOption(L + ' #tb-region', 'Antioquia'); await p.selectOption(L + ' #tb-ciudad', 'Medellín');
+    await p.fill(L + ' #tb-direccion', 'Calle 10 # 43-12');
+    await tap('Reclamar mi TheoBox'); await p.waitForTimeout(400);
+    if ((await screen()) !== 'tbDireccion') errs.push('se pudo reclamar sin aceptar las bases');
+    await p.check(L + ' #tb-bases'); await tap('Reclamar mi TheoBox'); await p.waitForTimeout(1500); await shot('en-camino');
+    const st = await p.evaluate(async () => { const c = await import('/js/core.js'); return [c.S.theoboxReclamada, c.S.theoboxEnvio?.ciudad]; });
+    if ((await screen()) !== 'tbEnCamino' || !st[0] || st[1] !== 'Medellín') errs.push('reclamar no guarda el envío ni muestra «Va en camino»: ' + JSON.stringify(st));
+    await tap('Compartir'); await p.waitForTimeout(1200); await shot('compartir');
+    if ((await screen()) !== 'tbCompartir') errs.push('«Compartir» no abre «Comparte tu premio»: ' + await screen());
+    await tap('Cerrar'); await p.waitForTimeout(900); await tap('Volver al camino'); await p.waitForTimeout(1500);
+    if ((await screen()) !== 'mapa' || await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-espera'))) errs.push('ya reclamada, el aviso sigue en el mapa (o no vuelve al mapa): ' + await screen());
   },
   async memorama() {
     await scenario('Memorama'); await shot('mapa');

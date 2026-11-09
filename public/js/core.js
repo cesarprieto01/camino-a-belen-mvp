@@ -31,6 +31,7 @@ export const DEFAULT = () => ({
   vidrioPendiente: null, // recién unida: el vidrio de la card se limpia la primera vez que se ve (true | 'dedo')
   forzarPremio: '',    // panel: forzar casilla de la ruleta
   theobox: 'libre',    // gran premio de la ruleta: 'libre' · 'otra' (ya tiene dueño) · 'mia' (la ganó esta familia); panel › Ruleta
+  theoboxReclamada: false, theoboxEnvio: null, // ya dejó los datos de envío (y cuáles); mientras no, la TheoBox espera en el mapa
   musica: true,        // música de fondo del mapa y la trivia (on/off)
   notas: {}, huecos: [], vistas: {},
 });
