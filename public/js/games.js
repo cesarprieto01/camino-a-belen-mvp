@@ -359,9 +359,24 @@ register('triviaFin', {
       const grey = svgs.find(s => !s.innerHTML.includes('#F7C948'));
       svgs.forEach((s, k) => {
         const src = (k < vis ? gold : grey) || s;
-        if (src !== s) { const c = src.cloneNode(true); c.setAttribute('style', s.getAttribute('style')); s.replaceWith(c); s = c; }
-        s.style.animation = `pop .5s ${.35 + k * .22}s cubic-bezier(.2,.9,.3,1.4) both`;
+        // cada puesto conserva su tamaño (la del centro es la grande) y su giro
+        if (src !== s) { const c = src.cloneNode(true); ['style', 'width', 'height'].forEach(a => c.setAttribute(a, s.getAttribute(a))); s.replaceWith(c); s = c; }
+        // la vacía sin la sombra dorada y con borde, para que se lea sobre el resplandor
+        if (k >= vis) { s.style.filter = 'none'; s.querySelector('path')?.setAttribute('stroke', dark() ? 'rgba(255,255,255,.4)' : '#B3C6D3'); s.querySelector('path')?.setAttribute('stroke-width', '1'); }
+        const giro = s.style.transform.match(/rotate\(([-\d.]+deg)\)/)?.[1] || '0deg';
+        s.style.setProperty('--r', giro);
+        s.style.animation = `popRot .5s ${.35 + k * .22}s cubic-bezier(.2,.9,.3,1.4) both`;
       });
+      // el resplandor va detrás de las estrellas ganadas (con una sola, no alumbra el centro vacío)
+      const halo = starsBox.querySelector(':scope > span[aria-hidden]');
+      if (halo && vis < 3) {
+        // medido en pantalla y pasado a pt (el teléfono del prototipo puede estar escalado)
+        const caja = starsBox.getBoundingClientRect(), esc = caja.width / starsBox.offsetWidth || 1;
+        const centro = el => { const r = el.getBoundingClientRect(); return ((r.left + r.right) / 2 - caja.left) / esc; };
+        const ganadas = $$(starsBox, 'svg').slice(0, Math.max(1, vis)), w = vis <= 1 ? 150 : 210;
+        halo.style.left = (centro(ganadas[0]) + centro(ganadas[ganadas.length - 1])) / 2 + 'px';
+        halo.style.width = w + 'px'; halo.style.marginLeft = -w / 2 + 'px';
+      }
     }
     // cada estrella ganada suena al aparecer (sol, si, re: la trivia perfecta completa el acorde); con menos movimiento, una sola nota
     if (reduced()) { if (vis) sonido('estrella', vis - 1, 0.35); } else for (let k = 0; k < vis; k++) sonido('estrella', k, 0.35 + k * 0.22);
