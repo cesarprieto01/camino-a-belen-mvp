@@ -2346,7 +2346,7 @@
     ],
     "selector": "#viewport .layer[data-screen=teodoro] :is(.cuarto-patch.prenda, .cuarto-patch[aria-label$=\" panes\"])",
     "descripcion": "Lo ganado en el reto que se ve en el cuarto: las prendas puestas y el contador de panes.",
-    "medidas": "Prendas sobre Teodoro: gorro de 84 pt en (150, 96) girado −8°; bufanda de 102 pt en (140, 222); bolso de 62 pt en (236, 268) girado 10° (en el piso, (262, 330), si Teodoro está cansado); cama de paja de 100 pt en (268, 312). Sombra drop-shadow(0 3 4 rgba(0,8,43,.25)). Panes: 40 × 24 pt en (336, 520), fondo rgb(251,242,229), texto #4A2E14 800 15 pt.",
+    "medidas": "Prendas sobre Teodoro: gorro de 84 pt en (150, 96) girado −8°; bufanda de 102 pt en (140, 222); bolso de 62 pt en (236, 268) girado 10° (en el piso, (262, 330), si Teodoro está cansado). Sombra drop-shadow(0 3 4 rgba(0,8,43,.25)). Panes: 40 × 24 pt en (336, 520), fondo rgb(251,242,229), texto #4A2E14 800 15 pt.",
     "estados": [
       {
         "id": "prendas",
@@ -2929,8 +2929,8 @@
       {
         "id": "prenda",
         "nombre": "Prenda",
-        "cuando": "Sale la prenda de la semana",
-        "visual": "«¡Ganaste un gorro / una bufanda / un bolso / una cama de paja!», «Teodoro ya la tiene puesta»; «¡Nuevo!» flotante; «Ver el cuarto de Teodoro» dentro de la ventana.",
+        "cuando": "Sale la prenda de la semana (en la semana 4, la que les falte; con las tres, panes)",
+        "visual": "«¡Ganaste un gorro / una bufanda / un bolso!», «Teodoro ya la tiene puesta»; «¡Nuevo!» flotante; «Ver el cuarto de Teodoro» dentro de la ventana.",
         "assets": [
           "assets/28a067c47bf9134f91f26a009e0465b5.webp",
           "assets/ed7f054b6f0d602d40b41b8d2706379a.webp",

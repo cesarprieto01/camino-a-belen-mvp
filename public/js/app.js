@@ -54,7 +54,7 @@ function fill(upto, opts = {}) {
   S.completos[0] = { contenido: true };
   for (let n = 1; n <= upto; n++) S.completos[n] = hasTrivia(n) ? { contenido: true, trivia: true, estrellas: STAR_PATTERN[n - 1] } : { contenido: true };
   S.ruletas = {}; S.prendas = []; S.sorpresas = {}; S.ruletaPendiente = {};
-  RULES.ruleta.forEach((d, i) => { if (d <= upto) { S.ruletas[d] = PRENDAS[i].id; S.prendas.push(PRENDAS[i].id); } });
+  RULES.ruleta.forEach((d, i) => { if (d <= upto) { S.ruletas[d] = PRENDAS[i]?.id || 'panes'; if (PRENDAS[i]) S.prendas.push(PRENDAS[i].id); } });
   Object.keys(RULES.sorpresa).forEach(d => { if (+d <= upto) S.sorpresas[d] = 'hecha'; });
   S.panes = 60 + upto * 22;
   Object.assign(S, opts);
@@ -125,9 +125,9 @@ const DECISIONES = [
   'Solo los días 1, 2, 3, 4, 9, 11, 17, 18 y 24 tienen trivia (cronograma de contenido). Los demás se completan con la historia, sin estrellas; si toca sorpresa (6, 12, 15, 21) se abre al terminar la historia.',
   'Trivia: 5 preguntas por día, todas con 4 respuestas; revisión pastoral hecha (exactitud bíblica, una sola respuesta válida, lenguaje para 5–8 años). Falta la aprobación final del equipo de contenido.',
   'Estrellas: 5 de 5 = 3 estrellas · 3 o 4 = 2 · menos = 1. Solo cuenta el primer intento de cada pregunta.',
-  'Ruleta: 10 casillas (7 panes, manzana, prenda de la semana, cuarto). Prendas: gorro, bufanda, bolso y cama de paja.',
+  'Ruleta: 8 casillas: TheoBox (gran premio, solo día 24 y una vez), 4 de 20 panes, «?» (cuarto nuevo para Teodoro), prenda de la semana y «otra oportunidad». Prendas: gorro, bufanda y bolso (semanas 1 a 3); en la semana 4 sale la que les falte.',
   'La historia del reproductor dura 9 segundos para poder probar rápido.',
-  'Ruleta: la manzana le da +1 de energía a Teodoro; la prenda de la semana sale más seguido si aún no la tiene; el cuarto no se repite.',
+  'Ruleta: la prenda de la semana sale más seguido si aún no la tiene; el cuarto no se repite (si ya lo tienen, panes); la TheoBox nunca sale al azar.',
   'Pop-ups sobre la pantalla real: teaser, final de trivia, ruleta y premios, «Se acabó el tiempo» y «Mañana seguimos».',
   'Hojas de página (se cierran deslizando): free sobre el reto y calificación sobre el mapa.',
   'Pantalla completa a propósito: el reto en familia (es un destino con contenido, extras y un juego dentro: en hoja quedaría apretado y se perdería al deslizar) y la invitación (simula salir a WhatsApp/iMessage; en la app real es la hoja de compartir del sistema).',

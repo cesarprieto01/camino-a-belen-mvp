@@ -1106,7 +1106,7 @@ function quitarCorona(root) {
 /** El cuarto de Teodoro trae nombre, racha y panes pintados en la imagen: se tapan con los datos reales (mismo estilo que Hoy). */
 function patchCuarto(root) {
   const bg = $$(root, 'img').find(i => /^Tab Teodoro/.test(i.alt || ''));
-  const POS = { gorro: 'left:150px;top:96px;width:84px;transform:rotate(-8deg)', bufanda: 'left:140px;top:222px;width:102px', bolso: 'left:236px;top:268px;width:62px;transform:rotate(10deg)', paja: 'left:268px;top:312px;width:100px' };
+  const POS = { gorro: 'left:150px;top:96px;width:84px;transform:rotate(-8deg)', bufanda: 'left:140px;top:222px;width:102px', bolso: 'left:236px;top:268px;width:62px;transform:rotate(10deg)' };
   // de pie (3 a 5 de energía) lleva gorro y bufanda; cansado o dormido, el bolso queda en el piso
   const dePie = S.bateria >= 3 || !!bg;
   if (!dePie) POS.bolso = 'left:262px;top:330px;width:58px;transform:rotate(-6deg)';
@@ -1137,7 +1137,7 @@ function patchCuarto(root) {
   add(`${racha()}<svg aria-hidden="true" width="16" height="20" viewBox="0 0 24 30"><path d="M12 1C13 8 21 11 21 19a9 9 0 0 1-18 0c0-5 3-7 4-11 2 3 3 4 3 6 1-4 2-8 2-13Z" fill="#F28C28"/><path d="M12 14c1 4 5 5 5 9a5 5 0 0 1-10 0c0-3 2-4 2-6 1 1 2 2 2 3 0-2 1-4 1-6Z" fill="#FFC94A"/></svg>`,
     'left:206px;top:55px;width:74px;height:44px;border-radius:22px;background:#1F7F95;display:flex;align-items:center;justify-content:center;gap:4px;color:#FFFFFF;font:700 18px "Neue Montreal",Mulish,sans-serif;box-shadow:0 4px 12px rgba(0,8,43,.12)')
     .setAttribute('aria-label', `Racha: ${racha()} días seguidos`);
-  // prendas ganadas en la ruleta: Teodoro las lleva puestas (la cama de paja va en el suelo)
+  // prendas ganadas en la ruleta: Teodoro las lleva puestas
   ponerPrendas();
   add(String(S.panes), 'left:336px;top:520px;width:40px;height:24px;background:rgb(251,242,229);color:#4A2E14;display:grid;place-items:center;font:800 15px Mulish,sans-serif')
     .setAttribute('aria-label', `${S.panes} panes`);
@@ -1525,6 +1525,8 @@ const SEGMENTS = ['theobox', 'panes', 'cuarto', 'panes', 'prenda', 'panes', 'otr
 const TEOBOX_DIA = RULES.ruleta[RULES.ruleta.length - 1];
 const TEOBOX = 'ruleta/theobox.webp', TEOBOX_IMG = A(TEOBOX); // en la rueda va recortada, sin el resplandor (se veía chica)
 const teoboxEnJuego = n => n === TEOBOX_DIA && S.theobox === 'libre';
+// la prenda de la casilla «prenda»: la de su semana (1 a 3); en la semana 4, la primera que les falte (sin ninguna pendiente, null = panes)
+const prendaDe = n => PRENDAS[RULES.ruleta.indexOf(n)] || PRENDAS.find(x => !S.prendas.includes(x.id)) || null;
 const SEG = 360 / SEGMENTS.length;
 // los íconos de las 8 casillas sobre rueda8.webp (caja = lo que mide la rueda), cada uno mirando hacia afuera
 const casillas = (caja, prenda) => {
@@ -1549,12 +1551,12 @@ register('ruletaPop', {
     wheel?.parentElement.classList.add('a-pop');
     const pointer = $$(root, 'img').find(i => i.src.includes('3fdb655b'));
     // la rueda de 8 casillas y sus iconos (la del lienzo trae 10)
-    const week0 = RULES.ruleta.indexOf(n);
+    const prendaSemana = prendaDe(n); // se fija al abrir: la rueda muestra lo mismo que da
     if (wheel) {
       const base = wheel.querySelector(':scope > img'); if (base) base.src = 'assets/ruleta/rueda8.webp';
       [...wheel.children].filter(c => c.tagName === 'DIV').forEach(c => c.remove());
       const box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2;
-      wheel.insertAdjacentHTML('beforeend', casillas(box, A(PRENDAS[week0]?.img || IMG.regalo)));
+      wheel.insertAdjacentHTML('beforeend', casillas(box, A(prendaSemana?.img || IMG.pan)));
       wheel.style.transformOrigin = `${cx}px ${cx}px`;
       wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: TheoBox, panes, sorpresa, panes, prenda de la semana, panes, gira otra vez, panes');
     }
@@ -1566,7 +1568,7 @@ register('ruletaPop', {
       const tarde = find(root, 'Más tarde'); if (tarde) tarde.style.visibility = 'hidden'; layer.querySelector('.pop-x')?.remove();
       // premio: el forzado en el panel o al azar (todas las casillas ganan)
       const forced = giros === 0 ? S.forzarPremio : ''; // el giro extra de «otra oportunidad» siempre es al azar
-      const weekId = PRENDAS[RULES.ruleta.indexOf(n)]?.id;
+      const weekId = prendaSemana?.id;
       const pick = () => {
         if (weekId && !S.prendas.includes(weekId) && Math.random() < .35) return SEGMENTS.indexOf('prenda');
         let i = Math.floor(Math.random() * SEGMENTS.length);
@@ -1611,7 +1613,6 @@ register('ruletaPop', {
         wheel.classList.remove('wheel-spin'); wheel.style.transition = 'none';
         if (!layer.isConnected) return;
       }
-      const week = RULES.ruleta.indexOf(n);
       // «¡Gira otra vez!»: un segundo giro, sin premio todavía
       if (premio === 'otra') {
         navigator.vibrate?.(20);
@@ -1625,11 +1626,12 @@ register('ruletaPop', {
         const masTarde = find(root, 'Más tarde'); if (masTarde) masTarde.style.visibility = ''; // pueden girar ahora o dejarlo para después
         return;
       }
-      const prize = premio === 'prenda' ? PRENDAS[week].id : premio;
+      if (premio === 'prenda' && !prendaSemana) premio = 'panes'; // semana 4 con las tres prendas: la casilla es de panes
+      const prize = premio === 'prenda' ? prendaSemana.id : premio;
       S.ruletas[n] = prize;
       if (premio === 'theobox') S.theobox = 'mia';
       if (premio === 'panes') addPanes(RULES.panes.ruleta);
-      if (premio === 'prenda') S.prendas.push(PRENDAS[week].id);
+      if (premio === 'prenda' && !S.prendas.includes(prendaSemana.id)) S.prendas.push(prendaSemana.id);
       if (premio === 'cuarto') S.cuartoNuevo = true;
       // con la energía llena, Teodoro la guarda para mañana (no se pierde el premio)
       if (premio === 'manzana') { S.manzanaLlena = S.bateria >= 5; if (S.manzanaLlena) S.manzana = true; else setBateria(S.bateria + 1); }

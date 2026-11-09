@@ -133,12 +133,12 @@ export const RULES = {
 };
 export const hasTrivia = n => RULES.trivia.includes(n);
 
-// Prenda de cada semana (la del regalo de la ruleta). Semana 4: por definir en el lienzo.
+// Prenda de la semana en la ruleta (semanas 1 a 3). La semana 4 (día 24, la de la TheoBox) no trae una propia: da la que les falte
+// y, si ya tienen las tres, panes. La cama de paja ya no va en la ruleta (César, 9-nov).
 export const PRENDAS = [
   { id: 'gorro', nombre: 'un gorro', img: IMG.gorro, sub: 'Teodoro ya lo tiene puesto' },
   { id: 'bufanda', nombre: 'una bufanda', img: IMG.bufanda, sub: 'Teodoro ya la tiene puesta' },
   { id: 'bolso', nombre: 'un bolso', img: IMG.bolso, sub: 'Teodoro ya lo lleva' },
-  { id: 'paja', nombre: 'una cama de paja', img: IMG.paja, sub: 'Ya está en el cuarto de Teodoro' },
 ];
 
 // Trivia: 5 preguntas por día. o = opciones (texto o {t,img}); a = índice correcto o lista (varias)
