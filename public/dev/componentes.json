@@ -2858,8 +2858,8 @@
       "ruletaPop"
     ],
     "selector": "#viewport .layer[data-screen=ruletaPop] > .root > div > :not(.ov-scrim):not(.ov-body), #viewport .layer[data-screen=ruletaPop] .ov-body > *",
-    "descripcion": "La rueda de 8 casillas que se gira tocando la ruleta del mapa (días 4, 11, 18 y 24), con su botón y todo lo que lleva encima.",
-    "medidas": "Velo rgba(0,20,50,.8) con desenfoque 6. «Semana N» 17 pt blanco. Rueda de 330 × 330 pt en (30, 246) con 8 casillas cada 45° desde arriba, a 26,2 % del ancho desde el centro: sorpresa dorada (cuarto nuevo, 60 pt), panes, regalo, panes, prenda de la semana, panes, «otra vez», panes (46 pt). Puntero de 50 × 60 pt arriba. «¡Girar!» de 350 × 64 pt en y 664, radio 22, #F5DB78, 700 23 pt; «Más tarde» de 44 pt en blanco; cerrar 44 × 44 pt rgba(255,255,255,.18) arriba a la derecha. Igual en oscuro.",
+    "descripcion": "La rueda de 8 casillas que se gira tocando la ruleta del mapa (días 4, 11, 18 y 24), con su botón y todo lo que lleva encima. La TheoBox (gran premio, una sola para todo el reto) se ve siempre pero solo sale en la del día 24, una vez; nunca se anuncia con textos ni fechas.",
+    "medidas": "Velo rgba(0,20,50,.8) con desenfoque 6. «Semana N» 17 pt blanco. Rueda de 330 × 330 pt en (30, 246) con 8 casillas cada 45° desde arriba, a 26,2 % del ancho desde el centro: TheoBox en la dorada (gran premio, 67 pt, recortada sin resplandor; ya con dueño: gris al 50 %), panes, «?» turquesa en la celeste (cuarto nuevo, 60 pt, en la paleta de la casilla), panes, prenda de la semana, panes, «otra vez», panes (46 pt). Puntero de 50 × 60 pt arriba. «¡Girar!» de 350 × 64 pt en y 664, radio 22, #F5DB78, 700 23 pt; «Más tarde» de 44 pt en blanco; cerrar 44 × 44 pt rgba(255,255,255,.18) arriba a la derecha. Igual en oscuro.",
     "estados": [
       {
         "id": "lista",
@@ -2868,10 +2868,10 @@
         "visual": "La rueda entra con rebote (escala .85 → 1 con fundido, 0,42 s, cubic-bezier(.34,1.56,.64,1)).",
         "assets": [
           "assets/ruleta/rueda8.webp",
-          "assets/ruleta/sorpresa.webp",
+          "assets/ruleta/sorpresa-azul.webp",
           "assets/ruleta/otra-vez.webp",
           "assets/5bab1fe48e4c5009d62da468a9d7f69f.webp",
-          "assets/40de1cf55d4441bd10615c06350dde30.webp",
+          "assets/ruleta/theobox-casilla.webp",
           "assets/3fdb655b7743b5a7a821153429c4d733.webp",
           "assets/28a067c47bf9134f91f26a009e0465b5.webp",
           "assets/ed7f054b6f0d602d40b41b8d2706379a.webp",
@@ -2929,7 +2929,7 @@
       {
         "id": "prenda",
         "nombre": "Prenda",
-        "cuando": "Sale la prenda de la semana o el regalo (una prenda que aún no tienen)",
+        "cuando": "Sale la prenda de la semana",
         "visual": "«¡Ganaste un gorro / una bufanda / un bolso / una cama de paja!», «Teodoro ya la tiene puesta»; «¡Nuevo!» flotante; «Ver el cuarto de Teodoro» dentro de la ventana.",
         "assets": [
           "assets/28a067c47bf9134f91f26a009e0465b5.webp",
@@ -2946,7 +2946,7 @@
       {
         "id": "panes",
         "nombre": "Panes",
-        "cuando": "Salen panes (o el regalo cuando ya tienen todas las prendas)",
+        "cuando": "Salen panes (o la sorpresa cuando ya tienen el cuarto nuevo)",
         "visual": "«¡Ganaste 20 panes!», «Ya están en la canasta de Teodoro», «+20» flotante con el pan; sin «Ver el cuarto».",
         "assets": [
           "assets/5bab1fe48e4c5009d62da468a9d7f69f.webp"
@@ -2976,6 +2976,17 @@
         "assets": [],
         "lienzo": [],
         "probar": "Gira la ruleta."
+      },
+      {
+        "id": "theobox",
+        "nombre": "TheoBox (gran premio)",
+        "cuando": "Día 24, solo la familia del momento ganador (en la app lo decide el servidor, una sola vez)",
+        "visual": "«¡Ganaste la / TheoBox!», «Solo había una y es tuya»; la TheoBox entra girando y flota; doble confeti (90 y 60), vibración 30-60-30, motivo largo y Teodoro «¡Increíble!»; sin «Ver el cuarto». El envío: pendiente.",
+        "assets": [
+          "assets/ruleta/theobox.webp"
+        ],
+        "lienzo": [],
+        "probar": "Recorrido «Gran premio: TheoBox»."
       }
     ]
   },

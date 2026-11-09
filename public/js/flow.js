@@ -1515,17 +1515,25 @@ register('cerrado', {
 });
 
 // ---------- Ruleta (días 4, 11, 18 y 24) ----------
-// 8 casillas (45° cada una), desde arriba en el sentido del reloj: el «?» dorado es el fondo nuevo para Teodoro (cuarto);
-// el regalo trae una prenda al azar; «prenda» es la de la semana; «otra» da un segundo giro. Panes alternados para que quede simétrica.
-const SEGMENTS = ['cuarto', 'panes', 'regalo', 'panes', 'prenda', 'panes', 'otra', 'panes'];
+// 8 casillas (45° cada una), desde arriba en el sentido del reloj: la dorada es la TheoBox, el gran premio; el «?» turquesa (casilla celeste)
+// es el fondo nuevo para Teodoro (cuarto); «prenda» es la de la semana; «otra» da un segundo giro. Panes alternados para que quede simétrica.
+const SEGMENTS = ['theobox', 'panes', 'cuarto', 'panes', 'prenda', 'panes', 'otra', 'panes'];
+// Gran premio: una sola TheoBox para todo el reto. Se ve en todas las ruletas, pero solo se gana en la última (día 24) y una sola vez:
+// en la app la decide el servidor (un momento al azar de ese día; la primera familia que gira después se la lleva). Después sigue en la
+// rueda, apagada. Nunca se anuncia con textos ni fechas en la ruleta (César). En el MVP: S.theobox ('libre' | 'otra' | 'mia') y
+// «Qué sale al girar › TheoBox» en el panel.
+const TEOBOX_DIA = RULES.ruleta[RULES.ruleta.length - 1];
+const TEOBOX = 'ruleta/theobox.webp', TEOBOX_IMG = A(TEOBOX); // en la rueda va recortada, sin el resplandor (se veía chica)
+const teoboxEnJuego = n => n === TEOBOX_DIA && S.theobox === 'libre';
 const SEG = 360 / SEGMENTS.length;
 // los íconos de las 8 casillas sobre rueda8.webp (caja = lo que mide la rueda), cada uno mirando hacia afuera
 const casillas = (caja, prenda) => {
-  const ico = { cuarto: 'assets/ruleta/sorpresa.webp', panes: A(IMG.pan), regalo: A(IMG.regalo), prenda, otra: 'assets/ruleta/otra-vez.webp' };
+  const ico = { cuarto: 'assets/ruleta/sorpresa-azul.webp', panes: A(IMG.pan), theobox: 'assets/ruleta/theobox-casilla.webp', prenda, otra: 'assets/ruleta/otra-vez.webp' };
   const cx = caja / 2, r = caja * .262, s = caja * .14;
   return SEGMENTS.map((id, i) => {
-    const z = s * (id === 'cuarto' ? 1.3 : 1); // el premio especial, el más grande
-    const sombra = id === 'cuarto' ? 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
+    const z = s * (id === 'theobox' ? 1.45 : id === 'cuarto' ? 1.3 : 1); // el gran premio, el más grande; después la sorpresa
+    const sombra = id === 'theobox' ? (S.theobox === 'otra' ? 'grayscale(1) opacity(.5)' : 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))')
+      : id === 'cuarto' ? 'drop-shadow(0 0 1.5px #055E78) drop-shadow(0 2px 3px rgba(5,94,120,.4))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
     return `<div style="position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)"><img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-r - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}"></div>`;
   }).join('');
 };
@@ -1548,7 +1556,7 @@ register('ruletaPop', {
       const box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2;
       wheel.insertAdjacentHTML('beforeend', casillas(box, A(PRENDAS[week0]?.img || IMG.regalo)));
       wheel.style.transformOrigin = `${cx}px ${cx}px`;
-      wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: sorpresa dorada, panes, regalo, panes, prenda de la semana, panes, gira otra vez, panes');
+      wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: TheoBox, panes, sorpresa, panes, prenda de la semana, panes, gira otra vez, panes');
     }
     let spun = false, giro = 0, giros = 0; // giros: el premio elegido en el panel solo decide el primero // giro: dónde quedó la rueda (para volver a girar)
     on(root, '¡Girar!', async (ev, btn) => {
@@ -1562,11 +1570,13 @@ register('ruletaPop', {
       const pick = () => {
         if (weekId && !S.prendas.includes(weekId) && Math.random() < .35) return SEGMENTS.indexOf('prenda');
         let i = Math.floor(Math.random() * SEGMENTS.length);
-        if (giros > 0) while (SEGMENTS[i] === 'otra') i = Math.floor(Math.random() * SEGMENTS.length); // la segunda vuelta no repite «otra oportunidad»
-        if (SEGMENTS[i] === 'cuarto' && S.cuartoNuevo) i = SEGMENTS.indexOf('regalo');
+        // la TheoBox nunca sale al azar (solo el momento ganador del día 24); la segunda vuelta no repite «otra oportunidad»
+        while (SEGMENTS[i] === 'theobox' || (giros > 0 && SEGMENTS[i] === 'otra')) i = Math.floor(Math.random() * SEGMENTS.length);
+        if (SEGMENTS[i] === 'cuarto' && S.cuartoNuevo) i = SEGMENTS.indexOf('panes');
         return i;
       };
-      let idx = forced ? SEGMENTS.indexOf(forced) : pick();
+      const vale = forced && SEGMENTS.includes(forced) && (forced !== 'theobox' || teoboxEnJuego(n));
+      let idx = vale ? SEGMENTS.indexOf(forced) : pick();
       giros++;
       if (idx < 0) idx = 0;
       let premio = SEGMENTS[idx];
@@ -1615,13 +1625,9 @@ register('ruletaPop', {
         const masTarde = find(root, 'Más tarde'); if (masTarde) masTarde.style.visibility = ''; // pueden girar ahora o dejarlo para después
         return;
       }
-      // el regalo trae una prenda al azar que aún no tiene (no la de la semana); si ya las tiene todas, panes
-      const libres = PRENDAS.filter(x => x.id !== PRENDAS[week]?.id && !S.prendas.includes(x.id));
-      const sorpresa = premio === 'regalo' ? libres[Math.floor(Math.random() * libres.length)] || null : null;
-      if (premio === 'regalo' && !sorpresa) premio = 'panes';
-      const prize = premio === 'prenda' ? PRENDAS[week].id : sorpresa ? sorpresa.id : premio;
-      if (sorpresa) S.prendas.push(sorpresa.id);
+      const prize = premio === 'prenda' ? PRENDAS[week].id : premio;
       S.ruletas[n] = prize;
+      if (premio === 'theobox') S.theobox = 'mia';
       if (premio === 'panes') addPanes(RULES.panes.ruleta);
       if (premio === 'prenda') S.prendas.push(PRENDAS[week].id);
       if (premio === 'cuarto') S.cuartoNuevo = true;
@@ -1646,23 +1652,27 @@ register('ruletaPremio', {
   mount(root, p, layer) {
     const n = p.day;
     const prenda = PRENDAS.find(x => x.id === p.premio);
-    const info = prenda ? { img: prenda.img, t1: '¡Ganaste', t2: prenda.nombre + '!', sub: true }
+    const teobox = p.premio === 'theobox';
+    const info = teobox ? { img: TEOBOX, t1: '¡Ganaste la', t2: 'TheoBox!', sub: true }
+      : prenda ? { img: prenda.img, t1: '¡Ganaste', t2: prenda.nombre + '!', sub: true }
       : p.premio === 'manzana' ? { img: IMG.manzana, t1: '¡Ganaste', t2: 'una manzana!', sub: true }
       : p.premio === 'cuarto' ? { img: IMG.cuarto, t1: '¡Ganaste un', t2: 'cuarto nuevo!', sub: true }
       : { img: IMG.pan, t1: '¡Ganaste', t2: `${RULES.panes.ruleta} panes!`, sub: false };
     const pic = $$(root, 'img').find(i => i.src.includes(IMG.gorro));
-    if (pic) { pic.src = A(info.img); pic.alt = info.t2; pic.style.animation = 'spinIn .7s cubic-bezier(.2,.9,.3,1.2) both, bob 2.4s .8s ease-in-out infinite'; }
+    if (pic) { pic.src = A(info.img); pic.alt = teobox ? 'TheoBox: parlante con la figura de Jesús' : info.t2; pic.style.animation = 'spinIn .7s cubic-bezier(.2,.9,.3,1.2) both, bob 2.4s .8s ease-in-out infinite'; }
     setText(root, '¡Ganaste', info.t1); setText(root, 'un gorro!', info.t2);
     const subEl = textEl(root, 'Ya está en el');
     if (!info.sub && subEl) subEl.textContent = 'Ya están en la canasta de Teodoro';
     else if (p.premio === 'manzana' && subEl) subEl.textContent = S.manzanaLlena ? 'Teodoro la guardó para mañana' : 'Teodoro se la comió: ¡más energía!';
     else if (prenda && subEl) subEl.textContent = prenda.sub; // el enlace al cuarto va aparte, no dos veces
+    else if (teobox && subEl) subEl.textContent = 'Solo había una y es tuya';
     // halo del premio: en oscuro, luz azul clara (el dorado sobre azul se veía color barro)
     if (dark()) $$(root, 'div[aria-hidden="true"]').filter(d => /radial-gradient/.test(d.style.background) && /245,\s*219,\s*120/.test(d.style.background)).forEach(d => { d.style.background = 'radial-gradient(closest-side, rgba(255,246,221,.22), rgba(255,246,221,0))'; });
     // el motivo largo y Teodoro festeja; la canción vuelve 1,5 s después de su voz
-    setTimeout(() => levanta('ruleta', 0.5), (Math.max(motivo('largo'), teoDice('premio', { tras: 0.9 })) + 1.5) * 1000);
+    setTimeout(() => levanta('ruleta', 0.5), (Math.max(motivo('largo'), teoDice(teobox ? 'premioGrande' : 'premio', { tras: 0.9 })) + 1.5) * 1000);
     if (p.premio === 'panes' || prenda) floaty(layer, p.premio === 'panes' ? `+${RULES.panes.ruleta}` : '¡Nuevo!', 250, 210, p.premio === 'panes' ? IMG.pan : null);
-    confetti(layer, 195, 300, 36);
+    confetti(layer, 195, 300, teobox ? 90 : 36);
+    if (teobox) { navigator.vibrate?.([30, 60, 30]); setTimeout(() => confetti(layer, 195, 260, 60), 900); } // el gran premio festeja dos veces
     const alMapa = () => go('mapa', {}, 'down', { replace: true });
     const seguir = on(root, 'Empezar el cuento', alMapa); if (seguir) seguir.dataset.back = '1';
     setText(root, 'Empezar el cuento', 'Volver al camino');

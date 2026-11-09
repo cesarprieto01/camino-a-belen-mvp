@@ -118,6 +118,7 @@ const premioTxt = id => {
   if (id === 'panes') return `Te tocaron ${RULES.panes.ruleta} panes`;
   if (id === 'manzana') return 'Te tocó una manzana para Teodoro';
   if (id === 'cuarto') return 'Te tocó un cuarto nuevo para Teodoro';
+  if (id === 'theobox') return '¡Ganaste la TheoBox!';
   const p = PRENDAS.find(x => x.id === id);
   return p ? `Te tocó ${p.nombre} para Teodoro` : '¡Ya tienes tu premio!';
 };

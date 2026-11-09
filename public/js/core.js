@@ -30,6 +30,7 @@ export const DEFAULT = () => ({
   isla: true, zonas: false, // panel › Avanzado › iPhone: la isla dinámica y las zonas seguras en el teléfono simulado
   vidrioPendiente: null, // recién unida: el vidrio de la card se limpia la primera vez que se ve (true | 'dedo')
   forzarPremio: '',    // panel: forzar casilla de la ruleta
+  theobox: 'libre',    // gran premio de la ruleta: 'libre' · 'otra' (ya tiene dueño) · 'mia' (la ganó esta familia); panel › Ruleta
   musica: true,        // música de fondo del mapa y la trivia (on/off)
   notas: {}, huecos: [], vistas: {},
 });

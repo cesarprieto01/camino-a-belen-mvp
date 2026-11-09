@@ -170,6 +170,20 @@ const flows = {
     // la de un día que aún no llega: aviso con la fecha
     await tap('Ruleta de la semana 3'); await p.waitForTimeout(600);
     if ((await screen()) !== 'mapa') errs.push('tocar una ruleta futura no se queda en el mapa: ' + await screen());
+    // TheoBox (gran premio): forzada el día 11 no sale; el día 24 sí, una vez; con dueño no sale
+    const girarTB = (hoy, theobox) => p.evaluate(async ([hoy, theobox]) => {
+      const c = await import('/js/core.js'); c.reset({ hoy, inscrito: true, teaserVisto: true, plan: 'premium', forzarPremio: 'theobox', theobox });
+      for (let d = 0; d < hoy; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.completos[hoy] = { contenido: true }; c.save(); c.clearHistory();
+      c.go('mapa', {}, 'none', { tab: true }); c.go('ruletaPop', { day: hoy }, 'modal');
+    }, [hoy, theobox]);
+    const tb = () => p.evaluate(async () => { const c = await import('/js/core.js'); return [c.S.theobox, Object.values(c.S.ruletas).includes('theobox')]; });
+    await girarTB(11, 'libre'); await p.waitForTimeout(900); await tap('¡Girar!'); await p.waitForTimeout(5400);
+    if ((await tb())[1]) errs.push('la TheoBox salió antes del día 24');
+    await girarTB(24, 'otra'); await p.waitForTimeout(900); await tap('¡Girar!'); await p.waitForTimeout(5400);
+    if ((await tb())[1]) errs.push('la TheoBox salió aunque ya tenía dueño');
+    await girarTB(24, 'libre'); await p.waitForTimeout(900); await shot('ruleta-24'); await tap('¡Girar!'); await p.waitForTimeout(5400); await shot('theobox');
+    const [estadoTB, salio] = await tb();
+    if (!salio || estadoTB !== 'mia' || !/TheoBox/.test(await p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.textContent || ''))) errs.push('el día 24 con la TheoBox libre no sale «¡Ganaste la TheoBox!»: ' + estadoTB);
   },
   async memorama() {
     await scenario('Memorama'); await shot('mapa');
