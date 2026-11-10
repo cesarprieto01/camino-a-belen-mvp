@@ -199,10 +199,10 @@ register('tbMiTheobox', {
     // los pasos: hechos, el de ahora (late) y los que faltan
     const ol = root.querySelector('.tb-pasos');
     ol.innerHTML = PASOS.map(([t, fecha, ico], i) => {
-      const clase = llego || i < p - 1 ? 'tb-hecho' : i === p - 1 ? 'tb-ahora' : 'tb-luego';
+      const clase = llego || i < p - 1 ? 'tb-paso-hecho' : i === p - 1 ? 'tb-paso-ahora' : 'tb-paso-luego';
       const titulo = llego && i === 3 ? '¡Llegó a tu casa!' : t;
       return `<li class="${clase}"><span class="tb-paso-eje"><span class="tb-paso-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">${ico}</svg></span>${i < 3 ? '<span class="tb-paso-linea" aria-hidden="true"></span>' : ''}</span>`
-        + `<span class="tb-paso-txt"><span><b>${titulo}</b><small>${fecha}</small></span>${clase === 'tb-ahora' ? '<small>Ahora</small>' : ''}</span></li>`;
+        + `<span class="tb-paso-txt"><span><b>${titulo}</b><small>${fecha}</small></span>${clase === 'tb-paso-ahora' ? '<small>Ahora</small>' : ''}</span></li>`;
     }).join('');
     // la guía de la paquetería existe desde que sale
     const guia = [...root.querySelectorAll('.tb-titulo')].find(t => t.textContent === 'ENVÍO')?.parentElement;
