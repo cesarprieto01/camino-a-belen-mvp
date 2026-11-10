@@ -6,6 +6,7 @@ import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, pa
 import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from './musica.js'; // música, voces de Teodoro y efectos
 import { rateRow } from './games.js';
 import { celebrar, pensar } from './teo-anim.js';
+import { tarjetaInicio } from './theobox.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = conTodo; // Theo Premium o Pase de Adviento
@@ -80,7 +81,7 @@ export function finishTrivia(n, aciertos, replay = false) {
 // Barra de pestañas de la app (igual en todas)
 function tabs(root) {
   // la barra de pestañas la pone y la conecta core.js (tabbar.js) en todas las pantallas
-  on(root, 'Ajustes', () => nota('Ajustes de Theo', 'Ya existen en la app'));
+  on(root, 'Ajustes', () => go('ajustes', {}, 'push'));
 }
 function appContent(root) {
   // domingo con el camino: el «Evangelio del día» es el del camino (lleva allá, no se hace dos veces)
@@ -590,6 +591,7 @@ register('hoy', {
       on(root, mundos, () => go('mundos', { from: 'hoy' }, 'push'));
     }
     on(root, 'Energía de Teodoro', () => toast(`Energía: ${S.bateria} de 5`, ['Dormido', 'Cabeceando', 'Agotado', 'Tranquilo', 'Travieso', 'Feliz'][S.bateria]));
+    if (!S.regreso) tarjetaInicio(root); // la TheoBox va en camino: card entre Adviento y Misiones Diarias
 
     // Modal de regreso (una semana o más sin caminar)
     if (S.regreso && fase() !== 'recuerdo') {

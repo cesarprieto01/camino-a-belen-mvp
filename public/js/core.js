@@ -32,6 +32,7 @@ export const DEFAULT = () => ({
   forzarPremio: '',    // panel: forzar casilla de la ruleta
   theobox: 'libre',    // gran premio de la ruleta: 'libre' · 'otra' (ya tiene dueño) · 'mia' (la ganó esta familia); panel › Ruleta
   theoboxReclamada: false, theoboxEnvio: null, // ya dejó los datos de envío (y cuáles); mientras no, la TheoBox espera en el mapa
+  theoboxPaso: 2, // ya reclamada: 2 la preparan, 3 salió, 4 llegó (Mi TheoBox; mientras viaja se ve en el mapa y el inicio)
   musica: true,        // música de fondo del mapa y la trivia (on/off)
   notas: {}, huecos: [], vistas: {},
 });

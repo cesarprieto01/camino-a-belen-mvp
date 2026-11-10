@@ -185,10 +185,12 @@ const flows = {
     const [estadoTB, salio] = await tb();
     if (!salio || estadoTB !== 'mia' || (await screen()) !== 'tbGano') errs.push('el día 24 con la TheoBox libre no lleva a «¡Ganaste la TheoBox!»: ' + estadoTB + ' · ' + await screen());
   },
-  // TheoBox ganada: reclamarla (datos en dos pasos) → «Va en camino» → «Comparte tu premio»; con «Ahora no», espera en el mapa
+  // TheoBox ganada: reclamarla (datos en dos pasos) → «Va en camino» → «Comparte tu premio»; con «Ahora no», espera en el mapa.
+  // Ya reclamada, el mapa, el inicio y Ajustes llevan a «Mi TheoBox». En el tema claro van las pantallas claras
   async theobox() {
     await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 24, inscrito: true, teaserVisto: true, plan: 'premium', theobox: 'mia', theoboxReclamada: false }); for (let d = 0; d <= 24; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.ruletas[24] = 'theobox'; c.save(); c.clearHistory(); c.go('tbGano', { day: 24 }, 'none'); });
     await p.waitForTimeout(1500); await shot('gano');
+    if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-claro')))) errs.push('en el tema claro «¡Ganaste!» no sale clara');
     await tap('Ahora no'); await p.waitForTimeout(1500);
     if ((await screen()) !== 'mapa' || !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-espera')))) errs.push('«Ahora no» no deja la TheoBox esperando en el mapa: ' + await screen());
     await shot('mapa-espera');
@@ -213,7 +215,23 @@ const flows = {
     await tap('Compartir'); await p.waitForTimeout(1200); await shot('compartir');
     if ((await screen()) !== 'tbCompartir') errs.push('«Compartir» no abre «Comparte tu premio»: ' + await screen());
     await tap('Cerrar'); await p.waitForTimeout(900); await tap('Volver al camino'); await p.waitForTimeout(1500);
-    if ((await screen()) !== 'mapa' || await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-espera'))) errs.push('ya reclamada, el aviso sigue en el mapa (o no vuelve al mapa): ' + await screen());
+    const aviso = await p.evaluate(() => document.querySelector('#viewport .layer:last-child .tb-espera')?.textContent || '');
+    if ((await screen()) !== 'mapa' || !/va en camino/.test(aviso)) errs.push('ya reclamada, el mapa no avisa que va en camino: ' + await screen() + ' · ' + aviso);
+    await shot('mapa-en-camino');
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child .tb-espera-cta')?.click()); await p.waitForTimeout(1200); await shot('mi-theobox');
+    const mi = await p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.textContent || '');
+    if ((await screen()) !== 'tbMiTheobox' || !/Medellín, Antioquia, Colombia/.test(mi) || !/La preparamos para ti/.test(mi)) errs.push('«Ver envío» no abre Mi TheoBox con el envío: ' + await screen());
+    if (/\[Paquetería\]/.test(mi)) errs.push('Mi TheoBox muestra la guía antes de que salga');
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.theoboxPaso = 3; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(1800); await shot('inicio-en-camino');
+    if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-inicio')))) errs.push('el inicio no muestra la card de la TheoBox en camino');
+    await p.evaluate(() => document.querySelector('#viewport .layer:last-child .tb-inicio .tb-espera-cta')?.click()); await p.waitForTimeout(1200);
+    if ((await screen()) !== 'tbMiTheobox' || !(await p.evaluate(() => /\[Paquetería\]/.test(document.querySelector('#viewport .layer:last-child').textContent)))) errs.push('la card del inicio no abre Mi TheoBox con la guía (ya salió): ' + await screen());
+    await tap('Atrás'); await p.waitForTimeout(1000); await tap('Ajustes'); await p.waitForTimeout(1200); await shot('ajustes');
+    if ((await screen()) !== 'ajustes') errs.push('el engrane del inicio no abre Ajustes: ' + await screen());
+    await tap('Mi TheoBox'); await p.waitForTimeout(1200);
+    if ((await screen()) !== 'tbMiTheobox') errs.push('Ajustes › Mis premios no abre Mi TheoBox: ' + await screen());
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.theoboxPaso = 4; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(1500);
+    if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-inicio'))) errs.push('ya entregada, el inicio sigue mostrando la card');
   },
   async memorama() {
     await scenario('Memorama'); await shot('mapa');

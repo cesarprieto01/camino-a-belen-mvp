@@ -1,12 +1,13 @@
 // TheoBox, el gran premio de la ruleta (día 24, una sola en todo el reto): «¡Ganaste la TheoBox!», los datos de envío en dos pasos,
-// «Va en camino» y «Comparte tu premio». Diseño aprobado por César en el lienzo «TheoBox · Gran premio» (9-nov-2026). Las pantallas
-// (public/screens/TB-*.html) son oscuras en los dos temas: es un momento aparte, como el diseño. Si eligen «Ahora no», la TheoBox
-// queda esperando encima de la hoja del día en el mapa (map.js) hasta que la reclamen.
+// «Va en camino», «Comparte tu premio» y «Mi TheoBox» (seguimiento y soporte). Diseño aprobado por César en el lienzo
+// «TheoBox · Gran premio» (9 y 10-nov-2026): cada pantalla tiene su versión clara (TB-*-claro.html) y oscura (TB-*.html).
+// Si eligen «Ahora no», la TheoBox queda esperando encima de la hoja del día en el mapa (map.js) hasta que la reclamen; ya
+// reclamada, mientras viaja se llega a «Mi TheoBox» desde el mapa, el inicio (card) y Ajustes («Mis premios»).
 import { S, save, go, back, on, register, toast, confetti } from './core.js';
 import { teoDice, motivo, levanta } from './musica.js';
 import { celebrar } from './teo-anim.js';
 
-const igual = f => [f, f]; // misma pantalla de día y de noche
+const tema = f => [f + '-claro', f]; // [clara, oscura]
 // países de ejemplo hasta saber a dónde se envía: el país elegido trae sus estados (o departamentos) y sus ciudades
 export const PAISES = {
   'Estados Unidos': { region: 'Estado', zonas: { California: ['Los Ángeles', 'San Diego', 'San Francisco'], Florida: ['Miami', 'Orlando', 'Tampa'], Texas: ['Austin', 'Dallas', 'Houston'] } },
@@ -40,7 +41,7 @@ const alSalir = reglas => reglas.forEach(([campo, regla]) => {
 });
 
 register('tbGano', {
-  files: igual('TB-Ganaste'),
+  files: tema('TB-Ganaste'),
   mount(root, p, layer) {
     requestAnimationFrame(() => celebrar(root)); // Teodoro salta (Lottie) donde está el dibujo quieto
     confetti(layer, 195, 260, 90);
@@ -53,7 +54,7 @@ register('tbGano', {
 });
 
 register('tbDatos', {
-  files: igual('TB-Datos'), scrollAuto: true,
+  files: tema('TB-Datos'), scrollAuto: true,
   mount(root) {
     if (S.theoboxReclamada) return go('tbEnCamino', {}, 'none', { replace: true });
     const e = envio(), $ = id => root.querySelector('#tb-' + id);
@@ -79,7 +80,7 @@ register('tbDatos', {
 });
 
 register('tbDireccion', {
-  files: igual('TB-Direccion'), scrollAuto: true,
+  files: tema('TB-Direccion'), scrollAuto: true,
   mount(root) {
     if (S.theoboxReclamada) return go('tbEnCamino', {}, 'none', { replace: true });
     const e = envio(), $ = id => root.querySelector('#tb-' + id);
@@ -115,14 +116,14 @@ register('tbDireccion', {
     on(root, 'Reclamar mi TheoBox', () => {
       if (!revisar(reglas)) return;
       Object.assign(e, { pais: pais.value, region: region.value, ciudad: ciudad.value, direccion: dir.value.trim(), apto: apto.value.trim(), cp: cp.value.trim(), notas: notas.value.trim() });
-      S.theoboxReclamada = true; save();
+      S.theoboxReclamada = true; S.theoboxPaso = 2; save();
       go('tbEnCamino', { recien: true }, 'fade', { replace: true });
     });
   },
 });
 
 register('tbEnCamino', {
-  files: igual('TB-EnCamino'),
+  files: tema('TB-EnCamino'),
   mount(root, p, layer) {
     requestAnimationFrame(() => celebrar(root));
     if (p.recien) { confetti(layer, 195, 180, 50); motivo('corto'); navigator.vibrate?.(30); }
@@ -138,7 +139,7 @@ function guardar() {
   document.body.appendChild(a); a.click(); a.remove();
 }
 register('tbCompartir', {
-  files: igual('TB-Celebrar'),
+  files: tema('TB-Celebrar'),
   mount(root) {
     requestAnimationFrame(() => celebrar(root));
     on(root, 'Cerrar', () => back('mapa'));
@@ -151,5 +152,88 @@ register('tbCompartir', {
       guardar(); toast('Imagen guardada', 'Súbela a tus historias');
     });
     on(root, 'Guardar imagen', () => { guardar(); toast('Imagen guardada', 'Está en tus descargas'); });
+  },
+});
+
+// ---------- Mi TheoBox: cómo va el envío y a quién escribir ----------
+// el día 24 del reto es el 22 de diciembre: reclamada ese día, se prepara el 23, sale el 24 y llega entre el 28 y el 30
+const PASOS = [
+  ['Recibimos tus datos', '22 dic', '<path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v4h4"></path><path d="M9.5 14l2 2 4-4"></path>'],
+  ['La preparamos para ti', '23 dic', '<rect x="3.5" y="8" width="17" height="4" rx="1"></rect><path d="M5 12v8h14v-8"></path><path d="M12 8v12"></path><path d="M12 8C10.5 5 7 5 7 7s3 1 5 1zm0 0c1.5-3 5-3 5-1s-3 1-5 1z"></path>'],
+  ['Salió hacia tu casa', '24 dic', '<path d="M2.5 7h11v9h-11z"></path><path d="M13.5 10h4l3 3v3h-7"></path><circle cx="6.5" cy="17.5" r="1.8"></circle><circle cx="17" cy="17.5" r="1.8"></circle>'],
+  ['¡Llega a tu casa!', '28–30 dic', '<path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1Z"></path>'],
+];
+export const LLEGA = 'Llega entre el 28 y el 30 dic';
+const paso = () => S.theoboxPaso || 2; // 2 = la preparan, 3 = salió, 4 = llegó
+/** Reclamada y todavía viajando: el mapa y el inicio la muestran. */
+export const enCamino = () => S.theobox === 'mia' && S.theoboxReclamada && paso() < 4;
+/** Lo de adentro del aviso del mapa y de la card del inicio: la caja, «va en camino», cuándo llega y «Ver envío». */
+export const avisoEnvio = ({ camion = false } = {}) => '<span class="tb-espera-ico" aria-hidden="true">'
+  + (camion ? '' : '<i></i>') + '<img src="assets/ruleta/theobox-casilla.webp" alt="">'
+  + (camion ? '<span class="tb-camion"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' + PASOS[2][2] + '</svg></span>' : '')
+  + `</span><span class="tb-espera-txt"><b>Tu TheoBox va en camino</b><small>${LLEGA}</small></span><button type="button" class="tb-espera-cta" data-bound="1">Ver envío</button>`;
+
+/** Inicio: mientras viaja, la card va entre Adviento y Misiones Diarias (lo de abajo baja lo que mide la card). */
+export function tarjetaInicio(root) {
+  if (!enCamino() || root.querySelector('.tb-inicio')) return;
+  const ALTO = 88, DESDE = 460;
+  [...root.children].forEach(el => {
+    const t = parseFloat(el.style.top);
+    if (el.tagName !== 'NAV' && el.style.position === 'absolute' && t >= DESDE) el.style.top = (t + ALTO) + 'px';
+  });
+  root.style.height = (parseFloat(root.style.height) + ALTO) + 'px';
+  const c = document.createElement('div'); c.className = 'tb-inicio';
+  c.innerHTML = avisoEnvio();
+  c.querySelector('button').addEventListener('click', () => go('tbMiTheobox', {}, 'push'));
+  root.appendChild(c);
+}
+
+register('tbMiTheobox', {
+  files: tema('TB-MiTheobox'), scrollAuto: true,
+  mount(root) {
+    const p = paso(), llego = p >= 4;
+    on(root, 'Atrás', () => back('mapa'));
+    // estado de arriba
+    const estado = [...root.querySelectorAll('.tb-titulo')].find(t => t.textContent === 'ESTADO')?.parentElement;
+    if (estado && llego) { estado.querySelector('.tb-oro').textContent = '¡Llegó!'; estado.lastElementChild.textContent = 'Que la disfruten en familia'; }
+    // los pasos: hechos, el de ahora (late) y los que faltan
+    const ol = root.querySelector('.tb-pasos');
+    ol.innerHTML = PASOS.map(([t, fecha, ico], i) => {
+      const clase = llego || i < p - 1 ? 'tb-hecho' : i === p - 1 ? 'tb-ahora' : 'tb-luego';
+      const titulo = llego && i === 3 ? '¡Llegó a tu casa!' : t;
+      return `<li class="${clase}"><span class="tb-paso-eje"><span class="tb-paso-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">${ico}</svg></span>${i < 3 ? '<span class="tb-paso-linea" aria-hidden="true"></span>' : ''}</span>`
+        + `<span class="tb-paso-txt"><span><b>${titulo}</b><small>${fecha}</small></span>${clase === 'tb-ahora' ? '<small>Ahora</small>' : ''}</span></li>`;
+    }).join('');
+    // la guía de la paquetería existe desde que sale
+    const guia = [...root.querySelectorAll('.tb-titulo')].find(t => t.textContent === 'ENVÍO')?.parentElement;
+    if (guia && p < 3) guia.remove();
+    on(root, 'Copiar el número de guía', () => { navigator.clipboard?.writeText('0000 0000 0000').catch(() => {}); toast('Guía copiada'); });
+    on(root, 'Ver en la paquetería', () => toast('Paquetería', 'Muy pronto aquí'));
+    // a quién se entrega: lo que llenaron (con el panel puede no haber datos: queda el ejemplo del diseño)
+    const e = S.theoboxEnvio || {}, entrega = [...root.querySelectorAll('.tb-titulo')].find(t => t.textContent === 'SE ENTREGA A')?.parentElement;
+    if (entrega && e.nombre) {
+      entrega.querySelector('b').textContent = e.nombre;
+      const lineas = [[e.direccion, e.apto].filter(Boolean).join(', '), [e.ciudad, e.region, e.pais].filter(Boolean).join(', '), [e.prefijo, e.telefono].filter(Boolean).join(' ')];
+      entrega.lastElementChild.innerHTML = lineas.filter(Boolean).map(l => l.replace(/[<&]/g, c => c === '<' ? '&lt;' : '&amp;')).join('<br>');
+    }
+    on(root, 'Escribir a soporte', () => toast('Soporte de Theo', 'Muy pronto aquí'));
+    on(root, 'Enviar un correo', () => toast('Correo de soporte', 'Muy pronto aquí'));
+  },
+});
+
+// ---------- Ajustes de Theo (ya existen en la app; aquí solo es nuevo «Mis premios») ----------
+register('ajustes', {
+  files: ['Ajustes-claro', 'Ajustes'], scrollAuto: true,
+  mount(root) {
+    on(root, 'Atrás', () => back('hoy'));
+    const perfil = [...root.querySelectorAll('.aj-fila b')].find(b => b.textContent === 'Lucía');
+    if (perfil) perfil.textContent = S.nombre;
+    const premios = [...root.querySelectorAll('.aj-seccion')].find(t => t.textContent === 'MIS PREMIOS'), fila = premios?.nextElementSibling;
+    if (S.theobox === 'mia' && S.theoboxReclamada) {
+      const est = fila.querySelector('span > i')?.parentElement; // el punto y «En camino · llega…»
+      if (est && paso() >= 4) est.lastChild.textContent = 'Entregada';
+      on(root, fila, () => go('tbMiTheobox', {}, 'push'));
+    } else { premios?.remove(); fila?.remove(); }
+    [...root.querySelectorAll('.aj-fila')].filter(f => !f.dataset.bound).forEach(f => on(root, f, () => toast('Ajustes de Theo', 'Ya existen en la app')));
   },
 });

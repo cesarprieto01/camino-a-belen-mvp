@@ -1156,7 +1156,7 @@ body.dev-on .p-arrow { width: 34px; height: 34px; border-radius: 10px; font-size
 .dv-tema > small { font: 600 10.5px/1.3 Mulish, sans-serif; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dv-badge-t { top: auto; bottom: 26px; left: 10px; background: rgba(10,31,68,.85); }
 
-/* ---------- TheoBox, el gran premio (pantallas TB-*: oscuras en los dos temas, como el diseño aprobado) ---------- */
+/* ---------- TheoBox, el gran premio (pantallas TB-*.html oscuras y TB-*-claro.html claras, con la paleta clara del MVP) ---------- */
 .tb-rayos { background: repeating-conic-gradient(from 0deg, rgba(255,220,110,.32) 0deg 6deg, rgba(255,220,110,0) 6deg 16deg); -webkit-mask: radial-gradient(circle, #000 0 12%, transparent 64%); mask: radial-gradient(circle, #000 0 12%, transparent 64%); animation: tbGirar 30s linear infinite; }
 .tb-halo { animation: tbRespirar 2.6s ease-in-out infinite; }
 .tb-flota { animation: tbFlotar 3s ease-in-out infinite; }
@@ -1194,20 +1194,98 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 .tb-acepto { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 16px; background: rgba(255,255,255,.05); font: 500 15px/1.4 Mulish, system-ui, sans-serif; color: #FFF6DD; cursor: pointer; }
 .tb-acepto input { flex: none; width: 22px; height: 22px; margin: 1px 0 0; accent-color: #F5DB78; }
 .tb-enlace { padding: 0; border: 0; background: none; color: #FFE89A; font: inherit; text-decoration: underline; cursor: pointer; }
+/* modo claro (TB-*-claro.html, raíz .tb-claro): los mismos componentes con títulos turquesa, cards blancas y dorado oscuro que se lee */
+.tb-claro .tb-rayos { background: repeating-conic-gradient(from 0deg, rgba(240,180,50,.3) 0deg 6deg, rgba(240,180,50,0) 6deg 16deg); }
+.tb-claro .tb-oro { background-image: linear-gradient(180deg, #E3A42A 0%, #B06A00 55%, #8F5A06 100%); }
+.tb-claro .tb-vidrio { background: rgba(255,255,255,.92); border-color: rgba(11,116,138,.12); box-shadow: 0 10px 26px rgba(11,116,138,.1); }
+.tb-claro .tb-boton:focus-visible, .tb-claro .tb-redondo:focus-visible, .tb-claro .tb-enlace:focus-visible { outline-color: #0B748A; }
+.tb-claro .tb-redondo { box-sizing: border-box; border-color: rgba(11,116,138,.16); background: #FFFFFF; color: #0B748A; box-shadow: 0 2px 8px rgba(11,116,138,.08); }
+.tb-claro .tb-principal { box-shadow: 0 10px 24px rgba(217,169,58,.35); }
+.tb-claro .tb-confianza, .tb-claro .tb-ayuda, .tb-claro .tb-opcional { color: #3E5F6B; }
+.tb-claro .tb-campo { border-color: #C6DCE4; background: #FFFFFF; color: #00516D; transition: border-color 120ms ease-out, box-shadow 120ms ease-out; }
+.tb-claro .tb-campo::placeholder { color: #7F9AA4; }
+.tb-claro .tb-campo:focus { border-color: #1E8DA5; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(30,141,165,.15); }
+.tb-claro .tb-etiqueta { color: #00516D; }
+.tb-claro .tb-error { color: #B42318; }
+.tb-claro .tb-error::before { background: #B42318; color: #FFFFFF; }
+.tb-claro .tb-ok input.tb-campo { border-color: rgba(10,132,69,.45); }
+.tb-claro .tb-mal .tb-campo { border-color: #D92D20; }
+.tb-claro .tb-acepto { background: #FFFFFF; border: 1px solid rgba(11,116,138,.14); color: #00516D; }
+.tb-claro .tb-acepto input { accent-color: #0B748A; }
+.tb-claro .tb-enlace { color: #0B748A; }
+/* Mi TheoBox (seguimiento y ayuda) */
+.tb-titulo { margin: 0; font: 800 12px Mulish, sans-serif; letter-spacing: .14em; color: rgba(255,246,221,.7); }
+.tb-claro .tb-titulo { color: #3E5F6B; }
+.tb-pasos li { display: flex; gap: 14px; min-height: 62px; }
+.tb-pasos li:last-child { min-height: 0; }
+.tb-paso-eje { flex: none; display: flex; flex-direction: column; align-items: center; }
+.tb-paso-ico { width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid rgba(255,255,255,.45); background: rgba(255,255,255,.12); color: #FFFFFF; }
+.tb-hecho .tb-paso-ico { border: 0; background: #F7C948; color: #06325A; }
+.tb-ahora .tb-paso-ico { border: 3px solid #F7C948; background: radial-gradient(circle, rgba(247,201,72,.35) 0%, #0B2A5E 75%); color: #FFE89A; animation: tbPulso 1.6s ease-out infinite; }
+.tb-paso-linea { flex: 1; width: 3px; margin: 4px 0; border-radius: 2px; background: rgba(255,255,255,.25); }
+.tb-hecho .tb-paso-linea { background: #F7C948; }
+.tb-paso-txt { flex: 1; display: flex; flex-direction: column; gap: 2px; padding-top: 9px; }
+.tb-paso-txt > span { display: flex; justify-content: space-between; gap: 8px; }
+.tb-paso-txt b { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.92); }
+.tb-hecho .tb-paso-txt b, .tb-ahora .tb-paso-txt b { font-weight: 800; color: #FFFFFF; }
+.tb-ahora .tb-paso-txt b { color: #FFE89A; }
+.tb-paso-txt small { flex: none; font-size: 13px; color: rgba(255,246,221,.75); }
+.tb-claro .tb-paso-ico { border-color: rgba(11,116,138,.28); background: #F1F9FB; color: #3E5F6B; }
+.tb-claro .tb-hecho .tb-paso-ico { background: #F7C948; color: #06325A; }
+.tb-claro .tb-ahora .tb-paso-ico { border-color: #E3A42A; background: radial-gradient(circle, rgba(247,201,72,.35) 0%, #FFFFFF 75%); color: #8F5A06; }
+.tb-claro .tb-paso-linea { background: rgba(11,116,138,.16); }
+.tb-claro .tb-hecho .tb-paso-linea { background: #E3A42A; }
+.tb-claro .tb-paso-txt b, .tb-claro .tb-hecho .tb-paso-txt b { color: #00516D; }
+.tb-claro .tb-ahora .tb-paso-txt b { color: #8F5A06; }
+.tb-claro .tb-paso-txt small { color: #3E5F6B; }
+.tb-luz { animation: tbLatir 2.6s ease-in-out infinite; }
 /* la ruleta cae en la TheoBox: todo se oscurece menos la casilla dorada, que brilla */
 .tb-dorada { position: absolute; pointer-events: none; z-index: 2; }
 .tb-dorada-velo { position: absolute; border-radius: 50%; background: conic-gradient(from -22.5deg, rgba(0,8,43,0) 0deg 45deg, rgba(0,8,43,.62) 45deg 360deg); animation: tbAparece .45s ease-out both; }
 .tb-dorada-luz { position: absolute; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(255,246,221,.95) 0%, rgba(255,214,90,.7) 34%, rgba(247,201,72,0) 70%); mix-blend-mode: screen; animation: tbAparece .45s ease-out both, tbLatir 1.1s .45s ease-in-out infinite; }
-/* mapa: la TheoBox ganada espera encima de la hoja del día (no la reemplaza) hasta reclamarla */
-[data-sheet] > .tb-espera { position: absolute; left: 6px; right: 6px; top: -76px; height: 64px; box-sizing: border-box; padding: 8px; display: flex; align-items: center; gap: 10px; border-radius: 22px; color: #FFFFFF; background: linear-gradient(180deg, rgba(52,86,142,.94) 0%, rgba(20,48,98,.94) 100%); -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%); border: 1px solid rgba(255,255,255,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 14px 34px rgba(0,8,43,.4); z-index: 59; animation: tbEntra .45s cubic-bezier(.2,.9,.3,1.15) both; }
-/* dentro de la hoja (que ya es de vidrio) el desenfoque no alcanza el mapa: el fondo va casi opaco para que se lea */
-.tb-espera-ico { position: relative; flex: none; width: 48px; height: 48px; border-radius: 15px; background: rgba(255,255,255,.12); display: grid; place-items: center; }
+/* mapa: la TheoBox ganada espera encima de la hoja del día (no la reemplaza) hasta reclamarla; ya reclamada, avisa que va en camino.
+   Dentro de la hoja (que ya es de vidrio) el desenfoque no alcanza el mapa: el fondo va casi opaco para que se lea */
+[data-sheet] > .tb-espera { position: absolute; left: 6px; right: 6px; top: -76px; height: 64px; box-sizing: border-box; padding: 8px; display: flex; align-items: center; gap: 10px; border-radius: 22px; color: #00516D; background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(240,249,251,.94) 100%); -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); border: 1px solid rgba(255,255,255,.95); box-shadow: inset 0 1px 0 #FFFFFF, 0 14px 34px rgba(11,60,80,.25); z-index: 59; animation: tbEntra .45s cubic-bezier(.2,.9,.3,1.15) both; }
+:root[data-theme="dark"] [data-sheet] > .tb-espera { color: #FFFFFF; background: linear-gradient(180deg, rgba(52,86,142,.94) 0%, rgba(20,48,98,.94) 100%); -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%); border-color: rgba(255,255,255,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 14px 34px rgba(0,8,43,.4); }
+.tb-espera-ico { position: relative; flex: none; width: 48px; height: 48px; border-radius: 15px; background: rgba(233,181,62,.16); display: grid; place-items: center; }
+:root[data-theme="dark"] .tb-espera-ico { background: rgba(255,255,255,.12); }
 .tb-espera-ico i { position: absolute; inset: 2px; border-radius: 50%; background: radial-gradient(circle, rgba(255,232,154,.75) 0%, rgba(247,201,72,0) 70%); animation: tbLatir 2.6s ease-in-out infinite; }
 .tb-espera-ico img { position: relative; width: 42px; height: 42px; object-fit: contain; }
+.tb-espera-ico .tb-camion { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; box-sizing: border-box; border-radius: 50%; background: #F7C948; border: 2px solid #FFFFFF; color: #06325A; display: grid; place-items: center; }
+:root[data-theme="dark"] .tb-espera-ico .tb-camion { border-color: #1B3F78; }
 .tb-espera b { flex: 1; min-width: 0; font: 800 15px Mulish, system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-espera-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tb-espera-txt b { font-size: 14px; }
+.tb-espera-txt small { font: 700 12px Mulish, system-ui, sans-serif; color: #8F5A06; white-space: nowrap; }
+:root[data-theme="dark"] .tb-espera-txt small { font-weight: 600; color: #FFE89A; }
 .tb-espera-cta { flex: none; height: 44px; padding: 0 16px; border: 0; border-radius: 16px; background: #F5DB78; color: #06325A; font: 700 16px 'Neue Montreal', Mulish, sans-serif; cursor: pointer; touch-action: manipulation; transition: transform 100ms ease-out; }
+.tb-espera-txt + .tb-espera-cta { padding: 0 12px; font-size: 14px; }
 .tb-espera-cta:active { transform: scale(.96); }
 [data-sheet]:has(> .tb-espera) > .back-hoy { top: -136px !important; }
+/* inicio: mientras la TheoBox viaja, una card entre Adviento y Misiones Diarias lleva a Mi TheoBox */
+.tb-inicio { position: absolute; left: 16px; right: 16px; top: 458px; height: 74px; box-sizing: border-box; padding: 9px; display: flex; align-items: center; gap: 10px; border-radius: 24px; background: #FFFFFF; border: 1px solid rgba(227,164,42,.5); box-shadow: 0 10px 24px rgba(11,116,138,.14); color: #00516D; z-index: 2; }
+:root[data-theme="dark"] .tb-inicio { background: linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 100%); border-color: rgba(255,232,154,.45); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 12px 28px rgba(0,8,43,.35); color: #FFFFFF; }
+.tb-inicio .tb-espera-ico { width: 52px; height: 52px; border-radius: 16px; background: #FFF6DD; }
+:root[data-theme="dark"] .tb-inicio .tb-espera-ico { background: rgba(255,255,255,.1); }
+.tb-inicio .tb-espera-ico img { width: 44px; height: 44px; }
+.tb-inicio .tb-espera-txt { gap: 2px; }
+.tb-inicio .tb-espera-txt small { font-size: 13px; }
+.tb-inicio .tb-espera-cta { padding: 0 12px; font-size: 14px; }
+/* ajustes (Theo): grupos de filas; «Mis premios» solo aparece con la TheoBox reclamada */
+.aj-grupo { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 22px; overflow: hidden; }
+.aj-claro .aj-grupo { background: #FFFFFF; border-color: rgba(11,116,138,.12); box-shadow: 0 4px 14px rgba(11,116,138,.06); }
+.aj-fila { width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 0 16px; border: 0; background: none; text-align: left; color: #FFFFFF; font: inherit; cursor: pointer; touch-action: manipulation; }
+.aj-claro .aj-fila { color: #00516D; }
+.aj-fila + .aj-fila { border-top: 1px solid rgba(255,255,255,.1); }
+.aj-claro .aj-fila + .aj-fila { border-top-color: rgba(11,116,138,.1); }
+.aj-fila.aj-grupo { border: 1px solid rgba(255,255,255,.12); }
+.aj-claro .aj-fila.aj-grupo { border-color: rgba(11,116,138,.12); }
+.aj-fila:focus-visible { outline: 2px solid #FFFFFF; outline-offset: -2px; }
+.aj-claro .aj-fila:focus-visible { outline-color: #0B748A; }
+.aj-ico { flex: none; width: 36px; height: 36px; border-radius: 11px; background: rgba(255,255,255,.1); display: grid; place-items: center; color: #FFFFFF; }
+.aj-claro .aj-ico { background: #E8F5F9; color: #0B748A; }
+.aj-seccion { margin: 0 0 -6px 4px; font: 800 12px Mulish, sans-serif; letter-spacing: .14em; color: rgba(255,246,221,.7); }
+.aj-claro .aj-seccion { color: #3E5F6B; }
 @keyframes tbGirar { to { transform: rotate(360deg); } }
 @keyframes tbRespirar { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.08); opacity: 1; } }
 @keyframes tbFlotar { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
@@ -1219,7 +1297,10 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 @keyframes tbLatir { 0%, 100% { transform: scale(.92); opacity: .75; } 50% { transform: scale(1.1); opacity: 1; } }
 @keyframes tbEntra { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .tb-rayos, .tb-halo, .tb-flota, .tb-flota-giro, .tb-titila, .tb-ahora, .tb-dorada-luz, .tb-espera-ico i, [data-sheet] > .tb-espera { animation: none; }
+  .tb-rayos, .tb-halo, .tb-flota, .tb-flota-giro, .tb-titila, .tb-ahora, .tb-ahora .tb-paso-ico, .tb-luz, .tb-dorada-luz, .tb-espera-ico i, [data-sheet] > .tb-espera { animation: none; }
   .tb-confeti { display: none; }
 }
-@media (prefers-reduced-transparency: reduce) { [data-sheet] > .tb-espera { background: #1B3F78; -webkit-backdrop-filter: none; backdrop-filter: none; } }
+@media (prefers-reduced-transparency: reduce) {
+  [data-sheet] > .tb-espera { background: #FFFFFF; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root[data-theme="dark"] [data-sheet] > .tb-espera { background: #1B3F78; }
+}

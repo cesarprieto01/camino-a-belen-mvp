@@ -6,6 +6,7 @@ import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
 import { bindMute, retener, soltarTrasVoz, teoDice, sonido, motivo } from './musica.js';
 import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
 import { SENDERO } from './sendero.js';
+import { enCamino, avisoEnvio } from './theobox.js';
 // dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
 const piesDe = teo => { const l = parseFloat(teo.style.left), t = parseFloat(teo.style.top), w = parseFloat(teo.style.width), h = parseFloat(teo.style.height); return { cx: l + w / 2, pies: t + h, alto: h }; };
 /** Teodoro (Lottie) camina por «ruta» (puntos de sus pies en el mapa) hasta «fin», mirando hacia donde va: el dibujo mira a la derecha y se voltea
@@ -789,13 +790,17 @@ function sheetDrag(layer) {
       b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-label', 'Abrir el día');
     }
   };
-  // la TheoBox ganada y sin reclamar espera encima de la hoja del día (no la reemplaza) hasta que la reclamen (theobox.js)
+  // la TheoBox ganada y sin reclamar espera encima de la hoja del día (no la reemplaza) hasta que la reclamen; ya reclamada,
+  // mientras viaja, ahí mismo avisa que va en camino y lleva a «Mi TheoBox» (theobox.js)
   const esperaTB = s => {
-    if (!s || S.theobox !== 'mia' || S.theoboxReclamada || s.querySelector(':scope > .tb-espera')) return;
+    const espera = S.theobox === 'mia' && !S.theoboxReclamada;
+    if (!s || !(espera || enCamino()) || s.querySelector(':scope > .tb-espera')) return;
     const m = document.createElement('div'); m.className = 'tb-espera'; m.setAttribute('role', 'status');
-    m.innerHTML = '<span class="tb-espera-ico" aria-hidden="true"><i></i><img src="assets/ruleta/theobox-casilla.webp" alt=""></span><b>Tu TheoBox te espera</b><button type="button" class="tb-espera-cta" data-bound="1">Reclamar</button>';
+    m.innerHTML = espera
+      ? '<span class="tb-espera-ico" aria-hidden="true"><i></i><img src="assets/ruleta/theobox-casilla.webp" alt=""></span><b>Tu TheoBox te espera</b><button type="button" class="tb-espera-cta" data-bound="1">Reclamar</button>'
+      : avisoEnvio({ camion: true });
     m.addEventListener('pointerdown', ev => ev.stopPropagation());
-    m.querySelector('button').addEventListener('click', ev => { ev.stopPropagation(); go('tbDatos', {}, 'push'); });
+    m.querySelector('button').addEventListener('click', ev => { ev.stopPropagation(); go(espera ? 'tbDatos' : 'tbMiTheobox', {}, 'push'); });
     s.appendChild(m);
   };
   build(layer.querySelector('[data-sheet]')); esperaTB(layer.querySelector('[data-sheet]'));
