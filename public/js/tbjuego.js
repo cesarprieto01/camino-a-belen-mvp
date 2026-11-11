@@ -246,12 +246,17 @@ export function deslizarCamino(tCard, from = 'teodoro') {
   l2.classList.add('tbj-l2');
   l2.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); go('mapa', { theobox: true, from }, 'push'); }, true);
 
+  montarSlider(tCard, l2);
+}
+
+/** El deslizador ocupa el lugar de la card (misma posición); lo de abajo baja lo que miden los puntos. Devuelve el deslizador. */
+function montarSlider(tCard, l2) {
   // el deslizador ocupa el lugar de la card; lo de abajo baja lo que miden los puntos
   const PUNTOS = 26;
   const wrap = el('div', 'tbj-slider-wrap');
   wrap.style.cssText = `position:absolute;left:${tCard.style.left};top:${tCard.style.top};width:${tCard.offsetWidth || parseFloat(tCard.style.width)}px;z-index:${tCard.style.zIndex || 1}`;
   const t0 = parseFloat(tCard.style.top);
-  [...tCard.parentElement.children].forEach(e => { const tp = parseFloat(e.style.top); if (e !== tCard && !isNaN(tp) && tp > t0) e.style.top = `${tp + PUNTOS}px`; });
+  [...tCard.parentElement.children].forEach(e => { const tp = parseFloat(e.style.top); if (e !== tCard && !e.classList.contains('vidrio-zona') && !isNaN(tp) && tp > t0) e.style.top = `${tp + PUNTOS}px`; });
   const pa = tCard.parentElement, ph = parseFloat(pa.style.height); if (ph) pa.style.height = `${ph + PUNTOS}px`;
   const slider = el('div', 'tbj-slider');
   slider.setAttribute('role', 'region'); slider.setAttribute('aria-roledescription', 'carrusel'); slider.setAttribute('aria-label', 'Adviento y TheoBox');
@@ -264,6 +269,45 @@ export function deslizarCamino(tCard, from = 'teodoro') {
     const i = Math.round(slider.scrollLeft / slider.clientWidth);
     puntos.querySelectorAll('i').forEach((pt, k) => pt.classList.toggle('on', k === i));
   }), { passive: true });
+  return slider;
+}
+
+/** Antes del 29 (inscrito o no): prendido y sin TheoBox ganada. */
+export const juegoAntes = () => !!S.tbJuego && fase() === 'antes' && S.theobox !== 'mia';
+
+/** Antes del 29: la card grande de la cuenta atrás (o la del vidrio, sin inscribirse) se desliza a otra con la misma UI, el mismo
+ *  contador y la escena de Teodoro con la TheoBox. Su botón hace lo mismo que el de la card de siempre. */
+export function deslizarAntes(root) {
+  if (!juegoAntes()) return;
+  const card = [...root.querySelectorAll('[role=group][aria-label^="Adviento"]')].find(g => g.offsetWidth >= 330 && !g.closest('.theo-heroe, .tbj-slider'));
+  if (!card) return;
+  const orig = [...card.querySelectorAll('a, button')].find(a => /^(Ver el intro|Saber más|Entrar|Únete al reto|Unirme gratis)$/.test(a.textContent.trim()));
+  const art = mercado() === 'usa' ? 'una' : 'la', e = escena();
+  const l2 = el('div', 'tbj-antes', `
+    <div class="tbj-antes-img"><img src="${e.src}" alt="${e.alt}"><span aria-hidden="true"></span></div>
+    <h3 class="tbj-antes-tit">Podrías ganar ${art} <b>TheoBox</b></h3>
+    <p class="tbj-antes-sub">Empieza el <b>29 de noviembre</b></p>
+    <div class="tbj-antes-cuenta" role="timer"><span><b data-u="d">0</b> <em>días</em></span><i></i><span><b data-u="h">00</b> horas</span><i></i><span><b data-u="m">00</b> min</span></div>
+    <button type="button" class="tbj-antes-cta"></button>`);
+  const boton = l2.querySelector('.tbj-antes-cta');
+  boton.append(orig?.textContent.trim() || (S.inscrito ? 'Ver el intro' : 'Únete al reto'));
+  if (!orig || orig.querySelector('svg')) boton.insertAdjacentHTML('beforeend', FLECHA); // con flecha solo si la de siempre la lleva
+  boton.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); orig?.click(); });
+  l2.setAttribute('role', 'group'); l2.setAttribute('aria-label', `Podrías ganar ${art} TheoBox. Empieza el 29 de noviembre`);
+  // la misma cuenta atrás que la card de siempre
+  const meta = new Date(2026, 10, 29, 0, 0, 0), cuenta = l2.querySelector('.tbj-antes-cuenta');
+  const tic = () => {
+    const ms = Math.max(0, meta - new Date()), d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
+    cuenta.querySelector('[data-u=d]').textContent = d; cuenta.querySelector('em').textContent = d === 1 ? 'día' : 'días';
+    cuenta.querySelector('[data-u=h]').textContent = String(h).padStart(2, '0'); cuenta.querySelector('[data-u=m]').textContent = String(m).padStart(2, '0');
+    cuenta.setAttribute('aria-label', `Empieza en ${d} ${d === 1 ? 'día' : 'días'}, ${h} horas y ${m} minutos`);
+  };
+  tic(); const iv = setInterval(() => { if (!l2.isConnected) clearInterval(iv); else tic(); }, 15000);
+  atar(l2);
+  // sin inscribirse: la zona del vidrio (para limpiarlo con el dedo) solo cuenta con la card de siempre a la vista
+  const zona = card.nextElementSibling?.classList.contains('vidrio-zona') ? card.nextElementSibling : null;
+  const slider = montarSlider(card, l2);
+  if (zona) slider.addEventListener('scroll', () => { zona.style.visibility = slider.scrollLeft > slider.clientWidth / 2 ? 'hidden' : ''; }, { passive: true });
 }
 
 /** Bajo el premio de la ruleta (si no fue la TheoBox): una card pequeña «Para papás · Conócela» que abre la web. */

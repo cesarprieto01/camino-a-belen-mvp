@@ -1393,6 +1393,30 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 .tbj-puntos { display: flex; justify-content: center; gap: 8px; height: 26px; align-items: center; }
 .tbj-puntos i { width: 7px; height: 7px; border-radius: 50%; background: rgba(11,116,138,.28); transition: background 200ms ease-out; }
 .tbj-puntos i.on { background: #0B748A; }
+/* antes del 29: la card de la cuenta atrás con la TheoBox (misma UI que la de siempre) */
+.tbj-antes { position: relative; width: 358px; height: 402px; box-sizing: border-box; border-radius: 28px; overflow: hidden; background: #FFFFFF; box-shadow: 0 16px 36px rgba(8,93,111,.16); color: #00516D; text-align: left; cursor: default; }
+:root[data-theme="dark"] .tbj-antes { background: #274E7C; color: #FFFFFF; box-shadow: 0 16px 36px rgba(0,8,43,.35); }
+.tbj-antes-img { position: absolute; left: 0; top: 0; width: 100%; height: 201px; overflow: hidden; }
+.tbj-antes-img img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 5%; }
+.tbj-antes-img span { position: absolute; left: 0; right: 0; bottom: 0; height: 50px; background: linear-gradient(rgba(255,255,255,0), #FFFFFF); }
+:root[data-theme="dark"] .tbj-antes-img span { background: linear-gradient(rgba(39,78,124,0), #274E7C); }
+.tbj-antes-tit { position: absolute; left: 16px; right: 16px; top: 206px; margin: 0; font: 500 24px/28px 'Neue Montreal', Mulish, system-ui, sans-serif; color: #00516D; }
+.tbj-antes-tit b { font-weight: 700; }
+.tbj-antes-sub { position: absolute; left: 16px; right: 16px; top: 237px; margin: 0; font: 400 15px/19px 'Neue Montreal', Mulish, system-ui, sans-serif; color: #3E5F6B; }
+.tbj-antes-sub b { font-weight: 700; color: #00516D; }
+:root[data-theme="dark"] .tbj-antes-tit, :root[data-theme="dark"] .tbj-antes-sub b { color: #FFFFFF; }
+:root[data-theme="dark"] .tbj-antes-sub { color: #FFF6DD; }
+.tbj-antes-cuenta { position: absolute; left: 16px; right: 16px; top: 268px; height: 56px; border-radius: 16px; background: #EEF6F8; display: flex; align-items: center; }
+.tbj-antes-cuenta span { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 4px; font: 400 13px 'Neue Montreal', Mulish, system-ui, sans-serif; color: #3E5F6B; }
+.tbj-antes-cuenta em { font-style: normal; }
+.tbj-antes-cuenta b { font: 700 26px/29px 'Neue Montreal', Mulish, system-ui, sans-serif; color: #00516D; font-variant-numeric: tabular-nums; }
+.tbj-antes-cuenta i { flex: none; width: 1px; height: 28px; background: rgba(0,81,109,.14); }
+:root[data-theme="dark"] .tbj-antes-cuenta { background: rgba(255,255,255,.1); }
+:root[data-theme="dark"] .tbj-antes-cuenta span { color: #FFF6DD; }
+:root[data-theme="dark"] .tbj-antes-cuenta b { color: #FFFFFF; }
+:root[data-theme="dark"] .tbj-antes-cuenta i { background: rgba(255,255,255,.16); }
+.tbj-antes-cta { position: absolute; left: 16px; right: 16px; top: 334px; height: 52px; border: 0; border-radius: 16px; background: #F5DB78; color: #06325A; display: flex; align-items: center; justify-content: center; gap: 10px; font: 700 18px 'Neue Montreal', Mulish, system-ui, sans-serif; cursor: pointer; touch-action: manipulation; transition: transform 100ms ease-out; }
+.tbj-antes-cta:active { transform: scale(.97); }
 :root[data-theme="dark"] .tbj-puntos i { background: rgba(255,255,255,.3); }
 :root[data-theme="dark"] .tbj-puntos i.on { background: #FFFFFF; }
 .tbj-l2-luz { position: absolute; right: 6px; top: 96px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,90,.75), rgba(255,214,90,0)); pointer-events: none; }

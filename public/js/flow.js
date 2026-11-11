@@ -7,7 +7,7 @@ import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from
 import { rateRow } from './games.js';
 import { celebrar, pensar } from './teo-anim.js';
 import { tarjetaInicio } from './theobox.js';
-import { deslizarCamino, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
+import { deslizarCamino, deslizarAntes, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = conTodo; // Theo Premium o Pase de Adviento
@@ -564,7 +564,7 @@ register('hoy', {
       on(root, 'Adviento: se revela al unirte al reto', () => go('teaser', {}, 'modal'));
       on(root, root.querySelector('a[aria-label^="Mundos"]'), () => go('mundos', {}, 'push'));
       vidrioPendiente(root, p);
-      if (!S.inscrito) vidrioConDedo(root, 'hoy');
+      Promise.resolve(S.inscrito ? null : vidrioConDedo(root, 'hoy')).then(() => deslizarAntes(root)); // TheoBox en juego: la card de la cuenta atrás se desliza (tras montar el vidrio)
       // al entrar de cero ya no se abre nada solo: la invitación sale al tocar el póster o la card, y los slides, al unirse
       return;
     }
@@ -1055,7 +1055,7 @@ register('teodoro', {
       on(root, 'Ver el camino', () => S.inscrito ? (S.hoy >= 0 ? entrar('teodoro') : go('mundos', {}, 'push')) : go('teaser', { from: 'teodoro' }, 'modal'));
       on(root, 'Adviento: se revela al unirte al reto', () => go('teaser', { from: 'teodoro' }, 'modal'));
       vidrioPendiente(root, p); // recién unida: el vidrio se limpia la primera vez que se ve la card
-      if (!S.inscrito) vidrioConDedo(root, 'teodoro'); // la misma card que el inicio: también se limpia con el dedo
+      Promise.resolve(S.inscrito ? null : vidrioConDedo(root, 'teodoro')).then(() => deslizarAntes(root)); // la misma card que el inicio: también se limpia con el dedo; TheoBox en juego se desliza
     }
     on(root, 'Toca para descubrir', () => go('teaser', { from: 'teodoro' }, 'modal'));
     on(root, 'Inscribirme', (ev, el) => inscribir(el, 'teodoro')); on(root, 'Unirme gratis', (ev, el) => inscribir(el, 'teodoro'));
