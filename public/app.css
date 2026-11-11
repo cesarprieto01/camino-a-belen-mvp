@@ -1304,3 +1304,124 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
   [data-sheet] > .tb-espera { background: #FFFFFF; -webkit-backdrop-filter: none; backdrop-filter: none; }
   :root[data-theme="dark"] [data-sheet] > .tb-espera { background: #1B3F78; }
 }
+
+/* ===== TheoBox en juego (tbjuego.js · 11-nov-2026) ===== */
+[class^="tbj-"][hidden], [class*=" tbj-"][hidden] { display: none !important; }
+/* insignia del mapa: vidrio como los botones del mapa, arriba a la izquierda bajo «Atrás» */
+.tbj-ins { position: absolute; left: 12px; top: 150px; min-width: 64px; height: 74px; padding: 0 8px 10px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border: 1px solid rgba(255,255,255,.95); border-radius: 18px; cursor: pointer; background: rgba(255,255,255,.92); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); box-shadow: inset 0 1px 0 #FFFFFF, 0 8px 18px rgba(11,60,80,.22); z-index: 56; touch-action: manipulation; transition: transform 100ms ease-out; }
+:root[data-theme="dark"] .tbj-ins { background: rgba(52,86,142,.92); border-color: rgba(255,255,255,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 8px 18px rgba(0,8,43,.4); }
+.tbj-ins:active { transform: scale(.96); }
+.tbj-ins:focus-visible { outline: 2px solid #0B748A; outline-offset: 3px; }
+.tbj-ins .tbj-luz { position: absolute; left: 50%; top: 16px; width: 60px; height: 60px; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,90,.7), rgba(255,214,90,0)); pointer-events: none; }
+.tbj-ins img { position: absolute; left: 50%; top: -14px; width: 46px; height: auto; translate: -50% 0; pointer-events: none; }
+.tbj-ins b { position: relative; white-space: nowrap; font: 700 14px/1 'Neue Montreal', Mulish, sans-serif; color: #00516D; text-align: center; }
+:root[data-theme="dark"] .tbj-ins b { color: #FFFFFF; }
+
+/* panel: crece desde la insignia; estilo actividad en vivo con el fondo turquesa del carrusel «Meet TheoBox» */
+.tbj-panel { position: absolute; left: 10px; right: 10px; top: 52px; z-index: 80; box-sizing: border-box; padding: 18px 16px 16px; border-radius: 30px; background: linear-gradient(180deg, rgba(244,252,253,.98) 0%, rgba(222,244,248,.98) 100%); -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255,255,255,.95); box-shadow: inset 0 1px 0 #FFFFFF, 0 22px 48px rgba(11,60,80,.3); display: flex; flex-direction: column; gap: 14px; color: #00516D; font-family: Mulish, system-ui, sans-serif; text-align: left; }
+:root[data-theme="dark"] .tbj-panel { color: #FFFFFF; background: linear-gradient(180deg, rgba(24,52,108,.97) 0%, rgba(12,30,74,.97) 100%); border-color: rgba(255,255,255,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 22px 48px rgba(0,8,43,.55); }
+.tbj-grid { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 4px; align-items: end; }
+.tbj-txt { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.tbj-ojo { margin: 0; font: 700 14px/1.2 'Neue Montreal', Mulish, sans-serif; color: #0B748A; }
+:root[data-theme="dark"] .tbj-ojo { color: #6FD3E6; }
+.tbj-tit { margin: 0 0 2px; font: 500 29px/1.04 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.022em; color: #1E4F6B; }
+.tbj-tit b { font-weight: 700; }
+:root[data-theme="dark"] .tbj-tit { color: #FFFFFF; }
+.tbj-boton { align-self: flex-start; height: 44px; padding: 0 16px; border: 0; border-radius: 14px; background: #0B748A; color: #FFFFFF; font: 700 16px/1 'Neue Montreal', Mulish, sans-serif; display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; box-shadow: 0 6px 14px rgba(11,116,138,.3); cursor: pointer; transition: transform 100ms ease-out; }
+:root[data-theme="dark"] .tbj-boton { background: #1E9AB4; box-shadow: 0 6px 14px rgba(0,8,43,.4); }
+.tbj-boton:active { transform: scale(.96); }
+.tbj-prod { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+.tbj-prod-luz { position: absolute; left: 50%; top: 50%; width: 176px; height: 176px; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,226,120,.55), rgba(255,226,120,0)); pointer-events: none; }
+.tbj-prod img { position: relative; display: block; width: 150px; height: auto; }
+.tbj-dias { display: flex; flex-direction: column; gap: 8px; padding-top: 2px; }
+.tbj-dias-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.tbj-dias-cab b { font: 700 16px/1.2 'Neue Montreal', Mulish, sans-serif; color: #1E4F6B; }
+.tbj-dias-cab span { font: 600 13px/1.2 Mulish, sans-serif; color: #3E5F6B; white-space: nowrap; }
+:root[data-theme="dark"] .tbj-dias-cab b { color: #FFFFFF; }
+:root[data-theme="dark"] .tbj-dias-cab span { color: rgba(255,255,255,.75); }
+.tbj-fila { display: flex; align-items: center; gap: 10px; }
+.tbj-tramos { flex: 1; display: flex; gap: 5px; }
+.tbj-tramos i { position: relative; flex: 1; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(11,116,138,.14); box-sizing: border-box; }
+.tbj-tramos i b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: linear-gradient(180deg, #FCDA6A, #E8A92E); box-shadow: inset 0 2px 0 rgba(255,255,255,.4); }
+.tbj-tramos i.a { background: #FFFFFF; box-shadow: inset 0 0 0 2px #E8A92E; }
+.tbj-tramos i.r { background: transparent; border: 1.5px dashed #0B748A; }
+.tbj-tramos.semanas i { height: 14px; border-radius: 7px; }
+:root[data-theme="dark"] .tbj-tramos i { background: rgba(255,255,255,.16); }
+:root[data-theme="dark"] .tbj-tramos i b { background: linear-gradient(180deg, #FFE08A, #F2B83A); }
+:root[data-theme="dark"] .tbj-tramos i.a { background: rgba(255,212,94,.1); box-shadow: inset 0 0 0 2px #FFD45E; }
+:root[data-theme="dark"] .tbj-tramos i.r { background: transparent; border-color: #6FD3E6; }
+.tbj-meta { position: relative; flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #FFFFFF; box-shadow: inset 0 0 0 2px #F2C94C, 0 3px 8px rgba(2,37,79,.12); color: #A86F08; }
+.tbj-meta img { width: 28px; height: auto; display: block; }
+.tbj-meta i { position: absolute; right: -3px; bottom: -3px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: #FFFFFF; color: #A86F08; box-shadow: 0 1px 3px rgba(2,37,79,.25); }
+.tbj-meta.abierta { box-shadow: 0 0 0 3px #F2C94C, 0 0 16px rgba(255,206,64,.7); }
+:root[data-theme="dark"] .tbj-meta { background: rgba(255,255,255,.95); box-shadow: inset 0 0 0 2px #FFD45E; }
+:root[data-theme="dark"] .tbj-meta i { background: #162E60; color: #FFD45E; }
+.tbj-legal { margin: 0; font: 500 12px/1.45 Mulish, sans-serif; color: #5B7A85; }
+:root[data-theme="dark"] .tbj-legal { color: rgba(255,255,255,.65); }
+.tbj-bases { padding: 0; border: 0; background: none; font: 600 12px Mulish, sans-serif; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.tbj-recoger { position: absolute; left: 50%; bottom: -50px; translate: -50% 0; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; color: #00516D; background: rgba(255,255,255,.92); box-shadow: 0 6px 14px rgba(11,60,80,.22); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+:root[data-theme="dark"] .tbj-recoger { color: #FFFFFF; background: rgba(22,46,96,.92); }
+
+/* la web dentro de la app (simulada) */
+.tbj-velo { position: absolute; inset: 0; z-index: 89; background: rgba(0,8,43,.4); }
+.tbj-web { position: absolute; left: 0; right: 0; bottom: 0; top: 54px; z-index: 90; background: #FCFBF7; color: #02254F; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; overflow: hidden; font-family: Mulish, sans-serif; box-shadow: 0 -10px 30px rgba(0,8,43,.3); }
+.tbj-web-barra { display: grid; grid-template-columns: 72px 1fr 72px; align-items: center; height: 48px; padding: 0 12px; background: #F2F4F7; border-bottom: 1px solid rgba(2,37,79,.1); font: 600 14px Mulish, sans-serif; color: #2F5B6B; }
+.tbj-web-barra span:first-of-type { justify-self: center; }
+.tbj-web-listo { font: 700 16px Mulish, sans-serif; color: #1E8DA5; background: none; border: 0; height: 44px; text-align: left; cursor: pointer; padding: 0; }
+.tbj-web-cuerpo { overflow: auto; }
+.tbj-web-cuerpo > img { width: 100%; height: 300px; object-fit: cover; display: block; }
+.tbj-web-in { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.tbj-web-in small { font: 800 12px Mulish, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #1E8DA5; }
+.tbj-web-in h4 { margin: 0; font: 700 26px/1.1 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.02em; }
+.tbj-web-in p { margin: 0; font: 500 16px/1.45 Mulish, sans-serif; color: #2F5B6B; }
+.tbj-web-in span { margin-top: 10px; font: 500 12px/1.4 Mulish, sans-serif; color: #7A8E96; }
+
+/* la TheoBox dibujada sobre la base de la ruleta (USA) y junto a Belén (LATAM) */
+.tbj-caja { position: absolute; translate: -50% 0; pointer-events: none; z-index: 2; }
+.tbj-caja > img:first-child { display: block; width: 100%; height: auto; filter: drop-shadow(0 2px 2px rgba(60,40,10,.25)); }
+.tbj-caja.bloq > img:first-child { filter: saturate(.55) drop-shadow(0 2px 2px rgba(60,40,10,.25)); }
+.tbj-candado { position: absolute; right: -10%; bottom: -6%; width: 46%; height: auto; filter: drop-shadow(0 2px 3px rgba(2,37,79,.3)); }
+.tbj-base-luz { position: absolute; translate: -50% 0; width: 92%; aspect-ratio: 1.3; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,206,80,.7), rgba(255,206,80,.25) 55%, rgba(255,206,80,0)); pointer-events: none; }
+.tbj-belen.tbj-caja { width: 74px; translate: 0 0; }
+.tbj-belen .tbj-candado { width: 36%; }
+
+/* inicio: la card de la TheoBox en el carrusel de destacados (256 × 330) */
+.tbj-heroe { width: 256px; height: 330px; flex: none; }
+.tbj-heroe-fondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+.tbj-heroe-luz { position: absolute; right: -10px; top: 92px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,90,.7), rgba(255,214,90,0)); }
+.tbj-heroe-tb { position: absolute; right: 14px; top: 104px; width: 92px; height: auto; }
+.tbj-heroe-deg { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; background: linear-gradient(180deg, rgba(4,14,36,0) 0%, rgba(4,14,36,.72) 34%, rgba(4,14,36,.92) 100%); }
+.tbj-heroe-txt { position: absolute; left: 16px; right: 16px; bottom: 74px; text-align: center; color: #FFFFFF; display: flex; flex-direction: column; gap: 4px; }
+.tbj-heroe-ojo { font: 700 12px/1.2 Mulish, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #F5DB78; }
+.tbj-heroe-txt b { font: 500 24px/1.08 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.01em; }
+.tbj-heroe-txt strong { font-weight: 700; }
+.tbj-heroe-boton { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 48px; border-radius: 16px; background: #F5DB78; color: #06325A; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 16px/1 'Neue Montreal', Mulish, sans-serif; }
+
+/* tab Teodoro: la card del camino se desliza a la lámina de la TheoBox; puntos debajo */
+.tbj-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: 26px; }
+.tbj-slider::-webkit-scrollbar { display: none; }
+.tbj-slider > * { scroll-snap-stop: always; }
+.tbj-puntos { display: flex; justify-content: center; gap: 8px; height: 26px; align-items: center; }
+.tbj-puntos i { width: 7px; height: 7px; border-radius: 50%; background: rgba(11,116,138,.28); transition: background 200ms ease-out; }
+.tbj-puntos i.on { background: #0B748A; }
+:root[data-theme="dark"] .tbj-puntos i { background: rgba(255,255,255,.3); }
+:root[data-theme="dark"] .tbj-puntos i.on { background: #FFFFFF; }
+.tbj-l2-luz { position: absolute; right: 6px; top: 96px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,90,.75), rgba(255,214,90,0)); pointer-events: none; }
+.tbj-l2-tb { position: absolute; right: 24px; top: 108px; width: 112px; height: auto; pointer-events: none; }
+
+/* bajo el premio de la ruleta: «Para papás · Conócela» */
+.tbj-papas { position: absolute; z-index: 60; box-sizing: border-box; padding: 10px 16px 10px 10px; border-radius: 22px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,.9); background: rgba(255,255,255,.97); box-shadow: 0 12px 28px rgba(11,60,80,.22); color: #00516D; text-align: left; cursor: pointer; font-family: Mulish, sans-serif; }
+:root[data-theme="dark"] .tbj-papas { background: rgba(30,58,110,.96); border-color: rgba(255,255,255,.22); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 12px 28px rgba(0,8,43,.45); color: #FFFFFF; }
+.tbj-papas-img { flex: none; width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(180deg, #F4FCFD, #DEF4F8); }
+:root[data-theme="dark"] .tbj-papas-img { background: rgba(255,255,255,.08); }
+.tbj-papas-img img { width: 50px; height: auto; }
+.tbj-papas-txt { display: flex; flex-direction: column; gap: 5px; }
+.tbj-papas-txt small { font: 800 11px/1 Mulish, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #3E5F6B; }
+:root[data-theme="dark"] .tbj-papas-txt small { color: rgba(255,255,255,.7); }
+.tbj-papas-txt b { display: inline-flex; align-items: center; gap: 6px; font: 700 17px/1.1 'Neue Montreal', Mulish, sans-serif; color: #0B748A; }
+:root[data-theme="dark"] .tbj-papas-txt b { color: #6FD3E6; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .tbj-ins, .tbj-panel { background: #FFFFFF; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root[data-theme="dark"] .tbj-ins, :root[data-theme="dark"] .tbj-panel { background: #162E60; }
+}

@@ -171,24 +171,38 @@ const flows = {
     await tap('Ruleta de la semana 3'); await p.waitForTimeout(600);
     if ((await screen()) !== 'mapa') errs.push('tocar una ruleta futura no se queda en el mapa: ' + await screen());
     // TheoBox (gran premio): forzada el día 11 no sale; el día 24 sí, una vez; con dueño no sale
-    const girarTB = (hoy, theobox) => p.evaluate(async ([hoy, theobox]) => {
-      const c = await import('/js/core.js'); c.reset({ hoy, inscrito: true, teaserVisto: true, plan: 'premium', forzarPremio: 'theobox', theobox });
-      for (let d = 0; d < hoy; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.completos[hoy] = { contenido: true }; c.save(); c.clearHistory();
+    // modelo anterior (una sola TheoBox, día 24): «TheoBox en juego» apagada; extra = { tbJuego, mercado, salta } para el modelo nuevo
+    const girarTB = (hoy, theobox, extra = {}) => p.evaluate(async ([hoy, theobox, { salta = [], ...extra }]) => {
+      const c = await import('/js/core.js'); c.reset({ hoy, inscrito: true, teaserVisto: true, plan: 'premium', forzarPremio: 'theobox', theobox, tbJuego: false, ...extra });
+      for (let d = 0; d < hoy; d++) if (!salta.includes(d)) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.completos[hoy] = { contenido: true }; c.save(); c.clearHistory();
       c.go('mapa', {}, 'none', { tab: true }); c.go('ruletaPop', { day: hoy }, 'modal');
-    }, [hoy, theobox]);
+    }, [hoy, theobox, extra]);
     const tb = () => p.evaluate(async () => { const c = await import('/js/core.js'); return [c.S.theobox, Object.values(c.S.ruletas).includes('theobox')]; });
     await girarTB(11, 'libre'); await p.waitForTimeout(900); await tap('¡Girar!'); await p.waitForTimeout(5400);
     if ((await tb())[1]) errs.push('la TheoBox salió antes del día 24');
     await girarTB(24, 'otra'); await p.waitForTimeout(900); await tap('¡Girar!'); await p.waitForTimeout(5400);
     if ((await tb())[1]) errs.push('la TheoBox salió aunque ya tenía dueño');
+    // TheoBox en juego (USA): la ruleta de la semana la da solo con la semana completa; en LATAM nunca sale en la ruleta
+    const gris = () => p.evaluate(() => /grayscale/.test(document.querySelector('#viewport .layer:last-child img[src*="theobox-casilla"]')?.style.filter || ''));
+    await girarTB(11, 'libre', { tbJuego: true, mercado: 'usa', salta: [9] }); await p.waitForTimeout(900);
+    if (!(await gris())) errs.push('TheoBox en juego: con un día sin hacer la casilla de la TheoBox no sale apagada');
+    await tap('¡Girar!'); await p.waitForTimeout(5400);
+    if ((await tb())[1]) errs.push('TheoBox en juego: salió con la semana incompleta');
+    await girarTB(11, 'libre', { tbJuego: true, mercado: 'latam' }); await p.waitForTimeout(900); await tap('¡Girar!'); await p.waitForTimeout(5400);
+    if ((await tb())[1]) errs.push('TheoBox en juego: en LATAM salió en la ruleta');
+    await girarTB(11, 'libre', { tbJuego: true, mercado: 'usa' }); await p.waitForTimeout(900);
+    if (await gris()) errs.push('TheoBox en juego: semana completa y la casilla de la TheoBox sale apagada');
+    await tap('¡Girar!'); await p.waitForTimeout(7400);
+    if (!(await tb())[1]) errs.push(`TheoBox en juego: semana completa en la ruleta 11 y la TheoBox no salió (${await screen()})`);
     await girarTB(24, 'libre'); await p.waitForTimeout(900); await shot('ruleta-24'); await tap('¡Girar!'); await p.waitForTimeout(7400); await shot('theobox');
     const [estadoTB, salio] = await tb();
     if (!salio || estadoTB !== 'mia' || (await screen()) !== 'tbGano') errs.push('el día 24 con la TheoBox libre no lleva a «¡Ganaste la TheoBox!»: ' + estadoTB + ' · ' + await screen());
   },
   // TheoBox ganada: reclamarla (datos en dos pasos) → «Va en camino» → «Comparte tu premio»; con «Ahora no», espera en el mapa.
   // Ya reclamada, el mapa, el inicio y Ajustes llevan a «Mi TheoBox». En el tema claro van las pantallas claras
+  // modelo anterior de la TheoBox (una sola, día 24): con «TheoBox en juego» apagada
   async theobox() {
-    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 24, inscrito: true, teaserVisto: true, plan: 'premium', theobox: 'mia', theoboxReclamada: false }); for (let d = 0; d <= 24; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.ruletas[24] = 'theobox'; c.save(); c.clearHistory(); c.go('tbGano', { day: 24 }, 'none'); });
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ tbJuego: false, hoy: 24, inscrito: true, teaserVisto: true, plan: 'premium', theobox: 'mia', theoboxReclamada: false }); for (let d = 0; d <= 24; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.ruletas[24] = 'theobox'; c.save(); c.clearHistory(); c.go('tbGano', { day: 24 }, 'none'); });
     await p.waitForTimeout(1500); await shot('gano');
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-claro')))) errs.push('en el tema claro «¡Ganaste!» no sale clara');
     await tap('Ahora no'); await p.waitForTimeout(1500);
@@ -747,6 +761,64 @@ const flows = {
       await tap(n === 7 ? '¡Nos abrazamos!' : '¡Lo hicimos!'); await p.waitForTimeout(1400);
       const fin = await screen(); if (n === 21 ? fin !== 'memoramaReglas' : !['mapa', 'cerrado'].includes(fin)) errs.push(`día ${n}: tras «¡Ganaron todos!» va a ${fin}`);
     }
+  },
+  async tbjuego() {
+    // TheoBox en juego: Hoy → lámina del carrusel → mapa con el panel abierto → web → panel; tab Teodoro; premio; interruptor y mercado
+    const hay = sel => p.evaluate(s => !!document.querySelector(`#viewport .layer:last-child ${s}`), sel);
+    const chip = async attr => { const abierto = () => p.evaluate(() => document.getElementById('panel')?.classList.contains('open')); if (!(await abierto())) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector('[data-tab="aj"]')?.click()); await p.waitForTimeout(300); if (!(await p.evaluate(a => { const c = document.querySelector(`[${a}]`); c?.click(); return !!c; }, attr))) errs.push(`tbjuego: no está el chip [${attr}] en Ajustes`); await p.waitForTimeout(900); if (await abierto()) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(400); } };
+    if (!(await hay('.tbj-heroe'))) { errs.push('tbjuego: falta la lámina de la TheoBox en el carrusel de Hoy'); return; }
+    await p.evaluate(() => { const t = document.querySelector('#viewport .layer:last-child .tbj-heroe'); t.parentElement.scrollLeft = t.offsetLeft - (390 - 256) / 2; t.parentElement.dispatchEvent(new Event('scroll')); });
+    await p.waitForTimeout(700); await shot('tbj-hoy');
+    await tap('Podrías ganar una TheoBox');
+    if (!(await waitScreen('mapa'))) { errs.push(`tbjuego: «Ir al camino» no lleva al mapa (${await screen()})`); return; }
+    await p.waitForTimeout(1200);
+    if (!(await hay('.tbj-panel:not([hidden])'))) errs.push('tbjuego: al llegar desde la lámina el panel no se abre');
+    const cab = await p.evaluate(() => document.querySelector('#viewport .layer:last-child .tbj-dias-cab b')?.textContent || '');
+    if (!/^4 de 7/.test(cab)) errs.push(`tbjuego: la barra debería decir «4 de 7…» y dice «${cab}»`);
+    if (!(await hay('.dz-ruleta .tbj-caja'))) errs.push('tbjuego: las ruletas que vienen no llevan la TheoBox');
+    await shot('tbj-panel');
+    await tap('Conócela'); await p.waitForTimeout(500);
+    if (!(await hay('.tbj-web:not([hidden])'))) errs.push('tbjuego: «Conócela» no abre la web');
+    await shot('tbj-web');
+    await tap('Listo'); await p.waitForTimeout(500);
+    if (await hay('.tbj-web:not([hidden])')) errs.push('tbjuego: «Listo» no cierra la web');
+    if (!(await hay('.tbj-panel:not([hidden])'))) errs.push('tbjuego: al cerrar la web se cerró también el panel');
+    await tap('Recoger'); await p.waitForTimeout(400);
+    if (await hay('.tbj-panel:not([hidden])')) errs.push('tbjuego: «Recoger» no cierra el panel');
+    await tap('TheoBox:'); await p.waitForTimeout(700);
+    if (!(await hay('.tbj-panel:not([hidden])'))) errs.push('tbjuego: la insignia no abre el panel');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(600);
+    if (await hay('.tbj-panel:not([hidden])')) errs.push('tbjuego: Escape (atrás del sistema) no cierra el panel');
+    if ((await screen()) !== 'mapa') errs.push(`tbjuego: Escape con el panel abierto salió del mapa (${await screen()})`);
+    // la TheoBox de la ruleta: sin candado solo con la semana completa y la ruleta abierta
+    const mapaCon = async faltan => { await p.evaluate(async f => { const c = await import('/js/core.js'); c.S.hoy = 11; for (let d = 9; d <= 11; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; f.forEach(d => delete c.S.completos[d]); c.save(); c.go('mapa', {}, 'none', { tab: true }); }, faltan); await p.waitForTimeout(1200); };
+    await mapaCon([]);
+    if (!(await hay('.dz-ruleta .tbj-caja:not(.bloq)'))) errs.push('tbjuego: semana completa y ruleta abierta, pero la TheoBox sigue con candado');
+    await shot('tbj-ruleta-lista');
+    await mapaCon([9]);
+    if (await hay('.dz-ruleta .tbj-caja:not(.bloq)')) errs.push('tbjuego: falta el día 9 y la ruleta promete la TheoBox sin candado');
+    // premio de la ruleta (no la TheoBox): «Para papás · Conócela» debajo
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('ruletaPremio', { day: 11, premio: 'panes', from: 'mapa' }, 'modal'); });
+    await p.waitForTimeout(1800);
+    if (!(await hay('.tbj-papas'))) errs.push('tbjuego: falta «Para papás» bajo el premio de la ruleta');
+    await shot('tbj-premio');
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(900);
+    await tap('Teodoro'); await p.waitForTimeout(900);
+    const lam = await p.evaluate(() => document.querySelectorAll('#viewport .layer:last-child .tbj-slider > *').length);
+    if (lam !== 2) errs.push(`tbjuego: el tab Teodoro debería tener 2 láminas y tiene ${lam}`);
+    await shot('tbj-teodoro');
+    // apagada: nada de la TheoBox en juego
+    await chip('data-tbjuego="0"');
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('mapa', {}, 'none', { tab: true }); }); await p.waitForTimeout(1200);
+    if (await hay('.tbj-ins, .tbj-caja')) errs.push('tbjuego: apagada, el mapa sigue mostrando la TheoBox en juego');
+    await shot('tbj-apagada');
+    // LATAM: una sola TheoBox, en Belén
+    await chip('data-tbjuego="1"'); await chip('data-mercado="latam"');
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('mapa', {}, 'none', { tab: true }); }); await p.waitForTimeout(1200);
+    if (!(await hay('.tbj-belen'))) errs.push('tbjuego: LATAM sin la TheoBox junto a Belén');
+    if (await hay('.dz-ruleta .tbj-caja')) errs.push('tbjuego: LATAM no debería poner la TheoBox en las ruletas');
+    await tap('TheoBox:'); await p.waitForTimeout(700); await shot('tbj-latam');
+    await chip('data-mercado="usa"');
   },
   async teodoro() { await tap('Teodoro'); await shot('tab'); await tap('Ver mis mundos'); await shot('mundos'); await tap('Adviento'); await shot('mapa'); },
 };

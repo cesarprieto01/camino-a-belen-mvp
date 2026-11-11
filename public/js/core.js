@@ -33,6 +33,8 @@ export const DEFAULT = () => ({
   theobox: 'libre',    // gran premio de la ruleta: 'libre' · 'otra' (ya tiene dueño) · 'mia' (la ganó esta familia); panel › Ruleta
   theoboxReclamada: false, theoboxEnvio: null, // ya dejó los datos de envío (y cuáles); mientras no, la TheoBox espera en el mapa
   theoboxPaso: 2, // ya reclamada: 2 la preparan, 3 salió, 4 llegó (Mi TheoBox; mientras viaja se ve en el mapa y el inicio)
+  tbJuego: true,       // «TheoBox en juego» (tbjuego.js): insignia del mapa, lámina del inicio, TheoBox en las ruletas; panel › TheoBox en juego
+  mercado: 'usa',      // 'usa': una TheoBox por ruleta · 'latam': una sola, en un sorteo al cerrar el camino
   musica: true,        // música de fondo del mapa y la trivia (on/off)
   notas: {}, huecos: [], vistas: {},
 });
@@ -45,7 +47,7 @@ function load() {
   try { return { ...DEFAULT(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULT(); }
 }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* navegador privado */ } emit(); }
-export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas }; S = Object.assign(DEFAULT(), keep, over); save(); }
+export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas, tbJuego: S.tbJuego, mercado: S.mercado }; S = Object.assign(DEFAULT(), keep, over); save(); }
 export function shareURL() {
   const { notas, huecos, ...rest } = S;
   return location.origin + location.pathname + '#estado=' + btoa(unescape(encodeURIComponent(JSON.stringify(rest)))) + '&pantalla=' + (cur?.name || 'hoy');
@@ -188,7 +190,7 @@ export function go(name, params = {}, anim = 'push', opts = {}) {
   if (name === 'teodoro' && S.mascota === false) name = 'hoy'; // sin mascota el camino vive en Hoy
   if (inFlight === name) return busy; // doble toque
   if (cur && !opts.fromBack && !opts.replace && !dePaso(cur.name)) {
-    const { thenCerrado, ...keep } = cur.params || {}; // lo de un solo uso no vuelve al regresar
+    const { thenCerrado, theobox, ...keep } = cur.params || {}; // lo de un solo uso no vuelve al regresar (theobox: abrir el panel de TheoBox en juego)
     stack.push({ name: cur.name, params: keep });
     if (stack.length > 60) stack.shift();
   }
@@ -229,7 +231,7 @@ function sysBack() {
 // encima entran un velo y el diálogo (u hoja). Al cerrar se destapa sin volver a montarla.
 const OVERLAY = new Set(['modal', 'sheet', 'page']);
 const snap = () => JSON.stringify([S.hoy, S.inscrito, S.completos, S.bateria, S.panes, S.prendas, S.plan, S.cuartoNuevo, S.tema, S.ruletas, S.regreso]);
-const sameParams = (a = {}, b = {}) => { const s = ({ thenCerrado, ...x }) => JSON.stringify(x); return s(a) === s(b); };
+const sameParams = (a = {}, b = {}) => { const s = ({ thenCerrado, theobox, ...x }) => JSON.stringify(x); return s(a) === s(b); };
 let inFlight = null;
 /** Deja del lienzo solo el velo y el diálogo: lo de antes del velo era un fondo de muestra. */
 function asOverlay(layer, root, anim) {

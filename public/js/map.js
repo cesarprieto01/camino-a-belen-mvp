@@ -7,6 +7,7 @@ import { bindMute, retener, soltarTrasVoz, teoDice, sonido, motivo } from './mus
 import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
 import { SENDERO } from './sendero.js';
 import { enCamino, avisoEnvio } from './theobox.js';
+import { juegoMapa, decorarRuleta, decorarBelen } from './tbjuego.js';
 // dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
 const piesDe = teo => { const l = parseFloat(teo.style.left), t = parseFloat(teo.style.top), w = parseFloat(teo.style.width), h = parseFloat(teo.style.height); return { cx: l + w / 2, pies: t + h, alto: h }; };
 /** Teodoro (Lottie) camina por «ruta» (puntos de sus pies en el mapa) hasta «fin», mirando hacia donde va: el dibujo mira a la derecha y se voltea
@@ -252,6 +253,7 @@ register('mapa', {
         + (opened ? `<span class="rul-hecha" aria-hidden="true" style="position:absolute;left:${R.x > 195 ? 18 : 82}%;top:${R.img === 'ruleta-pie' ? 13 : 21}%;width:40px;height:40px;box-sizing:border-box;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(180deg,rgba(71,198,218,.95),rgba(11,116,138,.97));box-shadow:0 0 0 2.5px rgba(255,255,255,.96),0 6px 14px rgba(6,80,95,.38),inset 0 2px 3px rgba(255,255,255,.45),inset 0 -3px 5px rgba(6,80,95,.25);display:flex;align-items:center;justify-content:center;pointer-events:none"><svg width="20" height="20" viewBox="0 0 30 30" fill="none"><path d="M6.25 15.625 11.875 21.25 23.75 9.375" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
           : `<span class="dz-etiqueta" style="left:${R.lx - R.x}px;top:${R.ly - R.y}px">${lista ? DESTELLO + label : label}</span>`);
       a.setAttribute('aria-label', opened ? `Ruleta de la semana ${i + 1}: ya la giraste` : lista ? `Ruleta de la semana ${i + 1}: ¡gírala!` : cerrada ? `Ruleta de la semana ${i + 1}: cerrada` : falta ? `Ruleta de la semana ${i + 1}: se abre al terminar el día ${d}` : `Ruleta de la semana ${i + 1}: se abre el ${f.dd} de ${mes}`);
+      if (!opened) decorarRuleta(a, d, { bloqueada, pie: R.img === 'ruleta-pie' }); // TheoBox en juego (USA): la TheoBox sobre la base
       root.appendChild(a);
       on(root, a, () => {
         animate(a, 'a-pop');
@@ -315,6 +317,8 @@ register('mapa', {
     if (params.dia != null) layer.dataset.dia = String(params.dia);
     paintSheet(layer, T, params.dia);
     sheetDrag(layer);
+    // TheoBox en juego: la insignia (arriba a la izquierda) y su panel; LATAM, la TheoBox junto a Belén. «Ir al camino» llega con el panel abierto
+    juegoMapa(layer, !!params.theobox); decorarBelen(root);
     seen('S-03-Mapa');
     if (act != null && contentDone(act) && !isDone(act)) seen('S-03b-Mapa-trivia');
     if (focus === 0) seen('V2-Mapa-dia0-claro');

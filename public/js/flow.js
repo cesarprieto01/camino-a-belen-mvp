@@ -7,6 +7,7 @@ import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from
 import { rateRow } from './games.js';
 import { celebrar, pensar } from './teo-anim.js';
 import { tarjetaInicio } from './theobox.js';
+import { laminaHoy, deslizarCamino, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = conTodo; // Theo Premium o Pase de Adviento
@@ -367,9 +368,10 @@ function heroe(root) {
     `<img src="assets/evangelio.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 0">`);
   card.style.position = 'relative'; card.style.left = card.style.top = '0'; card.style.flex = 'none';
   card.before(box); box.appendChild(pista);
-  pista.append(lampara, card, evangelio);
+  const tb = laminaHoy(); // TheoBox en juego: su card va justo después de Adviento
+  pista.append(lampara, card, ...(tb ? [tb] : []), evangelio);
   // las de los lados se ven más pequeñas, pegadas hacia el centro (como en Theo)
-  const slides = [lampara, card, evangelio];
+  const slides = [lampara, card, ...(tb ? [tb] : []), evangelio];
   const pinta = () => {
     const c = pista.scrollLeft + pista.clientWidth / 2;
     slides.forEach(sl => {
@@ -1015,6 +1017,7 @@ register('teodoro', {
       }
     }
     const { st, toMap } = tCard && fase() !== 'antes' ? paintCaminoCard(tCard, 'teodoro') : { st: cardState(), toMap: () => entrar('teodoro') };
+    if (tCard && fase() !== 'antes') deslizarCamino(tCard); // TheoBox en juego: segunda lámina de la misma card
     replaceText(root, /^Misiones Diarias$/, 'Misiones diarias');
     paintEnergy(root);
     patchCuarto(root);
@@ -1526,18 +1529,21 @@ const SEGMENTS = ['theobox', 'panes', 'cuarto', 'panes', 'prenda', 'panes', 'otr
 // «Qué sale al girar › TheoBox» en el panel.
 const TEOBOX_DIA = RULES.ruleta[RULES.ruleta.length - 1];
 const TEOBOX = 'ruleta/theobox.webp', TEOBOX_IMG = A(TEOBOX); // en la rueda va recortada, sin el resplandor (se veía chica)
-const teoboxEnJuego = n => n === TEOBOX_DIA && S.theobox === 'libre';
+const teoboxEnJuego = n => (S.tbJuego
+  // TheoBox en juego: una por ruleta, para quien completó la semana, solo en la ruleta de esta semana (cierra al abrir la siguiente) y una por familia
+  ? juegoActivo() && mercado() === 'usa' && ruletaActual()?.d === n && semanaCompleta(n)
+  : n === TEOBOX_DIA && S.theobox === 'libre');
 // la prenda de la casilla «prenda»: la de su semana (1 a 3); en la semana 4, la primera que les falte (sin ninguna pendiente, null = panes)
 const prendaDe = n => PRENDAS[RULES.ruleta.indexOf(n)] || PRENDAS.find(x => !S.prendas.includes(x.id)) || null;
 const SEG = 360 / SEGMENTS.length;
 // los íconos de las 8 casillas sobre rueda8.webp (caja = lo que mide la rueda), cada uno mirando hacia afuera
-const casillas = (caja, prenda) => {
+const casillas = (caja, prenda, apagada = S.theobox === 'otra') => { // apagada: la TheoBox en gris (no se puede ganar en este giro)
   const ico = { cuarto: 'assets/ruleta/sorpresa-azul.webp', panes: A(IMG.pan), theobox: 'assets/ruleta/theobox-casilla.webp', prenda, otra: 'assets/ruleta/otra-vez.webp' };
   const cx = caja / 2, r = caja * .262, s = caja * .14;
   return SEGMENTS.map((id, i) => {
     // la TheoBox, un poco más afuera y del ancho de su casilla (la cuña se angosta hacia el centro: más grande se salía); la sorpresa, más grande
     const z = s * (id === 'theobox' ? 1.15 : id === 'cuarto' ? 1.3 : 1), rr = id === 'theobox' ? r * 1.13 : r;
-    const sombra = id === 'theobox' ? (S.theobox === 'otra' ? 'grayscale(1) opacity(.5)' : 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))')
+    const sombra = id === 'theobox' ? (apagada ? 'grayscale(1) opacity(.5)' : 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))')
       : id === 'cuarto' ? 'drop-shadow(0 0 1.5px #055E78) drop-shadow(0 2px 3px rgba(5,94,120,.4))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
     return `<div style="position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)"><img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-rr - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}"></div>`;
   }).join('');
@@ -1559,7 +1565,7 @@ register('ruletaPop', {
       const base = wheel.querySelector(':scope > img'); if (base) base.src = 'assets/ruleta/rueda8.webp';
       [...wheel.children].filter(c => c.tagName === 'DIV').forEach(c => c.remove());
       const box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2;
-      wheel.insertAdjacentHTML('beforeend', casillas(box, A(prendaSemana?.img || IMG.pan)));
+      wheel.insertAdjacentHTML('beforeend', casillas(box, A(prendaSemana?.img || IMG.pan), S.tbJuego ? !teoboxEnJuego(n) : S.theobox === 'otra'));
       wheel.style.transformOrigin = `${cx}px ${cx}px`;
       wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: TheoBox, panes, sorpresa, panes, prenda de la semana, panes, gira otra vez, panes');
     }
@@ -1704,6 +1710,7 @@ register('ruletaPremio', {
       Object.assign(ver.style, { top: '654px', left: '40px', right: '40px', height: '44px', color: dark() ? '#FFFFFF' : '#0B748A', zIndex: 5 });
     } else ver.style.display = 'none'; }
     xEnTarjeta(root, alMapa);
+    cardPapas(root, layer, p.premio); // TheoBox en juego: si no le tocó la TheoBox, «Para papás · Conócela» debajo del premio
   },
 });
 /** X dentro de la tarjeta del premio (arriba a la derecha). */
