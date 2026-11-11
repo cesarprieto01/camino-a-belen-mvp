@@ -9,8 +9,8 @@
 import { S, go, toast, nota, dark, reduced, fase, contentDone, puedeDia } from './core.js';
 import { RULES } from './data.js';
 
-const IMG = { real: 'assets/theobox/juego/real.webp', sola: 'assets/theobox/juego/sola.webp', dibujada: 'assets/theobox/juego/dibujada.webp', coloca: 'assets/theobox/juego/coloca.webp', escenaDia: 'assets/theobox/juego/escena-dia.webp', escenaNoche: 'assets/theobox/juego/escena-noche.webp' };
-// Escena de la lámina: Teodoro escucha la TheoBox, de día y de noche (aprobadas por César el 11-nov; ya traen la TheoBox).
+const IMG = { real: 'assets/theobox/juego/real.webp', sola: 'assets/theobox/juego/sola.webp', dibujada: 'assets/theobox/juego/dibujada.webp', coloca: 'assets/theobox/juego/coloca.webp', escenaDia: 'assets/theobox/juego/escena-dia-v2.webp', escenaNoche: 'assets/theobox/juego/escena-noche-v2.webp' };
+// Escena de la lámina: Teodoro escucha la TheoBox, de día y de noche (v2 de César, 11-nov: la TheoBox fiel al producto real).
 const escena = () => ({ src: dark() ? IMG.escenaNoche : IMG.escenaDia, alt: 'Teodoro escucha la TheoBox y se balancea con la música', sobre: false });
 // Cierre del sorteo de LATAM: día 26 (Belén, 24 dic). Decisión pendiente de César: el 6 de enero (día 39, fin del camino).
 const SORTEO = 26;
