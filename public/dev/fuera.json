@@ -1,13 +1,13 @@
 {
   "selectores": [
     "#viewport .layer nav.theo-tabbar",
-    "#viewport .layer[data-screen=hoy] > .root > div:not(:has(> [role=dialog])) > :not([aria-label*=\"Adviento\"]):not(.theo-heroe):not(.theo-fila):not(.vidrio-zona)",
+    "#viewport .layer[data-screen=hoy] > .root > div:not(:has(> [role=dialog])) > :not([aria-label*=\"Adviento\"]):not(.theo-heroe):not(.theo-fila):not(.vidrio-zona):not(.tbj-slider-wrap)",
     "#viewport .layer[data-screen=hoy] > .root > div:has(> [role=dialog]) > div:has(> nav.theo-tabbar) > :not(.theo-heroe):not([aria-label*=\"Adviento\"]):not(:has([aria-label*=\"Adviento\"]))",
     "#viewport .layer[data-screen=hoy] .theo-heroe .theo-heroe-t",
     "#viewport .layer[data-screen=hoy] .theo-fila:not(:has(a[aria-label^=\"Mundos\"]))",
     "#viewport .layer[data-screen=hoy] .theo-fila a:not([aria-label^=\"Mundos\"]):not([aria-label*=\"Adviento\"])",
     "#viewport .layer[data-screen=teodoro] > .root > div > :not([aria-label^=\"Adviento\"]):not(.cuarto-patch.prenda):not([aria-label$=\" panes\"]):not(:has([aria-label^=\"Adviento\"]))",
-    "#viewport .layer[data-screen=teodoro] > .root > div > div:has([aria-label^=\"Adviento\"]) > :not([aria-label^=\"Adviento\"]):not(.vidrio-zona)",
+    "#viewport .layer[data-screen=teodoro] > .root > div > div:has([aria-label^=\"Adviento\"]) > :not([aria-label^=\"Adviento\"]):not(.vidrio-zona):not(.tbj-slider-wrap)",
     "#viewport .layer[data-screen=mundos] > .root > div > :not([aria-label^=\"Adviento:\"]):not(.mundos-accion):not(.mundos-volver)"
   ]
 }
