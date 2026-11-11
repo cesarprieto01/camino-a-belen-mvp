@@ -274,7 +274,7 @@ register('mapa', {
     const hoyN = Math.min(lastDay(), 26);
     if (chip && S.hoy > 0 && S.hoy < 27 && focus !== hoyN) { replaceText(chip, /\/ 26/, `· hoy ${hoyN}`); chip.setAttribute('aria-label', `Día ${focus}. Hoy es el día ${hoyN}`); }
     if (chip && fase() === 'gracia' && S.inscrito && vistos() < 26) { chip.textContent = cuentaGracia(true); chip.style.whiteSpace = 'nowrap'; chip.style.fontSize = '16px'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', cuentaGracia()); }
-    if (chip && S.hoy <= 0) { chip.textContent = 'Sale el 29'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', 'El camino sale el 29 de noviembre'); }
+    if (chip && S.hoy <= 0) { chip.textContent = 'Inicia el 29'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', 'El camino inicia el 29 de noviembre'); }
     paintEnergy(layer);
     if (recargaDe != null) layer.querySelectorAll(`img[src*="${BATTERY_IDS[S.bateria]}"]`).forEach(i => { i.src = A(BATTERY_IDS[recargaDe]); });
     bindMute(layer.querySelector('.map-head button[aria-label^="Música"]'));
