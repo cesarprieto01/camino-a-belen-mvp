@@ -7,7 +7,7 @@ import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from
 import { rateRow } from './games.js';
 import { celebrar, pensar } from './teo-anim.js';
 import { tarjetaInicio } from './theobox.js';
-import { laminaHoy, deslizarCamino, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
+import { deslizarCamino, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
 const premium = conTodo; // Theo Premium o Pase de Adviento
@@ -368,10 +368,9 @@ function heroe(root) {
     `<img src="assets/evangelio.webp" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 0">`);
   card.style.position = 'relative'; card.style.left = card.style.top = '0'; card.style.flex = 'none';
   card.before(box); box.appendChild(pista);
-  const tb = laminaHoy(); // TheoBox en juego: su card va justo después de Adviento
-  pista.append(lampara, card, ...(tb ? [tb] : []), evangelio);
+  pista.append(lampara, card, evangelio);
   // las de los lados se ven más pequeñas, pegadas hacia el centro (como en Theo)
-  const slides = [lampara, card, ...(tb ? [tb] : []), evangelio];
+  const slides = [lampara, card, evangelio];
   const pinta = () => {
     const c = pista.scrollLeft + pista.clientWidth / 2;
     slides.forEach(sl => {
@@ -575,6 +574,7 @@ register('hoy', {
     // la tarjeta del camino sale dos veces (destacado y tarjeta grande): las dos con el mismo estado
     const cards = $$(root, '[role=group][aria-label^="Adviento"]');
     const { st } = cards.length ? cards.map(c => paintCaminoCard(c, 'hoy'))[0] : { st: cardState() };
+    if (fase() !== 'antes') cards.filter(c => !c.closest('.theo-heroe')).forEach(c => deslizarCamino(c, 'hoy')); // TheoBox en juego: la card grande se desliza (como en el tab Teodoro)
     // Misiones Diarias: Mundos va primero del 29 nov al 26 dic; al terminar el día queda hecha
     const mundos = root.querySelector('a[aria-label^="Mundos"]');
     if (mundos) {

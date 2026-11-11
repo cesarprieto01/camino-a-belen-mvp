@@ -3,17 +3,15 @@
 //  · USA: una TheoBox en cada ruleta (días 4, 11, 18 y 24) para quien llega con la semana completa. Una por familia.
 //  · LATAM: una sola, en un sorteo al cerrar el camino, para quien completa las 4 semanas.
 // Piezas: la insignia del mapa y su panel (crece desde ella), la web dentro de la app («Conócela»), la TheoBox dibujada en las
-// ruletas y en Belén, la lámina del inicio (carrusel de Hoy y card deslizable del tab Teodoro) y la card «Para papás» bajo el premio.
+// ruletas y en Belén, la segunda lámina de la card grande del camino (inicio y tab Teodoro) y la card «Para papás» bajo el premio.
 // Regla de la barra (cualquier orden): cada tramo es un día fijo (USA) o una semana (LATAM); se llena cuando ese día está hecho,
 // a tiempo o recuperado; solo cuenta al girar (o al cierre del sorteo). Quién gana lo decide el servidor; aquí no hay azar.
 import { S, go, toast, nota, dark, reduced, fase, contentDone, puedeDia } from './core.js';
 import { RULES } from './data.js';
 
-const IMG = { real: 'assets/theobox/juego/real.webp', sola: 'assets/theobox/juego/sola.webp', dibujada: 'assets/theobox/juego/dibujada.webp', coloca: 'assets/theobox/juego/coloca.webp', escenaDia: 'assets/theobox/juego/escena-dia.webp' };
-// Escena de las láminas: de día, Teodoro escucha la TheoBox (aprobada por César el 11-nov; ya trae la TheoBox). De noche, mientras se
-// aprueba su versión, la escena aprobada de Teodoro saltando con la TheoBox real encima (sobre = true).
-const escena = () => (dark() ? { src: 'assets/pila/reactivado-noche.webp', alt: 'Teodoro salta de alegría junto a la TheoBox', sobre: true }
-  : { src: IMG.escenaDia, alt: 'Teodoro escucha la TheoBox y se balancea con la música', sobre: false });
+const IMG = { real: 'assets/theobox/juego/real.webp', sola: 'assets/theobox/juego/sola.webp', dibujada: 'assets/theobox/juego/dibujada.webp', coloca: 'assets/theobox/juego/coloca.webp', escenaDia: 'assets/theobox/juego/escena-dia.webp', escenaNoche: 'assets/theobox/juego/escena-noche.webp' };
+// Escena de la lámina: Teodoro escucha la TheoBox, de día y de noche (aprobadas por César el 11-nov; ya traen la TheoBox).
+const escena = () => ({ src: dark() ? IMG.escenaNoche : IMG.escenaDia, alt: 'Teodoro escucha la TheoBox y se balancea con la música', sobre: false });
 // Cierre del sorteo de LATAM: día 26 (Belén, 24 dic). Decisión pendiente de César: el 6 de enero (día 39, fin del camino).
 const SORTEO = 26;
 const SEMANAS = [[1, 7], [8, 14], [15, 21], [22, 26]];
@@ -209,23 +207,8 @@ export function decorarBelen(root) {
   root.appendChild(c);
 }
 
-/** Inicio: la card de la TheoBox en el carrusel de destacados de Hoy, justo después de Adviento (256 × 330). */
-export function laminaHoy() {
-  if (!juegoActivo()) return null;
-  const t = textos(), e = escena();
-  const a = el('a', 'theo-heroe-t tbj-heroe', `
-    <img class="tbj-heroe-fondo" src="${e.src}" alt="${e.alt}">
-    ${e.sobre ? `<span class="tbj-heroe-luz" aria-hidden="true"></span><img class="tbj-heroe-tb" src="${IMG.real}" alt="">` : ''}
-    <span class="tbj-heroe-deg" aria-hidden="true"></span>
-    <div class="tbj-heroe-txt"><span class="tbj-heroe-ojo">${t.ins}</span><b>Podrías ganar ${t.art} <strong>TheoBox</strong></b></div>
-    <span class="tbj-heroe-boton">Ir al camino${FLECHA}</span>`);
-  a.href = '#'; a.setAttribute('aria-label', `Podrías ganar ${t.art} TheoBox. ${t.ins}. Ir al camino`);
-  a.addEventListener('click', ev => { ev.preventDefault(); if (a.getAttribute('aria-hidden') !== 'true') go('mapa', { theobox: true, from: 'hoy' }, 'push'); });
-  return atar(a);
-}
-
-/** Tab Teodoro: la card del camino se desliza a una segunda lámina con la TheoBox (la misma card, otro contenido); puntos debajo. */
-export function deslizarCamino(tCard) {
+/** Card grande del camino (inicio y tab Teodoro): se desliza a una segunda lámina con la TheoBox (la misma card, otro contenido); puntos debajo. */
+export function deslizarCamino(tCard, from = 'teodoro') {
   if (!juegoActivo() || !tCard || tCard.closest('.tbj-slider')) return;
   const p = progreso(), t = textos(p);
   const l2 = tCard.cloneNode(true);
@@ -261,7 +244,7 @@ export function deslizarCamino(tCard) {
   if (estrella) { estrella.src = IMG.real; estrella.style.filter = 'drop-shadow(0 0 6px rgba(255,214,90,.8))'; }
   l2.setAttribute('aria-label', `Podrías ganar ${t.art} TheoBox. ${t.ins}. Ir al camino`);
   l2.classList.add('tbj-l2');
-  l2.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); go('mapa', { theobox: true, from: 'teodoro' }, 'push'); }, true);
+  l2.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); go('mapa', { theobox: true, from }, 'push'); }, true);
 
   // el deslizador ocupa el lugar de la card; lo de abajo baja lo que miden los puntos
   const PUNTOS = 26;

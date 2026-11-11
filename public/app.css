@@ -1385,17 +1385,6 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 .tbj-belen.tbj-caja { width: 74px; translate: 0 0; }
 .tbj-belen .tbj-candado { width: 36%; }
 
-/* inicio: la card de la TheoBox en el carrusel de destacados (256 × 330) */
-.tbj-heroe { width: 256px; height: 330px; flex: none; }
-.tbj-heroe-fondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
-.tbj-heroe-luz { position: absolute; right: -10px; top: 92px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,90,.7), rgba(255,214,90,0)); }
-.tbj-heroe-tb { position: absolute; right: 14px; top: 104px; width: 92px; height: auto; }
-.tbj-heroe-deg { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; background: linear-gradient(180deg, rgba(4,14,36,0) 0%, rgba(4,14,36,.72) 34%, rgba(4,14,36,.92) 100%); }
-.tbj-heroe-txt { position: absolute; left: 16px; right: 16px; bottom: 74px; text-align: center; color: #FFFFFF; display: flex; flex-direction: column; gap: 4px; }
-.tbj-heroe-ojo { font: 700 12px/1.2 Mulish, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #F5DB78; }
-.tbj-heroe-txt b { font: 500 24px/1.08 'Neue Montreal', Mulish, sans-serif; letter-spacing: -.01em; }
-.tbj-heroe-txt strong { font-weight: 700; }
-.tbj-heroe-boton { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 48px; border-radius: 16px; background: #F5DB78; color: #06325A; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 16px/1 'Neue Montreal', Mulish, sans-serif; }
 
 /* tab Teodoro: la card del camino se desliza a la lámina de la TheoBox; puntos debajo */
 .tbj-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; border-radius: 26px; }
