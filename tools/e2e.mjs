@@ -20,7 +20,7 @@ await p.reload(); await p.waitForSelector('#viewport .layer', { timeout: 20000 }
 // la app arranca desde cero; los recorridos (salvo «inicio») parten del día 9 con 8 días hechos
 // cada recorrido (salvo «inicio» y «completo») arranca del mismo estado, aunque se corran varios seguidos
 const base = async () => {
-  await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 9, inscrito: true, teaserVisto: true, panes: 120 }); for (let d = 0; d <= 8; d++) c.S.completos[d] = { contenido: true, trivia: d > 0, estrellas: d ? 2 : 0 }; [3, 6].forEach(d => c.S.sorpresas[d] = 'hecha'); c.S.ruletas[4] = 'gorro'; c.S.prendas = ['gorro']; c.S.prendasVistas = 1; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); });
+  await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 9, inscrito: true, teaserVisto: true, panes: 120, theoboxAdviento: false }); for (let d = 0; d <= 8; d++) c.S.completos[d] = { contenido: true, trivia: d > 0, estrellas: d ? 2 : 0 }; [3, 6].forEach(d => c.S.sorpresas[d] = 'hecha'); c.S.ruletas[4] = 'adviento'; c.S.prendas = ['adviento']; c.S.traje = 'adviento'; c.S.prendasVistas = 1; c.save(); c.clearHistory(); c.go('hoy', {}, 'none', { tab: true }); }); // la ruleta 1 ya dio la bienvenida (traje de Adviento)
   await p.waitForTimeout(900);
 };
 let k = 0;
@@ -177,7 +177,7 @@ const flows = {
     // TheoBox (gran premio): forzada el día 11 no sale; el día 24 sí, una vez; con dueño no sale
     // modelo anterior (una sola TheoBox, día 24): «TheoBox en juego» apagada; extra = { tbJuego, mercado, salta } para el modelo nuevo
     const girarTB = (hoy, theobox, extra = {}) => p.evaluate(async ([hoy, theobox, { salta = [], ...extra }]) => {
-      const c = await import('/js/core.js'); c.reset({ hoy, inscrito: true, teaserVisto: true, plan: 'premium', forzarPremio: 'theobox', theobox, tbJuego: false, ...extra });
+      const c = await import('/js/core.js'); c.reset({ hoy, inscrito: true, teaserVisto: true, plan: 'premium', forzarPremio: 'theobox', theobox, tbJuego: false, theoboxAdviento: true, ...extra }); // la TheoBox en Adviento viene apagada: estas pruebas la prenden
       for (let d = 0; d < hoy; d++) if (!salta.includes(d)) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.completos[hoy] = { contenido: true }; c.save(); c.clearHistory();
       c.go('mapa', {}, 'none', { tab: true }); c.go('ruletaPop', { day: hoy }, 'modal');
     }, [hoy, theobox, extra]);
@@ -206,7 +206,7 @@ const flows = {
   // Ya reclamada, el mapa, el inicio y Ajustes llevan a «Mi TheoBox». En el tema claro van las pantallas claras
   // modelo anterior de la TheoBox (una sola, día 24): con «TheoBox en juego» apagada
   async theobox() {
-    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ tbJuego: false, hoy: 24, inscrito: true, teaserVisto: true, plan: 'premium', theobox: 'mia', theoboxReclamada: false }); for (let d = 0; d <= 24; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.ruletas[24] = 'theobox'; c.save(); c.clearHistory(); c.go('tbGano', { day: 24 }, 'none'); });
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ tbJuego: false, theoboxAdviento: true, hoy: 24, inscrito: true, teaserVisto: true, plan: 'premium', theobox: 'mia', theoboxReclamada: false }); for (let d = 0; d <= 24; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; c.S.ruletas[24] = 'theobox'; c.save(); c.clearHistory(); c.go('tbGano', { day: 24 }, 'none'); });
     await p.waitForTimeout(1500); await shot('gano');
     if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .tb-claro')))) errs.push('en el tema claro «¡Ganaste!» no sale clara');
     await tap('Ahora no'); await p.waitForTimeout(1500);
@@ -766,9 +766,74 @@ const flows = {
       const fin = await screen(); if (n === 21 ? fin !== 'memoramaReglas' : !['mapa', 'cerrado'].includes(fin)) errs.push(`día ${n}: tras «¡Ganaron todos!» va a ${fin}`);
     }
   },
+  async premios() {
+    // premios de la ruleta (12-nov): calendario, ruleta saltada, Teodoro vestido y TheoBox en Adviento apagada por defecto
+    const girar = async (hoy, extra = {}, salta = []) => {
+      await p.evaluate(async ([hoy, extra, salta]) => { const c = await import('/js/core.js'); c.reset({ hoy, inscrito: true, teaserVisto: true, plan: 'premium', theoboxAdviento: false, forzarPremio: '', ...extra }); for (let d = 0; d <= hoy; d++) c.S.completos[d] = { contenido: true, trivia: true, estrellas: 2 }; salta.forEach(d => { c.S.ruletas[d] = undefined; delete c.S.ruletas[d]; }); c.save(); c.clearHistory(); c.go('mapa', {}, 'none', { tab: true }); c.go('ruletaPop', { day: hoy }, 'modal'); }, [hoy, extra, salta]);
+      await p.waitForTimeout(1200); await tap('¡Girar!'); await p.waitForTimeout(8500);
+      return p.evaluate(async hoy => { const c = await import('/js/core.js'); return { r: c.S.ruletas[hoy], cuarto: c.S.cuartoNuevo, prendas: c.S.prendas, traje: c.S.traje, pantalla: document.querySelector('#viewport .layer:last-child')?.dataset.screen }; }, hoy);
+    };
+    const aria = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child [role=img][aria-label^="Ruleta"]')?.getAttribute('aria-label') || '');
+    // bienvenida: el primer giro da el traje de Adviento (también si se unió tarde y su primera ruleta es otra)
+    let r = await girar(4);
+    if (r.r !== 'adviento' || r.traje !== 'adviento' || r.pantalla !== 'ruletaPremio') errs.push('premios: la primera ruleta debería dar el traje de Adviento ' + JSON.stringify(r));
+    await shot('premio-adviento');
+    r = await girar(18, {});
+    if (r.r !== 'adviento') errs.push('premios: la primera ruleta de alguien que se unió tarde debería dar el traje de Adviento ' + JSON.stringify(r));
+    // forzado desde el panel: el cuarto dorado lleva a su pantalla
+    r = await girar(11, { forzarPremio: 'fondo', prendas: ['adviento'], traje: 'adviento', ruletas: { 4: 'adviento' } });
+    if (r.r !== 'fondo' || !r.cuarto || r.pantalla !== 'premioCuarto') errs.push('premios: forzar el cuarto no lleva a su premio ' + JSON.stringify(r));
+    await shot('premio-cuarto');
+    // el sorteo (data.js) con azar controlado y con 20 000 niños simulados
+    const prueba = await p.evaluate(async () => {
+      const d = await import('/js/data.js'), out = [];
+      const st = (o = {}) => ({ ruletas: { 4: 'adviento' }, prendas: ['adviento'], cuartoNuevo: false, sinPremio: 0, ...o });
+      if (d.sortearPremio(st(), 11, { azar: () => 0 }) !== 'fondo') out.push('azar 0 en la ruleta 2 debería dar el cuarto');
+      if (d.sortearPremio(st(), 11, { azar: () => 0.999 }) !== 'panes') out.push('azar casi 1 debería dar panes');
+      for (let k = 0; k < 400; k++) { const x = d.sortearPremio(st({ cuartoNuevo: true, prendas: ['adviento', 'natividad'] }), 24); if (!['panes', 'otra'].includes(x)) { out.push('con todo, salió ' + x); break; } }
+      for (let k = 0; k < 400; k++) { const x = d.sortearPremio(st({ sinPremio: 2 }), 18); if (!['fondo', 'natividad'].includes(x)) { out.push('con mala racha no aseguró premio: ' + x); break; } }
+      for (let k = 0; k < 400; k++) { if (d.sortearPremio(st(), 11, { giro: 1 }) === 'otra') { out.push('en la segunda vuelta salió otra oportunidad'); break; } }
+      // 20 000 niños que giran las 4 ruletas (con «otra oportunidad» y la mala racha), como la rueda
+      let f = 0, n = 0, todo = 0, solo = 0; const N = 20000;
+      for (let k = 0; k < N; k++) {
+        const S = { ruletas: {}, prendas: [], cuartoNuevo: false, sinPremio: 0 };
+        for (const dia of [4, 11, 18, 24]) {
+          let giro = 0, x; do { x = d.sortearPremio(S, dia, { giro }); giro++; } while (x === 'otra');
+          S.ruletas[dia] = x; if (x === 'fondo') S.cuartoNuevo = true; else if (x !== 'panes') S.prendas.push(x);
+          S.sinPremio = x === 'panes' ? S.sinPremio + 1 : 0;
+        }
+        f += S.cuartoNuevo; n += S.prendas.includes('natividad'); todo += S.cuartoNuevo && S.prendas.includes('natividad'); solo += !S.cuartoNuevo && !S.prendas.includes('natividad');
+      }
+      const pct = v => Math.round(v / N * 1000) / 10;
+      const res = { cuarto: pct(f), natividad: pct(n), todo: pct(todo), soloBienvenida: pct(solo) };
+      if (res.cuarto < 45 || res.cuarto > 53) out.push('el cuarto debería salir al ~49 %: ' + res.cuarto);
+      if (res.natividad < 73 || res.natividad > 80) out.push('Natividad debería salir al ~77 %: ' + res.natividad);
+      if (res.soloBienvenida > 0) out.push('nadie debería quedarse solo con la bienvenida: ' + res.soloBienvenida);
+      return { out, res };
+    });
+    prueba.out.forEach(e => errs.push('premios: ' + e));
+    console.log('simulación', JSON.stringify(prueba.res));
+    // la rueda: dorada = cuarto, sin TheoBox (apagada); prendida, vuelve la TheoBox
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('ruletaPop', { day: 24 }, 'modal'); }); await p.waitForTimeout(1200);
+    if (!/^Ruleta sorpresa con 8 casillas: cuarto de Adviento/.test(await aria()) || /TheoBox/.test(await aria())) errs.push('premios: con la TheoBox apagada, la dorada debería ser el cuarto y no haber TheoBox: ' + await aria());
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.theoboxAdviento = true; c.save(); c.go('ruletaPop', { day: 24 }, 'modal', { replace: true }); }); await p.waitForTimeout(1200);
+    if (!/^Ruleta sorpresa con 8 casillas: TheoBox/.test(await aria())) errs.push('premios: con la TheoBox prendida, la dorada debería ser la TheoBox: ' + await aria());
+    // el cuarto de Adviento con Teodoro vestido
+    for (const traje of ['adviento', 'natividad']) {
+      await p.evaluate(async traje => { const c = await import('/js/core.js'); c.reset({ hoy: 19, inscrito: true, teaserVisto: true, theoboxAdviento: false, cuartoNuevo: true, prendas: ['adviento', 'natividad'], traje, prendasVistas: 2, bateria: 5 }); c.save(); c.clearHistory(); c.go('teodoro', {}, 'none', { tab: true }); }, traje);
+      await p.waitForTimeout(1500);
+      const ok = await p.evaluate(t => [...document.querySelectorAll('#viewport .layer:last-child img')].some(i => i.src.includes(`premios/teodoro-${t}`)) && [...document.querySelectorAll('#viewport .layer:last-child img')].some(i => i.src.includes('premios/fondo-adviento')), traje);
+      if (!ok) errs.push(`premios: el cuarto de Adviento no muestra a Teodoro con el traje de ${traje}`);
+      await shot('cuarto-' + traje);
+    }
+    // apagada: ni insignia ni TheoBox en el mapa, ni lámina en el inicio
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.reset({ hoy: 9, inscrito: true, teaserVisto: true, theoboxAdviento: false }); for (let d = 0; d <= 8; d++) c.S.completos[d] = { contenido: true }; c.save(); c.go('mapa', {}, 'none', { tab: true }); }); await p.waitForTimeout(1500);
+    if (await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child :is(.tbj-ins, .tbj-caja, .tb-espera)'))) errs.push('premios: con la TheoBox apagada el mapa muestra TheoBox');
+  },
   async tbjuego() {
     // TheoBox en juego: Hoy → lámina del carrusel → mapa con el panel abierto → web → panel; tab Teodoro; premio; interruptor y mercado
     const hay = sel => p.evaluate(s => !!document.querySelector(`#viewport .layer:last-child ${s}`), sel);
+    await p.evaluate(async () => { const c = await import('/js/core.js'); c.S.theoboxAdviento = true; c.S.tbJuego = true; c.S.mercado = 'usa'; c.save(); c.go('hoy', {}, 'none', { tab: true }); }); await p.waitForTimeout(900); // viene apagada (y el recorrido anterior puede dejar TheoBox en juego apagada)
     const chip = async attr => { const abierto = () => p.evaluate(() => document.getElementById('panel')?.classList.contains('open')); if (!(await abierto())) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector('[data-tab="aj"]')?.click()); await p.waitForTimeout(300); if (!(await p.evaluate(a => { const c = document.querySelector(`[${a}]`); c?.click(); return !!c; }, attr))) errs.push(`tbjuego: no está el chip [${attr}] en Ajustes`); await p.waitForTimeout(900); if (await abierto()) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(400); } };
     if (await hay('.theo-heroe .tbj-slider, .theo-heroe .tbj-l2')) errs.push('tbjuego: el carrusel de arriba no lleva TheoBox');
     if (!(await hay('.tbj-slider .tbj-l2'))) { errs.push('tbjuego: la card grande del inicio no se desliza a la TheoBox'); return; }

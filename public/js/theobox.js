@@ -3,7 +3,7 @@
 // «TheoBox · Gran premio» (9 y 10-nov-2026): cada pantalla tiene su versión clara (TB-*-claro.html) y oscura (TB-*.html).
 // Si eligen «Ahora no», la TheoBox queda esperando encima de la hoja del día en el mapa (map.js) hasta que la reclamen; ya
 // reclamada, mientras viaja se llega a «Mi TheoBox» desde el mapa, el inicio (card) y Ajustes («Mis premios»).
-import { S, save, go, back, on, register, toast, confetti } from './core.js';
+import { S, save, go, back, on, register, toast, confetti, conTheobox } from './core.js';
 import { teoDice, motivo, levanta } from './musica.js';
 import { celebrar } from './teo-anim.js';
 
@@ -166,7 +166,7 @@ const PASOS = [
 export const LLEGA = 'Llega entre el 28 y el 30 dic';
 const paso = () => S.theoboxPaso || 2; // 2 = la preparan, 3 = salió, 4 = llegó
 /** Reclamada y todavía viajando: el mapa y el inicio la muestran. */
-export const enCamino = () => S.theobox === 'mia' && S.theoboxReclamada && paso() < 4;
+export const enCamino = () => conTheobox() && S.theobox === 'mia' && S.theoboxReclamada && paso() < 4;
 /** Lo de adentro del aviso del mapa y de la card del inicio: la caja, «va en camino», cuándo llega y «Ver envío». */
 export const avisoEnvio = ({ camion = false } = {}) => '<span class="tb-espera-ico" aria-hidden="true">'
   + (camion ? '' : '<i></i>') + '<img src="assets/ruleta/theobox-casilla.webp" alt="">'
@@ -229,7 +229,7 @@ register('ajustes', {
     const perfil = [...root.querySelectorAll('.aj-fila b')].find(b => b.textContent === 'Lucía');
     if (perfil) perfil.textContent = S.nombre;
     const premios = [...root.querySelectorAll('.aj-seccion')].find(t => t.textContent === 'MIS PREMIOS'), fila = premios?.nextElementSibling;
-    if (S.theobox === 'mia' && S.theoboxReclamada) {
+    if (conTheobox() && S.theobox === 'mia' && S.theoboxReclamada) {
       const est = fila.querySelector('span > i')?.parentElement; // el punto y «En camino · llega…»
       if (est && paso() >= 4) est.lastChild.textContent = 'Entregada';
       on(root, fila, () => go('tbMiTheobox', {}, 'push'));

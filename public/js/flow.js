@@ -1,8 +1,8 @@
 // Flujo del camino: qué pasa al tocar cada cosa y qué pantalla del lienzo se ve.
 import { S, save, A, cur, $, $$, on, find, go, back, register, seen, toast, nota, hueco, paintEnergy, teodoroImg, activeDay, walkDay, isDone, contentDone,
   lastDay, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
-  addPanes, setBateria, recargar, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo } from './core.js';
-import { DAYS, TYPES, RULES, PRENDAS, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
+  addPanes, setBateria, recargar, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo, conTheobox } from './core.js';
+import { DAYS, TYPES, RULES, PRENDAS, FONDO, sortearPremio, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
 import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from './musica.js'; // música, voces de Teodoro y efectos
 import { rateRow } from './games.js';
 import { celebrar, pensar } from './teo-anim.js';
@@ -808,7 +808,7 @@ const SLIDES = [
   { vis: 'pesebre', t: '¡Jesús está por llegar!', d: 'Preparemos juntos el corazón para recibirlo en Navidad.', alt: 'El pesebre vacío bajo la estrella de Belén, esperando al Niño Jesús' },
   { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día junto a Teodoro hasta el pesebre.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
   { vis: 'aprende', t: 'Mira, juega, canta… y ama', d: 'Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.', alt: 'Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia' },
-  { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.', alt: 'La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes' },
+  { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.', alt: 'La ruleta de premios con el traje de Adviento, el traje de Natividad y una trivia perfecta de tres estrellas y diez panes' },
 ];
 // chispas de cuatro puntas: [left, top, tamaño, opacidad]
 const chispas = (l, clase = '') => l.map(([x, y, s, o = 1]) => `<svg class="rs-chispa ${clase}" viewBox="0 0 24 24" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${o}"><path d="M12 1.5 14 10 22.5 12 14 14 12 22.5 10 14 1.5 12 10 10Z"/></svg>`).join('');
@@ -850,8 +850,8 @@ function slidesEn(root, caja, listo) {
       <div class="rs-card rs-centro"><img class="rs-nacimiento" src="assets/poster/navidad.webp" alt="">
         ${chispas([[84, 108, 12], [150, 96, 10, .85]], 'rs-suave')}<div class="rs-card-velo"></div><span class="rs-chip">${PLAY}El nacimiento de Jesús</span></div>`,
     gana: `<div class="rs-rayos"></div><div class="rs-brillo"></div>
-      <div class="rs-ruleta"><div class="rs-rueda"><img src="assets/ruleta/rueda8.webp" alt="">${casillas(279, A(IMG.bufanda))}</div></div><img class="rs-puntero" src="${A('3fdb655b7743b5a7a821153429c4d733')}" alt="">
-      <img class="rs-premio rs-izq" src="assets/slides/premio-gorro.webp" alt=""><img class="rs-premio rs-der" src="assets/slides/premio-bufanda.webp" alt="">
+      <div class="rs-ruleta"><div class="rs-rueda"><img src="assets/ruleta/rueda8.webp" alt="">${casillas(279)}</div></div><img class="rs-puntero" src="${A('3fdb655b7743b5a7a821153429c4d733')}" alt="">
+      <img class="rs-premio rs-izq rs-traje" src="assets/premios/traje-adviento.webp" alt=""><img class="rs-premio rs-der rs-traje" src="assets/premios/traje-natividad.webp" alt="">
       <img class="rs-premio rs-centro" src="assets/slides/premio-trivia.webp" alt="">
       ${CONFETI.map(([x, y, w, h, r], k) => `<i class="rs-confeti" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:rotate(${r}deg);background:${(oscuro ? ['#F5DB78', '#5ED3E8', '#FF9AB8', '#FFFFFF', '#5ED3E8', '#F5DB78'] : ['#F0C446', '#1F9DB8', '#F27FA5', '#F0C446', '#1F9DB8', '#F27FA5'])[k]}"></i>`).join('')}`,
   };
@@ -1040,8 +1040,7 @@ register('teodoro', {
     // la isla del cuarto lleva a los mundos de Teodoro; el botón de la tarjeta, al camino
     if (isla) {
       on(root, isla, () => go('mundos', {}, 'push'));
-      isla.querySelectorAll('span').forEach(sp => { if (/Día/.test(sp.textContent)) sp.style.display = 'none'; });
-      isla.classList.add('a-bob');
+      isla.querySelectorAll('span').forEach(sp => { if (/Día/.test(sp.textContent)) sp.style.display = 'none'; }); // quieta: el cuarto no lleva animación
     }
     // la puerta a Mundos siempre lleva el ícono de Mundos (el planeta), nunca la isla
     $$(root, 'a[aria-label="Ver mis mundos"] img').slice(0, 1).forEach(i => { i.src = 'assets/mundos.webp'; i.style.objectFit = 'contain'; });
@@ -1062,9 +1061,10 @@ register('teodoro', {
     on(root, 'Ver el Adviento', () => go('listo', {}, 'push'));
     on(root, 'Invitar', () => go('invitacion', {}, 'push'));
     on(root, 'Entrar', () => entrar('teodoro'));
-    $$(root, 'img').filter(i => /Teodoro/.test(i.alt || '')).slice(0, 1).forEach(i => i.classList.add('a-bob'));
-    // prendas ganadas en la ruleta, visibles en el cuarto
-    if (S.prendas.length > (S.prendasVistas || 0)) { S.prendasVistas = S.prendas.length; save(); toast('Tu cuarto', `Prendas ganadas: ${S.prendas.map(id => PRENDAS.find(p => p.id === id)?.nombre.replace(/^un[a]? /, '')).join(', ')}`); }
+    // el cuarto va quieto: sin animación (César, 12-nov)
+    // trajes ganados en la ruleta, visibles en el cuarto (Teodoro lleva el último)
+    const ganados = PRENDAS.filter(t => S.prendas.includes(t.id));
+    if (ganados.length > (S.prendasVistas || 0)) { S.prendasVistas = ganados.length; save(); toast('Tu cuarto', ganados.length > 1 ? 'Ya tienes los dos trajes' : `Teodoro estrena ${ganados[0].nombre}`); }
   },
 });
 /** Antes del 29 la card del tab Teodoro se trae del tablero del inicio (vidrio empañado sin unirse; Teodoro de espaldas ya dentro) y va en el mismo sitio. */
@@ -1087,7 +1087,7 @@ async function cardDelInicio(root) {
 }
 /** El acceso a Mundos en el cuarto de Teodoro: el mismo ícono de Mundos de Misiones Diarias, junto a la cama (lienzo «Tab Teodoro»). */
 function islaAdviento(root) {
-  const cuarto = $$(root, 'img').find(i => /^Tab Teodoro|^Cuarto de Nazaret/.test(i.alt || ''));
+  const cuarto = $$(root, 'img').find(i => /^Tab Teodoro|^Cuarto de (Nazaret|Adviento)/.test(i.alt || ''));
   if (!cuarto) return null;
   const a = document.createElement('a');
   a.setAttribute('aria-label', 'Mundos de Teodoro');
@@ -1111,13 +1111,23 @@ function quitarCorona(root) {
 /** El cuarto de Teodoro trae nombre, racha y panes pintados en la imagen: se tapan con los datos reales (mismo estilo que Hoy). */
 function patchCuarto(root) {
   const bg = $$(root, 'img').find(i => /^Tab Teodoro/.test(i.alt || ''));
-  const POS = { gorro: 'left:150px;top:96px;width:84px;transform:rotate(-8deg)', bufanda: 'left:140px;top:222px;width:102px', bolso: 'left:236px;top:268px;width:62px;transform:rotate(10deg)' };
-  // de pie (3 a 5 de energía) lleva gorro y bufanda; cansado o dormido, el bolso queda en el piso
+  // el traje puesto: el último que ganó (S.traje); de pie (3 a 5 de energía) lo lleva, cansado o dormido no
+  const traje = PRENDAS.find(t => t.id === S.traje && S.prendas.includes(t.id)) || PRENDAS.filter(t => S.prendas.includes(t.id)).pop();
   const dePie = S.bateria >= 3 || !!bg;
-  if (!dePie) POS.bolso = 'left:262px;top:330px;width:58px;transform:rotate(-6deg)';
-  const ponerPrendas = () => S.prendas.forEach(id => { const pr = PRENDAS.find(x => x.id === id); if (!pr || !POS[id] || (!dePie && (id === 'gorro' || id === 'bufanda'))) return; const im = document.createElement('img'); im.src = A(pr.img); im.alt = `Teodoro lleva ${pr.nombre}`; im.className = 'cuarto-patch prenda'; im.style.cssText = POS[id] + ';height:auto;z-index:' + (id === 'paja' ? 1 : 5); root.appendChild(im); });
+  // cuarto de siempre (Teodoro viene pintado en el fondo): con traje, el mismo cuarto sin Teodoro pintado y Teodoro vestido en su lugar
+  const ponerPrendas = () => {
+    if (!traje || !dePie) return;
+    bg.src = A('premios/cuarto-sin-teodoro.webp');
+    const im = document.createElement('img'); im.src = A(traje.teodoro); im.alt = `Teodoro en su cuarto con ${traje.nombre}`; im.className = 'cuarto-patch prenda';
+    const sombra = document.createElement('div'); sombra.className = 'cuarto-patch'; sombra.setAttribute('aria-hidden', 'true'); // la sombra en el piso que traía el Teodoro pintado
+    sombra.style.cssText = 'left:122px;top:382px;width:150px;height:24px;border-radius:50%;background:radial-gradient(closest-side, rgba(40,62,120,.28), rgba(40,62,120,0));z-index:3';
+    im.style.cssText = 'left:110px;top:86px;height:314px;width:auto;z-index:4'; root.append(sombra, im);
+  };
   if (!bg) {
-    // Cuarto de Nazaret: los datos son texto y Teodoro va suelto (su pose sigue a la batería)
+    // Cuarto de Adviento (el premio dorado; usa la pieza del antiguo cuarto de Nazaret): el fondo nuevo, los datos son texto y Teodoro va
+    // suelto (su pose sigue a la batería; de pie y con traje, Teodoro vestido)
+    const cuarto = $$(root, 'img').find(i => /^Cuarto de Nazaret/.test(i.alt || ''));
+    if (cuarto) { cuarto.src = A(FONDO.fondo); cuarto.alt = 'Cuarto de Adviento: pesebre en la ventana y la corona de Adviento'; Object.assign(cuarto.style, { objectFit: 'cover', objectPosition: '50% 0' }); }
     replaceText(root, /^Ces$/, S.nombre);
     // las píldoras de arriba eran texto blanco sobre beige translúcido (no se leían): fondo azul noche translúcido
     [...root.children].filter(el => { const t = parseFloat(el.style.top); return t >= 40 && t <= 62 && el.offsetHeight <= 52; })
@@ -1129,7 +1139,7 @@ function patchCuarto(root) {
     if (rp) { const tn = [...rp.querySelectorAll('*'), rp].flatMap(e => [...e.childNodes]).find(c => c.nodeType === 3 && /^\s*\d+\s*$/.test(c.nodeValue)); if (tn) tn.nodeValue = String(racha()); rp.setAttribute('aria-label', `Racha: ${racha()} días`); }
     const teo = $$(root, 'img').find(i => /^Teodoro en su Cuarto/.test(i.alt || ''));
     if (teo && S.bateria < 5) teo.src = teodoroImg();
-    ponerPrendas();
+    if (teo && traje && dePie) { teo.src = A(traje.teodoro); teo.alt = `Teodoro en su Cuarto de Adviento con ${traje.nombre}`; teo.style.objectFit = 'contain'; }
     const pn = document.createElement('div'); pn.className = 'cuarto-patch'; pn.textContent = String(S.panes); pn.setAttribute('aria-label', `${S.panes} panes`);
     pn.style.cssText = 'left:336px;top:524px;width:40px;height:24px;background:rgb(251,242,229);color:#4A2E14;display:grid;place-items:center;font:800 15px Mulish,sans-serif';
     root.appendChild(pn);
@@ -1520,31 +1530,33 @@ register('cerrado', {
 });
 
 // ---------- Ruleta (días 4, 11, 18 y 24) ----------
-// 8 casillas (45° cada una), desde arriba en el sentido del reloj: la dorada es la TheoBox, el gran premio; el «?» turquesa (casilla celeste)
-// es el fondo nuevo para Teodoro (cuarto); «prenda» es la de la semana; «otra» da un segundo giro. Panes alternados para que quede simétrica.
-const SEGMENTS = ['theobox', 'panes', 'cuarto', 'panes', 'prenda', 'panes', 'otra', 'panes'];
+// 8 casillas (45° cada una), desde arriba en el sentido del reloj. La dorada es el premio grande: el fondo de Adviento para el cuarto de
+// Teodoro (con la TheoBox en Adviento prendida vuelve la TheoBox y el fondo pasa al lugar de «otra oportunidad»). Los dos trajes llevan su
+// gorro; panes alternados para que quede simétrica. Qué sale lo decide el calendario de posibilidades (data.js › sortearPremio).
+const segmentos = () => (conTheobox() ? ['theobox', 'panes', 'adviento', 'panes', 'natividad', 'panes', 'fondo', 'panes'] : ['fondo', 'panes', 'adviento', 'panes', 'natividad', 'panes', 'otra', 'panes']);
+const NOMBRE_CASILLA = { fondo: 'cuarto de Adviento', adviento: 'traje de Adviento', natividad: 'traje de Natividad', panes: 'panes', otra: 'gira otra vez', theobox: 'TheoBox' };
 // Gran premio: una sola TheoBox para todo el reto. Se ve en todas las ruletas, pero solo se gana en la última (día 24) y una sola vez:
 // en la app la decide el servidor (un momento al azar de ese día; la primera familia que gira después se la lleva). Después sigue en la
 // rueda, apagada. Nunca se anuncia con textos ni fechas en la ruleta (César). En el MVP: S.theobox ('libre' | 'otra' | 'mia') y
 // «Qué sale al girar › TheoBox» en el panel.
 const TEOBOX_DIA = RULES.ruleta[RULES.ruleta.length - 1];
 const TEOBOX = 'ruleta/theobox.webp', TEOBOX_IMG = A(TEOBOX); // en la rueda va recortada, sin el resplandor (se veía chica)
-const teoboxEnJuego = n => (S.tbJuego
+const teoboxEnJuego = n => conTheobox() && (S.tbJuego
   // TheoBox en juego: una por ruleta, para quien completó la semana, solo en la ruleta de esta semana (cierra al abrir la siguiente) y una por familia
   ? juegoActivo() && mercado() === 'usa' && ruletaActual()?.d === n && semanaCompleta(n)
   : n === TEOBOX_DIA && S.theobox === 'libre');
-// la prenda de la casilla «prenda»: la de su semana (1 a 3); en la semana 4, la primera que les falte (sin ninguna pendiente, null = panes)
-const prendaDe = n => PRENDAS[RULES.ruleta.indexOf(n)] || PRENDAS.find(x => !S.prendas.includes(x.id)) || null;
-const SEG = 360 / SEGMENTS.length;
+const SEG = 360 / 8;
 // los íconos de las 8 casillas sobre rueda8.webp (caja = lo que mide la rueda), cada uno mirando hacia afuera
-const casillas = (caja, prenda, apagada = S.theobox === 'otra') => { // apagada: la TheoBox en gris (no se puede ganar en este giro)
-  const ico = { cuarto: 'assets/ruleta/sorpresa-azul.webp', panes: A(IMG.pan), theobox: 'assets/ruleta/theobox-casilla.webp', prenda, otra: 'assets/ruleta/otra-vez.webp' };
+const casillas = (caja, segs = segmentos(), apagada = false) => { // apagada: la TheoBox en gris (no se puede ganar en este giro)
+  const ico = { fondo: A(FONDO.icono), panes: A(IMG.pan), theobox: 'assets/ruleta/theobox-casilla.webp', otra: 'assets/ruleta/otra-vez.webp', adviento: A(PRENDAS[0].icono), natividad: A(PRENDAS[1].icono) };
   const cx = caja / 2, r = caja * .262, s = caja * .14;
-  return SEGMENTS.map((id, i) => {
-    // la TheoBox, un poco más afuera y del ancho de su casilla (la cuña se angosta hacia el centro: más grande se salía); la sorpresa, más grande
-    const z = s * (id === 'theobox' ? 1.15 : id === 'cuarto' ? 1.3 : 1), rr = id === 'theobox' ? r * 1.13 : r;
-    const sombra = id === 'theobox' ? (apagada ? 'grayscale(1) opacity(.5)' : 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))')
-      : id === 'cuarto' ? 'drop-shadow(0 0 1.5px #055E78) drop-shadow(0 2px 3px rgba(5,94,120,.4))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
+  return segs.map((id, i) => {
+    // la dorada (arriba), un poco más afuera y del ancho de su casilla (la cuña se angosta hacia el centro: más grande se salía); los gorros, algo más grandes
+    const dorada = i === 0, traje = id === 'adviento' || id === 'natividad';
+    // el gorro de Adviento es casi cuadrado (llena su caja); el tocado de Natividad es ancho y bajo: más caja para que se vean del mismo tamaño
+    const z = s * (dorada ? 1.15 : id === 'adviento' ? 1.1 : id === 'natividad' ? 1.32 : id === 'fondo' ? 1.08 : 1), rr = dorada ? r * 1.13 : traje ? r * 1.02 : r;
+    const sombra = dorada ? (id === 'theobox' && apagada ? 'grayscale(1) opacity(.5)' : 'drop-shadow(0 0 1.5px #7A3B0A) drop-shadow(0 2px 3px rgba(122,59,10,.45))')
+      : traje ? 'drop-shadow(0 0 1.5px #0B3A5E) drop-shadow(0 2px 3px rgba(5,40,80,.35))' : 'drop-shadow(0 2px 3px rgba(8,93,111,.18))';
     return `<div style="position:absolute;left:${cx}px;top:${cx}px;width:0;height:0;transform:rotate(${i * SEG}deg)"><img src="${ico[id]}" alt="" style="position:absolute;left:${-z / 2}px;top:${-rr - z / 2}px;width:${z}px;height:${z}px;object-fit:contain;filter:${sombra}"></div>`;
   }).join('');
 };
@@ -1560,16 +1572,16 @@ register('ruletaPop', {
     wheel?.parentElement.classList.add('a-pop');
     const pointer = $$(root, 'img').find(i => i.src.includes('3fdb655b'));
     // la rueda de 8 casillas y sus iconos (la del lienzo trae 10)
-    const prendaSemana = prendaDe(n); // se fija al abrir: la rueda muestra lo mismo que da
+    const SEGMENTS = segmentos(); // se fija al abrir: la rueda muestra lo mismo que puede dar
     if (wheel) {
       const base = wheel.querySelector(':scope > img'); if (base) base.src = 'assets/ruleta/rueda8.webp';
       [...wheel.children].filter(c => c.tagName === 'DIV').forEach(c => c.remove());
       const box = base ? parseFloat(base.style.width) || 330 : 330, cx = box / 2;
-      wheel.insertAdjacentHTML('beforeend', casillas(box, A(prendaSemana?.img || IMG.pan), S.tbJuego ? !teoboxEnJuego(n) : S.theobox === 'otra'));
+      wheel.insertAdjacentHTML('beforeend', casillas(box, SEGMENTS, S.tbJuego ? !teoboxEnJuego(n) : S.theobox === 'otra'));
       wheel.style.transformOrigin = `${cx}px ${cx}px`;
-      wheel.parentElement.setAttribute('aria-label', 'Ruleta sorpresa con 8 casillas: TheoBox, panes, sorpresa, panes, prenda de la semana, panes, gira otra vez, panes');
+      wheel.parentElement.setAttribute('aria-label', `Ruleta sorpresa con 8 casillas: ${SEGMENTS.map(id => NOMBRE_CASILLA[id]).join(', ')}`);
     }
-    let spun = false, giro = 0, giros = 0; // giros: el premio elegido en el panel solo decide el primero // giro: dónde quedó la rueda (para volver a girar)
+    let spun = false, giro = 0, giros = S.otraPendiente === n ? 1 : 0; // tras «otra oportunidad» (aunque cierren y vuelvan) ya no sale otra // giros: el premio elegido en el panel solo decide el primero // giro: dónde quedó la rueda (para volver a girar)
     on(root, '¡Girar!', async (ev, btn) => {
       if (spun) return; spun = true;
       root.querySelector('.gira-otra')?.remove();
@@ -1577,14 +1589,12 @@ register('ruletaPop', {
       const tarde = find(root, 'Más tarde'); if (tarde) tarde.style.visibility = 'hidden'; layer.querySelector('.pop-x')?.remove();
       // premio: el forzado en el panel o al azar (todas las casillas ganan)
       const forced = giros === 0 ? S.forzarPremio : ''; // el giro extra de «otra oportunidad» siempre es al azar
-      const weekId = prendaSemana?.id;
+      // calendario de posibilidades (data.js): bienvenida, posibilidades de esta ruleta, mala racha; la TheoBox nunca sale al azar.
+      // Entre las casillas de panes, cualquiera (para que no caiga siempre en la misma)
       const pick = () => {
-        if (weekId && !S.prendas.includes(weekId) && Math.random() < .35) return SEGMENTS.indexOf('prenda');
-        let i = Math.floor(Math.random() * SEGMENTS.length);
-        // la TheoBox nunca sale al azar (solo el momento ganador del día 24); la segunda vuelta no repite «otra oportunidad»
-        while (SEGMENTS[i] === 'theobox' || (giros > 0 && SEGMENTS[i] === 'otra')) i = Math.floor(Math.random() * SEGMENTS.length);
-        if (SEGMENTS[i] === 'cuarto' && S.cuartoNuevo) i = SEGMENTS.indexOf('panes');
-        return i;
+        const id = sortearPremio(S, n, { giro: giros, conOtra: SEGMENTS.includes('otra') });
+        const iguales = SEGMENTS.map((x, i) => (x === id ? i : -1)).filter(i => i >= 0);
+        return iguales.length ? iguales[Math.floor(Math.random() * iguales.length)] : SEGMENTS.indexOf('panes');
       };
       const vale = forced && SEGMENTS.includes(forced) && (forced !== 'theobox' || teoboxEnJuego(n));
       let idx = vale ? SEGMENTS.indexOf(forced) : pick();
@@ -1629,26 +1639,32 @@ register('ruletaPop', {
         zona.querySelector('.gira-otra')?.remove();
         const cartel = document.createElement('div'); cartel.className = 'gira-otra'; cartel.setAttribute('role', 'status');
         cartel.innerHTML = '<b>¡Otra oportunidad!</b><span>Gira de nuevo</span>';
+        S.otraPendiente = n; save();
         zona.appendChild(cartel);
         teoDice('otraOportunidad', { tras: 0.2 }); setTimeout(() => levanta('ruleta', 0.5), 2200);
         spun = false; btn.style.opacity = ''; btn.style.pointerEvents = ''; animate(btn, 'a-pop');
         const masTarde = find(root, 'Más tarde'); if (masTarde) masTarde.style.visibility = ''; // pueden girar ahora o dejarlo para después
         return;
       }
-      if (premio === 'prenda' && !prendaSemana) premio = 'panes'; // semana 4 con las tres prendas: la casilla es de panes
-      const prize = premio === 'prenda' ? prendaSemana.id : premio;
+      const prize = premio;
+      // lo de antes de este giro (panel › «Girar otra vez» lo devuelve tal cual)
+      S.antesRuleta = { ...(S.antesRuleta || {}), [n]: { prendas: [...S.prendas], traje: S.traje, cuartoNuevo: S.cuartoNuevo, sinPremio: S.sinPremio || 0, panes: S.panes, theobox: S.theobox } };
+      S.otraPendiente = null;
       S.ruletas[n] = prize;
       if (premio === 'theobox') S.theobox = 'mia';
       if (premio === 'panes') addPanes(RULES.panes.ruleta);
-      if (premio === 'prenda' && !S.prendas.includes(prendaSemana.id)) S.prendas.push(prendaSemana.id);
-      if (premio === 'cuarto') S.cuartoNuevo = true;
+      if (premio === 'adviento' || premio === 'natividad') { if (!S.prendas.includes(premio)) S.prendas.push(premio); S.traje = premio; } // se lo pone al ganarlo
+      if (premio === 'fondo') S.cuartoNuevo = true;
+      S.sinPremio = ['fondo', 'adviento', 'natividad', 'theobox'].includes(premio) ? 0 : (S.sinPremio || 0) + 1; // mala racha: ruletas seguidas solo con panes
       // con la energía llena, Teodoro la guarda para mañana (no se pierde el premio)
       if (premio === 'manzana') { S.manzanaLlena = S.bateria >= 5; if (S.manzanaLlena) S.manzana = true; else setBateria(S.bateria + 1); }
       save();
       if (premio === 'theobox') { await caeEnLaDorada(root, wheel); if (layer.isConnected) go('tbGano', { day: n }, 'fade', { replace: true }); return; } // theobox.js
       navigator.vibrate?.(30);
       await wait(300);
-      go(premio === 'cuarto' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n }, 'modal', { replace: true });
+      if (premio === 'fondo' && SEGMENTS[0] === 'fondo') await caeEnLaDorada(root, wheel); // el fondo es la dorada: brilla antes del premio
+      if (!layer.isConnected) return;
+      go(premio === 'fondo' ? 'premioCuarto' : 'ruletaPremio', { premio: prize, day: n }, 'modal', { replace: true });
     });
     const tarde0 = find(root, 'Más tarde'); if (tarde0) tarde0.dataset.back = '1';
     // una X para cerrar (igual que «Más tarde»: solo cierra; la ruleta sigue en el mapa)
@@ -1678,12 +1694,12 @@ register('ruletaPremio', {
     const prenda = PRENDAS.find(x => x.id === p.premio);
     const teobox = p.premio === 'theobox';
     const info = teobox ? { img: TEOBOX, t1: '¡Ganaste la', t2: 'TheoBox!', sub: true }
-      : prenda ? { img: prenda.img, t1: '¡Ganaste', t2: prenda.nombre + '!', sub: true }
+      : prenda ? { img: prenda.img, t1: prenda.t1, t2: prenda.t2, sub: true }
       : p.premio === 'manzana' ? { img: IMG.manzana, t1: '¡Ganaste', t2: 'una manzana!', sub: true }
       : p.premio === 'cuarto' ? { img: IMG.cuarto, t1: '¡Ganaste un', t2: 'cuarto nuevo!', sub: true }
       : { img: IMG.pan, t1: '¡Ganaste', t2: `${RULES.panes.ruleta} panes!`, sub: false };
     const pic = $$(root, 'img').find(i => i.src.includes(IMG.gorro));
-    if (pic) { pic.src = A(info.img); pic.alt = teobox ? 'TheoBox: parlante con la figura de Jesús' : info.t2; pic.style.animation = 'spinIn .7s cubic-bezier(.2,.9,.3,1.2) both, bob 2.4s .8s ease-in-out infinite'; }
+    if (pic) { pic.style.objectFit = 'contain'; pic.src = A(info.img); pic.alt = teobox ? 'TheoBox: parlante con la figura de Jesús' : info.t2; pic.style.animation = 'spinIn .7s cubic-bezier(.2,.9,.3,1.2) both, bob 2.4s .8s ease-in-out infinite'; }
     setText(root, '¡Ganaste', info.t1); setText(root, 'un gorro!', info.t2);
     const subEl = textEl(root, 'Ya está en el');
     if (!info.sub && subEl) subEl.textContent = 'Ya están en la canasta de Teodoro';
@@ -1745,6 +1761,10 @@ register('premioCuarto', {
     confetti(layer, 195, 300, 50);
     setTimeout(() => levanta('ruleta', 0.5), (Math.max(motivo('largo'), teoDice('premioGrande', { tras: 0.9 })) + 1.5) * 1000);
     const room = $$(root, 'img').find(i => i.src.includes(IMG.cuarto)) || $$(root, 'img')[1];
+    // el fondo de Adviento (pesebre en la ventana y la corona de Adviento)
+    if (room) { room.src = A(FONDO.img); room.alt = 'El cuarto de Adviento de Teodoro'; room.style.objectFit = 'cover'; room.style.objectPosition = '50% 30%'; }
+    setText(root, 'El Cuarto de Nazaret, como la casa de Jesús.', 'Con el pesebre en la ventana y la corona de Adviento.');
+    root.querySelector('[role=img][aria-label^="¡Ganaste un cuarto nuevo"]')?.setAttribute('aria-label', '¡Ganaste un cuarto nuevo! El cuarto de Adviento, con el pesebre en la ventana y la corona de Adviento.');
     room?.parentElement?.classList.add('a-pop');
     const nextW = RULES.ruleta.find(x => !S.ruletas[x]);
     const prox = textEl(root, /La próxima ruleta.*/);

@@ -4,6 +4,8 @@ import { FILES } from './assets.js';
 import { DAYS, RULES, BATTERY_IDS, TEODORO_IDS, IMG, hasTrivia } from './data.js';
 import { tabBar } from './tabbar.js';
 
+/** ¿Está prendida la TheoBox en Adviento? (panel › Ajustes; apagada por defecto) */
+export const conTheobox = () => !!S.theoboxAdviento;
 export const A = id => 'assets/' + (FILES[id] || id);
 export const $ = (r, s) => r.querySelector(s);
 export const $$ = (r, s) => [...r.querySelectorAll(s)];
@@ -22,7 +24,8 @@ export const DEFAULT = () => ({
   ruletas: {},         // día -> premio id
   ruletaPendiente: {}, // día -> true si dijo «Más tarde»
   sorpresas: {},       // día -> 'hecha' | 'luego'
-  prendas: [], cuartoNuevo: false,
+  prendas: [], cuartoNuevo: false, traje: null, sinPremio: 0, // sinPremio: ruletas seguidas solo con panes (con 2, la siguiente asegura un premio)
+  // premios de la ruleta: trajes ganados ('adviento' | 'natividad'), el fondo de Adviento y el traje puesto
   regreso: false, regresoAvisado: false, teaserVisto: false, sinCaminar: 0, diaGuardado: {}, // diaGuardado: cómo estaba Teodoro cada día (para volver atrás en el panel)
   ultimoJugado: null, // día del calendario en que terminó un contenido
   pasoAnimado: null,   // día recién completado (animación en el mapa)
@@ -30,6 +33,7 @@ export const DEFAULT = () => ({
   isla: true, zonas: false, // panel › Avanzado › iPhone: la isla dinámica y las zonas seguras en el teléfono simulado
   vidrioPendiente: null, // recién unida: el vidrio de la card se limpia la primera vez que se ve (true | 'dedo')
   forzarPremio: '',    // panel: forzar casilla de la ruleta
+  theoboxAdviento: false, // TODO lo de la TheoBox en Adviento (gran premio, Mi TheoBox, TheoBox en juego): apagado por ahora (César, 12-nov); panel › Ajustes
   theobox: 'libre',    // gran premio de la ruleta: 'libre' · 'otra' (ya tiene dueño) · 'mia' (la ganó esta familia); panel › Ruleta
   theoboxReclamada: false, theoboxEnvio: null, // ya dejó los datos de envío (y cuáles); mientras no, la TheoBox espera en el mapa
   theoboxPaso: 2, // ya reclamada: 2 la preparan, 3 salió, 4 llegó (Mi TheoBox; mientras viaja se ve en el mapa y el inicio)
@@ -44,10 +48,20 @@ function load() {
     const url = new URLSearchParams(location.hash.slice(1)).get('estado');
     if (url) return { ...DEFAULT(), ...JSON.parse(decodeURIComponent(escape(atob(url)))) };
   } catch { /* enlace dañado: arranca limpio */ }
-  try { return { ...DEFAULT(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULT(); }
+  try { return migrar({ ...DEFAULT(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }); } catch { return DEFAULT(); }
+}
+/** Estados guardados antes de los premios nuevos (12-nov): gorro, bufanda, bolso y cuarto de Nazaret ya no existen. */
+function migrar(s) {
+  const viejas = { gorro: 'panes', bufanda: 'panes', bolso: 'panes', paja: 'panes', prenda: 'panes', cuarto: 'fondo' };
+  s.prendas = (s.prendas || []).filter(id => id === 'adviento' || id === 'natividad');
+  Object.keys(s.ruletas || {}).forEach(d => { if (viejas[s.ruletas[d]]) s.ruletas[d] = viejas[s.ruletas[d]]; });
+  if (s.traje && !s.prendas.includes(s.traje)) s.traje = null;
+  s.prendasVistas = Math.min(s.prendasVistas || 0, s.prendas.length);
+  if (!['', 'fondo', 'adviento', 'natividad', 'panes', 'otra', 'theobox'].includes(s.forzarPremio || '')) s.forzarPremio = '';
+  return s;
 }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* navegador privado */ } emit(); }
-export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas, tbJuego: S.tbJuego, mercado: S.mercado }; S = Object.assign(DEFAULT(), keep, over); save(); }
+export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas, tbJuego: S.tbJuego, mercado: S.mercado, theoboxAdviento: S.theoboxAdviento }; S = Object.assign(DEFAULT(), keep, over); save(); }
 export function shareURL() {
   const { notas, huecos, ...rest } = S;
   return location.origin + location.pathname + '#estado=' + btoa(unescape(encodeURIComponent(JSON.stringify(rest)))) + '&pantalla=' + (cur?.name || 'hoy');
@@ -230,7 +244,7 @@ function sysBack() {
 // Pop-ups de verdad: con 'modal' u 'sheet', la pantalla de abajo sigue montada y quieta;
 // encima entran un velo y el diálogo (u hoja). Al cerrar se destapa sin volver a montarla.
 const OVERLAY = new Set(['modal', 'sheet', 'page']);
-const snap = () => JSON.stringify([S.hoy, S.inscrito, S.completos, S.bateria, S.panes, S.prendas, S.plan, S.cuartoNuevo, S.tema, S.ruletas, S.regreso]);
+const snap = () => JSON.stringify([S.theoboxAdviento, S.tbJuego, S.mercado, S.traje, S.hoy, S.inscrito, S.completos, S.bateria, S.panes, S.prendas, S.plan, S.cuartoNuevo, S.tema, S.ruletas, S.regreso]);
 const sameParams = (a = {}, b = {}) => { const s = ({ thenCerrado, theobox, ...x }) => JSON.stringify(x); return s(a) === s(b); };
 let inFlight = null;
 /** Deja del lienzo solo el velo y el diálogo: lo de antes del velo era un fondo de muestra. */

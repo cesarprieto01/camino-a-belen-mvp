@@ -55,7 +55,10 @@ function fill(upto, opts = {}) {
   S.completos[0] = { contenido: true };
   for (let n = 1; n <= upto; n++) S.completos[n] = hasTrivia(n) ? { contenido: true, trivia: true, estrellas: STAR_PATTERN[n - 1] } : { contenido: true };
   S.ruletas = {}; S.prendas = []; S.sorpresas = {}; S.ruletaPendiente = {};
-  RULES.ruleta.forEach((d, i) => { if (d <= upto) { S.ruletas[d] = PRENDAS[i]?.id || 'panes'; if (PRENDAS[i]) S.prendas.push(PRENDAS[i].id); } });
+  S.cuartoNuevo = false; S.traje = null;
+  // ruletas ya giradas: un camino de ejemplo (la 1 da la bienvenida; las demás salen al azar en la app)
+  const EJEMPLO = { 4: 'adviento', 11: 'panes', 18: 'natividad', 24: 'fondo' }; S.sinPremio = 0;
+  RULES.ruleta.forEach(d => { if (d <= upto) { const id = EJEMPLO[d]; S.ruletas[d] = id; if (id === 'fondo') S.cuartoNuevo = true; else if (id !== 'panes') { S.prendas.push(id); S.traje = id; } S.sinPremio = id === 'panes' ? S.sinPremio + 1 : 0; } });
   Object.keys(RULES.sorpresa).forEach(d => { if (+d <= upto) S.sorpresas[d] = 'hecha'; });
   S.panes = 60 + upto * 22;
   Object.assign(S, opts);
@@ -80,11 +83,14 @@ const REC = [
   { sec: 2, t: 'Tocar un día cerrado', mira: 'Toca un día que aún no llega: globo con la fecha en que se abre', run: day(10, 9), go: 'mapa', covers: ['S-03d-Mapa-dia-cerrado'] },
   { sec: 2, t: 'Repetir un día ya hecho', mira: 'Toca un día con ✓ en el mapa: ver otra vez o repetir la trivia', run: day(10, 9), go: 'mapa', covers: ['S-03c-Mapa-dia-pasado'] },
   { sec: 3, t: 'Día de ruleta', mira: 'Día 11 · toca la ruleta del mapa: gira y da premio; «Volver al camino» deja en el mapa', run: day(11, 10), go: 'mapa', covers: ['S-03f-Mapa-dia11', 'S-05b-Ruleta-pop', 'S-05c-Ruleta-premio'] },
-  { sec: 3, t: 'Gran premio: TheoBox', mira: 'Día 24 (última ruleta): cae en la TheoBox, la única del reto. Antes de ese día se ve pero nunca sale; con «Ya tiene dueño» queda apagada', run: () => { day(24, 23, { forzarPremio: 'theobox', theobox: 'libre', plan: 'premium', tbJuego: false })(); S.completos[24] = { contenido: true }; save(); }, go: 'mapa', covers: [] },
-  { sec: 3, t: 'TheoBox en juego', mira: 'Día 9 (USA): la insignia del mapa abre el panel (crece desde ella), «Conócela» abre la web, la ruleta de la semana trae la TheoBox con candado; en el inicio, la card junto a Adviento. Panel › Ruleta: interruptor y mercado', run: day(9, 8, { tbJuego: true, mercado: 'usa' }), go: 'mapa', covers: [] },
-  { sec: 3, t: 'TheoBox en camino', mira: 'Ya la reclamaron y salió: el aviso del mapa, la card del inicio y Ajustes › Mis premios llevan a Mi TheoBox (seguimiento, guía y soporte)', run: () => { day(25, 25, { theobox: 'mia', theoboxReclamada: true, theoboxPaso: 3, plan: 'premium' })(); S.ruletas[24] = 'theobox'; save(); }, go: 'hoy', covers: [] },
-  { sec: 3, t: 'TheoBox ganada, sin reclamar', mira: 'Eligieron «Ahora no»: la TheoBox espera encima de la hoja del día, en vidrio, con «Reclamar» (lleva a los datos de envío)', run: () => { day(24, 24, { theobox: 'mia', theoboxReclamada: false, plan: 'premium' })(); S.ruletas[24] = 'theobox'; save(); }, go: 'mapa', covers: [] },
-  { sec: 3, t: 'Premio: cuarto nuevo', mira: 'La ruleta cae en la casa: cuarto de Nazaret', run: day(11, 10, { forzarPremio: 'cuarto' }), go: 'mapa', covers: ['S-09-Premio-cuarto', 'V3-Teodoro-nazaret'] },
+  { sec: 3, t: 'Gran premio: TheoBox', mira: 'Día 24 (última ruleta): cae en la TheoBox, la única del reto. Antes de ese día se ve pero nunca sale; con «Ya tiene dueño» queda apagada', run: () => { day(24, 23, { forzarPremio: 'theobox', theobox: 'libre', plan: 'premium', tbJuego: false, theoboxAdviento: true })(); S.completos[24] = { contenido: true }; save(); }, go: 'mapa', covers: [] },
+  { sec: 3, t: 'TheoBox en juego', mira: 'Día 9 (USA): la insignia del mapa abre el panel (crece desde ella), «Conócela» abre la web, la ruleta de la semana trae la TheoBox con candado; en el inicio, la card junto a Adviento. Panel › Ruleta: interruptor y mercado', run: day(9, 8, { tbJuego: true, mercado: 'usa', theoboxAdviento: true }), go: 'mapa', covers: [] },
+  { sec: 3, t: 'TheoBox en camino', mira: 'Ya la reclamaron y salió: el aviso del mapa, la card del inicio y Ajustes › Mis premios llevan a Mi TheoBox (seguimiento, guía y soporte)', run: () => { day(25, 25, { theobox: 'mia', theoboxReclamada: true, theoboxPaso: 3, plan: 'premium', theoboxAdviento: true })(); S.ruletas[24] = 'theobox'; save(); }, go: 'hoy', covers: [] },
+  { sec: 3, t: 'TheoBox ganada, sin reclamar', mira: 'Eligieron «Ahora no»: la TheoBox espera encima de la hoja del día, en vidrio, con «Reclamar» (lleva a los datos de envío)', run: () => { day(24, 24, { theobox: 'mia', theoboxReclamada: false, plan: 'premium', theoboxAdviento: true })(); S.ruletas[24] = 'theobox'; save(); }, go: 'mapa', covers: [] },
+  { sec: 3, t: 'Bienvenida: traje de Adviento', mira: 'Día 4 · primera ruleta: siempre da el traje de Adviento; Teodoro lo estrena en su cuarto', run: day(4, 3, { theoboxAdviento: false }), go: 'mapa', covers: [] },
+  { sec: 3, t: 'Premio dorado: cuarto de Adviento', mira: 'Día 11 (forzado) · cae en la dorada: el cuarto de Adviento (pesebre en la ventana y la corona); en el tab Teodoro, el cuarto nuevo', run: day(11, 10, { forzarPremio: 'fondo', theoboxAdviento: false }), go: 'mapa', covers: ['S-09-Premio-cuarto', 'V3-Teodoro-nazaret'] },
+  { sec: 3, t: 'Premio: traje de Natividad', mira: 'Día 18 (forzado) · el traje de Natividad (tocado y túnica de pastor); Teodoro se lo pone', run: day(18, 17, { forzarPremio: 'natividad', theoboxAdviento: false }), go: 'mapa', covers: [] },
+  { sec: 3, t: 'Mala racha', mira: 'Día 24 · las ruletas 2 y 3 solo dieron panes: esta asegura un premio que le falte (el cuarto o el traje de Natividad)', run: () => { day(24, 23, { theoboxAdviento: false })(); S.ruletas[18] = 'panes'; S.prendas = ['adviento']; S.traje = 'adviento'; S.sinPremio = 2; save(); }, go: 'mapa', covers: [] },
   { sec: 4, t: 'Memorama', mira: 'Día 3 · tras la trivia: «Hoy toca Memorama»', run: day(3, 2), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-claro', 'V2-Memorama-reglas-claro', 'V2-Memorama-claro', 'V2-Memorama-fin-claro'] },
   { sec: 4, t: 'Adivinanza', mira: 'Día 6 (sin trivia) · tras la historia: «Hoy toca Adivinanza» · toca el reloj para ver «se acabó el tiempo»', run: day(6, 5), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-adivinanza-claro', 'V2-Adivinanza-intro-claro', 'V2-Adivinanza-claro', 'V2-Adivinanza-tiempo-claro', 'V2-Adivinanza-fin-claro'] },
   { sec: 4, t: 'Desafío en familia', mira: 'Día 9 · «Hoy toca Desafío» · sacar otra carta (Avemaría) · ¡lo hicimos!', run: day(9, 8), go: 'mapa', covers: ['V2-Trivia-fin-sorpresa-desafio-claro', 'V2-Desafio-intro-claro', 'V2-Desafio-claro', 'V2-Desafio-carta2-claro', 'V2-Desafio-fin-claro'] },
@@ -132,9 +138,9 @@ const DECISIONES = [
   'Solo los días 1, 2, 3, 4, 9, 11, 17, 18 y 24 tienen trivia (cronograma de contenido). Los demás se completan con la historia, sin estrellas; si toca sorpresa (6, 12, 15, 21) se abre al terminar la historia.',
   'Trivia: 5 preguntas por día, todas con 4 respuestas; revisión pastoral hecha (exactitud bíblica, una sola respuesta válida, lenguaje para 5–8 años). Falta la aprobación final del equipo de contenido.',
   'Estrellas: 5 de 5 = 3 estrellas · 3 o 4 = 2 · menos = 1. Solo cuenta el primer intento de cada pregunta.',
-  'Ruleta: 8 casillas: TheoBox (gran premio, solo día 24 y una vez), 4 de 20 panes, «?» (cuarto nuevo para Teodoro), prenda de la semana y «otra oportunidad». Prendas: gorro, bufanda y bolso (semanas 1 a 3); en la semana 4 sale la que les falte.',
+  'Ruleta (12-nov): 8 casillas: la dorada es el cuarto de Adviento (fondo para el cuarto de Teodoro), el traje de Adviento, el traje de Natividad, 4 de 20 panes y «otra oportunidad». Reemplazan al gorro rojo, la bufanda, el bolso y el cuarto de Nazaret. Con la TheoBox en Adviento prendida (panel › Ajustes, apagada por defecto) la dorada vuelve a ser la TheoBox y el cuarto toma el lugar de «otra oportunidad».',
   'La historia del reproductor dura 9 segundos para poder probar rápido.',
-  'Ruleta: la prenda de la semana sale más seguido si aún no la tiene; el cuarto no se repite (si ya lo tienen, panes); la TheoBox nunca sale al azar.',
+  'Calendario de posibilidades (12-nov): la primera ruleta que gire da el traje de Adviento (bienvenida). Después: ruleta 2 (9 dic) cuarto 8 % · Natividad 25 % · otra oportunidad 15 % · panes 52 %; ruleta 3 (16 dic) cuarto 15 % · Natividad 30 % · otra 10 % · panes 45 %; ruleta 4 (22 dic) cuarto 25 % · Natividad 35 % · otra 5 % · panes 35 % (con el traje de Adviento ya ganado). Lo ganado no se repite (su parte pasa a panes); los panes sí. Dos ruletas seguidas solo con panes: la siguiente asegura un premio que le falte. Simulado con 100 000 niños que giran las 4: 49 % el cuarto, 77 % Natividad, 25 % todo, 0 % solo la bienvenida. Teodoro se pone el último traje que ganó (de pie). En la app lo decide el servidor al girar y lo guarda; las posibilidades se publican en las bases para papás.',
   'Pop-ups sobre la pantalla real: teaser, final de trivia, ruleta y premios, «Se acabó el tiempo» y «Mañana seguimos».',
   'Hojas de página (se cierran deslizando): free sobre el reto y calificación sobre el mapa.',
   'Pantalla completa a propósito: el reto en familia (es un destino con contenido, extras y un juego dentro: en hoja quedaría apretado y se perdería al deslizar) y la invitación (simula salir a WhatsApp/iMessage; en la app real es la hoja de compartir del sistema).',
@@ -341,10 +347,13 @@ function render() {
     ${plegable('notas-dec', 'Decisiones del MVP para revisar', `<ul class="p-list">${DECISIONES.map(t => `<li><small>${esc(t)}</small></li>`).join('')}</ul>`, { n: DECISIONES.length })}`;
   } else {
     body = `${grupo('Ruleta',
-      `<div class="p-row p-stack"><span class="p-row-t">Qué sale al girar</span><div class="p-chips">${[['', 'Al azar'], ['cuarto', '? Fondo nuevo'], ['panes', '20 panes'], ['theobox', S.tbJuego ? (S.mercado === 'latam' ? 'TheoBox (en LATAM no sale en la ruleta)' : 'TheoBox (si completó la semana)') : `TheoBox (solo día ${RULES.ruleta[RULES.ruleta.length - 1]})`], ['prenda', 'Prenda de la semana'], ['otra', 'Otra oportunidad']].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div></div>`
+      `<div class="p-row p-stack"><span class="p-row-t">Qué sale al girar<small>Al azar: la primera da el traje de Adviento; luego cada ruleta tiene sus posibilidades (Decisiones › Calendario de posibilidades)</small></span><div class="p-chips">${[['', 'Al azar (posibilidades)'], ['fondo', 'Cuarto de Adviento'], ['adviento', 'Traje de Adviento'], ['natividad', 'Traje de Natividad'], ['panes', '20 panes'], ...(S.theoboxAdviento ? [] : [['otra', 'Otra oportunidad']]), ...(S.theoboxAdviento ? [['theobox', S.tbJuego ? (S.mercado === 'latam' ? 'TheoBox (en LATAM no sale en la ruleta)' : 'TheoBox (si completó la semana)') : `TheoBox (solo día ${RULES.ruleta[RULES.ruleta.length - 1]})`]] : [])].map(([v, l]) => `<button data-premio="${v}" aria-pressed="${(S.forzarPremio || '') === v}">${l}</button>`).join('')}</div></div>`
+      + fila('TheoBox en Adviento', sw('theobox', S.theoboxAdviento, 'TheoBox en Adviento'), 'Gran premio, Mi TheoBox y TheoBox en juego. Apagada por ahora: la dorada es el cuarto de Adviento')
+      + (S.theoboxAdviento ? ''
       + `<div class="p-row p-stack"><span class="p-row-t">TheoBox (gran premio)<small>Modelo anterior (con «TheoBox en juego» apagada). Una sola para todo el reto: en la app la gana la primera familia que gira después de un momento al azar del día ${RULES.ruleta[RULES.ruleta.length - 1]}</small></span><div class="p-chips">${[['libre', 'Sin dueño'], ['otra', 'Ya tiene dueño'], ['mia', 'La ganamos, sin reclamar'], ['reclamada', 'Reclamada: la preparan'], ['salio', 'Salió hacia la casa'], ['llego', 'Ya llegó']].map(([v, l]) => `<button data-theobox="${v}" aria-pressed="${(S.theobox === 'mia' && S.theoboxReclamada ? ENVIO[S.theoboxPaso || 2] : S.theobox || 'libre') === v}">${l}</button>`).join('')}</div></div>`
       + `<div class="p-row p-stack"><span class="p-row-t">TheoBox en juego<small>Insignia del mapa, lámina del inicio, TheoBox en las ruletas y «Para papás» bajo el premio</small></span><div class="p-chips">${[['1', 'Encendida'], ['0', 'Apagada']].map(([v, l]) => `<button data-tbjuego="${v}" aria-pressed="${(S.tbJuego ? '1' : '0') === v}">${l}</button>`).join('')}</div></div>`
       + `<div class="p-row p-stack"><span class="p-row-t">Mercado<small>USA: una TheoBox por ruleta · LATAM: una sola, sorteo al cerrar el camino</small></span><div class="p-chips">${[['usa', 'USA'], ['latam', 'LATAM']].map(([v, l]) => `<button data-mercado="${v}" aria-pressed="${(S.mercado || 'usa') === v}">${l}</button>`).join('')}</div></div>`
+      : '')
       + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
     ${grupo('iPhone',
       fila('Isla dinámica', sw('isla', S.isla !== false, 'Isla dinámica'))
@@ -388,6 +397,10 @@ panel.addEventListener('click', e => {
   if (t.dataset.sw === 'ins') { S.inscrito = !S.inscrito; save(); go('hoy', {}, 'fade'); return; }
   if (t.dataset.sw === 'isla') { S.isla = S.isla === false; save(); return; }
   if (t.dataset.sw === 'zonas') { S.zonas = !S.zonas; save(); return; }
+  if (t.dataset.sw === 'theobox') { // todo lo de la TheoBox en Adviento: la rueda, el mapa, el inicio y Ajustes cambian
+    S.theoboxAdviento = !S.theoboxAdviento; if (S.forzarPremio === (S.theoboxAdviento ? 'otra' : 'theobox')) S.forzarPremio = ''; // prendida, la rueda no tiene «otra oportunidad»
+    save(); render(); if (['mapa', 'hoy', 'teodoro', 'ajustes'].includes(cur?.name)) { const { theobox, ...pp } = cur.params || {}; go(cur.name, pp, 'none', { scrollTop: cur.layer.scrollTop }); } return;
+  }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
   if (t.dataset.tbjuego || t.dataset.mercado) {
@@ -412,7 +425,9 @@ panel.addEventListener('click', e => {
     // la ruleta de la semana en curso (la última que ya llegó): se borra su giro y se abre de nuevo, sin cambiar de día
     const d = [...RULES.ruleta].reverse().find(x => x <= lastDay());
     if (!d) { nota('Aún no hay ruleta', 'La primera es el día 4'); return; }
-    delete S.ruletas[d]; save();
+    const antes = S.antesRuleta?.[d]; // deshace lo que dio ese giro (premio, traje puesto, mala racha y panes)
+    if (antes) Object.assign(S, { prendas: [...antes.prendas], traje: antes.traje, cuartoNuevo: antes.cuartoNuevo, sinPremio: antes.sinPremio, panes: antes.panes, theobox: antes.theobox ?? S.theobox });
+    delete S.ruletas[d]; S.otraPendiente = null; save();
     go('mapa', {}, 'none', { replace: true });
     setTimeout(() => go('ruletaPop', { day: d, from: 'mapa' }, 'modal'), 500);
     closeMobile();

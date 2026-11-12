@@ -133,13 +133,46 @@ export const RULES = {
 };
 export const hasTrivia = n => RULES.trivia.includes(n);
 
-// Prenda de la semana en la ruleta (semanas 1 a 3). La semana 4 (día 24, la de la TheoBox) no trae una propia: da la que les falte
-// y, si ya tienen las tres, panes. La cama de paja ya no va en la ruleta (César, 9-nov).
+// Premios de la ruleta (César, 12-nov): el fondo de Adviento para el cuarto de Teodoro (la casilla dorada) y dos trajes, Adviento y
+// Natividad. Reemplazan al gorro rojo, la bufanda, el bolso y el cuarto de Nazaret. Los panes son el premio de base y se repiten.
+export const FONDO = { id: 'fondo', nombre: 'el cuarto de Adviento', img: 'premios/fondo-premio.webp', fondo: 'premios/fondo-adviento.webp', icono: 'premios/fondo-casilla.webp' };
+// Los trajes: el gorro es el ícono de su casilla; «teodoro» es Teodoro de pie con el traje puesto (en los dos cuartos).
 export const PRENDAS = [
-  { id: 'gorro', nombre: 'un gorro', img: IMG.gorro, sub: 'Teodoro ya lo tiene puesto' },
-  { id: 'bufanda', nombre: 'una bufanda', img: IMG.bufanda, sub: 'Teodoro ya la tiene puesta' },
-  { id: 'bolso', nombre: 'un bolso', img: IMG.bolso, sub: 'Teodoro ya lo lleva' },
+  { id: 'adviento', nombre: 'el traje de Adviento', t1: '¡Ganaste el', t2: 'traje de Adviento!', img: 'premios/traje-adviento.webp', icono: 'premios/gorro-adviento.webp', teodoro: 'premios/teodoro-adviento.webp', sub: 'Teodoro ya lo tiene puesto' },
+  { id: 'natividad', nombre: 'el traje de Natividad', t1: '¡Ganaste el', t2: 'traje de Natividad!', img: 'premios/traje-natividad.webp', icono: 'premios/gorro-natividad.webp', teodoro: 'premios/teodoro-natividad.webp', sub: 'Teodoro ya lo tiene puesto' },
 ];
+/** ¿Ya lo tiene? (el fondo es S.cuartoNuevo; los trajes, S.prendas) */
+export const tienePremio = (S, id) => (id === 'fondo' ? !!S.cuartoNuevo : (S.prendas || []).includes(id));
+
+// ---------- Calendario de posibilidades (César, 12-nov) ----------
+// 1. Bienvenida: el primer giro de su vida da el traje de Adviento (Teodoro lo estrena ese día). Si se une tarde, su primera ruleta.
+// 2. Después, cada ruleta tiene sus posibilidades (en %, suman 100). Lo que ya tiene no se repite: su parte pasa a panes.
+//    El cuarto dorado empieza difícil y se acerca a Navidad; el traje de Natividad sube hacia Nochebuena.
+// 3. Mala racha: dos ruletas seguidas solo con panes → la siguiente asegura un premio que le falte (con estas mismas posibilidades).
+// 4. «Otra oportunidad» vuelve a girar la misma ruleta; en esa vuelta no sale otra vez (su parte pasa a panes).
+// Con 100 000 niños simulados que giran las 4: el 49 % gana el cuarto, el 77 % el traje de Natividad, el 25 % todo y nadie se queda
+// solo con la bienvenida. En la app lo decide el servidor al girar (y lo guarda); la rueda solo anima hasta lo que salió.
+export const POSIBILIDADES = {
+  4: { fondo: 8, natividad: 25, adviento: 20, otra: 15, panes: 32 },   // ruleta 1 (2 dic): para quien ya giró antes (casi nunca: es la primera)
+  11: { fondo: 8, natividad: 25, adviento: 20, otra: 15, panes: 32 },  // ruleta 2 (9 dic)
+  18: { fondo: 15, natividad: 30, adviento: 20, otra: 10, panes: 25 }, // ruleta 3 (16 dic)
+  24: { fondo: 25, natividad: 35, adviento: 20, otra: 5, panes: 15 },  // ruleta 4 (22 dic)
+};
+const ITEMS = ['fondo', 'adviento', 'natividad'];
+const elegir = (pares, azar) => { const t = pares.reduce((a, [, w]) => a + w, 0); let x = azar() * t; for (const [id, w] of pares) { x -= w; if (x < 0) return id; } return pares[pares.length - 1][0]; };
+/** Lo que sale en la ruleta del día n. giro: 0 el primero, 1 tras «otra oportunidad»; conOtra: la rueda tiene esa casilla. */
+export function sortearPremio(S, n, { giro = 0, conOtra = true, azar = Math.random } = {}) {
+  const primero = !Object.values(S.ruletas || {}).some(Boolean);
+  if (primero && !tienePremio(S, 'adviento')) return 'adviento';
+  const tabla = POSIBILIDADES[n];
+  if (!tabla) return 'panes';
+  const pesos = []; let panes = tabla.panes;
+  ITEMS.forEach(id => { const w = tabla[id] || 0; if (tienePremio(S, id)) panes += w; else if (w) pesos.push([id, w]); });
+  if (giro > 0 || !conOtra) panes += tabla.otra || 0; else if (tabla.otra) pesos.push(['otra', tabla.otra]);
+  if ((S.sinPremio || 0) >= 2) { const faltan = pesos.filter(([id]) => ITEMS.includes(id)); if (faltan.length) return elegir(faltan, azar); }
+  pesos.push(['panes', panes]);
+  return elegir(pesos, azar);
+}
 
 // Trivia: 5 preguntas por día. o = opciones (texto o {t,img}); a = índice correcto o lista (varias)
 const P = (q, o, a, pista, ok) => ({ q, o, a, pista, ok });

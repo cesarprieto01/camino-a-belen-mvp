@@ -1,5 +1,5 @@
 // Mapa del camino (diseño «Mapa Diozen» del Figma): el paisaje ilustrado va de fondo y encima se pintan en vivo los 26 días, Teodoro y las ruletas.
-import { S, save, A, $, $$, on, frag, go, back, cur, clearHistory, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
+import { S, save, A, $, $$, on, frag, go, back, cur, clearHistory, conTheobox, walkDay, teoDay, toast, seen, hueco, paintEnergy, teodoroImg, activeDay, isDone, contentDone, triviaPendiente,
   lastDay, stars, wait, reduced, animate, register, replaceText, dark, fase, vistos, cuentaGracia, puedeDia } from './core.js';
 import { DAYS, TYPES, RULES, IMG, PRENDAS, BATTERY_IDS, dateOf, iconOf, SORPRESA_NOMBRE, hasTrivia, pantallaDia } from './data.js';
 import { startDay, ctaLabel, openSorpresa, abrirDescargable } from './flow.js';
@@ -119,8 +119,8 @@ const isRow = el => el.style.height === '52px' || el.style.height === '58px';
 const premioTxt = id => {
   if (id === 'panes') return `Te tocaron ${RULES.panes.ruleta} panes`;
   if (id === 'manzana') return 'Te tocó una manzana para Teodoro';
-  if (id === 'cuarto') return 'Te tocó un cuarto nuevo para Teodoro';
-  if (id === 'theobox') return '¡Ganaste la TheoBox!';
+  if (id === 'cuarto' || id === 'fondo') return 'Te tocó el cuarto de Adviento para Teodoro';
+  if (id === 'theobox') return conTheobox() ? '¡Ganaste la TheoBox!' : '¡Ya tienes tu premio!';
   const p = PRENDAS.find(x => x.id === id);
   return p ? `Te tocó ${p.nombre} para Teodoro` : '¡Ya tienes tu premio!';
 };
@@ -797,7 +797,7 @@ function sheetDrag(layer) {
   // la TheoBox ganada y sin reclamar espera encima de la hoja del día (no la reemplaza) hasta que la reclamen; ya reclamada,
   // mientras viaja, ahí mismo avisa que va en camino y lleva a «Mi TheoBox» (theobox.js)
   const esperaTB = s => {
-    const espera = S.theobox === 'mia' && !S.theoboxReclamada;
+    const espera = conTheobox() && S.theobox === 'mia' && !S.theoboxReclamada;
     if (!s || !(espera || enCamino()) || s.querySelector(':scope > .tb-espera')) return;
     const m = document.createElement('div'); m.className = 'tb-espera'; m.setAttribute('role', 'status');
     m.innerHTML = espera

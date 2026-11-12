@@ -6,7 +6,7 @@
 // ruletas y en Belén, la segunda lámina de la card grande del camino (inicio y tab Teodoro) y la card «Para papás» bajo el premio.
 // Regla de la barra (cualquier orden): cada tramo es un día fijo (USA) o una semana (LATAM); se llena cuando ese día está hecho,
 // a tiempo o recuperado; solo cuenta al girar (o al cierre del sorteo). Quién gana lo decide el servidor; aquí no hay azar.
-import { S, go, toast, nota, dark, reduced, fase, contentDone, puedeDia } from './core.js';
+import { S, go, toast, nota, dark, reduced, fase, contentDone, puedeDia, conTheobox } from './core.js';
 import { RULES } from './data.js';
 
 const IMG = { real: 'assets/theobox/juego/real.webp', sola: 'assets/theobox/juego/sola.webp', dibujada: 'assets/theobox/juego/dibujada.webp', coloca: 'assets/theobox/juego/coloca.webp', escenaDia: 'assets/theobox/juego/escena-dia-v2.webp', escenaNoche: 'assets/theobox/juego/escena-noche-v2.webp' };
@@ -34,7 +34,7 @@ export function ruletaActual() {
 
 /** ¿Se muestra? Prendido, inscrito, en el camino, sin haber ganado ya una TheoBox y con algo por delante. */
 export function juegoActivo() {
-  if (!S.tbJuego || !S.inscrito || S.theobox === 'mia' || fase() !== 'camino') return false;
+  if (!conTheobox() || !S.tbJuego || !S.inscrito || S.theobox === 'mia' || fase() !== 'camino') return false;
   return mercado() === 'usa' ? !!ruletaActual() : S.hoy <= SORTEO;
 }
 
@@ -273,7 +273,7 @@ function montarSlider(tCard, l2) {
 }
 
 /** Antes del 29 (inscrito o no): prendido y sin TheoBox ganada. */
-export const juegoAntes = () => !!S.tbJuego && fase() === 'antes' && S.theobox !== 'mia';
+export const juegoAntes = () => conTheobox() && !!S.tbJuego && fase() === 'antes' && S.theobox !== 'mia';
 
 /** Antes del 29: la card grande de la cuenta atrás (o la del vidrio, sin inscribirse) se desliza a otra con la misma UI, el mismo
  *  contador y la escena de Teodoro con la TheoBox. Su botón hace lo mismo que el de la card de siempre. */
@@ -312,7 +312,7 @@ export function deslizarAntes(root) {
 
 /** Bajo el premio de la ruleta (si no fue la TheoBox): una card pequeña «Para papás · Conócela» que abre la web. */
 export function cardPapas(root, layer, premio) {
-  if (!S.tbJuego || mercado() !== 'usa' || premio === 'theobox' || S.theobox === 'mia') return;
+  if (!conTheobox() || !S.tbJuego || mercado() !== 'usa' || premio === 'theobox' || S.theobox === 'mia') return;
   const dlg = root.querySelector('[role=dialog]');
   if (!dlg || layer.querySelector('.tbj-papas')) return;
   // posición del diálogo dentro de la capa con offsets: no le afectan las animaciones de entrada
