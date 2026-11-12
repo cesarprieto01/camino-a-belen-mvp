@@ -4,7 +4,10 @@ import fs from 'fs';
 const [scen = '0', dir = 'tmp/e2e', mobile] = process.argv.slice(2);
 fs.mkdirSync(dir, { recursive: true });
 // sin --hide-scrollbars: las barras de scroll se ven como en un Mac con mouse (para detectarlas)
-const b = await chromium.launch({ executablePath: '/Users/ces/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing', ignoreDefaultArgs: ['--hide-scrollbars'] });
+// Chrome for Testing si está; si no (caché de Playwright borrado), el Google Chrome del Mac. CHROME=<ruta> manda sobre los dos.
+const CFT = '/Users/ces/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing';
+const executablePath = process.env.CHROME || (fs.existsSync(CFT) ? CFT : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
+const b = await chromium.launch({ executablePath, ignoreDefaultArgs: ['--hide-scrollbars'] });
 const ctx = await b.newContext(mobile ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } });
 const p = await ctx.newPage();
 const errs = [];
@@ -12,7 +15,8 @@ p.on('pageerror', e => { if (!/Failed to fetch/.test(e.message)) errs.push('PAGE
 p.on('console', m => { if (m.type() === 'error' && !/Failed to fetch|Failed to load resource/.test(m.text())) errs.push(m.text()); });
 await p.goto('http://localhost:5190/app.html');
 await p.evaluate(() => localStorage.clear());
-await p.reload(); await p.waitForTimeout(1200);
+// en frío (primer Chrome de la sesión) la app tarda más: se espera a que monte su primera pantalla, no un tiempo fijo
+await p.reload(); await p.waitForSelector('#viewport .layer', { timeout: 20000 }); await p.waitForTimeout(600);
 // la app arranca desde cero; los recorridos (salvo «inicio») parten del día 9 con 8 días hechos
 // cada recorrido (salvo «inicio» y «completo») arranca del mismo estado, aunque se corran varios seguidos
 const base = async () => {
@@ -114,7 +118,7 @@ const pasarSlides = async (tag) => {
   for (let i = 0; i < 3; i++) { await tap('Siguiente'); await p.waitForTimeout(250); }
   await tap('¡Vamos!'); await p.waitForTimeout(1200);
 };
-const scenario = async (i) => { if (!(await p.evaluate(() => document.querySelectorAll('[data-tab]').length))) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
+const scenario = async (i) => { if (!(await p.evaluate(() => document.getElementById('panel')?.classList.contains('open')))) { /* pintado pero cerrado también cuenta como cerrado */ await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
 const answerTrivia = async () => {
   for (let q = 0; q < 5; q++) {
     // contesta bien leyendo los datos del juego
@@ -765,7 +769,7 @@ const flows = {
   async tbjuego() {
     // TheoBox en juego: Hoy → lámina del carrusel → mapa con el panel abierto → web → panel; tab Teodoro; premio; interruptor y mercado
     const hay = sel => p.evaluate(s => !!document.querySelector(`#viewport .layer:last-child ${s}`), sel);
-    const chip = async attr => { const abierto = () => p.evaluate(() => document.getElementById('panel')?.classList.contains('open')); if (!(await abierto())) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector('[data-tab="aj"]')?.click()); await p.waitForTimeout(300); if (!(await p.evaluate(a => { const c = document.querySelector(`[${a}]`); c?.click(); return !!c; }, attr))) errs.push(`tbjuego: no está el chip [${attr}] en Ajustes`); await p.evaluate(() => document.querySelector('[data-tab="estado"]')?.click()); /* el panel vuelve a «Estado» para los demás recorridos */ await p.evaluate(() => document.querySelector('[data-tab="estado"]')?.click()); /* el panel vuelve a «Estado»: los demás recorridos eligen su escenario desde ahí */ await p.evaluate(() => document.querySelector('[data-tab="estado"]')?.click()); /* el panel vuelve a «Estado»: los demás recorridos eligen su escenario desde ahí */ await p.waitForTimeout(900); if (await abierto()) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(400); } };
+    const chip = async attr => { const abierto = () => p.evaluate(() => document.getElementById('panel')?.classList.contains('open')); if (!(await abierto())) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector('[data-tab="aj"]')?.click()); await p.waitForTimeout(300); if (!(await p.evaluate(a => { const c = document.querySelector(`[${a}]`); c?.click(); return !!c; }, attr))) errs.push(`tbjuego: no está el chip [${attr}] en Ajustes`); await p.waitForTimeout(900); if (await abierto()) { await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(400); } };
     if (await hay('.theo-heroe .tbj-slider, .theo-heroe .tbj-l2')) errs.push('tbjuego: el carrusel de arriba no lleva TheoBox');
     if (!(await hay('.tbj-slider .tbj-l2'))) { errs.push('tbjuego: la card grande del inicio no se desliza a la TheoBox'); return; }
     await p.evaluate(() => { const s = document.querySelector('#viewport .layer:last-child .tbj-slider'); s.scrollIntoView({ block: 'center' }); s.scrollLeft = s.clientWidth; });
