@@ -1220,8 +1220,8 @@
       {
         "id": "nochebuena",
         "nombre": "Nochebuena",
-        "cuando": "El día 26, mientras no hayan visto el nacimiento",
-        "visual": "Hoja especial del lienzo: «Hoy nace Jesús» (en el recuerdo «El nacimiento») con su botón para empezar.",
+        "cuando": "El día 26, mientras no hayan visto el contenido del último día",
+        "visual": "Hoja especial del lienzo: «¡Llegamos a Belén!» con su botón para empezar.",
         "assets": [],
         "lienzo": [
           "V2-Mapa-d24-claro",
@@ -1402,7 +1402,7 @@
       },
       {
         "id": "nacimiento",
-        "nombre": "Ver el nacimiento",
+        "nombre": "Ver mi logro / Ver el último día",
         "cuando": "Todo hecho desde el día 26, o en el recuerdo",
         "visual": "Con ▶ en el recuerdo.",
         "assets": [],
@@ -1771,7 +1771,7 @@
         "id": "navidad",
         "nombre": "Llegaste a Belén",
         "cuando": "Vieron los 26 cuentos",
-        "visual": "Título «¡Feliz Navidad!» (solo el 25) o «Adviento» y «¡Llegaste a Belén!»; escena del nacimiento (recorte al 35 % desde arriba) sin Teodoro; botón «Ver el nacimiento».",
+        "visual": "Título «¡Feliz Navidad!» (solo el 25) o «Adviento» y «¡Llegaste a Belén!»; su escena con Teodoro (nunca la del nacimiento); botón «Ver mi logro» (abre el gran final).",
         "assets": [
           "assets/455d2635515c50327d1e7cc360590069.webp"
         ],
@@ -1783,7 +1783,7 @@
         "id": "recuerdo",
         "nombre": "Recuerdo (desde el 7 de enero)",
         "cuando": "Desde el 7 de enero",
-        "visual": "«Nos vemos el próximo año» + «Ver el nacimiento», o «Caminaste N días con Teodoro» + «Ver tu camino».",
+        "visual": "«Nos vemos el próximo año» + «Ver el último día», o «Caminaste N días con Teodoro» + «Ver tu camino».",
         "assets": [
           "assets/455d2635515c50327d1e7cc360590069.webp"
         ],
@@ -2061,9 +2061,9 @@
       },
       {
         "id": "nacimiento",
-        "nombre": "Ver el nacimiento / Ver tu camino",
+        "nombre": "Ver el último día / Ver tu camino",
         "cuando": "Llegaron a Belén, o en el recuerdo",
-        "visual": "Abre el video del nacimiento (o el mapa).",
+        "visual": "Abre el contenido del último día (o el mapa).",
         "assets": [],
         "lienzo": [],
         "probar": "Recorrido «Terminó completo»."
@@ -2205,7 +2205,7 @@
         "id": "recuerdo",
         "nombre": "Recuerdo sin empezar",
         "cuando": "Desde el 7 de enero, si no vieron ningún cuento",
-        "visual": "Escena de fiesta (días impares) o el cielo con Teodoro y el farol (días pares); «Nos vemos el próximo año» + «Ver el nacimiento».",
+        "visual": "Escena de fiesta (días impares) o el cielo con Teodoro y el farol (días pares); «Nos vemos el próximo año» + «Ver el último día».",
         "assets": [
           "assets/pila/dias-0-dia.webp",
           "assets/pila/dias-0-noche.webp",
@@ -2627,7 +2627,7 @@
         "id": "aprende",
         "nombre": "3 · Mira, juega, canta… y ama",
         "cuando": "Tercer slide",
-        "visual": "Tres cartas (cuento, nacimiento y trivia) salen del centro y se abren en abanico ±9° con su mazo detrás.",
+        "visual": "Tres cartas (cuento, ángel con los pastores y trivia) salen del centro y se abren en abanico ±9° con su mazo detrás.",
         "assets": [
           "assets/183c744879d8ae7dd89b10934cde465c.webp",
           "assets/poster/navidad.webp",

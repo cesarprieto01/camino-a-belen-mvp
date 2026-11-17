@@ -14,7 +14,7 @@ export const IMG = {
   bufanda: 'ed7f054b6f0d602d40b41b8d2706379a', bolso: '5395dc871861741f74c551c3a1031492',
   paja: '98a7495c73f5fff24bb7130fa01efe67', pan: '5bab1fe48e4c5009d62da468a9d7f69f',
   pesebre: '06d17746a01e5a05a453fdf6f0e24b1d', farol: '8f9cd03fb68bac90ed249fa5d45f0828',
-  dorso: '834fcca7dd481ce118a38c73d90f02cc', regalo: '40de1cf55d4441bd10615c06350dde30', nacimiento: '455d2635515c50327d1e7cc360590069',
+  dorso: '834fcca7dd481ce118a38c73d90f02cc', regalo: '40de1cf55d4441bd10615c06350dde30', nacimiento: '455d2635515c50327d1e7cc360590069', belen: '625a2e782b64daf3e319ddf4d9acb47d',
   // Teodoro por nivel de batería (Teodoro-Energia)
   t5: '345591e97560d37b84ead12837ff9c75', t4: '64167d45da19875626c545019275e29c',
   t3: '7bfff4a8f40290f70de7fc8e49ee7d4d', t2: '52ba38f10b723e04ad04beea396aba0c',
@@ -45,7 +45,7 @@ const SCENES = {
   15: 'e7f682b970adabda92b49f1e7f8d04f5', 16: '9caf33a9fc36d0b8f6f7803571fa85a3', 17: 'a8f25293f207dc7eab99b4a2491972c9',
   18: '183c744879d8ae7dd89b10934cde465c', 19: 'c4ccddc6600cba02966d74b4e5937ac8', 20: '55a8fbeeef883e5d3d7d6f081d8bd168',
   21: '832e6416715007c87bf50f5330cb8eff', 22: '641044c4e0d7d7c08e0922364396cba6', 23: '0379fd70721f131c8b3d2576470ed921',
-  24: '47459af67a4b5599e33f6147ecedf0f3', 25: 'ff5ba60d05369d61e404403a80c98628', 26: '455d2635515c50327d1e7cc360590069',
+  24: '47459af67a4b5599e33f6147ecedf0f3', 25: 'ff5ba60d05369d61e404403a80c98628', 26: '67947142d31d9fb5442ef113320694e6', // el último día: Teodoro camina hacia Belén (nunca la escena del nacimiento)
 };
 
 // Formato de cada tipo (cronograma de contenido): fila de la hoja, botón y lo que se celebra al terminar.
@@ -109,7 +109,7 @@ export const DAYS = [
   D(23, 'cuento', 'Un burro de Navidad', { sub: 'Un cuento de Navidad con Teodoro' }),
   D(24, 'amigos', 'Especial de Navidad', { sub: 'Los Amigos de la Biblia esperan la Navidad' }),
   D(25, 'video', 'Navidad de Canela', { sub: 'Un cuento de Navidad' }),
-  D(26, 'nochebuena', 'El nacimiento de Jesús', { cita: 'Actividad final', sub: 'Llegamos a Belén: hoy nace Jesús' }),
+  D(26, 'nochebuena', 'El nacimiento de Jesús', { cita: 'Actividad final', sub: 'Llegamos a Belén' }),
 ];
 DAYS.forEach(d => { d.descarga ||= DESCARGA; });
 /** El día se hace en el hub (pasos + «¡Lo hicimos!») y no en el reproductor: retos y juegos en familia. */
@@ -410,7 +410,7 @@ export const JUEGOS = {
       { t: 'PESEBRE', cita: 'Lucas 2, 7', icon: 'pesebre' }, { t: 'ESTRELLA', cita: 'Mateo 2, 2', icon: 'estrella' },
       { t: 'BURRITO', cita: 'Isaías 1, 3', icon: 'teodoro' }, { t: 'ÁNGEL', cita: 'Lucas 2, 10', icon: 'gabriel' },
       { t: 'PASTORES', cita: 'Lucas 2, 8', icon: 'pastor' }, { t: 'MARÍA', cita: 'Lucas 1, 27', icon: 'maria' },
-      { t: 'JOSÉ', cita: 'Mateo 1, 20', icon: 'jose' }, { t: 'BELÉN', cita: 'Mateo 2, 1', icon: 'nacimiento' },
+      { t: 'JOSÉ', cita: 'Mateo 1, 20', icon: 'jose' }, { t: 'BELÉN', cita: 'Mateo 2, 1', icon: 'belen' },
       { t: 'REGALOS', cita: 'Mateo 2, 11', icon: 'regalo' }, { t: 'LUZ', cita: 'Juan 8, 12', icon: 'farol' },
       { t: 'PAN', cita: 'Juan 6, 35', icon: 'pan' },
     ] },

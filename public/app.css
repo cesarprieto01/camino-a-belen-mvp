@@ -818,7 +818,9 @@ nav.theo-tabbar .theo-home { position: absolute; left: 50%; bottom: 8px; width: 
 .rs-trivia { background: linear-gradient(160deg, #3CC0D4 0%, #1F8FA8 50%, #0E5E75 100%); }
 .rs-trivia-luz { left: 18px; top: 22px; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(255,240,180,.55) 0%, rgba(255,240,180,0) 70%); }
 .rs-sorpresa { left: 24px; top: 26px; width: 88px; height: 88px; object-fit: contain; transform: rotate(8deg); }
-.rs-nacimiento { left: -150px; top: -50px; width: 323px; height: 430px; object-fit: cover; }
+.rs-angel-card { background: linear-gradient(180deg, #2B5DAA 0%, #163C7A 55%, #0C2A5C 100%); }
+.rs-claro .rs-angel-card { background: linear-gradient(180deg, #8FD3EE 0%, #CFEFFA 55%, #FFF3CF 100%); }
+.rs-angel { left: -14px; top: 18px; width: 200px; height: 200px; object-fit: contain; }
 .rs-card-velo { left: 0; right: 0; bottom: 0; height: 70px; background: linear-gradient(180deg, rgba(4,14,36,0) 0%, rgba(4,14,36,.6) 100%); }
 .rs-chip { left: 10px; bottom: 10px; height: 22px; padding: 0 9px 0 7px; border-radius: 11px; background: rgba(4,14,36,.66); display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #FFFFFF; white-space: nowrap; }
 .rs-trivia .rs-chip { left: auto; right: 10px; }

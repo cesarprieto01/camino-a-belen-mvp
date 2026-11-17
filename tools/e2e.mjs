@@ -454,7 +454,7 @@ const flows = {
             const t = await sheetCta();
             if (t && /Hasta mañana/.test(t)) done = true;
             if (!t) errs.push(`día ${d}: mapa sin botón`);
-            if (d === 26 && t && /Ver el nacimiento/.test(t)) done = true;
+            if (d === 26 && t && /Ver mi logro/.test(t)) done = true;
             break; }
           case 'ruletaPop': await tap('¡Girar!'); await p.waitForTimeout(5200); break;
           case 'ruletaPremio': case 'premioCuarto': if (!(await clickYellow())) errs.push(`día ${d}: premio sin botón`); break;

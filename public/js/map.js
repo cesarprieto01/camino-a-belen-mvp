@@ -583,7 +583,6 @@ function paintSheet(layer, T, dia) {
   if (act === 26 && !contentDone(26) && T.sheet26) {
     const t = document.createElement('template'); t.innerHTML = T.sheet26;
     const s26 = t.content.firstElementChild; s26.dataset.sheet = '1'; sheet.replaceWith(s26); sheet = s26;
-    replaceText(sheet, /¡Llegamos a Belén!/, S.hoy <= 27 ? 'Hoy nace Jesús' : 'El nacimiento');
     const a = sheet.querySelector('a'); if (a) on(layer, a, () => startDay(26));
     sheet.classList.add('in-up');
     return;
@@ -773,7 +772,7 @@ function sheetDrag(layer) {
     const eyebrow = s.dataset.day === '0' ? 'Intro' : s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.firstChild?.textContent.trim() || ''; // sin la cita
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
-    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar amigos': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
+    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar amigos': 'Invitar', 'Ver mi logro': 'Mi logro', 'Ver el último día': 'Último día', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
     const corto = CORTOS[verbo] || (verbo.length > 15 ? verbo.split(' ')[0] : verbo);
     const play = !!cta?.querySelector('svg') && cta.querySelector('svg').style.display !== 'none';
     // imagen, un texto corto y el botón; lo pendiente es un punto, no una frase

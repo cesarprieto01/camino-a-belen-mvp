@@ -8,6 +8,8 @@ const LIB = 'vendor/lottie_light.min.js';
 // el lienzo de cada animación y lo que mide Teodoro de pie dentro de él (los pies tocan el borde de abajo)
 export const CAMINA = { nombre: 'teo-caminando', w: 324, h: 600, pie: 592 }; // mira a la derecha: hacia la izquierda se voltea
 export const CELEBRA = { nombre: 'teo-celebra', w: 875, h: 1522, pie: 1167 }; // recortado a Teodoro con sus saltos, centrado en él de pie
+// Teodoro completo saludando y meciéndose feliz (el de Theo Lectura, bucle de 2 s): otro gesto que el salto de CELEBRA (gran final, paso 2)
+export const SALUDA = { nombre: 'teo-saluda', w: 432, h: 576, pie: 480, x: 216, suelo: 515 };
 // los clips de la trivia salen del mismo lienzo (426 × 600): Teodoro mide 532 de pie y apoya los pies en (266,6; 591,3) en todos,
 // así que se encadenan sin ajustar nada. «salidas»: tramos [desde, hasta) de cada bucle con la pose de unión, donde puede empezar
 // una transición
@@ -189,9 +191,9 @@ export async function pasarA(img, transicion, bucle) {
 }
 
 /** Cambia el Teodoro quieto que celebra (alt «Teodoro celebra…») por el que salta, en bucle: mismos pies y mismo alto de pie. */
-export function celebrar(root, cual = img => /^Teodoro celebra/.test(img.alt || '')) {
+export function celebrar(root, cual = img => /^Teodoro celebra/.test(img.alt || ''), anim = CELEBRA, { alto = .96 } = {}) {
   if (reduced()) return;
-  $$(root, 'img').filter(i => cual(i) && i.offsetParent && i.offsetHeight).forEach(img => sobreDibujo(img, CELEBRA, { alto: .96 }));
+  $$(root, 'img').filter(i => cual(i) && i.offsetParent && i.offsetHeight).forEach(img => sobreDibujo(img, anim, { alto }));
 }
 
 /** Cambia a Teodoro con su mapa, pensando (IMG.tPregunta), por el que se mueve en bucle: trivia, «¿Jugamos?», el juego del teléfono
