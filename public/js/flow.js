@@ -5,7 +5,7 @@ import { S, save, A, cur, $, $$, on, find, go, back, register, seen, toast, nota
 import { DAYS, TYPES, RULES, PRENDAS, FONDO, sortearPremio, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
 import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from './musica.js'; // música, voces de Teodoro y efectos
 import { rateRow } from './games.js';
-import { celebrar, pensar, SALUDA } from './teo-anim.js';
+import { celebrar, pensar, SALUDA, CELEBRA } from './teo-anim.js';
 import { tarjetaInicio } from './theobox.js';
 import { deslizarCamino, deslizarAntes, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
 
@@ -1943,8 +1943,8 @@ function finPaso2(root, layer) {
   const btn = find(root, '¡Sí, lo logré!'); const lab = btn?.querySelector('span'); if (lab) lab.textContent = tx.b2;
   if (btn) on(root, btn, () => ir(3));
   const teo = $$(root, 'img').find(i => /^Teodoro salta/.test(i.alt || ''));
-  // Teodoro feliz en bucle: saluda y se mece (teo-saluda), otro gesto que el salto del paso 3 (teo-celebra)
-  celebrar(root, i => i === teo, SALUDA, { alto: .86 });
+  // Teodoro feliz en bucle: salta de alegría (teo-celebra); en el paso 3 saluda y se mece (otro gesto, pedido de César)
+  celebrar(root, i => i === teo, CELEBRA, { alto: .8 });
   const confeti = $$(root, 'span').filter(s => s.getAttribute('aria-hidden') === 'true' && s.style.position === 'absolute' && s.style.borderRadius === '3px');
   sparkles(root);
   if (num) num.textContent = reduced() ? String(v) : '1'; // arranca en 1 y cuenta hasta los cuentos vistos
@@ -1994,7 +1994,7 @@ function finPaso3(root, layer) {
       try { if (navigator.share) await navigator.share({ title: tx.shareT, text: tx.share(S.nombre, nums[0]) }); else nota(...tx.sinShare); } catch { /* cancelado */ }
     });
   }
-  celebrar(root); // Teodoro feliz: el que salta en bucle, encima del dibujo (los mismos pies y el mismo alto)
+  celebrar(root, undefined, SALUDA); // Teodoro feliz saluda y se mece (teo-saluda), encima del dibujo: otro gesto que el salto del paso 2
   const ver = () => valores.forEach(x => { if (x.n) x.n.textContent = x.panes ? tx.panes(x.v) : String(x.v); });
   if (reduced()) { ver(); return; }
   entra(titulo, { delay: 80 });

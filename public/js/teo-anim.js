@@ -8,7 +8,7 @@ const LIB = 'vendor/lottie_light.min.js';
 // el lienzo de cada animación y lo que mide Teodoro de pie dentro de él (los pies tocan el borde de abajo)
 export const CAMINA = { nombre: 'teo-caminando', w: 324, h: 600, pie: 592 }; // mira a la derecha: hacia la izquierda se voltea
 export const CELEBRA = { nombre: 'teo-celebra', w: 875, h: 1522, pie: 1167 }; // recortado a Teodoro con sus saltos, centrado en él de pie
-// Teodoro completo saludando y meciéndose feliz (el de Theo Lectura, bucle de 2 s): otro gesto que el salto de CELEBRA (gran final, paso 2)
+// Teodoro completo saludando y meciéndose feliz (el de Theo Lectura, bucle de 2 s): otro gesto que el salto de CELEBRA (gran final, paso 3)
 export const SALUDA = { nombre: 'teo-saluda', w: 432, h: 576, pie: 480, x: 216, suelo: 515 };
 // los clips de la trivia salen del mismo lienzo (426 × 600): Teodoro mide 532 de pie y apoya los pies en (266,6; 591,3) en todos,
 // así que se encadenan sin ajustar nada. «salidas»: tramos [desde, hasta) de cada bucle con la pose de unión, donde puede empezar
