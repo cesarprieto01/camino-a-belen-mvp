@@ -1265,7 +1265,7 @@ register('reproductor', {
     if (bloqueTit && barraRep) requestAnimationFrame(() => { bloqueTit.style.top = 'auto'; bloqueTit.style.bottom = bloqueTit.offsetParent.clientHeight - barraRep.offsetTop + 12 + 'px'; });
     const scene = $$(root, 'img').find(i => i.alt && i.alt.length > 10);
     if (scene) {
-      if (d.scene) { scene.src = A(d.scene); scene.alt = d.title; }
+      if (d.scene) { scene.src = A(n === 26 && dark() ? 'dia26-belen-noche.webp' : d.scene); scene.alt = n === 26 ? 'Belén bajo la estrella' : d.title; }
       // sin escena propia (día 0, 1 y 2 en el lienzo): Teodoro camina hacia Belén
       else { scene.src = A('67947142d31d9fb5442ef113320694e6'); scene.alt = 'Teodoro camina hacia Belén bajo la estrella'; }
       scene.style.transition = 'transform 9s linear'; requestAnimationFrame(() => { scene.style.transform = 'scale(1.06)'; });

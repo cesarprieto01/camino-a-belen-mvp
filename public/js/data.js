@@ -45,7 +45,7 @@ const SCENES = {
   15: 'e7f682b970adabda92b49f1e7f8d04f5', 16: '9caf33a9fc36d0b8f6f7803571fa85a3', 17: 'a8f25293f207dc7eab99b4a2491972c9',
   18: '183c744879d8ae7dd89b10934cde465c', 19: 'c4ccddc6600cba02966d74b4e5937ac8', 20: '55a8fbeeef883e5d3d7d6f081d8bd168',
   21: '832e6416715007c87bf50f5330cb8eff', 22: '641044c4e0d7d7c08e0922364396cba6', 23: '0379fd70721f131c8b3d2576470ed921',
-  24: '47459af67a4b5599e33f6147ecedf0f3', 25: 'ff5ba60d05369d61e404403a80c98628', 26: '67947142d31d9fb5442ef113320694e6', // el último día: Teodoro camina hacia Belén (nunca la escena del nacimiento)
+  24: '47459af67a4b5599e33f6147ecedf0f3', 25: 'ff5ba60d05369d61e404403a80c98628', 26: 'dia26-belen.webp', // el último día: Belén bajo la estrella (nunca la escena del nacimiento ni Teodoro caminando); de noche, dia26-belen-noche.webp
 };
 
 // Formato de cada tipo (cronograma de contenido): fila de la hoja, botón y lo que se celebra al terminar.
