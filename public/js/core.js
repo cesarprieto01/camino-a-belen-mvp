@@ -40,6 +40,7 @@ export const DEFAULT = () => ({
   tbJuego: true,       // «TheoBox en juego» (tbjuego.js): insignia del mapa, lámina del inicio, TheoBox en las ruletas; panel › TheoBox en juego
   mercado: 'usa',      // 'usa': una TheoBox por ruleta · 'latam': una sola, en un sorteo al cerrar el camino
   musica: true,        // música de fondo del mapa y la trivia (on/off)
+  finalIdioma: 'en',   // textos del gran final (26 días): 'en' (por defecto, pedido de César) | 'es'; panel › Ajustes
   notas: {}, huecos: [], vistas: {},
 });
 export let S = load();
@@ -61,7 +62,7 @@ function migrar(s) {
   return s;
 }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* navegador privado */ } emit(); }
-export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas, tbJuego: S.tbJuego, mercado: S.mercado, theoboxAdviento: S.theoboxAdviento }; S = Object.assign(DEFAULT(), keep, over); save(); }
+export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas, tbJuego: S.tbJuego, mercado: S.mercado, theoboxAdviento: S.theoboxAdviento, finalIdioma: S.finalIdioma }; S = Object.assign(DEFAULT(), keep, over); save(); }
 export function shareURL() {
   const { notas, huecos, ...rest } = S;
   return location.origin + location.pathname + '#estado=' + btoa(unescape(encodeURIComponent(JSON.stringify(rest)))) + '&pantalla=' + (cur?.name || 'hoy');
