@@ -1835,7 +1835,8 @@ const vibrar = ms => { try { navigator.vibrate?.(ms); } catch { /* sin vibració
 /** Lo que hizo en el camino: cuentos vistos, respuestas correctas, juegos (sorpresas y juegos en familia), estrellas y panes. */
 function numerosFin() {
   let ok = 0, est = 0;
-  for (let n = 1; n <= 26; n++) { ok += S.completos[n]?.aciertos || 0; est += stars(n); }
+  // aciertos de la mejor partida; un estado viejo sin aciertos los estima por sus estrellas (3 = 5, 2 = 3-4, 1 = 0-2)
+  for (let n = 1; n <= 26; n++) { ok += S.completos[n]?.aciertos ?? ({ 3: 5, 2: 4, 1: 2 }[stars(n)] || 0); est += stars(n); }
   const juegos = Object.keys(RULES.sorpresa).filter(d => S.sorpresas[d] === 'hecha').length + Object.keys(JUEGOS).filter(n => contentDone(+n)).length;
   return [vistos(), ok, juegos, est, S.panes];
 }

@@ -53,7 +53,7 @@ const STAR_PATTERN = [3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 1, 3, 2, 3, 3, 2, 3, 3, 1, 3
 function fill(upto, opts = {}) {
   S.completos = {};
   S.completos[0] = { contenido: true };
-  for (let n = 1; n <= upto; n++) S.completos[n] = hasTrivia(n) ? { contenido: true, trivia: true, estrellas: STAR_PATTERN[n - 1] } : { contenido: true };
+  for (let n = 1; n <= upto; n++) S.completos[n] = hasTrivia(n) ? { contenido: true, trivia: true, estrellas: STAR_PATTERN[n - 1], aciertos: { 3: 5, 2: 4, 1: 2 }[STAR_PATTERN[n - 1]] || 0 } : { contenido: true };
   S.ruletas = {}; S.prendas = []; S.sorpresas = {}; S.ruletaPendiente = {};
   S.cuartoNuevo = false; S.traje = null;
   // ruletas ya giradas: un camino de ejemplo (la 1 da la bienvenida; las demás salen al azar en la app)
@@ -358,7 +358,8 @@ function render() {
       : '')
       + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
     ${grupo('Gran final',
-      `<div class="p-row p-stack"><span class="p-row-t">Idioma<small>Textos del gran final (26 días): ¡Llegaste a Belén!, ¡26 días! y tus números</small></span><div class="p-chips">${[['en', 'English'], ['es', 'Español']].map(([v, l]) => `<button data-finidioma="${v}" aria-pressed="${(S.finalIdioma === 'es' ? 'es' : 'en') === v}">${l}</button>`).join('')}</div></div>`)}
+      `<div class="p-row p-stack"><span class="p-row-t">Idioma<small>Textos del gran final (26 días): ¡Llegaste a Belén!, ¡26 días! y tus números</small></span><div class="p-chips">${[['en', 'English'], ['es', 'Español']].map(([v, l]) => `<button data-finidioma="${v}" aria-pressed="${(S.finalIdioma === 'es' ? 'es' : 'en') === v}">${l}</button>`).join('')}</div></div>`
+      + fila('Ver el cierre', '<button class="p-btn p-btn-sm" data-act="verCierre">Ver</button>', 'Deja los 26 días completos (como quien terminó todo) y abre el gran final, como al terminar el video del nacimiento'))}
     ${grupo('iPhone',
       fila('Isla dinámica', sw('isla', S.isla !== false, 'Isla dinámica'))
       + fila('Zonas seguras', sw('zonas', S.zonas, 'Zonas seguras')),
@@ -426,6 +427,8 @@ panel.addEventListener('click', e => {
   if (a === 'week') advance(7);
   if (a === 'dayPlus') advance(1);
   if (a === 'dayMinus') retroceder();
+  // el gran final sale solo con los 26 cuentos vistos: deja el camino completo hasta el 25 y llega a Belén como de verdad (día 26 recién visto)
+  if (a === 'verCierre') { day(26, 25)(); save(); render(); go('final', { paso: 1 }, 'fade'); return; }
   if (a === 'ruletaOtraVez') {
     // la ruleta de la semana en curso (la última que ya llegó): se borra su giro y se abre de nuevo, sin cambiar de día
     const d = [...RULES.ruleta].reverse().find(x => x <= lastDay());
