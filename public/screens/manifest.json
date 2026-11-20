@@ -1134,5 +1134,101 @@
   "dark": true,
   "x": 2350,
   "y": 46239
+ },
+ "CARTA-1": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 1 Llegamos al pesebre · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-2": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 2 Una carta secreta · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-4": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 4 La carta · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-HIST": {
+  "w": 390,
+  "h": 693,
+  "title": "Carta · historia 9:16 (compartir) · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-3": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 3 ¡Ahora firma tú! · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-A4": {
+  "w": 420,
+  "h": 594,
+  "title": "Carta · hoja A4 (imprimir) · ☀ claro",
+  "dark": false,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-1-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 1 Llegamos al pesebre · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-2-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 2 Una carta secreta · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-4-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 4 La carta · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-HIST-oscuro": {
+  "w": 390,
+  "h": 693,
+  "title": "Carta · historia 9:16 (compartir) · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-3-oscuro": {
+  "w": 390,
+  "h": 844,
+  "title": "Carta · 3 ¡Ahora firma tú! · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 0
+ },
+ "CARTA-A4-oscuro": {
+  "w": 420,
+  "h": 594,
+  "title": "Carta · hoja A4 (imprimir) · ☾ oscuro",
+  "dark": true,
+  "x": 0,
+  "y": 0
  }
 }

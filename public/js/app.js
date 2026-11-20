@@ -7,6 +7,7 @@ import './flow.js';
 import './theobox.js';
 import './map.js';
 import './games.js';
+import { abrirCarta, cartaDemo } from './carta.js';
 import { devActivo, alCambiar, activar as modoDev, usandoApp, usar as usarApp, reubicando } from './dev.js';
 import { pintarDev } from './dev-panel.js';
 
@@ -17,7 +18,7 @@ const NAMES = {
   calificacion: '¿Te gustó?', free: 'Free · descargables', ruletaPop: 'Ruleta', ruletaPremio: 'Premio de la ruleta', premioCuarto: 'Cuarto nuevo', tbGano: '¡Ganaste la TheoBox!', tbDatos: 'TheoBox · Quién la recibe', tbDireccion: 'TheoBox · Dirección', tbEnCamino: 'TheoBox · Va en camino', tbCompartir: 'TheoBox · Comparte tu premio', tbMiTheobox: 'Mi TheoBox', ajustes: 'Ajustes',
   memoramaReglas: 'Memorama · antes de jugar', memorama: 'Memorama', memoramaFin: 'Memorama · fin', adivinanzaIntro: 'Adivinanza · antes de jugar',
   adivinanza: 'Adivinanza', adivinanzaTiempo: 'Adivinanza · se acabó el tiempo', adivinanzaFin: 'Adivinanza · fin', desafioIntro: 'Desafío · antes de empezar',
-  desafio: 'Desafío en familia', desafioFin: 'Desafío · cumplido', juegoIntro: 'Juego en familia', juegoPasos: 'Juego · así se juega', juegoCarta: 'Juego · a jugar', juegoFin: 'Juego · ¡ganaron todos!', final: 'Gran final', estatica: 'Vista del lienzo',
+  desafio: 'Desafío en familia', desafioFin: 'Desafío · cumplido', juegoIntro: 'Juego en familia', juegoPasos: 'Juego · así se juega', juegoCarta: 'Juego · a jugar', juegoFin: 'Juego · ¡ganaron todos!', final: 'Gran final', cartaSecreta: 'Carta · secreta', cartaFirma: 'Carta · firma', cartaGuardada: 'Carta · guardada', cartaSorpresa: 'Carta · ¡era para Jesús!', carta: 'La carta de Teodoro', cartaCompartir: 'Carta · compartir', cartaImprimir: 'Carta · imprimir', estatica: 'Vista del lienzo',
 };
 // Sección del lienzo de cada pantalla (para «Dónde estás»)
 const SECTION_OF = name => {
@@ -27,7 +28,7 @@ const SECTION_OF = name => {
   if (['ruletaPop', 'ruletaPremio', 'premioCuarto'].includes(name)) return 3;
   if (/^(memorama|adivinanza|desafio)/.test(name)) return 4;
   if (name === 'free') return 7;
-  if (name === 'final') return 8;
+  if (name === 'final' || /^carta/.test(name)) return 8;
   return 2;
 };
 // Nombres cortos; la posición (y) sale de las notas del lienzo al arrancar
@@ -108,20 +109,28 @@ const REC = [
   { sec: 7, t: 'Free · día gratis', mira: 'Día 11 (miércoles) · gancho gratis con trivia y ruleta; los días de pago con candado', run: day(11, 10, { plan: 'free' }), go: 'mapa', covers: [] },
   { sec: 7, t: 'Pase de Adviento', mira: 'Día 13 · compró el Pase: los 26 días y sus extras', run: day(13, 12, { plan: 'pase' }), go: 'mapa', covers: [] },
   { sec: 7, t: 'Primer día', mira: 'Día 1 · el camino recién empieza', run: day(1, 0), go: 'hoy', covers: ['V2-Mapa-completo-claro'] },
-  { sec: 8, t: 'Nochebuena', mira: 'Día 26 · el contenido del último día y el gran final: 3 pasos como historias (¡Llegaste a Belén!, ¡26 días!, tus números), en inglés o español (panel › Ajustes)', run: day(26, 25), go: 'mapa', covers: ['V2-Mapa-d24-claro', 'FIN-1', 'FIN-2', 'FIN-3'] },
-  { sec: 8, t: 'Gran final (directo)', mira: 'Los 26 cuentos vistos: abre el paso 1 del gran final. Toca a la derecha para avanzar y a la izquierda para volver', run: () => { day(26, 26)(); }, go: 'final', covers: ['FIN-1', 'FIN-2', 'FIN-3'] },
+  { sec: 8, t: 'Nochebuena · firma (le faltan días)', mira: 'Día 26 visto con 20 de 26: Teodoro trae una carta secreta → firma con el dedo → «¡Tu carta está guardada!» con los días del reto por completar', run: () => { day(26, 20)(); }, go: 'cartaSecreta', covers: ['CARTA-2', 'CARTA-3'] },
+  { sec: 8, t: 'Nochebuena · firma (terminó todo)', mira: 'Los 26 cuentos vistos: carta secreta → firma → Teodoro entrega la carta al Niño Jesús → «¡Era una carta para Jesús!» → la carta', run: () => { day(26, 26)(); }, go: 'cartaSecreta', covers: ['CARTA-2', 'CARTA-3', 'CARTA-1', 'CARTA-4'] },
+  { sec: 8, t: 'Carta guardada · faltan 4', mira: '28 de diciembre, lleva 22 de 26 y ya firmó: el ícono de la carta arriba en el mapa cuenta 4; al tocarlo, «Completa 4 días más del reto para abrirla»', run: () => { day(30, 22)(); cartaDemo({ vista: true, firmadaDia: 26 }); }, go: 'mapa', covers: [] },
+  { sec: 8, t: 'Carta · último que faltaba', mira: 'Lleva 25 de 26 y ya firmó: al terminar el cuento que falta se abre la sorpresa ahí mismo, el día que sea', run: () => { day(30, 25)(); cartaDemo({ vista: true, firmadaDia: 26 }); }, go: 'mapa', covers: [] },
+  { sec: 8, t: 'Carta · sorpresa', mira: 'Terminó todo: «¡Lo lograste!», Teodoro lleva la carta al pesebre (aquí va el JSON) y «¡Era una carta para Jesús!»', run: () => { day(27, 26)(); cartaDemo({ vista: true, firmadaDia: 26 }); }, go: 'cartaSorpresa', covers: ['CARTA-1'] },
+  { sec: 8, t: 'La carta de Teodoro', mira: 'La carta abierta con sus números (cuentos, juegos, estrellas, panes y tiempo) y su firma; Imprimir (A4) y Compartir (historia 9:16)', run: () => { day(27, 26)(); cartaDemo({ vista: true, firmadaDia: 26, abierta: true }); }, go: 'carta', covers: ['CARTA-4', 'CARTA-HIST', 'CARTA-A4'] },
   { sec: 8, t: 'Terminó completo', mira: '25 de diciembre · 26 de 26 días', run: day(27, 26), go: 'hoy', covers: [] },
   { sec: 8, t: 'Terminó incompleto', mira: '25 de diciembre · le faltan 5 días', run: day(27, 21), go: 'hoy', covers: [] },
   { sec: 8, t: 'Gracia · a medias', mira: '30 de diciembre · lleva 14 de 26: «Seguir con el día 15» y «Quedan 8 días para llegar a Belén»', run: day(32, 14), go: 'hoy', covers: [] },
   { sec: 8, t: 'Gracia · último día', mira: '6 de enero · lleva 20 de 26: «Último día para llegar a Belén»', run: day(39, 20), go: 'hoy', covers: [] },
+  { sec: 8, t: 'Mundos · quedan 7 días', mira: '31 de diciembre · lleva 20 de 26: la tarjeta de Adviento suma «Quedan 7 días» y siete estrellitas encendidas', run: day(33, 20), go: 'mundos', covers: [] },
+  { sec: 8, t: 'Mundos · quedan 2 días', mira: '5 de enero · lleva 20 de 26: «Quedan 2 días», quedan 2 estrellitas encendidas', run: day(38, 20), go: 'mundos', covers: [] },
+  { sec: 8, t: 'Mundos · último día', mira: '6 de enero · lleva 20 de 26: «¡Último día!» y la última estrellita titila', run: day(39, 20), go: 'mundos', covers: [] },
   { sec: 8, t: 'Gracia · sin empezar', mira: '2 de enero · inscrito sin días hechos: «Teodoro te espera»', run: day(35, 0), go: 'hoy', covers: [] },
   { sec: 8, t: 'Gracia · sin inscribirse', mira: '28 de diciembre: pop-up «¡Aún llegas a Belén!»', run: () => { reset({ hoy: 30, inscrito: false }); S.completos = {}; }, go: 'hoy', covers: [] },
   { sec: 8, t: 'Recuerdo · 7 de enero', mira: 'Lleva 14 de 26: «Caminaste 14 días con Teodoro»; lo que faltó queda apagado', run: day(40, 14), go: 'hoy', covers: [] },
+  { sec: 8, t: 'Recuerdo · la carta con lo que hizo', mira: '7 de enero, firmó con 19 de 26: la carta se abre igual, «caminó conmigo 19 días»', run: () => { day(40, 19)(); cartaDemo({ vista: true, firmadaDia: 26 }); }, go: 'mapa', covers: [] },
   { sec: 8, t: 'Se une tarde', mira: 'Día 5 sin inscribirse: «¡Ya salimos! ¿Vienes?»', run: () => { reset({ hoy: 5, inscrito: false }); S.completos = {}; }, go: 'hoy', covers: [] },
 ];
 // Lo que el MVP decidió por su cuenta (para revisarlo con el equipo)
 const DECISIONES = [
-  'Gran final (17-nov, lienzo «Gran final · 26 días»): al terminar el contenido del último día con los 26 cuentos vistos, 3 pasos a pantalla completa que se avanzan tocando, como historias (derecha avanza, izquierda vuelve): ¡Llegaste a Belén! · ¡26 días! (cuenta de 1 a 26 y confeti) · Tus números con Teodoro feliz animado. Celebra a quien lo logró, con su nombre. Imágenes y íconos = los del MVP (el lienzo tenía copias chicas). En inglés por defecto (César) o español: panel › Ajustes › Gran final. La tarjeta «días seguidos» pasó a «estrellas ganadas»: el MVP no guarda la fecha de cada día y se puede ponerse al día con varios juntos. En español el elogio es neutro en género («eres toda una estrella del Adviento»).',
+  'La carta de Teodoro (20-nov, lienzo «Gran final · 26 días», opción B; reemplaza al final de 3 pasos): dos momentos. 1) La firma: la primera vez que termina el cuento del día 26 (aunque le falten días) Teodoro trae una carta SECRETA y el niño la firma sin leerla (no hay números todavía). 2) La sorpresa: al terminar el último cuento que le falte, el día que sea (no vuelve al 26), o desde el 7 de enero con lo que hizo: Teodoro entrega la carta al Niño Jesús («¡Era una carta para Jesús!», aquí va el JSON) y se lee con sus números (cuentos, juegos, estrellas, panes y tiempo, con los íconos del mapa actual) y su firma; Imprimir (A4) y Compartir (historia 9:16). Entre los dos, el ícono de la carta arriba en el mapa cuenta los días del reto por completar (copys: días por completar, nunca «en N días»).',
   'TheoBox en juego (11-nov, se prende y apaga en el panel): USA una TheoBox en cada ruleta para quien completa la semana (una por familia); LATAM una sola en un sorteo al cerrar el camino (cierre pendiente: 24 dic o 6 ene; el MVP cierra el 24 dic, y si es el 6 ene hay que mostrarla también en la gracia). La barra cuenta días fijos en cualquier orden y solo se mira al girar. Copys sin promesas: «Podrías ganar una TheoBox», «Muchos giran, solo uno gana». Pendiente legal: participación gratis para free, «solo uno gana» y permisos de sorteo en LATAM.',
   'TheoBox (gran premio de la ruleta, reemplaza al regalo): una sola para todo el reto; se ve en todas las ruletas y solo sale en la del día 24, una vez (momento ganador al azar decidido por el servidor). Ya ganada, sigue en la rueda en gris. Al ganarla: la rueda se oscurece menos la casilla dorada, «¡Ganaste la TheoBox!», datos de envío en dos pasos (quién la recibe, para un adulto · dirección, con estado y ciudad según el país), «Va en camino» y «Comparte tu premio» (imagen 1080 × 1920 para historias). Con «Ahora no», espera encima de la hoja del día hasta reclamarla. Ya reclamada, el mapa, el inicio (card) y Ajustes («Mis premios») llevan a «Mi TheoBox»: seguimiento por pasos, guía de la paquetería y soporte. Pendiente: a qué países se envía, las bases (legal: el día 24 es de pago para free, nota de Apple 5.3, datos solo del adulto por COPPA), la paquetería y el canal de soporte reales, y guardar los datos en el servidor.',
   'Inicio real de Theo (lienzo «Inicio real», 21 oct): el destacado de Adviento va primero en el héroe, que se desliza entre tres destacados; Misiones Diarias y las filas de cuentos se deslizan de lado.',
@@ -358,8 +367,8 @@ function render() {
       : '')
       + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
     ${grupo('Gran final',
-      `<div class="p-row p-stack"><span class="p-row-t">Idioma<small>Textos del gran final (26 días): ¡Llegaste a Belén!, ¡26 días! y tus números</small></span><div class="p-chips">${[['en', 'English'], ['es', 'Español']].map(([v, l]) => `<button data-finidioma="${v}" aria-pressed="${(S.finalIdioma === 'es' ? 'es' : 'en') === v}">${l}</button>`).join('')}</div></div>`
-      + fila('Ver el cierre', '<button class="p-btn p-btn-sm" data-act="verCierre">Ver</button>', 'Deja los 26 días completos (como quien terminó todo) y abre el gran final, como al terminar el contenido del último día'))}
+      `<div class="p-row p-stack"><span class="p-row-t">Idioma<small>Textos de la carta de Teodoro (gran final)</small></span><div class="p-chips">${[['en', 'English'], ['es', 'Español']].map(([v, l]) => `<button data-finidioma="${v}" aria-pressed="${(S.finalIdioma === 'es' ? 'es' : 'en') === v}">${l}</button>`).join('')}</div></div>`
+      + fila('Ver el cierre', '<button class="p-btn p-btn-sm" data-act="verCierre">Ver</button>', 'Deja los 26 días completos (como quien terminó todo) y abre la carta de Teodoro desde la firma, como al terminar el último día'))}
     ${grupo('iPhone',
       fila('Isla dinámica', sw('isla', S.isla !== false, 'Isla dinámica'))
       + fila('Zonas seguras', sw('zonas', S.zonas, 'Zonas seguras')),
@@ -408,7 +417,7 @@ panel.addEventListener('click', e => {
   }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
-  if (t.dataset.finidioma) { S.finalIdioma = t.dataset.finidioma; save(); render(); if (cur?.name === 'final') go('final', cur.params || {}, 'none', { replace: true }); return; }
+  if (t.dataset.finidioma) { S.finalIdioma = t.dataset.finidioma; save(); render(); if (/^carta/.test(cur?.name || '')) go(cur.name, cur.params || {}, 'none', { replace: true }); return; }
   if (t.dataset.tbjuego || t.dataset.mercado) {
     if (t.dataset.tbjuego) S.tbJuego = t.dataset.tbjuego === '1'; else S.mercado = t.dataset.mercado;
     save(); render(); if (['mapa', 'hoy', 'teodoro'].includes(cur?.name)) { const { theobox, ...pp } = cur.params || {}; go(cur.name, pp, 'none', { scrollTop: cur.layer.scrollTop }); } return;
@@ -428,7 +437,7 @@ panel.addEventListener('click', e => {
   if (a === 'dayPlus') advance(1);
   if (a === 'dayMinus') retroceder();
   // el gran final sale solo con los 26 cuentos vistos: deja el camino completo hasta el 25 y llega a Belén como de verdad (día 26 recién visto)
-  if (a === 'verCierre') { day(26, 25)(); save(); render(); go('final', { paso: 1 }, 'fade'); return; }
+  if (a === 'verCierre') { day(26, 26)(); save(); render(); abrirCarta('fade'); return; }
   if (a === 'ruletaOtraVez') {
     // la ruleta de la semana en curso (la última que ya llegó): se borra su giro y se abre de nuevo, sin cambiar de día
     const d = [...RULES.ruleta].reverse().find(x => x <= lastDay());

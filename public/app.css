@@ -1446,3 +1446,76 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
   .tbj-ins, .tbj-panel { background: #FFFFFF; -webkit-backdrop-filter: none; backdrop-filter: none; }
   :root[data-theme="dark"] .tbj-ins, :root[data-theme="dark"] .tbj-panel { background: #162E60; }
 }
+
+/* Mundos · cierre (31 dic – 6 ene, flow.js cierreMundo): la tarjeta amarilla de Adviento crece hacia abajo una fila, bajo un
+   filete: el reloj de arena con «Quedan N días» / «¡Último día!» y siete estrellitas, una por día (31 dic a la izquierda,
+   6 ene a la derecha), que se van apagando.
+   La primera fila (título, día y ▶) queda donde estaba; solo existe esos 7 días, el resto del tiempo nada de esto aplica.
+   La tarjeta es amarilla en los dos temas, así que la fila es igual en claro y en oscuro. */
+.mundos-v:not(.mundos-pre) a[aria-label^="Adviento:"] > span.mundos-cierre-tarjeta { height: auto !important; flex-wrap: wrap; align-content: flex-start; padding-top: 8px !important; padding-bottom: 13px !important; }
+.mundos-cierre { flex: 0 0 auto; width: calc(100% - 10px); box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; padding-top: 11px; border-top: 1px solid rgba(6,50,90,.14); }
+.mundos-cierre-txt { display: flex; align-items: center; gap: 6px; color: #06325A; font: 700 15px/18px 'Neue Montreal', Mulish, sans-serif; letter-spacing: .1px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mundos-cierre-txt svg { flex: none; width: 17px; height: 17px; color: #0B748A; }
+.mundos-cierre-dias { display: flex; align-items: center; gap: 5px; }
+.mundos-cierre-dias i { display: block; width: 11px; height: 11px; color: rgba(6,50,90,.2); }
+.mundos-cierre-dias i.queda { color: #0B748A; }
+.mundos-cierre-dias svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+
+/* ---------- La carta de Teodoro (carta.js): ícono arriba en el mapa, sello, días por completar y vistas de compartir/imprimir ---------- */
+.carta-icono { position: absolute; z-index: 6; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.94); box-shadow: 0 2px 8px rgba(2,37,79,.16); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .1s ease-out; }
+.carta-icono:active { transform: scale(.92); }
+.carta-icono img { width: 36px; height: 36px; object-fit: contain; pointer-events: none; }
+:root[data-theme="dark"] .carta-icono { background: #274E7C; box-shadow: 0 2px 8px rgba(4,14,36,.22); }
+.carta-badge { position: absolute; top: -3px; right: -3px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; background: #0B748A; color: #FFFFFF; font: 800 12px/20px Mulish, sans-serif; text-align: center; box-shadow: 0 0 0 2px #FFFFFF; font-variant-numeric: tabular-nums; }
+:root[data-theme="dark"] .carta-badge { background: #F5DB78; color: #06325A; box-shadow: 0 0 0 2px #274E7C; }
+.carta-punto { position: absolute; top: 3px; right: 3px; width: 11px; height: 11px; border-radius: 50%; background: #E0565B; box-shadow: 0 0 0 2px #FFFFFF; }
+.carta-lista { animation: cartaBrilla 2.4s ease-in-out infinite; }
+.carta-lista img { animation: cartaMece 2.4s ease-in-out infinite; }
+@keyframes cartaBrilla { 0%, 100% { box-shadow: 0 2px 8px rgba(2,37,79,.16), 0 0 0 0 rgba(245,219,120,.0); } 50% { box-shadow: 0 2px 8px rgba(2,37,79,.16), 0 0 0 7px rgba(245,219,120,.55); } }
+@keyframes cartaMece { 0%, 70%, 100% { transform: rotate(0); } 76% { transform: rotate(-9deg); } 84% { transform: rotate(7deg); } 92% { transform: rotate(-3deg); } }
+.carta-globo { position: absolute; z-index: 6; padding: 9px 14px; border-radius: 16px; background: #06325A; color: #FFF6DD; font: 700 14px/18px 'Neue Montreal', Mulish, sans-serif; white-space: nowrap; box-shadow: 0 8px 18px rgba(0,8,43,.22); cursor: pointer; animation: cartaGlobo .5s cubic-bezier(.34,1.56,.64,1) .4s both; transform-origin: 100% 50%; }
+.carta-globo::after { content: ''; position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; margin-top: -6px; background: inherit; border-radius: 2px; transform: rotate(45deg); }
+:root[data-theme="dark"] .carta-globo { background: #F5DB78; color: #06325A; }
+@keyframes cartaGlobo { from { opacity: 0; transform: scale(.6) translateX(10px); } to { opacity: 1; transform: none; } }
+.carta-sello { position: absolute; right: 16px; top: 14px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #E46A5F 0%, #C8463F 45%, #9E2F2A 100%); box-shadow: 0 3px 0 #7E2420, 0 8px 14px rgba(0,8,43,.25), inset 0 0 0 4px rgba(255,255,255,.12); display: grid; place-items: center; transform: rotate(-14deg); z-index: 3; }
+.carta-pendientes { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.carta-dia { width: 50px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.carta-dia img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(2,37,79,.18)); }
+.carta-dia b { font: 700 13px/16px 'Neue Montreal', Mulish, sans-serif; color: #06325A; font-variant-numeric: tabular-nums; }
+:root[data-theme="dark"] .carta-dia b { color: #FFF6DD; }
+.carta-mas { justify-content: flex-start; }
+.carta-mas b { width: 46px; height: 46px; border-radius: 50%; border: 2px dashed rgba(6,50,90,.35); display: grid; place-items: center; font-size: 15px; box-sizing: border-box; }
+:root[data-theme="dark"] .carta-mas b { border-color: rgba(255,246,221,.45); }
+.carta-vista-t { position: absolute; left: 24px; right: 24px; top: 100px; text-align: center; font: 700 28px/34px 'Neue Montreal', Mulish, sans-serif; color: #00516D; }
+:root[data-theme="dark"] .carta-vista-t { color: #FFF6DD; }
+.carta-vista-marco { position: absolute; left: 50%; top: 152px; transform: translateX(-50%); overflow: hidden; border-radius: 14px; box-shadow: 0 16px 34px rgba(0,8,43,.25); background: #FFFFFF; }
+.carta-vista-botones { position: absolute; left: 20px; right: 20px; top: 718px; display: flex; gap: 12px; }
+.carta-btn { flex: 1; height: 62px; border: 0; border-radius: 20px; background: #FFFFFF; box-shadow: 0 6px 0 #C9D7E8; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 18px 'Neue Montreal', Mulish, sans-serif; color: #06325A; cursor: pointer; transition: transform .1s ease-out, box-shadow .1s ease-out; }
+.carta-btn.prim { background: #F5DB78; box-shadow: 0 6px 0 #E2BE55; }
+.carta-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #C9D7E8; }
+.carta-btn.prim:active { box-shadow: 0 2px 0 #E2BE55; }
+@media (prefers-reduced-motion: reduce) { .carta-lista, .carta-lista img, .carta-globo { animation: none; } }
+
+/* ---------- Firma con el dedo (js/firma.js) · B2.5 «¡Ahora firma tú!» ----------
+   Círculos de 34 px a 12 px, el elegido con anillo papel 3 px + color 3 px; «Borrar» de 40 px.
+   En oscuro: los no elegidos llevan aro blanco al 55 % y «Borrar» va en blanco sobre vidrio al 16 %.
+   .firma-oscuro / .firma-claro fuerzan el tema; sin ellas siguen a :root[data-theme]. */
+.firma-controles { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+.firma-colores { display: flex; gap: 12px; align-items: center; }
+.firma-color { position: relative; flex: none; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: var(--firma-c); box-shadow: 0 2px 6px rgba(0,8,43,.2); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: box-shadow var(--d-fast, 160ms) var(--ease-out), transform var(--d-press, 120ms) var(--ease-out); }
+.firma-color::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; } /* zona de toque de 44 px */
+.firma-color[aria-pressed="true"] { box-shadow: 0 0 0 3px #FFFBEF, 0 0 0 6px var(--firma-c); }
+.firma-color:active { transform: scale(.9); transition-duration: 80ms; }
+.firma-color:focus-visible { outline-offset: 8px; }
+.firma-borrar { flex: none; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: rgba(255,255,255,.85); display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1; color: #00516D; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform var(--d-press, 120ms) var(--ease-out), opacity var(--d-fast, 160ms) var(--ease-out); }
+.firma-borrar svg { flex: none; display: block; }
+.firma-borrar:active { transform: scale(.96); transition-duration: 80ms; }
+.firma-borrar:disabled { opacity: .45; cursor: default; transform: none; }
+.firma-oscuro .firma-color:not([aria-pressed="true"]),
+:root[data-theme="dark"] .firma-controles:not(.firma-claro) .firma-color:not([aria-pressed="true"]) { box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
+.firma-oscuro .firma-borrar,
+:root[data-theme="dark"] .firma-controles:not(.firma-claro) .firma-borrar { background: rgba(255,255,255,.16); color: #FFFFFF; }
+@media (prefers-reduced-motion: reduce) {
+  .firma-color, .firma-borrar { transition: box-shadow var(--d-fast, 160ms) ease, opacity var(--d-fast, 160ms) ease; }
+  .firma-color:active, .firma-borrar:active { transform: none; opacity: .8; }
+}
