@@ -1082,6 +1082,7 @@ body.dev-on .p-arrow { width: 34px; height: 34px; border-radius: 10px; font-size
 /* 3 · para consultar: lista tranquila, el valor se copia al tocarlo */
 .dv-grupo { margin: 0 0 16px; }
 .dv-grupo h3 { margin: 0 0 4px; font: 800 13px Mulish, sans-serif; color: var(--ink); }
+.dv-grupo h3 span { margin-left: 4px; font-weight: 700; color: var(--muted); }
 .dv-ref { margin: 0; }
 .dv-ref > div { display: flex; align-items: baseline; gap: 12px; padding: 5px 0; }
 .dv-ref dt { flex: none; width: 104px; font: 600 12.5px Mulish, sans-serif; color: var(--muted); }

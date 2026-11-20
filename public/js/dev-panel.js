@@ -3,7 +3,7 @@
 // lo que la define (asset, animación o texto), sus medidas, todos los estados de su componente, sus colores y lo demás plegado.
 // Cada valor se copia con un clic, como valor o como SwiftUI. Nombres y PNG salen de Drive («01 PARA LA APP», copiado en dev/app/);
 // los estados, de dev/componentes.json; lo que no es de Adviento, de dev/fuera.json y del catálogo.
-import { ponerFuera, ficha, nombreDe, nombreTipo, tipo, assetsDe, lottieInfo, descLottie, swift, pt, token, hijosCapa, padreCapa, cajaPantalla, bajar, traer, png, svgTexto, zip, reiniciarTokens, swiftColor, swiftFuente, swiftSombra, nombreCara, nombreDeclarada, esPieza, piezaDe, piezaPng, giroDe, textoFijo, vaEnCodigo, VP } from './dev-motor.js';
+import { ponerFuera, ficha, nombreDe, nombreTipo, tipo, assetsDe, lottieInfo, descLottie, swift, pt, token, hijosCapa, padreCapa, cajaPantalla, bajar, traer, png, svgTexto, zip, reiniciarTokens, swiftColor, swiftFuente, nombreCara, nombreDeclarada, esPieza, piezaDe, piezaPng, textoFijo, vaEnCodigo, VP, formaSwift, capaSwift, sombraSwift, filtroSwift, decoracion, pseudoSwift, animSwift, swiftPieza, finalesSwift, esFuera } from './dev-motor.js';
 import { elegida, elegir, resaltar, usandoApp, usar, subir, bajarA, tocarElegida, pantallaActual, reconocer } from './dev.js';
 import { manifest, logical, html, S, save, cur } from './core.js';
 import { miniatura as miniaturaLottie } from './teo-anim.js';
@@ -215,7 +215,111 @@ async function bajarCapa(h) {
   if (a) { const p = await pngDe(a.ruta, 3, h); return bajar(p.blob, p.nombre); }
   const sv = h.matches('svg') ? h : h.querySelector('svg'); if (sv) bajar(new Blob([svgTexto(sv)], { type: 'image/svg+xml' }), `${slug(nombreDe(h))}.svg`);
 }
-const swiftCard = (el, arch, sombra, giro) => [`Image("${arch}")`, '    .resizable()', `    .frame(width: ${pt(el.offsetWidth)}, height: ${pt(el.offsetHeight)})`, sombra && swiftSombra(sombra) ? `    ${swiftSombra(sombra)}` : '', giro ? `    .rotationEffect(.degrees(${giro}))` : ''].filter(Boolean).join('\n');
+// ---------- Efectos: cada fila dice lo que se ve y se copia como SwiftUI; lo que SwiftUI no tiene igual va en ámbar ----------
+const n1 = v => +(+v).toFixed(2);
+const pcs = p => `${+(p * 100).toFixed(1)} %`;
+const sinT = (s, F) => String(s).split('§F').join(F.s.includes('\n') ? 'forma' : F.s);
+const HACIA = { 0: 'de abajo arriba', 90: 'de izquierda a derecha', 180: 'de arriba abajo', 270: 'de derecha a izquierda' };
+const TIPO_DEG = { lineal: 'lineal', radial: 'radial', conico: 'cónico' };
+const rutaDeUrl = u => { try { return decodeURIComponent(new URL(u, location.href).pathname.replace(/^\/+/, '')); } catch { return u; } };
+/** Qué degradado es, en una línea: ángulo, forma y centro */
+function descDeg(c) {
+  if (c.tipo === 'lineal') { const a = Math.round(c.angulo); return `${n1(c.angulo)}°${HACIA[a] && Math.abs(c.angulo - a) < .01 ? ` · ${HACIA[a]}` : ''}`; }
+  const cen = `centro ${pcs(c.cx / c.W)} ${pcs(c.cy / c.H)}`;
+  if (c.tipo === 'radial') return `${c.circulo ? `círculo · radio ${n1(c.rx)}` : `elipse ${n1(c.rx)} × ${n1(c.ry)}`} · ${cen}`;
+  return `desde ${n1(c.desde)}° · ${cen}${c.cada ? ` · se repite cada ${n1(c.cada)}°` : ''}`;
+}
+/** Una capa de fondo: qué es (se copia como SwiftUI) y sus paradas, cada una con su posición */
+function filasDeg(c, k, n, w, h, F, nombre = 'Degradado') {
+  if (c.tipo === 'imagen') { const r = rutaDeUrl(c.url); return [ref('Imagen de fondo', `${esc(infoAsset(r).nombre)} · ajuste ${esc(c.size)} · ${esc(c.pos)} · ${esc(c.rep)}`, r)]; }
+  if (!c.st?.length) return [dato('Capa de fondo', `${esc(c.css.slice(0, 80))} <small>sin traducir</small>`, true)];
+  const g = capaSwift(c, w, h), st = c.patron || c.st;
+  return [ref(`${nombre} ${TIPO_DEG[c.tipo]}${n > 1 ? ` ${k + 1}/${n}` : ''}`, `${descDeg(c)}${n > 1 ? ` <small>${k === 0 ? 'la de arriba' : k === n - 1 ? 'la de abajo' : ''}</small>` : ''}`, g.estilo || sinT(g.vista, F)),
+    ...st.map(x => ref(`↳ ${c.tipo === 'conico' ? `${n1(x.p * 360)}°` : pcs(x.p)}`, muestra(x.c), x.c.hex)),
+    c.patron ? dato('', `<small>${c.st.length} paradas en todo el círculo: el código las trae todas</small>`) : '',
+    c.aprox ? dato('Pista de color', 'aproximada con 7 paradas en el código', true) : ''];
+}
+const descSombra = s => !s.x && !s.y && !s.b && s.s > 0 ? `aro de ${n1(s.s)}${s.inset ? ' por dentro' : ' por fuera'} · ${muestra(s.c)}` : `${n1(s.x)} ${n1(s.y)} · blur ${n1(s.b)}${s.s ? ` · spread ${n1(s.s)}` : ''} · ${muestra(s.c)}`;
+const FILTRO = { blur: 'Desenfoque', 'drop-shadow': 'Sombra (filtro)', saturate: 'Saturación', grayscale: 'Escala de grises', brightness: 'Brillo', contrast: 'Contraste', 'hue-rotate': 'Tono', invert: 'Invertir', opacity: 'Opacidad (filtro)', sepia: 'Sepia' };
+const descFiltro = x => x.f === 'drop-shadow' ? `${n1(x.x)} ${n1(x.y)} · blur ${n1(x.b)} <small>es σ: no se divide</small> · ${muestra(x.c)}` : x.f === 'blur' ? `${n1(x.v)} <small>σ (filter: blur)</small>` : /^(saturate|grayscale|opacity|sepia|invert)$/.test(x.f) ? pcs(x.v) : x.f === 'hue-rotate' ? `${n1(x.v)}°` : `×${n1(x.v)} <small>multiplica</small>`;
+const filasFiltros = (fs, titulo = '') => fs.map(x => { const s = filtroSwift(x); return s.mod ? ref(titulo || FILTRO[x.f] || x.f, descFiltro(x), s.mod.replace(/ \/\/.*$/, '')) : dato(titulo || FILTRO[x.f] || x.f, `${descFiltro(x)} <small>${esc(s.nota)}</small>`, true); }).join('');
+const nombreCorto = e => esc(nombreDe(e).slice(0, 28));
+/** Lo de sus contenedores que cambia cómo se ve: opacidad, filtros, giros */
+function filaHeredado(H) {
+  const p = [H.de.length && `se ve al ${Math.round(H.op * 100)} % por ${H.de.map(x => `«${nombreCorto(x.el)}» (${Math.round(x.op * 100)} %)`).join(', ')}`,
+    ...H.filtros.map(x => `«${nombreCorto(x.el)}» la ${x.fs.some(y => y.f === 'blur') ? 'desenfoca' : 'filtra'}: ${esc(x.css)}`),
+    ...H.tr.map(x => `«${nombreCorto(x.el)}» la ${x.t.es3d ? 'voltea en 3D' : [x.t.giro && `gira ${x.t.giro}°`, (x.t.sx !== 1 || x.t.sy !== 1) && `escala ×${x.t.sx}`].filter(Boolean).join(' y ')}`)].filter(Boolean);
+  return p.length ? dato('Heredado', `${p.join(' · ')} <small>va en el contenedor</small>`) : '';
+}
+/** Todas las filas de «Estilo» */
+function filasEstilo(f, E, svgEl, fi) {
+  const w = E.w, h = E.h, F = formaSwift(E.esq, w, h), fo = E.fondo, D = decoracion(E, w, h, { imagen: /^(img|svg|anim)$/.test(f.tipo) }), B = E.bordes, filas = [];
+  if (svgEl) filas.push(fi.iconoColores?.length > 1 ? dato('Ícono', `${fi.iconoColores.map(muestra).join(' · ')} <small>varios colores: van en el SVG</small>`) : ref('Ícono', `${muestra(fi.iconoColor)} <small>el color que pinta su trazo o relleno</small>`, fi.iconoColor?.hex));
+  if (E.vidrio) {
+    const v = E.vidrio;
+    filas.push(ref('Vidrio', `desenfoca lo de atrás · blur ${n1(v.blur)} <small>σ</small>${v.sat !== 1 ? ` · saturación ${pcs(v.sat)}` : ''}${v.otros.length ? ` · ${esc(v.otros.map(x => x.f).join(', '))}` : ''}${fo.base ? ` · encima ${muestra(fo.base)}` : ''}`, sinT('§F\n    .fill(.ultraThinMaterial)', F)),
+      dato('En SwiftUI', `aproximación <small>no hay desenfoque de fondo con radio a elegir: .ultraThinMaterial (Apple no publica su radio) y encima el relleno exacto; .glassEffect() de iOS 26 (Liquid Glass) además refracta y brilla. No medido: ImageRenderer no dibuja lo de atrás</small>`, true));
+  }
+  if (!fo.texto) {
+    if (fo.base) filas.push(ref(fo.capas.length ? 'Fondo debajo' : 'Fondo', muestra(fo.base), fo.base.hex));
+    fo.capas.forEach((c, k) => filas.push(...filasDeg(c, k, fo.capas.length, w, h, F)));
+  }
+  if (B.uni) filas.push(ref('Borde', `${n1(B.uni.w)} · ${muestra(B.uni.c)} · por dentro${B.uni.estilo !== 'solid' ? ` · ${B.uni.estilo}` : ''}`, sinT(`§F\n    .strokeBorder(${swiftColor(B.uni.c)}, lineWidth: ${n1(B.uni.w)})`, F)));
+  else B.lados.forEach(l => filas.push(ref(`Borde ${{ Top: 'arriba', Bottom: 'abajo', Left: 'izquierdo', Right: 'derecho' }[l.lado]}`, `${n1(l.w)} · ${muestra(l.c)}${l.estilo !== 'solid' ? ` · ${l.estilo}` : ''} <small>solo ese lado</small>`, `Rectangle().fill(${swiftColor(l.c)}).frame(${/Top|Bottom/.test(l.lado) ? 'height' : 'width'}: ${n1(l.w)})`)));
+  const C = E.contorno; if (C && C.c?.alfa > 0) filas.push(ref('Contorno', `${n1(C.w)} · ${muestra(C.c)} · ${C.o + C.w <= 0 ? 'por dentro del borde' : 'por fuera'} <small>outline, offset ${n1(C.o)}</small>`, sinT(D.encima.at(-1) || '', F)));
+  E.sombras.forEach((s, k, todas) => { const x = sombraSwift(s, E.esq, w, h, D.opaca, '§F', E.bordes.anchos, E.sombras.filter(y => !y.inset).length > 1); if (x) filas.push(ref(`Sombra${s.inset ? ' interior' : ''}${todas.filter(y => y.inset === s.inset).length > 1 ? ` ${todas.filter(y => y.inset === s.inset).indexOf(s) + 1}` : ''}`, descSombra(s), sinT(x.mod || x.capa, F))); });
+  if (E.sombras.some(s => s.s && !s.inset)) filas.push(dato('Spread', 'SwiftUI no lo tiene: el código agranda la forma de la sombra (mismo resultado)'));
+  filas.push(filasFiltros(E.filtros));
+  if (E.mascara) {
+    const M = E.mascara, c = M.capas[0];
+    if (M.aro) filas.push(dato('Máscara', 'deja solo el aro del padding (mask-composite: exclude)'));
+    else if (M.capas.length === 1 && c?.st?.length) { const g = capaSwift(c, w, h); filas.push(ref('Máscara', `degradado ${TIPO_DEG[c.tipo]} ${descDeg(c)} · ${c.st.map(x => `${pcs(x.p)} ${x.c.alfa >= .999 ? 'se ve' : x.c.alfa <= .001 ? 'no se ve' : `${Math.round(x.c.alfa * 100)} %`}`).join(' → ')}`, g.estilo ? `.mask {\n    Rectangle().fill(${g.estilo})\n}` : sinT(g.vista, F))); }
+    else filas.push(dato('Máscara', `${esc(M.css.slice(0, 90))} <small>sin traducir</small>`, true));
+  }
+  if (E.mezcla) filas.push(ref('Mezcla', esc(E.mezcla), `.blendMode(.${E.mezcla.replace(/-(\w)/g, (_, x) => x.toUpperCase())})`));
+  if (E.recorte) filas.push(dato('Recorte', `${esc(E.recorte)} <small>clip-path sin traducir</small>`, true));
+  if (E.opacidad < 1) filas.push(ref('Opacidad', `${Math.round(E.opacidad * 1000) / 10} %`, `.opacity(${n1(E.opacidad)})`));
+  else if (E.animado.has('opacity')) filas.push(dato('Opacidad', 'animada: ver «Animación»'));
+  if (E.recorta) filas.push(dato('Recorta', `lo de adentro con su forma <small>overflow: hidden → .clipShape(${esc(F.s.includes('\n') ? 'forma' : F.s)})</small>`));
+  filas.push(filaHeredado(E.heredado));
+  return filas.join('');
+}
+// lo que la composición con sus contenedores deja ver de un volteo 3D
+// la vista previa del contenedor con su fondo real (alfa y degradados) y sus esquinas en proporción
+const previaCaja = (el, E) => { const cs = getComputedStyle(el), k = 38.4 / Math.max(E.w, E.h, 1); return `background-color:${cs.backgroundColor};background-image:${cs.backgroundImage};border-radius:${E.esq.map(c => n1(c[0] * k) + 'px').join(' ')} / ${E.esq.map(c => n1(c[1] * k) + 'px').join(' ')}`; };
+const vistaCompuesta = el => { const top = pantallaActual(), cad = []; for (let e = el; e && e !== top; e = e.parentElement) cad.unshift(e); let m = new DOMMatrix(); cad.forEach(e => { const t = getComputedStyle(e).transform; if (t && t !== 'none') m = m.multiply(new DOMMatrix(t)); }); const g = Math.atan2(m.b, m.a) * 180 / Math.PI; return m.m33 < 0 ? 'con sus contenedores queda de espaldas (no se ve)' : `con sus contenedores se ve ${Math.abs(g) < .05 ? 'derecha' : `girada ${n1(g)}°`}`; };
+/** Giro, escala, espejo o volteo 3D de la propia capa */
+function filasTransform(E, el) {
+  const t = E.tr; if (!t) return E.animado.has('transform') ? dato('Movimiento', 'su transform está animado: ver «Animación»') : '';
+  if (t.es3d) return t.eje ? ref('Volteo 3D', `${n1(t.g)}° sobre el eje ${t.eje[1] ? 'Y' : 'X'} <small>no es un giro en el plano · ${vistaCompuesta(el)}</small>`, `.rotation3DEffect(.degrees(${t.g}), axis: (x: ${t.eje[0]}, y: ${t.eje[1]}, z: ${t.eje[2]}))`) : dato('Transformación 3D', `${esc(String(t.m))} <small>sin traducir</small>`, true);
+  return [t.giro ? ref('Giro', `${t.giro}°`, `.rotationEffect(.degrees(${t.giro}))`) : '', t.sx < 0 ? ref('Espejo', 'horizontal <small>scaleX(−1)</small>', '.scaleEffect(x: -1, y: 1)') : '',
+    Math.abs(Math.abs(t.sx) - 1) > 1e-3 || Math.abs(t.sy - 1) > 1e-3 ? ref('Escala', Math.abs(t.sx) === t.sy ? `×${t.sy}` : `×${Math.abs(t.sx)} · ×${t.sy}`, Math.abs(t.sx) === t.sy && t.sx > 0 ? `.scaleEffect(${t.sx})` : `.scaleEffect(x: ${t.sx}, y: ${t.sy})`) : '',
+    t.inclina ? dato('Inclinación', 'skew sin traducir', true) : ''].join('');
+}
+const DIR = { reverse: 'al revés', alternate: 'ida y vuelta', 'alternate-reverse': 'vuelta e ida' };
+const kfTxt = a => a.kf.map(k => `${pcs(k.offset)}: ${a.props.filter(p => k[p] !== undefined).map(p => `${p === 'boxShadow' ? 'box-shadow' : p} ${esc(k[p])}`).join(' · ')}${k.easing && k.easing !== 'linear' ? ` <small>${esc(k.easing)}</small>` : ''}`).join('<br>');
+/** Las animaciones de la capa (y de sus pseudo-elementos): keyframes, tiempo, curva, retraso, vueltas y su keyframeAnimator */
+function grupoAnim(E, F) {
+  const filas = [...E.anim.map(a => [a, '']), ...E.pseudo.flatMap(p => p.anim.map(a => [a, p.p]))].map(([a, p]) => {
+    const s = !p && animSwift(a, E.w, E.h, '§F', F), veces = a.it === Infinity ? 'en bucle' : a.it === 1 ? 'una vez' : `${a.it} veces`;
+    return [ref(`${a.css ? `CSS «${esc(a.nombre)}»` : `JS${a.nombre ? ` «${esc(a.nombre)}»` : ''}`}${p ? ` en ${p}` : ''}`, `${n1(a.dur / 1000)} s · ${veces}${a.dir !== 'normal' ? ` · ${DIR[a.dir] || a.dir}` : ''}${a.delay ? ` · empieza a los ${n1(a.delay / 1000)} s` : ''}${a.easing !== 'linear' ? ` · curva ${esc(a.easing)}` : ''} <small>no es Lottie</small>`, s ? sinT(`${s.codigo}\n\n${s.tipo}`, F) : ''),
+      dato('Keyframes', kfTxt(a)), s ? '' : dato('En SwiftUI', `sin traducir${a.props.length ? `: anima ${esc(a.props.join(', '))}` : ''}`, true)].join('');
+  });
+  return grupo('Animación', filas.join(''));
+}
+/** Los ::before/::after que pintan: su caja, su relleno (o aro), sus sombras; se copian como la capa de SwiftUI */
+function gruposPseudo(E) {
+  return E.pseudo.map((p, i) => {
+    const F = formaSwift(p.esq, p.w, p.h), g = p.fondo.capas.find(c => c.st?.length);
+    const filas = [ref('Tamaño', `${n1(p.w)} × ${n1(p.h)}${p.abs ? ` · en ${n1(p.x)}, ${n1(p.y)} de la caja` : ''}${F.txt ? ` · esquinas ${F.txt}` : ''}`, pseudoSwift(p, i)),
+      p.mascara?.aro && g ? [ref('Aro', `${n1(p.pad[0])} por dentro · degradado ${TIPO_DEG[g.tipo]} ${descDeg(g)}`, `${F.s}\n    .strokeBorder(${capaSwift(g, p.w, p.h).estilo}, lineWidth: ${n1(p.pad[0])})`), ...(g.patron || g.st).map(x => ref(`↳ ${pcs(x.p)}`, muestra(x.c), x.c.hex))].join('')
+        : [p.fondo.base ? ref('Fondo', muestra(p.fondo.base), p.fondo.base.hex) : '', ...p.fondo.capas.flatMap((c, k) => filasDeg(c, k, p.fondo.capas.length, p.w, p.h, F))].join(''),
+      ...p.sombras.map(s => ref(`Sombra${s.inset ? ' interior' : ''}`, descSombra(s), sinT((sombraSwift(s, p.esq, p.w, p.h, false) || {}).capa || '', F))),
+      p.opacidad < 1 ? ref('Opacidad', `${Math.round(p.opacidad * 100)} %`, `.opacity(${n1(p.opacidad)})`) : '', p.texto ? ref('Texto', esc(p.texto), p.texto) : '',
+      p.tr && !p.tr.es3d && p.tr.giro ? ref('Giro', `${p.tr.giro}°`, `.rotationEffect(.degrees(${p.tr.giro}))`) : ''];
+    return grupo(`Capa ${p.p} <span>${p.z !== 'auto' && +p.z < 0 ? 'debajo de lo de adentro' : 'encima del fondo'}</span>`, filas.join(''));
+  }).join('');
+}
 
 // ---------- La capa elegida ----------
 let cadenaEls = [];
@@ -238,14 +342,14 @@ function capaHtml(el) {
   const voz = el.getAttribute('aria-label') || el.getAttribute('alt') || '';
   const tipoTxt = esCard ? 'Card' : lot ? 'Animación' : sf ? (svgEl !== el ? 'Botón con ícono SVG' : 'Ícono SVG') : img ? (img.tipo === 'fondo' ? 'Fondo' : 'Imagen') : raizComp ? 'Componente' : nombreTipo(f.tipo);
   // una card mide lo que mide su caja (recta): la caja que se ve crece si está girada
-  const tw = esCard ? el.offsetWidth : f.w, th = esCard ? el.offsetHeight : f.h, giro = esCard ? giroDe(el) : 0;
+  const tw = esCard ? f.ef.w : f.w, th = esCard ? f.ef.h : f.h, E = f.ef, F = formaSwift(E.esq, E.w, E.h);
   const primera = !img && !lot ? [...el.querySelectorAll('img')].find(x => x.currentSrc && x.getClientRects().length && deAdviento(decodeURIComponent(new URL(x.currentSrc).pathname.replace(/^\/+/, ''))))?.getAttribute('src') : null;
   // 1 · qué se construye (con una sola acción principal; el formato va en gris)
   let obra = '';
   if (esCard) {
     // todo unido en un PNG al tamaño de la card, recta y sin sombra (la sombra y el giro van en SwiftUI); al lado, @2x,
     // la versión tal como se ve (con sombra y giro) y, si la card es una imagen con marco, la imagen sola
-    const arch = archivoPieza(el), efecto = !!f.sombra || !!giro;
+    const arch = archivoPieza(el), efecto = !!f.sombra || !!E.tr;
     obra = `<button class="dv-btn main dv-wide" data-card="3">${ico(I.bajar)}Descargar card</button>
       <p class="dv-pie">${esc(arch)}@3x.png · <button class="dv-link" data-card="2">@2x</button>${efecto ? ' · <button class="dv-link" data-card="3" data-vista>tal como se ve</button>' : ''}${img ? ` · <button class="dv-link" data-png="${esc(img.ruta)}" data-k="3">solo la imagen</button>` : ''}</p>`;
   } else if (lot) {
@@ -275,16 +379,16 @@ function capaHtml(el) {
   const antes = her.filter(enColumna).filter(([, c]) => c.y + c.h <= f.y + .5).sort((a, b) => b[1].y + b[1].h - a[1].y - a[1].h)[0];
   const despues = her.filter(enColumna).filter(([, c]) => c.y >= f.y + f.h - .5).sort((a, b) => a[1].y - b[1].y)[0];
   const conTexto = x => [...x.childNodes].some(n => n.nodeType === 3 && n.nodeValue.trim());
-  const tEl = conTexto(el) ? el : [...el.querySelectorAll('*')].find(x => conTexto(x) && x.getClientRects().length);
+  const tEl = conTexto(el) ? el : [...el.querySelectorAll('*')].find(x => conTexto(x) && x.getClientRects().length && !esFuera(x));
   const ft = tEl ? (tEl === el ? f : ficha(tEl)) : null;
-  const fu = ft?.fuente, colores = [...new Map([f.relleno, ...(f.fondo?.colores || []), f.borde?.color].filter(Boolean).map(c => [c.hex + c.alfa, c])).values()];
+  const fu = ft?.fuente;
   esperaFuentes = [...(fu?.espera || []), ...(f.fuente?.espera || [])];
   const medidas = [
     ref('Tamaño', `${pt(tw)} × ${pt(th)}`),
-    giro ? ref('Giro', `${giro}°`, `.rotationEffect(.degrees(${giro}))`) : '',
+    filasTransform(E, el),
     pc ? ref('Al contenedor', `↑ ${pt(f.y - pc.y)}  → ${pt(pc.x + pc.w - f.x - f.w)}  ↓ ${pt(pc.y + pc.h - f.y - f.h)}  ← ${pt(f.x - pc.x)}`, `top ${pt(f.y - pc.y)}, trailing ${pt(pc.x + pc.w - f.x - f.w)}, bottom ${pt(pc.y + pc.h - f.y - f.h)}, leading ${pt(f.x - pc.x)}`) : '',
     antes || despues ? ref('Separación', [antes && `${pt(f.y - antes[1].y - antes[1].h)} arriba`, despues && `${pt(despues[1].y - f.y - f.h)} abajo`].filter(Boolean).join(' · '), String(pt(antes ? f.y - antes[1].y - antes[1].h : despues[1].y - f.y - f.h))) : '',
-    f.radio ? ref('Esquinas', f.radio) : '',
+    f.radio ? ref('Esquinas', `${esc(f.radio)} <small>arco circular, como en CSS: .circular (no .continuous)</small>`, F.s) : '',
   ].join('');
   const texto = fu && ft.texto ? [
     ref('Contenido', esc(ft.texto.length > 80 ? ft.texto.slice(0, 80) + '…' : ft.texto), ft.texto),
@@ -292,20 +396,19 @@ function capaHtml(el) {
     ref('Línea', `${fu.alto ? pt(fu.alto) : 'normal'}${fu.tracking ? ` · letras ${pt(fu.tracking)}` : ''}`, fu.alto ? String(+(fu.alto - fu.tam).toFixed(1)) : ''),
     ref('Dynamic Type', `.${estiloDT(fu)} <small>sugerencia: el más cercano a ${pt(fu.tam)} pt</small>`, `.${estiloDT(fu)}`),
     fu.alto && ft.tipo === 'texto' ? ref('Líneas', `${Math.max(1, Math.round(ft.h / fu.alto))} · ${{ left: 'izquierda', start: 'izquierda', center: 'centro', right: 'derecha', end: 'derecha' }[fu.alin] || fu.alin}`, String(Math.max(1, Math.round(f.h / fu.alto)))) : '',
-    ref('Color', muestra(fu.color), fu.color?.hex),
+    ...(ft.ef.fondo.texto ? ft.ef.fondo.capas.flatMap((c, k, a) => filasDeg(c, k, a.length, ft.ef.w, ft.ef.h, formaSwift(ft.ef.esq, ft.ef.w, ft.ef.h), 'Color: degradado')) : [ref('Color', muestra(fu.color), fu.color?.hex)]),
+    ...ft.ef.sombraTexto.map(s => ref('Sombra del texto', descSombra(s), `.shadow(color: ${swiftColor(s.c)}, radius: ${n1(s.b / 2)}, x: ${n1(s.x)}, y: ${n1(s.y)})`)),
   ].join('') : '';
-  const estilo = [
-    svgEl ? ref('Ícono', muestra(fi.iconoColor), fi.iconoColor?.hex) : '',
-    ...colores.map((c, k) => ref(k ? '' : f.fondo ? 'Degradado' : 'Fondo', muestra(c), c.hex)),
-    f.borde ? ref('Borde', `${pt(f.borde.ancho)} · ${muestra(f.borde.color)}`, `${f.borde.ancho} ${f.borde.color?.hex}`) : '',
-    f.sombra ? ref('Sombra', 'Copiar para SwiftUI', swiftSombra(f.sombra) || f.sombra) : '',
-    f.opacidad ? ref('Opacidad', f.opacidad, String(parseFloat(f.opacidad) / 100)) : '',
-  ].join('');
-  const codigo = esCard ? swiftCard(el, archivoPieza(el), f.sombra, giro) : sf ? `// sugerencia: en el MVP es un SVG; el SF Symbol y su peso (por el grosor del trazo) son estimados\nImage(systemName: "${sf}")\n    .font(.system(size: ${pt(fi.h)}, weight: .${pesoSF(svgEl)}))\n    .foregroundStyle(${swiftColor(fi.iconoColor)})${svgEl !== el ? `\n    .frame(width: ${pt(f.w)}, height: ${pt(f.h)})` : ''}` : swift(f, i?.nombre || slug(f.nombre));
+  const estilo = filasEstilo(f, E, svgEl, fi);
+  // el ícono (SF Symbol sugerido o el SVG), con sus filtros, opacidad y giro; un botón que solo lleva el ícono es su caja con el ícono encima
+  const extra = svgEl ? finalesSwift(fi.ef) : null, conExtra = s => s + extra.L.map(x => '\n    ' + x.replace(/\n/g, '\n    ')).join('') + (extra.notas.length ? '\n' + extra.notas.join('\n') : '');
+  const icono = !svgEl ? '' : sf ? conExtra(`Image(systemName: "${sf}")\n    .font(.system(size: ${pt(fi.h)}, weight: .${pesoSF(svgEl)}))\n    .foregroundStyle(${swiftColor(fi.iconoColor)})`) : conExtra(`Image("${slug(nombreDe(svgEl))}")\n    .renderingMode(.template)\n    .foregroundStyle(${swiftColor(fi.iconoColor)})\n    .frame(width: ${pt(fi.w)}, height: ${pt(fi.h)})`);
+  const tipos = extra?.tipos.length ? '\n\n' + extra.tipos.join('\n') : '', nota = sf ? '// sugerencia: en el MVP es un SVG; el SF Symbol y su peso (por el grosor del trazo) son estimados\n' : '';
+  const codigo = esCard ? swiftPieza(f, archivoPieza(el)) : svgEl && svgEl !== el ? nota + swift(f, i?.nombre || slug(f.nombre), ft, icono) + tipos : sf ? nota + icono + tipos : swift(f, i?.nombre || slug(f.nombre), ft);
   // dentro de una card: la card entera a un toque (para volver a ella o bajarla toda)
   const deCard = pz && !esCard ? `<section class="dv-grupo"><h3>Card</h3><div class="dv-crow dv-crow-card"><button class="dv-crow-b" data-ir="pieza"><span class="dv-cmini" data-card-prev>${artePrincipal(pz) ? miniatura(artePrincipal(pz).ruta) : ''}</span><span>${esc(nombrePieza(pz))}<small>${pt(pz.offsetWidth)} × ${pt(pz.offsetHeight)} pt</small></span></button><button class="dv-crow-dl" data-card="3" aria-label="Descargar card" title="Descargar card">${ico(I.bajar)}</button></div></section>` : '';
   return `<nav class="dv-crumbs" aria-label="Ruta"><button class="dv-link" data-ir="pantalla">${esc(pantallaNombre)}</button>${cadena.map((c, k) => `<span aria-hidden="true">›</span><button class="dv-link" data-ir="c${k}">${esc(nombreCapa(c).slice(0, k === cadena.length - 1 ? 40 : 18))}</button>`).join('')}</nav>
-  <div class="dv-hero">${!lot ? `<div class="dv-prev" ${esCard ? 'data-card-prev' : ''}>${img ? miniatura(img.ruta) : primera ? miniatura(primera) : svgEl ? `<span class="dv-svgprev">${svgTexto(svgEl)}</span>` : fu ? `<span class="dv-aa" title="${esc(nombreCara(fu))}" style="font-family:${esc(fu.css)};font-weight:${fu.declarada.peso};font-style:${fu.declarada.estilo};font-synthesis:${esc(getComputedStyle(tEl).fontSynthesis || 'weight style')};color:${fu.color?.hex}">Aa</span>` : `<span class="dv-caja" style="background:${f.relleno?.hex || 'transparent'};border-radius:${Math.min(parseFloat(String(f.radio)) || 0, 16)}px"></span>`}</div>` : ''}
+  <div class="dv-hero">${!lot ? `<div class="dv-prev" ${esCard ? 'data-card-prev' : ''}>${img ? miniatura(img.ruta) : primera ? miniatura(primera) : svgEl ? `<span class="dv-svgprev">${svgTexto(svgEl)}</span>` : fu ? `<span class="dv-aa" title="${esc(nombreCara(fu))}" style="font-family:${esc(fu.css)};font-weight:${fu.declarada.peso};font-style:${fu.declarada.estilo};font-synthesis:${esc(getComputedStyle(tEl).fontSynthesis || 'weight style')};color:${fu.color?.hex}">Aa</span>` : `<span class="dv-caja" style="${esc(previaCaja(el, E))}"></span>`}</div>` : ''}
     <div class="dv-ident"><h2>${esc(titulo)}</h2><p>${tipoTxt} · ${pt(tw)} × ${pt(th)} pt${oscuro() ? ' · noche' : ''}</p></div></div>
   ${obra ? `<div class="dv-obra">${obra}</div>` : ''}
   ${esCard ? capasCardHtml(el) : deCard}
@@ -313,6 +416,8 @@ function capaHtml(el) {
   ${grupo('Medidas', medidas)}
   ${grupo('Texto', texto)}
   ${grupo('Estilo', estilo)}
+  ${E.anim.length || E.pseudo.some(p => p.anim.length) ? grupoAnim(E, F) : ''}
+  ${gruposPseudo(E)}
   ${voz && voz !== titulo ? grupo('VoiceOver', ref('Etiqueta', esc(voz), voz)) : ''}
   <details class="dv-mas"><summary>Código SwiftUI</summary><pre class="dv-code">${esc(codigo)}</pre><button class="dv-link" data-copia-code>Copiar código</button></details>`;
 }
@@ -405,10 +510,12 @@ async function conBoton(b, fn) {
 
 /** PNG @k: el de Drive si existe (la calidad de la entrega), si no, sale del archivo del MVP a su tamaño en pt */
 async function pngDe(r, k, el) {
-  const i = infoAsset(r), d = drive(i, k);
+  const i = infoAsset(r), hor = el && ficha(el).ef?.horneado, d = !hor && drive(i, k); // con un filtro que SwiftUI no tiene, sale del MVP con el filtro aplicado
   if (d) { try { return { blob: await traer(d), nombre: `${i.nombre}@${k}x.png` }; } catch { /* sigue con el del MVP */ } }
-  const f = el && ficha(el), [w, h] = i.pt || (f ? [f.w, f.h] : [0, 0]);
-  const out = await png(r, w, h, k); return { blob: out.blob, nombre: `${i.nombre}@${k}x.png`, corto: out.corto, w: out.w };
+  // el ancho al que se dibuja (con object-fit cover es más ancho que la caja); el alto sale de la proporción del original
+  const f = el && ficha(el), im = f?.ef?.img, [nw, nh] = im?.nat || [], esc2 = im && nw ? { cover: Math.max(f.ef.w / nw, f.ef.h / nh), contain: Math.min(f.ef.w / nw, f.ef.h / nh) }[im.fit] : 0;
+  const w = i.pt?.[0] || (esc2 ? nw * esc2 : f?.w) || 0;
+  const out = await png(r, w, 0, k, hor || ''); return { blob: out.blob, nombre: `${i.nombre}@${k}x.png`, corto: out.corto, w: out.w };
 }
 // la otra versión de una imagen (de día o de noche), por su nombre: -claro/-oscuro o -dia/-noche
 const TEMAS = [['-claro', '-oscuro'], ['-dia', '-noche']];
