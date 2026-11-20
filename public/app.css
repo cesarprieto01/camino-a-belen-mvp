@@ -1089,6 +1089,11 @@ body.dev-on .p-arrow { width: 34px; height: 34px; border-radius: 10px; font-size
 .dv-cp { padding: 0; border: 0; background: none; color: var(--ink); font: 600 13px/1.45 ui-monospace, 'SF Mono', Menlo, monospace; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; cursor: copy; }
 .dv-cp:hover { color: #0A66D6; text-decoration: underline; text-underline-offset: 3px; }
 .dv-cp small { font: 700 10.5px Mulish, sans-serif; color: var(--muted); }
+/* un dato que no se copia (falta o es un aviso); lo declarado que no es lo que se ve, en ámbar */
+.dv-nd { display: block; color: var(--ink); font: 600 13px/1.45 ui-monospace, 'SF Mono', Menlo, monospace; overflow-wrap: anywhere; }
+.dv-nd small { font: 700 10.5px Mulish, sans-serif; color: var(--muted); }
+.dv-ref .dv-difiere dt, .dv-ref .dv-difiere .dv-nd, .dv-ref .dv-difiere .dv-nd small { color: #A35200; }
+:root[data-theme="dark"] .dv-ref .dv-difiere dt, :root[data-theme="dark"] .dv-ref .dv-difiere .dv-nd, :root[data-theme="dark"] .dv-ref .dv-difiere .dv-nd small { color: #FFB65C; }
 .dv-sw { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border-radius: 4px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
 /* la pantalla: lista de componentes (la lista de trabajo) */
 .dv-comps { margin: 0; padding: 0; list-style: none; }

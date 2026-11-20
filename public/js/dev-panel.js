@@ -3,7 +3,7 @@
 // lo que la define (asset, animación o texto), sus medidas, todos los estados de su componente, sus colores y lo demás plegado.
 // Cada valor se copia con un clic, como valor o como SwiftUI. Nombres y PNG salen de Drive («01 PARA LA APP», copiado en dev/app/);
 // los estados, de dev/componentes.json; lo que no es de Adviento, de dev/fuera.json y del catálogo.
-import { ponerFuera, ficha, nombreDe, nombreTipo, tipo, assetsDe, lottieInfo, descLottie, swift, pt, token, hijosCapa, padreCapa, cajaPantalla, bajar, traer, png, svgTexto, zip, reiniciarTokens, swiftColor, swiftFuente, swiftSombra, postscript, esPieza, piezaDe, piezaPng, giroDe, textoFijo, vaEnCodigo, VP } from './dev-motor.js';
+import { ponerFuera, ficha, nombreDe, nombreTipo, tipo, assetsDe, lottieInfo, descLottie, swift, pt, token, hijosCapa, padreCapa, cajaPantalla, bajar, traer, png, svgTexto, zip, reiniciarTokens, swiftColor, swiftFuente, swiftSombra, nombreCara, nombreDeclarada, esPieza, piezaDe, piezaPng, giroDe, textoFijo, vaEnCodigo, VP } from './dev-motor.js';
 import { elegida, elegir, resaltar, usandoApp, usar, subir, bajarA, tocarElegida, pantallaActual, reconocer } from './dev.js';
 import { manifest, logical, html, S, save, cur } from './core.js';
 import { miniatura as miniaturaLottie } from './teo-anim.js';
@@ -87,16 +87,34 @@ function cuandoSale(nombre) {
     ${ls.slice(1).map(l => `<details class="dv-mas"><summary>${esc(l.titulo)}</summary>${flujo(l)}</details>`).join('')}</section>`;
 }
 
-// íconos de interfaz: en iOS se hacen con SF Symbols, no con un asset
-const SF = [[/cerrar|salir/i, 'xmark'], [/silenciad/i, 'speaker.slash.fill'], [/m[uú]sica|activad/i, 'speaker.wave.2.fill'], [/escuchar/i, 'speaker.wave.2'], [/volver|atr[aá]s/i, 'chevron.left'], [/siguiente/i, 'chevron.right'], [/compartir/i, 'square.and.arrow.up'], [/favorit|me gusta/i, 'heart'], [/reproducir/i, 'play.fill'], [/pausa/i, 'pause.fill'], [/enlace/i, 'link'], [/ajustes|configur/i, 'gearshape']];
+// íconos de interfaz: en el MVP son SVG; en iOS se harían con SF Symbols. El símbolo (por el nombre del botón) y su peso
+// (por el grosor del trazo) son una sugerencia, no un dato medido: el panel lo dice así
+const SF =[[/cerrar|salir/i, 'xmark'], [/silenciad/i, 'speaker.slash.fill'], [/m[uú]sica|activad/i, 'speaker.wave.2.fill'], [/escuchar/i, 'speaker.wave.2'], [/volver|atr[aá]s/i, 'chevron.left'], [/siguiente/i, 'chevron.right'], [/compartir/i, 'square.and.arrow.up'], [/favorit|me gusta/i, 'heart'], [/reproducir/i, 'play.fill'], [/pausa/i, 'pause.fill'], [/enlace/i, 'link'], [/ajustes|configur/i, 'gearshape']];
 export const sfSymbol = el => { const n = nombreDe(el); return SF.find(([re]) => re.test(n))?.[1] || ''; };
 const pesoSF = el => { const w = parseFloat(el.getAttribute('stroke-width') || el.querySelector('[stroke-width]')?.getAttribute('stroke-width') || 0); return w >= 2.4 ? 'semibold' : w >= 2 ? 'medium' : 'regular'; };
-// estilo de Dynamic Type más cercano (tamaño de iOS por defecto)
+// sugerencia: el estilo de Dynamic Type más cercano por tamaño (tamaños de iOS por defecto) y el peso que se ve
 const ESTILOS = [['largeTitle', 34], ['title', 28], ['title2', 22], ['title3', 20], ['body', 17], ['callout', 16], ['subheadline', 15], ['footnote', 13], ['caption', 12], ['caption2', 11]];
 const estiloDT = fu => { const [n] = ESTILOS.reduce((a, b) => Math.abs(b[1] - fu.tam) < Math.abs(a[1] - fu.tam) ? b : a); return n === 'body' && +fu.peso >= 600 ? 'headline' : n; };
 
 // una fila de consulta: etiqueta tranquila y valor que se copia al tocarlo
 const ref = (k, texto, copia = texto) => texto === '' || texto == null ? '' : `<div><dt>${k}</dt><dd><button class="dv-cp" data-copia="${esc(copia)}" aria-label="Copiar ${esc(k)}: ${esc(copia)}">${texto}</button></dd></div>`;
+// una fila que informa pero no se copia (un dato que falta o un aviso); «aviso»: lo declarado no es lo que se ve
+const dato = (k, html, aviso = false) => `<div${aviso ? ' class="dv-difiere"' : ''}><dt>${k}</dt><dd><span class="dv-nd">${html}</span></dd></div>`;
+// las caras que aún cargan: al terminar, el panel se repinta con la que de verdad se ve
+let esperaFuentes = [];
+/** Las filas de la fuente: lo que SE VE (cara, PostScript verificado) y, si no coincide, lo declarado y por qué */
+function filasFuente(fu) {
+  const cargando = fu.espera.length ? ` <small>por ahora: ${esc([...new Set(fu.espera.map(c => c.family))].join(', '))} aún no está lista</small>` : '';
+  const local = fu.tipo === 'local' ? ' <small>instalada en este equipo, no la de la web · cara sin verificar</small>' : fu.tipo === 'sistema' || fu.tipo === 'generica' ? ' <small>el nombre exacto no se puede comprobar desde el navegador · cara sin verificar</small>' : '';
+  return [
+    ref(fu.difiere ? 'Se ve' : 'Fuente', `${esc(nombreCara(fu))} · ${pt(fu.tam)}${cargando}${local}`, swiftFuente(fu)),
+    fu.ps ? ref('PostScript', esc(fu.ps[0]), fu.ps[0])
+      : fu.tipo === 'web' || fu.tipo === 'local' ? dato('PostScript', 'sin verificar <small>no está en la tabla de nombres leídos de los archivos</small>') : '',
+    fu.ps?.[2] ? ref('En la variable', esc(fu.ps[2]), fu.ps[2]) : '', // con el archivo variable de Google, la instancia se llama así
+    fu.difiere ? dato('Declarada', `${esc(nombreDeclarada(fu.declarada))} <small>${esc(fu.motivo)}</small>`, true) : '',
+    fu.otras.length ? dato('Otros caracteres', `de ${esc(fu.otras.join(', '))}`) : '',
+  ].join('');
+}
 const muestra = c => c ? `<i class="dv-sw" style="background:${c.hex};opacity:${Math.max(c.alfa, .2)}"></i>${c.hex}${c.alfa < 1 ? ` · ${Math.round(c.alfa * 100)} %` : ''}${token(c.hex) ? ` <small>${token(c.hex)}</small>` : ''}` : '';
 const grupo = (titulo, filas) => filas ? `<section class="dv-grupo"><h3>${titulo}</h3><dl class="dv-ref">${filas}</dl></section>` : '';
 
@@ -218,7 +236,7 @@ function capaHtml(el) {
   const raizComp = m && m.d === 0;
   const titulo = esCard ? nombrePieza(el) : raizComp ? m.c.nombre : f.nombre === nombreTipo(f.tipo) && i ? i.nombre : f.nombre; // una imagen sin nombre se llama como en Drive
   const voz = el.getAttribute('aria-label') || el.getAttribute('alt') || '';
-  const tipoTxt = esCard ? 'Card' : lot ? 'Animación' : sf ? (svgEl !== el ? 'Botón con ícono del sistema' : 'Ícono del sistema') : img ? (img.tipo === 'fondo' ? 'Fondo' : 'Imagen') : raizComp ? 'Componente' : nombreTipo(f.tipo);
+  const tipoTxt = esCard ? 'Card' : lot ? 'Animación' : sf ? (svgEl !== el ? 'Botón con ícono SVG' : 'Ícono SVG') : img ? (img.tipo === 'fondo' ? 'Fondo' : 'Imagen') : raizComp ? 'Componente' : nombreTipo(f.tipo);
   // una card mide lo que mide su caja (recta): la caja que se ve crece si está girada
   const tw = esCard ? el.offsetWidth : f.w, th = esCard ? el.offsetHeight : f.h, giro = esCard ? giroDe(el) : 0;
   const primera = !img && !lot ? [...el.querySelectorAll('img')].find(x => x.currentSrc && x.getClientRects().length && deAdviento(decodeURIComponent(new URL(x.currentSrc).pathname.replace(/^\/+/, ''))))?.getAttribute('src') : null;
@@ -243,7 +261,7 @@ function capaHtml(el) {
     // un solo archivo: el PNG @3x; @2x y la versión de noche, al lado
     obra = `<button class="dv-btn main dv-wide" data-png="${esc(img.ruta)}" data-k="3">${ico(I.bajar)}Descargar imagen</button><p class="dv-pie">${esc(i.nombre)}@3x.png${corto} · <button class="dv-link" data-png="${esc(img.ruta)}" data-k="2">@2x</button></p>${par ? diaNoche(par, img.ruta) : `<div data-par="${esc(img.ruta)}"></div>`}`;
   } else if (sf) {
-    obra = `<button class="dv-btn main dv-wide" data-copia="${sf}">${ico(I.copiar)}Copiar «${sf}»</button><p class="dv-pie">SF Symbol · ${pt(fi.h)} pt · ${pesoSF(svgEl)}</p>`;
+    obra = `<button class="dv-btn main dv-wide" data-copia="${sf}">${ico(I.copiar)}Copiar «${sf}»</button><p class="dv-pie">Sugerencia: en el MVP es un SVG; en iOS, este SF Symbol a ${pt(fi.h)} pt · peso estimado por el trazo: ${pesoSF(svgEl)} · <button class="dv-link" data-dl="svg">descargar el SVG</button></p>`;
   } else if (svgEl) {
     obra = `<button class="dv-btn main dv-wide" data-dl="svg">${ico(I.bajar)}Descargar ícono</button><p class="dv-pie">SVG vectorial · ${pt(f.w)} × ${pt(f.h)} pt</p>`;
   } else {
@@ -260,6 +278,7 @@ function capaHtml(el) {
   const tEl = conTexto(el) ? el : [...el.querySelectorAll('*')].find(x => conTexto(x) && x.getClientRects().length);
   const ft = tEl ? (tEl === el ? f : ficha(tEl)) : null;
   const fu = ft?.fuente, colores = [...new Map([f.relleno, ...(f.fondo?.colores || []), f.borde?.color].filter(Boolean).map(c => [c.hex + c.alfa, c])).values()];
+  esperaFuentes = [...(fu?.espera || []), ...(f.fuente?.espera || [])];
   const medidas = [
     ref('Tamaño', `${pt(tw)} × ${pt(th)}`),
     giro ? ref('Giro', `${giro}°`, `.rotationEffect(.degrees(${giro}))`) : '',
@@ -269,9 +288,9 @@ function capaHtml(el) {
   ].join('');
   const texto = fu && ft.texto ? [
     ref('Contenido', esc(ft.texto.length > 80 ? ft.texto.slice(0, 80) + '…' : ft.texto), ft.texto),
-    ref('Fuente', `${postscript(fu.familia, fu.peso)} · ${pt(fu.tam)}`, swiftFuente(fu)),
+    filasFuente(fu),
     ref('Línea', `${fu.alto ? pt(fu.alto) : 'normal'}${fu.tracking ? ` · letras ${pt(fu.tracking)}` : ''}`, fu.alto ? String(+(fu.alto - fu.tam).toFixed(1)) : ''),
-    ref('Dynamic Type', `.${estiloDT(fu)}`, `.${estiloDT(fu)}`),
+    ref('Dynamic Type', `.${estiloDT(fu)} <small>sugerencia: el más cercano a ${pt(fu.tam)} pt</small>`, `.${estiloDT(fu)}`),
     fu.alto && ft.tipo === 'texto' ? ref('Líneas', `${Math.max(1, Math.round(ft.h / fu.alto))} · ${{ left: 'izquierda', start: 'izquierda', center: 'centro', right: 'derecha', end: 'derecha' }[fu.alin] || fu.alin}`, String(Math.max(1, Math.round(f.h / fu.alto)))) : '',
     ref('Color', muestra(fu.color), fu.color?.hex),
   ].join('') : '';
@@ -282,11 +301,11 @@ function capaHtml(el) {
     f.sombra ? ref('Sombra', 'Copiar para SwiftUI', swiftSombra(f.sombra) || f.sombra) : '',
     f.opacidad ? ref('Opacidad', f.opacidad, String(parseFloat(f.opacidad) / 100)) : '',
   ].join('');
-  const codigo = esCard ? swiftCard(el, archivoPieza(el), f.sombra, giro) : sf ? `Image(systemName: "${sf}")\n    .font(.system(size: ${pt(fi.h)}, weight: .${pesoSF(svgEl)}))\n    .foregroundStyle(${swiftColor(fi.iconoColor)})${svgEl !== el ? `\n    .frame(width: ${pt(f.w)}, height: ${pt(f.h)})` : ''}` : swift(f, i?.nombre || slug(f.nombre));
+  const codigo = esCard ? swiftCard(el, archivoPieza(el), f.sombra, giro) : sf ? `// sugerencia: en el MVP es un SVG; el SF Symbol y su peso (por el grosor del trazo) son estimados\nImage(systemName: "${sf}")\n    .font(.system(size: ${pt(fi.h)}, weight: .${pesoSF(svgEl)}))\n    .foregroundStyle(${swiftColor(fi.iconoColor)})${svgEl !== el ? `\n    .frame(width: ${pt(f.w)}, height: ${pt(f.h)})` : ''}` : swift(f, i?.nombre || slug(f.nombre));
   // dentro de una card: la card entera a un toque (para volver a ella o bajarla toda)
   const deCard = pz && !esCard ? `<section class="dv-grupo"><h3>Card</h3><div class="dv-crow dv-crow-card"><button class="dv-crow-b" data-ir="pieza"><span class="dv-cmini" data-card-prev>${artePrincipal(pz) ? miniatura(artePrincipal(pz).ruta) : ''}</span><span>${esc(nombrePieza(pz))}<small>${pt(pz.offsetWidth)} × ${pt(pz.offsetHeight)} pt</small></span></button><button class="dv-crow-dl" data-card="3" aria-label="Descargar card" title="Descargar card">${ico(I.bajar)}</button></div></section>` : '';
   return `<nav class="dv-crumbs" aria-label="Ruta"><button class="dv-link" data-ir="pantalla">${esc(pantallaNombre)}</button>${cadena.map((c, k) => `<span aria-hidden="true">›</span><button class="dv-link" data-ir="c${k}">${esc(nombreCapa(c).slice(0, k === cadena.length - 1 ? 40 : 18))}</button>`).join('')}</nav>
-  <div class="dv-hero">${!lot ? `<div class="dv-prev" ${esCard ? 'data-card-prev' : ''}>${img ? miniatura(img.ruta) : primera ? miniatura(primera) : svgEl ? `<span class="dv-svgprev">${svgTexto(svgEl)}</span>` : fu ? `<span class="dv-aa" style="font-family:${esc(fu.familia)};font-weight:${fu.peso};color:${fu.color?.hex}">Aa</span>` : `<span class="dv-caja" style="background:${f.relleno?.hex || 'transparent'};border-radius:${Math.min(parseFloat(String(f.radio)) || 0, 16)}px"></span>`}</div>` : ''}
+  <div class="dv-hero">${!lot ? `<div class="dv-prev" ${esCard ? 'data-card-prev' : ''}>${img ? miniatura(img.ruta) : primera ? miniatura(primera) : svgEl ? `<span class="dv-svgprev">${svgTexto(svgEl)}</span>` : fu ? `<span class="dv-aa" title="${esc(nombreCara(fu))}" style="font-family:${esc(fu.css)};font-weight:${fu.declarada.peso};font-style:${fu.declarada.estilo};font-synthesis:${esc(getComputedStyle(tEl).fontSynthesis || 'weight style')};color:${fu.color?.hex}">Aa</span>` : `<span class="dv-caja" style="background:${f.relleno?.hex || 'transparent'};border-radius:${Math.min(parseFloat(String(f.radio)) || 0, 16)}px"></span>`}</div>` : ''}
     <div class="dv-ident"><h2>${esc(titulo)}</h2><p>${tipoTxt} · ${pt(tw)} × ${pt(th)} pt${oscuro() ? ' · noche' : ''}</p></div></div>
   ${obra ? `<div class="dv-obra">${obra}</div>` : ''}
   ${esCard ? capasCardHtml(el) : deCard}
@@ -331,6 +350,7 @@ function pantallaHtml(info) {
 }
 
 // ---------- Pintar ----------
+let vuelta = 0;
 export async function pintarDev(cont, info) {
   if (!CAT || !COMP || !FUE) cont.innerHTML = '<p class="dv-muted">Cargando…</p>'; // la primera vez baja el catálogo y los estados
   await cargar();
@@ -351,9 +371,12 @@ export async function pintarDev(cont, info) {
   reiniciarTokens();
   minis.forEach(a => a?.destroy()); minis = [];
   pantallaNombre = info.nombre;
-  const el = elegida(), usando = usandoApp();
+  const el = elegida(), usando = usandoApp(), mia = ++vuelta;
+  esperaFuentes = [];
   cont.innerHTML = `${usando ? '<p class="dv-usando">Estás usando la app. Para inspeccionar, pulsa I o el botón de la flecha.</p>' : ''}
     <div class="dv-body" aria-live="polite">${el ? capaHtml(el) : pantallaHtml(info)}</div>`;
+  // si la fuente que se ve es la de reserva porque la de verdad aún carga, al terminar se repinta (si nada cambió entretanto)
+  if (esperaFuentes.length) Promise.race(esperaFuentes.map(c => c.loaded.catch(() => {}))).then(() => { if (mia === vuelta && cont.isConnected && elegida() === el) pintarDev(cont, info); });
   if (!el) mapearCapas(cont);
   cont.querySelectorAll('[data-mini]').forEach(async m => minis.push(await miniaturaLottie(m, m.dataset.mini)));
   cont.querySelectorAll('[data-par]').forEach(async d => { const r = d.dataset.par, par = await parDe(r, el); if (par && d.isConnected) d.outerHTML = diaNoche(par, r); });

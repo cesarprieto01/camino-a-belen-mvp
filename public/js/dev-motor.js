@@ -102,10 +102,135 @@ export function token(hex) {
 // ---------- Valores en SwiftUI (para «Copiar como SwiftUI») ----------
 const n3 = v => +(+v).toFixed(3);
 export const swiftColor = c => !c ? '' : `Color(red: ${n3(parseInt(c.hex.slice(1, 3), 16) / 255)}, green: ${n3(parseInt(c.hex.slice(3, 5), 16) / 255)}, blue: ${n3(parseInt(c.hex.slice(5, 7), 16) / 255)})${c.alfa < 1 ? `.opacity(${n3(c.alfa)})` : ''}`;
-const NOMBRE_PESO = { 100: 'Thin', 200: 'ExtraLight', 300: 'Light', 400: 'Regular', 500: 'Medium', 600: 'SemiBold', 700: 'Bold', 800: 'ExtraBold', 900: 'Black' };
-/** Nombre PostScript de la fuente (Mulish 800 → Mulish-ExtraBold) */
-export const postscript = (familia, peso) => `${familia.replace(/\s+/g, '')}-${NOMBRE_PESO[peso] || 'Regular'}`;
-export const swiftFuente = fu => `.font(.custom("${postscript(fu.familia, fu.peso)}", size: ${n3(fu.tam)}))`;
+/** El nombre PostScript verificado de la cara que se ve; '' si no está en la tabla */
+export const postscript = fu => fu?.ps?.[0] || '';
+const PESO_SWIFT = { 100: 'ultraLight', 200: 'thin', 300: 'light', 400: 'regular', 500: 'medium', 600: 'semibold', 700: 'bold', 800: 'heavy', 900: 'black' };
+const pesoSwift = w => PESO_SWIFT[Math.min(900, Math.max(100, Math.round(w / 100) * 100))];
+/** .font(…) con la cara que se VE: su PostScript verificado; si no lo hay, lo dice en un comentario en vez de inventarlo */
+export function swiftFuente(fu) {
+  const t = n3(fu.tam), nota = [fu.negritaSimulada && 'el navegador simula la negrita', fu.cursivaSimulada && 'el navegador simula la cursiva'].filter(Boolean);
+  let s;
+  if (fu.ps) s = `.font(.custom("${fu.ps[0]}", size: ${t}))`;
+  else if (fu.tipo === 'web' || fu.tipo === 'local') { s = `.font(.custom("${fu.fam}", size: ${t}))`; nota.unshift(`nombre PostScript sin verificar (${fu.fam} ${fu.peso}${fu.estilo !== 'normal' ? ' italic' : ''})`); }
+  else { s = `.font(.system(size: ${t}, weight: .${pesoSwift(fu.peso)}))`; if (fu.tipo !== 'sistema') nota.unshift('en la web se ve una fuente genérica del navegador'); }
+  return s + (nota.length ? ` // ${nota.join('; ')}` : '');
+}
+
+// ---------- Tipografía: la cara que se DIBUJA, no la que declara el CSS ----------
+// Nombres PostScript leídos del name table (nameID 6) de los archivos reales, 19-nov-2026:
+//  · Neue Montreal: los 4 OTF de public/assets que carga fonts.css.
+//  · Mulish, Nunito y Fredoka: los estáticos oficiales de Google Fonts (fonts.google.com/download/list → static/*.ttf, los del zip).
+//    A la web Google les sirve las variables; ahí la instancia nombrada (postScriptNameID de fvar) a veces se llama distinto: 3.er valor.
+// familia|peso|estilo → [PostScript, estilo (nameID 17 o 2), PostScript de la instancia en la variable si cambia]
+const PS = Object.fromEntries(Object.entries({
+  'Neue Montreal|400|normal': ['NeueMontreal-Regular', 'Regular'], 'Neue Montreal|500|normal': ['NeueMontreal-Medium', 'Medium'],
+  'Neue Montreal|700|normal': ['NeueMontreal-Bold', 'Bold'], 'Neue Montreal|500|italic': ['NeueMontreal-MediumItalic', 'Medium Italic'],
+  'Mulish|200|normal': ['Mulish-ExtraLight', 'ExtraLight', 'MulishRoman-ExtraLight'], 'Mulish|300|normal': ['Mulish-Light', 'Light', 'MulishRoman-Light'],
+  'Mulish|400|normal': ['Mulish-Regular', 'Regular', 'MulishRoman-Regular'], 'Mulish|500|normal': ['Mulish-Medium', 'Medium', 'MulishRoman-Medium'],
+  'Mulish|600|normal': ['Mulish-SemiBold', 'SemiBold', 'MulishRoman-SemiBold'], 'Mulish|700|normal': ['Mulish-Bold', 'Bold', 'MulishRoman-Bold'],
+  'Mulish|800|normal': ['Mulish-ExtraBold', 'ExtraBold', 'MulishRoman-ExtraBold'], 'Mulish|900|normal': ['Mulish-Black', 'Black', 'MulishRoman-Black'],
+  'Mulish|200|italic': ['Mulish-ExtraLightItalic', 'ExtraLight Italic', 'MulishItalic-ExtraLight'], 'Mulish|300|italic': ['Mulish-LightItalic', 'Light Italic', 'MulishItalic-Light'],
+  'Mulish|400|italic': ['Mulish-Italic', 'Italic', 'MulishItalic-Regular'], 'Mulish|500|italic': ['Mulish-MediumItalic', 'Medium Italic', 'MulishItalic-Medium'],
+  'Mulish|600|italic': ['Mulish-SemiBoldItalic', 'SemiBold Italic', 'MulishItalic-SemiBold'], 'Mulish|700|italic': ['Mulish-BoldItalic', 'Bold Italic', 'MulishItalic-Bold'],
+  'Mulish|800|italic': ['Mulish-ExtraBoldItalic', 'ExtraBold Italic', 'MulishItalic-ExtraBold'], 'Mulish|900|italic': ['Mulish-BlackItalic', 'Black Italic', 'MulishItalic-Black'],
+  'Nunito|200|normal': ['Nunito-ExtraLight', 'ExtraLight'], 'Nunito|300|normal': ['Nunito-Light', 'Light'], 'Nunito|400|normal': ['Nunito-Regular', 'Regular'],
+  'Nunito|500|normal': ['Nunito-Medium', 'Medium'], 'Nunito|600|normal': ['Nunito-SemiBold', 'SemiBold'], 'Nunito|700|normal': ['Nunito-Bold', 'Bold'],
+  'Nunito|800|normal': ['Nunito-ExtraBold', 'ExtraBold'], 'Nunito|900|normal': ['Nunito-Black', 'Black'],
+  'Nunito|200|italic': ['Nunito-ExtraLightItalic', 'ExtraLight Italic', 'NunitoItalic-ExtraLight'], 'Nunito|300|italic': ['Nunito-LightItalic', 'Light Italic', 'NunitoItalic-Light'],
+  'Nunito|400|italic': ['Nunito-Italic', 'Italic', 'NunitoItalic-Regular'], 'Nunito|500|italic': ['Nunito-MediumItalic', 'Medium Italic', 'NunitoItalic-Medium'],
+  'Nunito|600|italic': ['Nunito-SemiBoldItalic', 'SemiBold Italic', 'NunitoItalic-SemiBold'], 'Nunito|700|italic': ['Nunito-BoldItalic', 'Bold Italic', 'NunitoItalic-Bold'],
+  'Nunito|800|italic': ['Nunito-ExtraBoldItalic', 'ExtraBold Italic', 'NunitoItalic-ExtraBold'], 'Nunito|900|italic': ['Nunito-BlackItalic', 'Black Italic', 'NunitoItalic-Black'],
+  'Fredoka|300|normal': ['Fredoka-Light', 'Light'], 'Fredoka|400|normal': ['Fredoka-Regular', 'Regular'], 'Fredoka|500|normal': ['Fredoka-Medium', 'Medium'],
+  'Fredoka|600|normal': ['Fredoka-SemiBold', 'SemiBold'], 'Fredoka|700|normal': ['Fredoka-Bold', 'Bold'],
+}).map(([k, v]) => [k.toLowerCase(), v]));
+const GENERICA = /^(serif|sans-serif|monospace|cursive|fantasy|math|emoji|fangsong)$/i;
+const SISTEMA = /^(system-ui|-apple-system|BlinkMacSystemFont|ui-sans-serif|ui-serif|ui-monospace|ui-rounded)$/i;
+const sinComillas = s => String(s).trim().replace(/^(["'])(.*)\1$/, '$2').trim();
+/** «"Neue Montreal", Mulish, sans-serif» → ['Neue Montreal', 'Mulish', 'sans-serif'] */
+export const familias = s => (String(s).match(/"[^"]*"|'[^']*'|[^,]+/g) || []).map(sinComillas).filter(Boolean);
+const cssFam = n => GENERICA.test(n) || SISTEMA.test(n) ? n : `"${n.replace(/["\\]/g, '\\$&')}"`;
+const tipoEstilo = s => /^italic/.test(s) ? 'italic' : /^oblique/.test(s) ? 'oblique' : 'normal';
+const pesoNum = v => v === 'normal' ? 400 : v === 'bold' ? 700 : parseFloat(v);
+const ANCHOS = { 'ultra-condensed': 50, 'extra-condensed': 62.5, condensed: 75, 'semi-condensed': 87.5, normal: 100, 'semi-expanded': 112.5, expanded: 125, 'extra-expanded': 150, 'ultra-expanded': 200 };
+const anchoNum = v => ANCHOS[v] ?? parseFloat(v);
+/** «500» → [500, 500]; «100 900» (variable) → [100, 900] */
+const extremos = (s, num) => { const v = String(s).trim().split(/\s+/).map(num); return [v[0], v[1] ?? v[0]]; };
+const rangos = s => String(s || 'U+0-10FFFF').split(',').map(r => { const m = r.trim().replace(/^U\+/i, ''); if (m.includes('?')) return [parseInt(m.replace(/\?/g, '0'), 16), parseInt(m.replace(/\?/g, 'F'), 16)]; const [a, b = a] = m.split('-').map(h => parseInt(h, 16)); return [a, b]; });
+const deRangos = new WeakMap();
+const cubre = (cara, cp) => { let r = deRangos.get(cara); if (!r) deRangos.set(cara, r = rangos(cara.unicodeRange)); return r.some(([a, b]) => cp >= a && cp <= b); };
+// CSS Fonts 4 §5.2: entre las caras de una familia decide el ancho, luego el estilo y luego el peso, cada uno con su orden de búsqueda;
+// lo que queda son los tramos (unicode-range) de una misma cara. Oblicua sin ángulos: va entre cursiva y normal.
+const lejos = (v, [a, b], abajoPrimero) => { if (a <= v && v <= b) return [0, 0]; const x = b < v ? b : a; return abajoPrimero ? (x < v ? [1, -x] : [2, x]) : (x > v ? [1, x] : [2, -x]); };
+const clavePeso = (w, r) => { if (w < 400 || w > 500) return lejos(w, r, w < 400); const [a, b] = r; if (a <= w && w <= b) return [0, 0]; const x = b < w ? b : a; return x > w && x <= 500 ? [1, x] : x < w ? [2, -x] : [3, x]; };
+const ORDEN_ESTILO = { italic: ['italic', 'oblique', 'normal'], oblique: ['oblique', 'italic', 'normal'], normal: ['normal', 'oblique', 'italic'] };
+const menor = (p, q) => { for (let i = 0; i < p.length; i++) if (p[i] !== q[i]) return p[i] < q[i]; return false; };
+const lasMejores = (caras, clave) => { let k = null, out = []; for (const c of caras) { const x = clave(c); if (!k || menor(x, k)) { k = x; out = [c]; } else if (!menor(k, x)) out.push(c); } return out; };
+const caraDe = (caras, w, est, st) => lasMejores(lasMejores(lasMejores(caras, c => lejos(st, extremos(c.stretch, anchoNum), st <= 100)), c => [ORDEN_ESTILO[tipoEstilo(est)].indexOf(tipoEstilo(c.style))]), c => clavePeso(w, extremos(c.weight, pesoNum)));
+// una familia que no es web (instalada, del sistema o con nombre propio del navegador) existe si la medida cambia frente a dos genéricas
+let lienzo = null;
+const PRUEBA = 'mmmmmmmmmmlli1WQ@&gyÁñ';
+const ancho = (fuente, t) => { const x = lienzo ??= document.createElement('canvas').getContext('2d'); x.font = fuente; return x.measureText(t).width; };
+const existe = (n, w, est) => { const p = `${tipoEstilo(est) === 'normal' ? '' : 'italic '}${w} 40px `; return ['monospace', 'serif'].some(g => ancho(`${p}${cssFam(n)}, ${g}`, PRUEBA) !== ancho(p + g, PRUEBA)); };
+const MOTIVO = { loading: 'está cargando', unloaded: 'aún no se pidió', error: 'no se pudo cargar' };
+/** La cara que el navegador dibuja de verdad para el texto propio de un elemento (CSS Fonts 4 §5): recorre la lista de font-family;
+ *  una familia web cuenta si su cara (elegida por ancho, estilo y peso) está cargada y cubre los caracteres; una local o del
+ *  sistema, si existe; una genérica, siempre. Dice si el navegador simula la negrita o la cursiva y por qué no se ve lo declarado. */
+export function fuenteDibujada(el, cs = getComputedStyle(el)) {
+  const lista = familias(cs.fontFamily), w = pesoNum(cs.fontWeight) || 400, est = cs.fontStyle, st = anchoNum(cs.fontStretch) || 100;
+  const propio = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.nodeValue).join('');
+  let txt = propio.trim() ? propio : el.textContent;
+  if (cs.textTransform === 'uppercase') txt = txt.toUpperCase(); else if (cs.textTransform === 'lowercase') txt = txt.toLowerCase();
+  let faltan = [...new Set(txt.replace(/\s/g, ''))].map(c => c.codePointAt(0)); if (!faltan.length) faltan = [97];
+  const web = new Map(); document.fonts.forEach(f => { const k = sinComillas(f.family).toLowerCase(); (web.get(k) || web.set(k, []).get(k)).push(f); });
+  const tramos = [], saltadas = [], espera = [];
+  for (const fam of lista) {
+    if (!faltan.length) break;
+    const caras = web.get(fam.toLowerCase());
+    if (caras) {
+      // con @font-face no cuenta la instalada del mismo nombre: o su cara está cargada o se pasa a la siguiente familia
+      const cara = caraDe(caras, w, est, st), usadas = new Set(), mios = [];
+      let motivo = 'no trae estos caracteres';
+      for (const cp of faltan) {
+        const seg = cara.filter(c => cubre(c, cp)).pop(); if (!seg) continue; // donde dos @font-face se pisan, gana el último
+        if (seg.status === 'loaded') { mios.push(cp); usadas.add(seg); } else { motivo = MOTIVO[seg.status] || motivo; if (seg.status !== 'error' && !espera.includes(seg)) espera.push(seg); }
+      }
+      if (mios.length) { tramos.push({ fam, tipo: 'web', cara: cara[0], caras: [...usadas], n: mios.length }); faltan = faltan.filter(cp => !mios.includes(cp)); }
+      else saltadas.push({ fam, motivo });
+    } else if (GENERICA.test(fam)) { tramos.push({ fam, tipo: 'generica', n: faltan.length }); faltan = []; }
+    else if (existe(fam, w, est)) { tramos.push({ fam, tipo: SISTEMA.test(fam) ? 'sistema' : 'local', n: faltan.length }); faltan = []; }
+    else saltadas.push({ fam, motivo: SISTEMA.test(fam) ? 'este navegador no la reconoce' : 'no está cargada' });
+  }
+  if (faltan.length) tramos.push({ fam: '', tipo: 'respaldo', n: faltan.length });
+  const t = tramos.reduce((a, b) => b.n > a.n ? b : a), decl = { fam: lista[0] || '', peso: w, estilo: tipoEstilo(est) };
+  const r = { fam: t.fam, tipo: t.tipo, familia: { web: t.fam, local: t.fam, sistema: 'Fuente del sistema', generica: 'Genérica del navegador', respaldo: 'Respaldo del navegador' }[t.tipo],
+    peso: w, estilo: decl.estilo, verificada: t.tipo === 'web', caras: t.caras || [], ps: null, negritaSimulada: false, cursivaSimulada: false,
+    declarada: decl, espera, otras: tramos.filter(x => x !== t).map(x => x.fam || 'respaldo del navegador'), css: t.tipo === 'respaldo' ? cs.fontFamily : cssFam(t.fam) };
+  if (t.tipo === 'web') {
+    const [a, b] = extremos(t.cara.weight, pesoNum), ec = tipoEstilo(t.cara.style);
+    r.peso = Math.min(b, Math.max(a, w)); r.estilo = ec; // una variable se dibuja al peso pedido dentro de su rango
+    // como Chrome: negrita simulada si se pide 600 o más y la cara no llega a 600; cursiva simulada si se pide y la cara es normal
+    r.negritaSimulada = w >= 600 && b < 600 && cs.fontSynthesisWeight !== 'none';
+    r.cursivaSimulada = decl.estilo !== 'normal' && ec === 'normal' && cs.fontSynthesisStyle !== 'none';
+    r.ps = PS[`${t.fam}|${r.peso}|${ec}`.toLowerCase()] || null;
+  }
+  // por qué no se ve lo declarado
+  r.difiere = t.fam.toLowerCase() !== decl.fam.toLowerCase() || r.peso !== w || r.estilo !== decl.estilo;
+  const s0 = saltadas.find(x => x.fam === decl.fam);
+  r.motivo = s0 ? s0.motivo : [
+    r.peso !== w && `la familia no trae ${w}: se usa la ${r.peso}${r.negritaSimulada ? ' y el navegador la engrosa' : ''}`,
+    r.estilo !== decl.estilo && (decl.estilo === 'normal' ? 'solo trae cursiva' : r.cursivaSimulada ? 'no trae cursiva: el navegador la inclina' : 'no trae cursiva'),
+  ].filter(Boolean).join(' · ');
+  return r;
+}
+/** «Mulish SemiBold 600», «Neue Montreal Bold 700», «Mulish Italic 400 + negrita simulada», «Fuente del sistema (system-ui) 600» */
+export function nombreCara(fu) {
+  const sim = [fu.negritaSimulada && 'negrita simulada', fu.cursivaSimulada && 'cursiva simulada'].filter(Boolean).join(' y ');
+  if (fu.tipo === 'web') return `${fu.fam} ${fu.ps ? fu.ps[1] : fu.estilo !== 'normal' ? 'Italic' : ''} ${fu.peso}`.replace(/\s+/g, ' ') + (sim ? ` + ${sim}` : '');
+  if (fu.tipo === 'respaldo') return fu.familia;
+  return `${fu.familia}${fu.tipo !== 'local' ? ` (${fu.fam})` : ''} ${fu.peso}${fu.estilo !== 'normal' ? ' Italic' : ''}`;
+}
+/** «Fredoka 600», «Mulish 700 italic» */
+export const nombreDeclarada = d => `${d.fam} ${d.peso}${d.estilo !== 'normal' ? ' ' + d.estilo : ''}`;
 /** «rgba(0, 8, 43, 0.15) 0px 2px 6px 0px» → .shadow(…): el blur de CSS es el doble del radio de SwiftUI */
 export function swiftSombra(s) {
   const m = String(s).match(/(rgba?\([^)]+\))\s+(-?[\d.]+)px\s+(-?[\d.]+)px\s+([\d.]+)px/); if (!m) return '';
@@ -157,7 +282,8 @@ export function ficha(el) {
     borde: bw > 0 ? { ancho: bw, color: color(cs.borderTopColor), estilo: cs.borderTopStyle } : null,
     sombra: cs.boxShadow !== 'none' ? cs.boxShadow : '',
     desenfoque: cs.backdropFilter && cs.backdropFilter !== 'none' ? cs.backdropFilter : '',
-    texto, fuente: texto ? { familia: cs.fontFamily.split(',')[0].replace(/["']/g, '').trim(), peso: cs.fontWeight, tam: parseFloat(cs.fontSize), alto: cs.lineHeight === 'normal' ? null : parseFloat(cs.lineHeight), tracking: cs.letterSpacing === 'normal' ? 0 : parseFloat(cs.letterSpacing), color: color(cs.color), alin: cs.textAlign } : null,
+    // la fuente es la que se dibuja (la caja ya forzó el layout, así que el navegador ya pidió las caras que necesita)
+    texto, fuente: texto ? { ...fuenteDibujada(el, cs), tam: parseFloat(cs.fontSize), alto: cs.lineHeight === 'normal' ? null : parseFloat(cs.lineHeight), tracking: cs.letterSpacing === 'normal' ? 0 : parseFloat(cs.letterSpacing), color: color(cs.color), alin: cs.textAlign } : null,
     iconoColor: t === 'svg' ? color(cs.color) : null,
     assets: assetsDe(el),
   };
@@ -274,14 +400,17 @@ const libreria = () => h2i ??= new Promise((ok, mal) => {
 const hojas = new Map(), datosFuente = new Map();
 const hoja = href => { if (!hojas.has(href)) hojas.set(href, fetch(href).then(r => r.text()).catch(() => '')); return hojas.get(href); };
 const aDatos = url => { if (!datosFuente.has(url)) datosFuente.set(url, fetch(url).then(r => r.blob()).then(b => new Promise(ok => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b); }))); return datosFuente.get(url); };
-async function fuentesDe(el) {
-  const usadas = new Set(); [el, ...el.querySelectorAll('*')].forEach(e => { if (TEXTO(e)) { const cs = getComputedStyle(e); usadas.add(`${cs.fontFamily.split(',')[0].replace(/["']/g, '').trim()}|${cs.fontWeight}|${cs.fontStyle}`); } });
+// una cara se reconoce igual en document.fonts y en el texto de la hoja: familia, peso y estilo de su @font-face y su unicode-range
+const claveCara = (fam, peso, estilo, rango) => [sinComillas(fam).toLowerCase(), extremos(peso, pesoNum).join('-'), tipoEstilo(estilo), rangos(rango).map(r => r.join('-')).join(',')].join('|');
+export async function fuentesDe(el) {
+  // solo las caras que se DIBUJAN y solo los tramos que cubren su texto: si el CSS pide 600 y se ve la 700, va la 700
+  const usadas = new Set(); [el, ...el.querySelectorAll('*')].forEach(e => { if (TEXTO(e)) fuenteDibujada(e).caras.forEach(c => usadas.add(claveCara(c.family, c.weight, c.style, c.unicodeRange))); });
   if (!usadas.size) return '';
   const css = (await Promise.all([...document.querySelectorAll('link[rel=stylesheet]')].map(l => hoja(l.href).then(t => ({ t, base: l.href }))))), out = [];
   for (const { t, base } of css) for (const [regla] of t.matchAll(/@font-face\s*{[^}]*}/g)) {
-    const fam = regla.match(/font-family:\s*["']?([^;"']+)/)?.[1].trim(), peso = regla.match(/font-weight:\s*(\d+)/)?.[1] || '400', estilo = regla.match(/font-style:\s*(\w+)/)?.[1] || 'normal';
-    const rango = regla.match(/unicode-range:\s*([^;]+)/)?.[1], url = regla.match(/url\(["']?([^"')]+)/)?.[1];
-    if (!url || !usadas.has(`${fam}|${peso}|${estilo}`) || (rango && !/U\+0000-00FF/i.test(rango))) continue;
+    const fam = regla.match(/font-family:\s*([^;}]+)/)?.[1] || '', peso = regla.match(/font-weight:\s*([^;}]+)/)?.[1] || '400', estilo = regla.match(/font-style:\s*([^;}]+)/)?.[1] || 'normal';
+    const rango = regla.match(/unicode-range:\s*([^;}]+)/)?.[1], url = regla.match(/url\(["']?([^"')]+)/)?.[1];
+    if (!url || !usadas.has(claveCara(fam, peso.trim(), estilo.trim(), rango))) continue;
     out.push(regla.replace(/src:[^;]+;?/, `src: url(${await aDatos(new URL(url, base).href)});`));
   }
   return out.join('\n');
