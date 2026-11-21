@@ -1447,19 +1447,26 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
   :root[data-theme="dark"] .tbj-ins, :root[data-theme="dark"] .tbj-panel { background: #162E60; }
 }
 
-/* Mundos · cierre (31 dic – 6 ene, flow.js cierreMundo): la tarjeta amarilla de Adviento crece hacia abajo una fila, bajo un
-   filete: el reloj de arena con «Quedan N días» / «¡Último día!» y siete estrellitas, una por día (31 dic a la izquierda,
-   6 ene a la derecha), que se van apagando.
-   La primera fila (título, día y ▶) queda donde estaba; solo existe esos 7 días, el resto del tiempo nada de esto aplica.
-   La tarjeta es amarilla en los dos temas, así que la fila es igual en claro y en oscuro. */
-.mundos-v:not(.mundos-pre) a[aria-label^="Adviento:"] > span.mundos-cierre-tarjeta { height: auto !important; flex-wrap: wrap; align-content: flex-start; padding-top: 8px !important; padding-bottom: 13px !important; }
-.mundos-cierre { flex: 0 0 auto; width: calc(100% - 10px); box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; padding-top: 11px; border-top: 1px solid rgba(6,50,90,.14); }
+/* Mundos · cierre (31 dic – 6 ene, flow.js cierreMundo): bajo la tarjeta amarilla de Adviento asoma una segunda tarjeta,
+   10 px más angosta por lado, como una bandeja que sale de ella (sus 20 px de arriba quedan escondidos tras la amarilla):
+   el reloj de arena con «Quedan N días» / «¡Último día!» y siete estrellitas, una por día (31 dic a la izquierda, 6 ene a
+   la derecha), que se van apagando. Con ella el conjunto sube 18 px y queda centrado entre la isla y la barra de pestañas;
+   la amarilla no cambia por dentro. El reloj de arena queda alineado con la «A» de «Adviento» (padding izquierdo 9 px:
+   el trazo del ícono empieza 4 px adentro). Solo existe esos 7 días: el resto del tiempo nada de esto aplica.
+   Claro: blanca, tinta azul marino y estrellas azul petróleo. Oscuro: el azul de los globos y de «Volver al inicio»
+   (#274E7C), texto blanco y estrellas doradas, como el contador del mapa en oscuro. */
+.mundos-v:not(.mundos-pre) a[aria-label^="Adviento:"].mundos-cierre-con > span { top: 326px !important; }
+.mundos-cierre { position: absolute; left: 54px; right: 54px; top: 370px; height: 66px; box-sizing: border-box; padding: 20px 14px 0 9px; border-radius: 0 0 20px 20px; background: #FFFFFF; box-shadow: 0 8px 20px rgba(4,14,36,.16); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+:root[data-theme="dark"] .mundos-cierre { background: #274E7C; box-shadow: 0 8px 20px rgba(4,14,36,.34); }
 .mundos-cierre-txt { display: flex; align-items: center; gap: 6px; color: #06325A; font: 700 15px/18px 'Neue Montreal', Mulish, sans-serif; letter-spacing: .1px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mundos-cierre-txt svg { flex: none; width: 17px; height: 17px; color: #0B748A; }
-.mundos-cierre-dias { display: flex; align-items: center; gap: 5px; }
-.mundos-cierre-dias i { display: block; width: 11px; height: 11px; color: rgba(6,50,90,.2); }
+.mundos-cierre-dias { display: flex; align-items: center; gap: 4px; }
+.mundos-cierre-dias i { display: block; width: 11px; height: 11px; color: rgba(6,50,90,.18); }
 .mundos-cierre-dias i.queda { color: #0B748A; }
 .mundos-cierre-dias svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+:root[data-theme="dark"] .mundos-cierre-txt { color: #FFFFFF; }
+:root[data-theme="dark"] .mundos-cierre-txt svg, :root[data-theme="dark"] .mundos-cierre-dias i.queda { color: #F5DB78; }
+:root[data-theme="dark"] .mundos-cierre-dias i { color: rgba(255,255,255,.24); }
 
 /* ---------- La carta de Teodoro (carta.js): ícono arriba en el mapa, sello, días por completar y vistas de compartir/imprimir ---------- */
 .carta-icono { position: absolute; z-index: 6; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.94); box-shadow: 0 2px 8px rgba(2,37,79,.16); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .1s ease-out; }
@@ -1497,25 +1504,72 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 @media (prefers-reduced-motion: reduce) { .carta-lista, .carta-lista img, .carta-globo { animation: none; } }
 
 /* ---------- Firma con el dedo (js/firma.js) · B2.5 «¡Ahora firma tú!» ----------
-   Círculos de 34 px a 12 px, el elegido con anillo papel 3 px + color 3 px; «Borrar» de 40 px.
-   En oscuro: los no elegidos llevan aro blanco al 55 % y «Borrar» va en blanco sobre vidrio al 16 %.
+   Una fila de 350 px, al estilo de Notas/Markup. Izquierda, lo que hace el dedo (una sola selección con el anillo
+   del diseño, papel 3 px + color 3 px): 5 colores y la goma, círculos de 32 px a 12 px → centros a 44 px, así cada
+   zona de toque mide 44 px sin pisar a la vecina. Derecha, acciones solo en ícono (44 px): deshacer y borrar todo;
+   el grupo se corre 11 px para que el último ícono quede a ras del borde. Desactivados al 35 %.
    .firma-oscuro / .firma-claro fuerzan el tema; sin ellas siguen a :root[data-theme]. */
 .firma-controles { width: 100%; display: flex; align-items: center; justify-content: space-between; }
-.firma-colores { display: flex; gap: 12px; align-items: center; }
-.firma-color { position: relative; flex: none; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: var(--firma-c); box-shadow: 0 2px 6px rgba(0,8,43,.2); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: box-shadow var(--d-fast, 160ms) var(--ease-out), transform var(--d-press, 120ms) var(--ease-out); }
-.firma-color::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; } /* zona de toque de 44 px */
+.firma-herramientas, .firma-colores { display: flex; align-items: center; gap: 12px; }
+.firma-color, .firma-goma { position: relative; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; box-shadow: 0 2px 6px rgba(0,8,43,.2); transition: box-shadow var(--d-fast, 160ms) var(--ease-out), transform var(--d-press, 120ms) var(--ease-out), opacity var(--d-fast, 160ms) var(--ease-out); }
+.firma-color::after, .firma-goma::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; } /* zona de toque de 44 px */
+.firma-color { background: var(--firma-c); }
 .firma-color[aria-pressed="true"] { box-shadow: 0 0 0 3px #FFFBEF, 0 0 0 6px var(--firma-c); }
-.firma-color:active { transform: scale(.9); transition-duration: 80ms; }
-.firma-color:focus-visible { outline-offset: 8px; }
-.firma-borrar { flex: none; height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: rgba(255,255,255,.85); display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1; color: #00516D; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform var(--d-press, 120ms) var(--ease-out), opacity var(--d-fast, 160ms) var(--ease-out); }
-.firma-borrar svg { flex: none; display: block; }
-.firma-borrar:active { transform: scale(.96); transition-duration: 80ms; }
-.firma-borrar:disabled { opacity: .45; cursor: default; transform: none; }
-.firma-oscuro .firma-color:not([aria-pressed="true"]),
-:root[data-theme="dark"] .firma-controles:not(.firma-claro) .firma-color:not([aria-pressed="true"]) { box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
-.firma-oscuro .firma-borrar,
-:root[data-theme="dark"] .firma-controles:not(.firma-claro) .firma-borrar { background: rgba(255,255,255,.16); color: #FFFFFF; }
+.firma-goma { display: grid; place-items: center; background: #FFFBEF; color: #00516D; }
+.firma-goma svg, .firma-accion svg { display: block; }
+.firma-goma[aria-pressed="true"] { box-shadow: 0 0 0 3px #EAF6FA, 0 0 0 6px #00516D; }
+.firma-color:active, .firma-goma:active { transform: scale(.9); transition-duration: 80ms; }
+.firma-color:focus-visible, .firma-goma:focus-visible { outline-offset: 8px; }
+.firma-acciones { display: flex; align-items: center; margin-right: -11px; }
+.firma-accion { position: relative; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #00516D; display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform var(--d-press, 120ms) var(--ease-out), opacity var(--d-fast, 160ms) var(--ease-out), background-color var(--d-fast, 160ms) var(--ease-out); }
+.firma-accion:active { transform: scale(.88); background: rgba(255,255,255,.55); transition-duration: 80ms; }
+.firma-goma:disabled, .firma-accion:disabled { opacity: .35; cursor: default; transform: none; background-color: transparent; }
+.firma-goma:disabled { background-color: #FFFBEF; }
+.firma-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+.firma-oscuro :is(.firma-color, .firma-goma):not([aria-pressed="true"]),
+:root[data-theme="dark"] .firma-controles:not(.firma-claro) :is(.firma-color, .firma-goma):not([aria-pressed="true"]) { box-shadow: 0 0 0 2px rgba(255,255,255,.55); }
+.firma-oscuro .firma-goma[aria-pressed="true"],
+:root[data-theme="dark"] .firma-controles:not(.firma-claro) .firma-goma[aria-pressed="true"] { box-shadow: 0 0 0 3px #0C244C, 0 0 0 6px #FFFFFF; }
+.firma-oscuro .firma-accion,
+:root[data-theme="dark"] .firma-controles:not(.firma-claro) .firma-accion { color: #FFFFFF; }
+.firma-oscuro .firma-accion:active,
+:root[data-theme="dark"] .firma-controles:not(.firma-claro) .firma-accion:active { background: rgba(255,255,255,.16); }
 @media (prefers-reduced-motion: reduce) {
-  .firma-color, .firma-borrar { transition: box-shadow var(--d-fast, 160ms) ease, opacity var(--d-fast, 160ms) ease; }
-  .firma-color:active, .firma-borrar:active { transform: none; opacity: .8; }
+  .firma-color, .firma-goma, .firma-accion { transition: box-shadow var(--d-fast, 160ms) ease, opacity var(--d-fast, 160ms) ease, background-color var(--d-fast, 160ms) ease; }
+  .firma-color:active, .firma-goma:active, .firma-accion:active { transform: none; opacity: .75; }
 }
+.carta-kicker { position: absolute; left: 20px; right: 20px; text-align: center; font: 700 12px/16px 'Neue Montreal', Mulish, sans-serif; letter-spacing: .14em; color: #3E5F6B; }
+:root[data-theme="dark"] .carta-kicker { color: rgba(255,246,221,.85); }
+/* carta · cielo de Mundos: bruma arriba (título) y abajo (botones) para leer sobre las nubes */
+.carta-bruma { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,249,252,.94) 0%, rgba(240,249,252,.6) 20%, rgba(240,249,252,0) 38%), linear-gradient(0deg, rgba(240,249,252,.7) 0%, rgba(240,249,252,0) 20%); }
+:root[data-theme="dark"] .carta-bruma { background: linear-gradient(180deg, rgba(5,18,48,.92) 0%, rgba(5,18,48,.55) 22%, rgba(5,18,48,0) 42%), linear-gradient(0deg, rgba(5,18,48,.75) 0%, rgba(5,18,48,0) 22%); }
+/* carta · los días que faltan, juntos en un panel de vidrio */
+.carta-panel { position: absolute; left: 24px; right: 24px; padding: 12px 10px 10px; border-radius: 22px; background: rgba(255,255,255,.62); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 8px 22px rgba(2,37,79,.12); }
+:root[data-theme="dark"] .carta-panel { background: rgba(10,32,72,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 8px 22px rgba(0,6,24,.3); }
+.carta-panel .carta-kicker { position: static; margin-bottom: 8px; }
+.carta-panel .carta-pendientes { position: static; }
+button.carta-dia { border: 0; padding: 4px 0; background: transparent; cursor: pointer; min-height: 64px; border-radius: 14px; font: inherit; -webkit-tap-highlight-color: transparent; }
+/* carta · firmar de nuevo */
+.carta-otra-firma { position: absolute; right: 12px; bottom: 8px; z-index: 3; min-height: 44px; padding: 0 10px; border: 0; background: transparent; display: flex; align-items: center; gap: 6px; font: 700 14px 'Neue Montreal', Mulish, sans-serif; color: #0B748A; cursor: pointer; }
+.carta-firma-tocable { cursor: pointer; }
+.carta-firma-boton { position: relative; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 6px; margin: -6px -6px; border: 0; background: transparent; cursor: pointer; border-radius: 12px; }
+.carta-lapiz { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #0B748A; background: rgba(30,141,165,.1); font-style: normal; }
+/* carta · al tocar, el botón se hunde un poco (al instante, sin mover nada alrededor) */
+.carta-toque { transition: transform 120ms cubic-bezier(.2,.8,.2,1), filter 120ms ease-out; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.carta-toque:active { filter: brightness(.97); } /* el hundido lo hace presionable() de carta-motion.js (responde en pointerdown y rebota al soltar) */
+/* carta · Liquid Glass donde suma: la X y los botones secundarios sobre el cielo (como las burbujas del mapa y el cerrar del MVP) */
+.carta-vidrio { -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); }
+.carta-x { background: rgba(255,255,255,.5) !important; -webkit-backdrop-filter: blur(16px) saturate(170%); backdrop-filter: blur(16px) saturate(170%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 4px 12px rgba(2,37,79,.12); }
+:root[data-theme="dark"] .carta-x { background: rgba(255,255,255,.16) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 4px 12px rgba(0,6,24,.3); }
+@media (prefers-reduced-transparency: reduce) { .carta-vidrio, .carta-x, .carta-panel { -webkit-backdrop-filter: none; backdrop-filter: none; } .carta-x { background: #FFFFFF !important; } :root[data-theme="dark"] .carta-x { background: #274E7C !important; } }
+/* ---------- carta · coreografía (js/carta-motion.js): la luz del pesebre, la estrella que titila, la lucecita de la carta y el destello ---------- */
+.cm-halo { position: absolute; border-radius: 50%; pointer-events: none; background: radial-gradient(closest-side, rgba(255,246,212,.95) 0%, rgba(255,231,156,.62) 36%, rgba(255,226,140,.22) 62%, rgba(255,226,140,0) 100%); }
+.cm-estrella { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 1; }
+.cm-estrella-luz { position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,252,232,.95), rgba(255,228,145,.5) 45%, rgba(255,228,145,0)); }
+.cm-chispa { position: absolute; width: 38px; height: 38px; margin: -19px 0 0 -19px; pointer-events: none; z-index: 5; filter: drop-shadow(0 0 2px #F2B93B) drop-shadow(0 0 9px rgba(245,196,80,.85)); }
+.cm-chispa svg { display: block; width: 100%; height: 100%; }
+.cm-estrella .cm-chispa-estrella { left: 0; top: 0; width: 46px; height: 46px; margin: -23px 0 0 -23px; z-index: auto; opacity: 0; }
+.cm-luz { position: absolute; left: 0; top: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; pointer-events: none; z-index: 3; background: radial-gradient(circle, #FFFFFF 0 28%, #FFF0BF 50%, rgba(255,214,110,0) 72%); box-shadow: 0 0 16px 6px rgba(255,226,140,.55); }
+.cm-flor { position: absolute; width: 104px; height: 104px; margin: -52px 0 0 -52px; border-radius: 50%; pointer-events: none; z-index: 3; background: radial-gradient(closest-side, rgba(255,252,236,.95), rgba(255,230,150,.5) 50%, rgba(255,230,150,0)); }
+.cm-destello { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.cm-onda { position: absolute; border-radius: 50%; pointer-events: none; z-index: 2; box-shadow: 0 0 0 2.5px rgba(200,70,63,.45); }

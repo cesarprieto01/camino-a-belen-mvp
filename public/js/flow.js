@@ -1194,7 +1194,7 @@ register('mundos', {
       adv?.setAttribute('aria-label', n === 0 ? 'Adviento: el intro. Entrar al camino' : `Adviento: día ${n} de 26. Entrar al camino`);
       on(root, adv, () => tocarIsla(adv, () => entrar('mundos')));
       adv?.querySelector('img[alt^="Teodoro"]')?.classList.add('a-bob');
-      cierreMundo(adv); // del 31 dic al 6 ene: «Quedan N días» en la tarjeta
+      cierreMundo(adv); // del 31 dic al 6 ene: «Quedan N días» en una tarjeta blanca que sale de la amarilla
     }
     on(root, 'Volver al cuarto de Teodoro', () => back('teodoro'));
     // Enero aún no se abre: el candado se sacude y un globo lo dice sobre la isla (no un aviso abajo)
@@ -1203,25 +1203,33 @@ register('mundos', {
     if (p.nueva && adv) resaltarIsla(adv); // recién unida: Adviento se resalta al llegar
   },
 });
-/** Últimos 7 días antes de que Adviento quede como recuerdo (31 dic – 6 ene): la tarjeta amarilla crece hacia abajo una fila,
- *  bajo un filete, con la cuenta («Quedan N días» / «¡Último día!», la misma de Hoy) y siete estrellitas, una por día, que se
- *  van apagando de izquierda a derecha; el último día solo queda la del final. Si ya llegó a Belén no hay prisa: no sale
- *  (como en Hoy y en el mapa). Fuera de esos días la tarjeta no cambia. */
+/** Últimos 7 días antes de que Adviento quede como recuerdo (31 dic – 6 ene): bajo la tarjeta amarilla asoma una segunda,
+ *  blanca y más angosta, como si saliera de ella, con la cuenta («Quedan N días» / «¡Último día!», la misma de Hoy) y siete
+ *  estrellitas, una por día, que se van apagando de izquierda a derecha; el último día solo queda la del final. El conjunto
+ *  sube un poco para quedar centrado. Si ya llegó a Belén no hay prisa: no sale (como en Hoy y en el mapa).
+ *  Fuera de esos días Mundos no cambia. */
 function cierreMundo(adv) {
   const card = adv?.querySelector(':scope > span');
   const q = GRACIA_FIN - S.hoy + 1;
   if (!card || fase() !== 'gracia' || q > 7 || vistos() >= 26) return;
   const ultimo = q <= 1;
-  card.classList.add('mundos-cierre-tarjeta');
   const estrella = '<svg viewBox="0 0 12 12"><path d="M6 0C6.6 3.3 8.7 5.4 12 6 8.7 6.6 6.6 8.7 6 12 5.4 8.7 3.3 6.6 0 6 3.3 5.4 5.4 3.3 6 0Z"/></svg>';
   const reloj = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12"/><path d="M7.5 3v2.6c0 2 1.3 3.5 3.1 4.8L12 12l1.4-1.6c1.8-1.3 3.1-2.8 3.1-4.8V3"/><path d="M7.5 21v-2.6c0-2 1.3-3.5 3.1-4.8L12 12l1.4 1.6c1.8 1.3 3.1 2.8 3.1 4.8V21"/><path d="M9.6 19.2c.4-1.3 1.3-2.1 2.4-2.6 1.1.5 2 1.3 2.4 2.6Z" fill="currentColor" stroke="none"/></svg>';
-  const fila = document.createElement('span'); fila.className = 'mundos-cierre'; fila.setAttribute('aria-hidden', 'true');
-  fila.innerHTML = `<span class="mundos-cierre-txt">${reloj}${cuentaGracia(true).replace('Último día', '¡Último día!')}</span>`
+  // la segunda tarjeta es un div (no span) para que no le toquen las reglas «a[aria-label^="Adviento:"] > span» de la amarilla
+  const bandeja = document.createElement('div'); bandeja.className = 'mundos-cierre'; bandeja.setAttribute('aria-hidden', 'true');
+  bandeja.innerHTML = `<span class="mundos-cierre-txt">${reloj}${cuentaGracia(true).replace('Último día', '¡Último día!')}</span>`
     + `<span class="mundos-cierre-dias">${Array.from({ length: 7 }, (_, i) => `<i${i >= 7 - q ? ' class="queda"' : ''}>${estrella}</i>`).join('')}</span>`; // del 31 dic (izq.) al 6 ene (der.): las pasadas se apagan
-  card.appendChild(fila);
+  adv.classList.add('mundos-cierre-con'); // sube el conjunto (estilos al final de app.css)
+  card.before(bandeja); // antes en el DOM = debajo de la amarilla: asoma por su borde de abajo
   adv.setAttribute('aria-label', adv.getAttribute('aria-label').replace('. Entrar', `. ${cuentaGracia()}. Entrar`));
-  // el último día, la estrellita que queda titila tres veces al llegar y se queda quieta
-  if (ultimo && !reduced()) fila.querySelector('i.queda')?.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.4)', opacity: .7, offset: .45 }, { transform: 'scale(1)', opacity: 1 }], { duration: 900, delay: 500, iterations: 3, easing: 'ease-in-out' });
+  // al llegar sale desde debajo de la amarilla; sin movimiento, solo aparece. Mientras sube 46 px es más alta que la
+  // amarilla: el recorte de arriba (8 px) evita que asome por encima y por sus esquinas redondeadas, y deja pasar la sombra
+  const quieto = reduced();
+  bandeja.animate(quieto ? [{ opacity: 0 }, { opacity: 1 }]
+    : [{ transform: 'translateY(-46px)', clipPath: 'inset(8px -30px -30px -30px)' }, { transform: 'translateY(0)', clipPath: 'inset(-30px -30px -30px -30px)' }],
+    { duration: quieto ? 200 : 560, delay: quieto ? 120 : 260, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
+  // el último día, la estrellita que queda titila tres veces cuando la tarjeta ya salió y se queda quieta
+  if (ultimo && !quieto) bandeja.querySelector('i.queda')?.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.4)', opacity: .7, offset: .45 }, { transform: 'scale(1)', opacity: 1 }], { duration: 900, delay: 850, iterations: 3, easing: 'ease-in-out' });
 }
 /** Tocar una isla: se hunde y rebota, y luego pasa lo que toca (se ve que el toque llegó). */
 function tocarIsla(el, luego) {

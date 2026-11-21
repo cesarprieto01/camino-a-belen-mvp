@@ -18,7 +18,7 @@ const NAMES = {
   calificacion: '¿Te gustó?', free: 'Free · descargables', ruletaPop: 'Ruleta', ruletaPremio: 'Premio de la ruleta', premioCuarto: 'Cuarto nuevo', tbGano: '¡Ganaste la TheoBox!', tbDatos: 'TheoBox · Quién la recibe', tbDireccion: 'TheoBox · Dirección', tbEnCamino: 'TheoBox · Va en camino', tbCompartir: 'TheoBox · Comparte tu premio', tbMiTheobox: 'Mi TheoBox', ajustes: 'Ajustes',
   memoramaReglas: 'Memorama · antes de jugar', memorama: 'Memorama', memoramaFin: 'Memorama · fin', adivinanzaIntro: 'Adivinanza · antes de jugar',
   adivinanza: 'Adivinanza', adivinanzaTiempo: 'Adivinanza · se acabó el tiempo', adivinanzaFin: 'Adivinanza · fin', desafioIntro: 'Desafío · antes de empezar',
-  desafio: 'Desafío en familia', desafioFin: 'Desafío · cumplido', juegoIntro: 'Juego en familia', juegoPasos: 'Juego · así se juega', juegoCarta: 'Juego · a jugar', juegoFin: 'Juego · ¡ganaron todos!', final: 'Gran final', cartaSecreta: 'Carta · secreta', cartaFirma: 'Carta · firma', cartaGuardada: 'Carta · guardada', cartaSorpresa: 'Carta · ¡era para Jesús!', carta: 'La carta de Teodoro', cartaCompartir: 'Carta · compartir', cartaImprimir: 'Carta · imprimir', estatica: 'Vista del lienzo',
+  desafio: 'Desafío en familia', desafioFin: 'Desafío · cumplido', juegoIntro: 'Juego en familia', juegoPasos: 'Juego · así se juega', juegoCarta: 'Juego · a jugar', juegoFin: 'Juego · ¡ganaron todos!', final: 'Gran final', cartaSecreta: 'Carta · secreta', cartaFirma: 'Carta · firma', cartaGuardada: 'Carta · guardada', cartaSorpresa: 'Carta · ¡era para Jesús!', carta: 'La carta de Teodoro', estatica: 'Vista del lienzo',
 };
 // Sección del lienzo de cada pantalla (para «Dónde estás»)
 const SECTION_OF = name => {
