@@ -31,7 +31,7 @@ const ACTIVIDADES = new Set(['trivia', 'triviaFin', 'completado', 'calificacion'
 const NIVEL = { cerrado: -6, ruletaPop: -5, ruletaPremio: -5, premioCuarto: -5, tbGano: -5, tbDatos: -10, tbDireccion: -10, tbEnCamino: -6, tbCompartir: -6, tbMiTheobox: -10, completado: -3, triviaFin: -3, memoramaFin: -3, adivinanzaFin: -3,
   desafioFin: -3, juegoFin: -3, trivia: -6, memoramaReglas: -6, memorama: -6, adivinanzaIntro: -6, desafioIntro: -6, juegoIntro: -6, juegoPasos: -6,
   hub: -8, calificacion: -8, desafio: -10,
-  cartaSecreta: -6, cartaFirma: -9, cartaGuardada: -4, cartaSorpresa: -6, carta: -4 }; // la carta: más baja al firmar (concentración)
+  cartaSecreta: 0, cartaFirma: -3, cartaGuardada: 0, cartaSorpresa: 0, carta: 0 }; // la carta: la ambiental de la trivia a nivel pleno (César: «falta la música»), apenas más baja al firmar
 const FILTRO = { ruletaPop: 3000, ruletaPremio: 3000, premioCuarto: 3000, cerrado: 1800 };
 // reposo: a los [baja] s sin tocar nada baja 6 dB y a los [calla] s se calla (en el reto en familia se fueron a hacerlo)
 const REPOSO_PANTALLA = { cerrado: [10, 25], hub: [30, 60], desafio: [30, 60] };
