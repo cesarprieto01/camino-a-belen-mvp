@@ -5,23 +5,54 @@
 //   node tools/braze-slides.mjs            → arma index.html (nombres de archivo: vista previa web) y braze.html (URLs de
 //                                             Braze, de urls.json: es el que se pega en Braze)
 // DEEP_LINK=theo://… node tools/braze-slides.mjs  fija el deep link de «¡Ya estás dentro!».
+// En inglés: --en (o IDIOMA=en) en cualquiera de los dos pasos → public/braze/slides-reto-en/ (archivos adviento-en-…).
+//   node tools/braze-slides.mjs --en capturar   ·   node tools/braze-slides.mjs --en
+//   (no se lee LANG de la terminal: ahí viene algo como es_ES.UTF-8; solo cuenta si es exactamente «en»)
 import fs from 'node:fs';
 import path from 'node:path';
 
+const EN = process.argv.includes('--en') || process.env.IDIOMA === 'en' || process.env.LANG === 'en';
 const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const CARPETA = path.join(RAIZ, 'public/braze/slides-reto');
+const CARPETA_ES = path.join(RAIZ, 'public/braze/slides-reto');
+const CARPETA = EN ? path.join(RAIZ, 'public/braze/slides-reto-en') : CARPETA_ES;
 const DEEP_LINK = process.env.DEEP_LINK || 'theo://adviento/ya-estas-dentro'; // pendiente: el deep link real del equipo de la app
 const ALTO_ARTE = 478; // el arte llega hasta el título (la ventana mide 350 × 698)
 
-// mismo contenido que SLIDES en flow.js
-const SLIDES = [
-  { vis: 'pesebre', t: '¡Jesús está por llegar!', d: 'Preparemos juntos el corazón para recibirlo en Navidad.', alt: 'El pesebre vacío bajo la estrella de Belén, esperando al Niño Jesús' },
-  { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día junto a Teodoro hasta el pesebre.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
-  { vis: 'aprende', t: 'Mira, juega, canta… y ama', d: 'Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.', alt: 'Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia' },
-  { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.', alt: 'La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes' },
-];
-const arte = (i, tema) => `adviento-slide-reto-${i + 1}-${SLIDES[i].vis}-${tema}.jpg`;
+// mismo contenido que SLIDES en flow.js; el inglés sigue el glosario de «Textos de la app ES-EN» (Drive, 3-nov-2026):
+// Teodoro no se traduce, «panes» = loaves, «reto» = challenge, «pesebre» = manger
+const TXT = EN ? {
+  lang: 'en', titulo: 'How the challenge works · Advent', dialogo: 'How the challenge works', de: 'of', cerrar: 'Close',
+  siguiente: 'Next', vamos: "Let's go!", aviso: "In the app: You're in!",
+  slides: [
+    { vis: 'pesebre', t: 'Jesus is almost here!', d: "Let's prepare our hearts together to welcome Him at Christmas.", alt: 'The empty manger under the Star of Bethlehem, waiting for Baby Jesus' },
+    { vis: 'camino', t: 'On the way to Bethlehem!', d: '26 days, a new step each day with Teodoro, all the way to the manger.', alt: "The journey map: Teodoro on today's day, the days already done with their stars, and the locked days ahead" },
+    { vis: 'aprende', t: 'Watch, play, sing, and love', d: 'Bible stories, trivia, games, songs, and a mission of love every day.', alt: 'A story about the lost sheep, the Birth of Jesus, and a trivia game' },
+    { vis: 'gana', t: 'Spin the wheel and win!', d: 'Finish each day, then spin to win stars, loaves for Teodoro, and surprises.', alt: 'The spin wheel with prizes: a hat, a scarf, and a perfect trivia score with three stars and ten loaves' },
+  ],
+} : {
+  lang: 'es', titulo: 'Así es el reto · Adviento', dialogo: 'Así es el reto', de: 'de', cerrar: 'Cerrar',
+  siguiente: 'Siguiente', vamos: '¡Vamos!', aviso: 'En la app: ¡Ya estás dentro!',
+  slides: [
+    { vis: 'pesebre', t: '¡Jesús está por llegar!', d: 'Preparemos juntos el corazón para recibirlo en Navidad.', alt: 'El pesebre vacío bajo la estrella de Belén, esperando al Niño Jesús' },
+    { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día junto a Teodoro hasta el pesebre.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
+    { vis: 'aprende', t: 'Mira, juega, canta… y ama', d: 'Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.', alt: 'Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia' },
+    { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.', alt: 'La ruleta de premios con un gorro, una bufanda y una trivia perfecta de tres estrellas y diez panes' },
+  ],
+};
+const SLIDES = TXT.slides;
+const arte = (i, tema) => `adviento-${EN ? 'en-' : ''}slide-reto-${i + 1}-${SLIDES[i].vis}-${tema}.jpg`;
+// las fuentes son las mismas en los dos idiomas (viven en slides-reto/ y en Braze ya están subidas)
 const FUENTES = { 400: 'adviento-neue-montreal-400.otf', 700: 'adviento-neue-montreal-700.otf' };
+const esFuente = f => Object.values(FUENTES).includes(f);
+const js = s => "'" + s.replace(/[\\']/g, '\\$&') + "'"; // texto para el script del mensaje, entre comillas simples
+
+// arte en inglés: los textos del MVP que se ven en el arte se cambian en el DOM antes de capturar, y las piezas con texto
+// horneado (el mapa y los tres premios) se cambian por sus versiones en inglés (slides-reto-en/piezas/: las mismas
+// pantallas del MVP recapturadas con el texto en inglés y parchadas solo en la zona del texto; ver su LEEME)
+const ARTE_EN = {
+  textos: { 'Hoy': 'Today', 'Hecho': 'Done', 'Cuento · 5 min': 'Story · 5 min', 'El nacimiento de Jesús': 'The Birth of Jesus' },
+  imgs: Object.fromEntries(['mapa-dia', 'mapa-noche', 'premio-gorro', 'premio-bufanda', 'premio-trivia'].map(n => [`assets/slides/${n}.webp`, `braze/slides-reto-en/piezas/${n}.webp`])),
+};
 
 // ---------- 1 · capturar el arte desde el MVP (con «Reducir movimiento»: todo en su lugar y Teodoro con su dibujo) ----------
 async function capturar() {
@@ -38,6 +69,18 @@ async function capturar() {
     await p.evaluate(async t => { localStorage.clear(); const c = await import('./js/core.js'); c.reset({ hoy: -3, inscrito: false, musica: false, tema: t }); c.save(); }, tema);
     await p.reload({ waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
     await p.evaluate(async () => { const c = await import('./js/core.js'); await c.go('retoSlides', {}, 'none'); }); await p.waitForTimeout(2500);
+    if (EN) {
+      const r = await p.evaluate(async ({ textos, imgs }) => {
+        const caja = document.querySelector('#viewport .layer:last-child .rs'), t = [], im = [];
+        const w = document.createTreeWalker(caja, NodeFilter.SHOW_TEXT);
+        while (w.nextNode()) { const n = w.currentNode, s = n.textContent.trim(); if (textos[s]) { n.textContent = n.textContent.replace(s, textos[s]); t.push(s); } }
+        for (const img of caja.querySelectorAll('img')) { const en = imgs[img.getAttribute('src')]; if (en) { img.src = en; await img.decode(); im.push(en); } }
+        return { t, im };
+      }, ARTE_EN);
+      // en cada tema: los 4 textos y 4 imágenes (su mapa y los 3 premios); si el MVP cambió y algo no está, mejor parar
+      if (r.t.length !== 4 || r.im.length !== 4) throw new Error(`Arte en inglés incompleto (${tema}): textos ${JSON.stringify(r.t)} · imágenes ${JSON.stringify(r.im)}`);
+      await p.waitForTimeout(300);
+    }
     // solo el arte: sin texto, puntos, botones ni esquinas
     await p.addStyleTag({ content: '.rs-txt, .rs-puntos, .rs-cta, .rs-cerrar { visibility: hidden !important; } .rs { border-radius: 0 !important; box-shadow: none !important; }' });
     for (let i = 0; i < SLIDES.length; i++) {
@@ -109,7 +152,7 @@ body { font-family: 'Neue Montreal', system-ui, -apple-system, sans-serif; }
       if (DEEP_LINK) window.location.href = DEEP_LINK; else brazeBridge.closeMessage();
       return;
     }
-    var a = document.querySelector('.aviso'); a.textContent = 'En la app: ¡Ya estás dentro!'; a.classList.add('on');
+    var a = document.querySelector('.aviso'); a.textContent = ${js(TXT.aviso)}; a.classList.add('on');
     setTimeout(function () { a.classList.remove('on'); yendo = false; ir(0); }, 1800);
   }
 
@@ -129,7 +172,7 @@ body { font-family: 'Neue Montreal', system-ui, -apple-system, sans-serif; }
     else poner(-i * W, anim ? 380 : 0);
     slides.forEach(function (sl, n) { sl.inert = n !== i; sl.setAttribute('aria-hidden', String(n !== i)); });
     puntos.forEach(function (p, n) { p.classList.toggle('on', n === i); });
-    cta.textContent = i < N - 1 ? 'Siguiente' : '¡Vamos!';
+    cta.textContent = i < N - 1 ? ${js(TXT.siguiente)} : ${js(TXT.vamos)};
     estrenar(i);
   }
   function ir(n) { i = Math.max(0, Math.min(N - 1, n)); pintar(true); }
@@ -164,12 +207,12 @@ body { font-family: 'Neue Montreal', system-ui, -apple-system, sans-serif; }
 })();`;
 
   return `<!doctype html>
-<html lang="es">
+<html lang="${TXT.lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Así es el reto · Adviento</title>
-<!-- In-app de Braze (Custom Code): los slides del reto al unirse. Generado con tools/braze-slides.mjs desde el MVP; no se edita a mano. -->
+<title>${TXT.titulo}</title>
+<!-- In-app de Braze (Custom Code): los slides del reto al unirse${EN ? ', en inglés' : ''}. Generado con tools/braze-slides.mjs${EN ? ' --en' : ''} desde el MVP; no se edita a mano. -->
 <style>
 ${ESTILOS.trim()}
 
@@ -180,17 +223,17 @@ ${ESTILOS_SLIDES}
 <body>
 <div class="velo" aria-hidden="true"></div>
 <div class="marco">
-  <div class="rs" role="dialog" aria-modal="true" aria-label="Así es el reto">
+  <div class="rs" role="dialog" aria-modal="true" aria-label="${TXT.dialogo}">
     <div class="rs-capa">
-      <div class="rs-pista" aria-roledescription="carrusel">${SLIDES.map((sl, i) => `
-        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="${i + 1} de ${SLIDES.length}">
+      <div class="rs-pista" aria-roledescription="${EN ? 'carousel' : 'carrusel'}">${SLIDES.map((sl, i) => `
+        <section class="rs-slide" role="group" aria-roledescription="slide" aria-label="${i + 1} ${TXT.de} ${SLIDES.length}">
           <img class="arte solo-dia" src="${url(arte(i, 'claro'))}" alt="${sl.alt}"><img class="arte solo-noche" src="${url(arte(i, 'oscuro'))}" alt="${sl.alt}">
           <div class="rs-txt"><h2>${sl.t}</h2><p>${sl.d}</p></div>
         </section>`).join('')}
       </div>
-      <button type="button" class="rs-cerrar" aria-label="Cerrar"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <button type="button" class="rs-cerrar" aria-label="${TXT.cerrar}"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <div class="rs-puntos" aria-hidden="true">${SLIDES.map(() => '<i></i>').join('')}</div>
-      <button type="button" class="rs-cta">Siguiente</button>
+      <button type="button" class="rs-cta">${TXT.siguiente}</button>
     </div>
   </div>
 </div>
@@ -204,15 +247,19 @@ ${ESTILOS_SLIDES}
 
 function armar() {
   const archivos = [...SLIDES.flatMap((_, i) => [arte(i, 'claro'), arte(i, 'oscuro')]), FUENTES[400], FUENTES[700]];
-  const faltan = archivos.filter(f => !fs.existsSync(path.join(CARPETA, f)));
-  if (faltan.length) throw new Error('Faltan: ' + faltan.join(', ') + ' (node tools/braze-slides.mjs capturar)');
-  fs.writeFileSync(path.join(CARPETA, 'index.html'), html(f => f));
-  // braze.html: con las URLs de los archivos ya subidos a Braze (urls.json), para no depender de que Braze cambie los nombres
-  const urlsArchivo = path.join(CARPETA, 'urls.json'), urls = fs.existsSync(urlsArchivo) ? JSON.parse(fs.readFileSync(urlsArchivo, 'utf8')) : {};
-  const sinUrl = archivos.filter(f => !urls[f]);
-  if (!sinUrl.length) fs.writeFileSync(path.join(CARPETA, 'braze.html'), html(f => urls[f]));
-  console.log(`index.html · ${archivos.length} archivos · deep link ${DEEP_LINK}${sinUrl.length ? ` · braze.html no se armó: faltan URLs de ${sinUrl.join(', ')}` : ' · braze.html con URLs de Braze'}`);
+  const dondeEsta = f => path.join(esFuente(f) ? CARPETA_ES : CARPETA, f);
+  const faltan = archivos.filter(f => !fs.existsSync(dondeEsta(f)));
+  if (faltan.length) throw new Error('Faltan: ' + faltan.join(', ') + ` (node tools/braze-slides.mjs${EN ? ' --en' : ''} capturar)`);
+  // en inglés las fuentes se leen de la carpeta en español (no se duplican)
+  fs.writeFileSync(path.join(CARPETA, 'index.html'), html(f => EN && esFuente(f) ? '../slides-reto/' + f : f));
+  // braze.html: con las URLs de los archivos ya subidos a Braze (urls.json), para no depender de que Braze cambie los nombres;
+  // las fuentes, si no están en el urls.json del idioma, salen del de español (son los mismos archivos en Braze)
+  const leer = c => { const a = path.join(c, 'urls.json'); return fs.existsSync(a) ? JSON.parse(fs.readFileSync(a, 'utf8')) : {}; };
+  const urls = leer(CARPETA), urlsES = EN ? leer(CARPETA_ES) : urls, urlDe = f => urls[f] || (esFuente(f) ? urlsES[f] : undefined);
+  const sinUrl = archivos.filter(f => !urlDe(f));
+  if (!sinUrl.length) fs.writeFileSync(path.join(CARPETA, 'braze.html'), html(urlDe));
+  console.log(`${path.relative(RAIZ, CARPETA)}/index.html · ${archivos.length} archivos · deep link ${DEEP_LINK}${sinUrl.length ? ` · braze.html no se armó: faltan URLs de ${sinUrl.join(', ')}` : ' · braze.html con URLs de Braze'}`);
 }
 
-if (process.argv[2] === 'capturar') await capturar();
+if (process.argv.includes('capturar')) await capturar();
 else armar();
