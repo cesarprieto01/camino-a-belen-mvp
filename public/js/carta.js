@@ -518,7 +518,7 @@ export function iconoCarta(layer) {
   on(layer, b, () => { b.animate?.([{ transform: 'scale(.9)' }, { transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.34,1.56,.64,1)' }); abrirCarta('fade'); });
   if (est === 'lista') {
     const g = document.createElement('div'); g.className = 'carta-globo'; g.setAttribute('role', 'status'); g.textContent = t.globo;
-    g.style.top = (bat.offsetTop + bat.offsetHeight + 8 + 6) + 'px'; g.style.right = (layer.clientWidth - bat.offsetLeft + 4 - bat.offsetWidth / 2 + 24 + 10) + 'px';
+    g.style.top = (bat.offsetTop + bat.offsetHeight + 8 + 6) + 'px'; g.style.right = (layer.clientWidth - bat.offsetLeft + 4 - bat.offsetWidth / 2 + 24 - 6) + 'px'; // la punta de la cola queda a ~10 px de la carta
     (bat.offsetParent || bat.parentElement).appendChild(g);
     on(layer, g, () => abrirCarta('fade'));
   }
