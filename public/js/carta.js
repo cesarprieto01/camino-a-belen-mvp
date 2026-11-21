@@ -28,7 +28,7 @@ export function estadoCarta() {
   return c.firma ? 'faltan' : 'firmar';
 }
 
-// ---------- Textos (inglés por defecto, como el final anterior: panel › Ajustes › Gran final) ----------
+// ---------- Textos (español por defecto, como todo el MVP; inglés en panel › Ajustes › Idioma: S.idiomaCarta) ----------
 // Regla de César: lo que le falta al niño se dice como días DEL RETO POR COMPLETAR («Completa 4 días más», «Completa el día 11»),
 // nunca como espera («te faltan 4 días» se lee «en 4 días se abre»). El texto de la carta es el del lienzo (opción B).
 const TXT = {
@@ -317,10 +317,10 @@ register('cartaGuardada', {
       const rehacer = () => go('cartaFirma', { rehacer: 'cartaGuardada' }, 'fade', { replace: true });
       on(root, caja, rehacer); on(root, otra, rehacer);
     }
-    // el sello: la huella de Teodoro cierra la carta hasta que la abra
+    // el sello: los cascos de Teodoro (es un burro) cierran la carta hasta que la abra
     if (tarjeta) {
       const sello = document.createElement('div'); sello.className = 'carta-sello'; sello.setAttribute('aria-hidden', 'true');
-      sello.innerHTML = '<svg width="34" height="34" viewBox="0 0 24 24" fill="#FFF6DD"><ellipse cx="5.2" cy="10.2" rx="2.1" ry="2.7" transform="rotate(-20 5.2 10.2)"/><ellipse cx="9.3" cy="5.6" rx="2.2" ry="2.9" transform="rotate(-8 9.3 5.6)"/><ellipse cx="14.7" cy="5.6" rx="2.2" ry="2.9" transform="rotate(8 14.7 5.6)"/><ellipse cx="18.8" cy="10.2" rx="2.1" ry="2.7" transform="rotate(20 18.8 10.2)"/><path d="M12 11c-3 0-6 3.6-6 6.6 0 1.9 1.4 3 3.2 3 1.2 0 1.8-.6 2.8-.6s1.6.6 2.8.6c1.8 0 3.2-1.1 3.2-3 0-3-3-6.6-6-6.6Z"/></svg>';
+      sello.innerHTML = '<svg width="34" height="34" viewBox="0 0 24 24" fill="#FFF6DD"><path transform="translate(6.8 8) scale(1.12)" d="M-.95 4.9C-2.7 4.9-4.3 3.5-4.3.3-4.3-3.1-2.4-5.1 0-5.1S4.3-3.1 4.3.3C4.3 3.5 2.7 4.9.95 4.9L.42.4Q0-.25-.42.4Z"/><path transform="translate(17.2 15.8) scale(1.12)" d="M-.95 4.9C-2.7 4.9-4.3 3.5-4.3.3-4.3-3.1-2.4-5.1 0-5.1S4.3-3.1 4.3.3C4.3 3.5 2.7 4.9.95 4.9L.42.4Q0-.25-.42.4Z"/></svg>';
       tarjeta.appendChild(sello);
     }
     // los días que faltan, con su ícono del mapa y un rótulo como el «✦ TIEMPO DE NAVIDAD ✦» de Adviento
