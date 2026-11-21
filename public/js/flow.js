@@ -3,7 +3,7 @@ import { S, save, A, cur, $, $$, on, find, go, back, register, seen, toast, nota
   lastDay, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, recargar, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo, conTheobox } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, FONDO, sortearPremio, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
-import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from './musica.js'; // música, voces de Teodoro y efectos
+import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz, precargar } from './musica.js'; // música, voces de Teodoro y efectos
 import { rateRow } from './games.js';
 import { celebrar, pensar, SALUDA, CELEBRA } from './teo-anim.js';
 import { tarjetaInicio } from './theobox.js';
@@ -1285,6 +1285,7 @@ register('reproductor', {
   files: F('S-05-Reproductor', 'S-05-Reproductor-oscuro'),
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
+    if (p.ultimo) precargar('nieve'); // al terminar sale la carta, con la ambiental de la trivia: que ya esté bajada
     setText(root, /Meditación de la Escucha/, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
     // una línea bajo el título: de qué trata el día (del cronograma)
     const tituloRep = textEl(root, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);

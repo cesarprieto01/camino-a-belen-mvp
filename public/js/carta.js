@@ -9,7 +9,7 @@
 import { S, save, A, $$, on, find, go, register, cur, toast, nota, dark, reduced, textEl, replaceText, confetti, vistos, contentDone, stars, fase } from './core.js';
 import { DAYS, TYPES, RULES, JUEGOS, IMG, iconOf, hasTrivia } from './data.js';
 import { sparkles, goldRain } from './flow.js';
-import { teoDice, sonido, motivo, retener, soltarTrasVoz } from './musica.js';
+import { teoDice, sonido, motivo } from './musica.js';
 import { entradaSecreta, botonListo, selloCarta, coreografiaSorpresa, abrirCartaAnim, presionable } from './carta-motion.js'; // coreografía de logro
 
 // ---------- Estado ----------
@@ -85,7 +85,8 @@ const TXT = {
     globo: 'Your letter is ready!',
   },
 };
-const tx = () => TXT[S.finalIdioma === 'es' ? 'es' : 'en'];
+const ingles = () => S.idiomaCarta === 'en'; // la carta va en español; el inglés se elige en panel › Ajustes › Idioma
+const tx = () => TXT[ingles() ? 'en' : 'es'];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const nombre = () => esc(S.nombre || 'Lucía');
 
@@ -119,7 +120,7 @@ function filasHTML(px = 30, fs = 16, num = 20, gap = 6, color = '#06325A') {
 }
 /** La fecha de la carta: el día en que la firmó (24 dic = Nochebuena, 25 = Navidad). */
 function fechaCarta() {
-  const d = C().firmadaDia ?? Math.min(S.hoy, 26), es = S.finalIdioma === 'es';
+  const d = C().firmadaDia ?? Math.min(S.hoy, 26), es = !ingles();
   if (d === 26) return es ? 'Nochebuena, 2026' : 'Christmas Eve, 2026';
   if (d === 27) return es ? 'Navidad, 2026' : 'Christmas Day, 2026';
   const fecha = new Date(2026, 10, 29 + d - 1);
@@ -229,7 +230,8 @@ register('cartaSecreta', {
     if (b) on(root, b, () => go('cartaFirma', {}, 'push'));
     cerrarX(root);
     sparkles(root);
-    if (primera && p.nochebuena && fase() !== 'recuerdo') { retener(12000); teoDice('nochebuena', { tras: motivo('nochebuena', 1.2) + 0.2 }); soltarTrasVoz(800); }
+    // la ambiental de la trivia suena desde que entra (no se retiene): las campanas y la voz van encima, y la voz la aparta sola mientras habla
+    if (primera && p.nochebuena && fase() !== 'recuerdo') teoDice('nochebuena', { tras: motivo('nochebuena', 1.2) + 0.2 });
     entradaSecreta({ root, layer, titulo, teo, boton: b, primera });
   },
 });
@@ -242,7 +244,7 @@ register('cartaFirma', {
     const c = C(), t = tx(); cielo(root);
     const titulo = textEl(root, /^¡Ahora firma tú/); if (titulo) titulo.textContent = p.rehacer ? t.firmaOtra(S.nombre) : t.firmaT(S.nombre);
     const sub = textEl(root, /^Con tu dedo/); if (sub) sub.textContent = t.firmaSub;
-    const cariño = textEl(root, /^Con cariño,$/); if (cariño && S.finalIdioma !== 'es') cariño.textContent = 'With love,';
+    const cariño = textEl(root, /^Con cariño,$/); if (cariño && ingles()) cariño.textContent = 'With love,';
     // el rótulo de la caja punteada (no el título: «Firma de nuevo…» también empieza por «Firma de»)
     const etiqueta = [...root.querySelectorAll('div')].find(d => /^Firma de /.test(d.textContent.trim()) && /dashed/.test(d.parentElement?.getAttribute('style') || ''));
     if (etiqueta) etiqueta.textContent = t.firmaCaja(S.nombre);
@@ -259,14 +261,14 @@ register('cartaFirma', {
       // fuera la muestra del lienzo: el nombre escrito, el corazón y el punto (quedan la línea base y el rótulo)
       [...(caja?.children || [])].forEach(el => { if (el === etiqueta) return; const st = el.getAttribute('style') || ''; if (/Gloria Hallelujah/.test(st) || el.querySelector?.('svg') || el.tagName.toLowerCase() === 'svg' || /border-radius: 50%/.test(st)) el.remove(); });
       const controles = find(root, 'Borrar')?.parentElement;
-      const ingles = S.finalIdioma !== 'es';
-      const colores = ingles ? [['navy blue', '#06325A'], ['teal', '#1E8DA5'], ['green', '#0A8445'], ['yellow', '#E2B33C'], ['orange', '#F0A04B']].map(([nombre, valor]) => ({ nombre, valor })) : undefined;
+      const enIngles = ingles();
+      const colores = enIngles ? [['navy blue', '#06325A'], ['teal', '#1E8DA5'], ['green', '#0A8445'], ['yellow', '#E2B33C'], ['orange', '#F0A04B']].map(([nombre, valor]) => ({ nombre, valor })) : undefined;
       f = m.crearFirma(caja, { colores, color: c.color ?? 1, oscuro: dark(), nombre: S.nombre, onCambio: vacia => habilitar(!vacia),
-        etiqueta: v => ingles ? `${S.nombre}’s signature: ${v ? 'empty' : 'signed'}` : `Firma de ${S.nombre}: ${v ? 'vacía' : 'firmada'}` });
+        etiqueta: v => enIngles ? `${S.nombre}’s signature: ${v ? 'empty' : 'signed'}` : `Firma de ${S.nombre}: ${v ? 'vacía' : 'firmada'}` });
       f.escuchar?.(st => { if (st && c.color !== st.color) { c.color = st.color; save(); } }); // recuerda el color elegido
       if (controles && m.pintarControles) {
         controles.innerHTML = ''; controles.style.justifyContent = 'stretch';
-        m.pintarControles(controles, f, colores, { textos: ingles ? { colores: 'Ink color', goma: 'Eraser', deshacer: 'Undo', borrar: 'Clear all' } : { colores: 'Color de la tinta', goma: 'Goma', deshacer: 'Deshacer', borrar: 'Borrar todo' } });
+        m.pintarControles(controles, f, colores, { textos: enIngles ? { colores: 'Ink color', goma: 'Eraser', deshacer: 'Undo', borrar: 'Clear all' } : { colores: 'Color de la tinta', goma: 'Goma', deshacer: 'Deshacer', borrar: 'Borrar todo' } });
       }
     } catch (e) { console.warn('firma', e); nota('Firma', 'El lienzo de firma no cargó'); habilitar(true); }
     const volver = () => go(p.rehacer, { recien: false }, 'fade', { replace: true }); // firmar de nuevo: vuelve a la carta o a «¡Carta firmada!»

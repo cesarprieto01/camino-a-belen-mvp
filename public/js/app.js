@@ -367,7 +367,7 @@ function render() {
       : '')
       + fila('Girar otra vez', '<button class="p-btn p-btn-sm" data-act="ruletaOtraVez">Girar</button>', `La de esta semana · días ${RULES.ruleta.join(', ').replace(/, (\d+)$/, ' y $1')}`))}
     ${grupo('Gran final',
-      `<div class="p-row p-stack"><span class="p-row-t">Idioma<small>Textos de la carta de Teodoro (gran final)</small></span><div class="p-chips">${[['en', 'English'], ['es', 'Español']].map(([v, l]) => `<button data-finidioma="${v}" aria-pressed="${(S.finalIdioma === 'es' ? 'es' : 'en') === v}">${l}</button>`).join('')}</div></div>`
+      `<div class="p-row p-stack"><span class="p-row-t">Idioma<small>Textos de la carta de Teodoro (gran final)</small></span><div class="p-chips">${[['es', 'Español'], ['en', 'English']].map(([v, l]) => `<button data-finidioma="${v}" aria-pressed="${(S.idiomaCarta === 'en' ? 'en' : 'es') === v}">${l}</button>`).join('')}</div></div>`
       + fila('Ver el cierre', '<button class="p-btn p-btn-sm" data-act="verCierre">Ver</button>', 'Deja los 26 días completos (como quien terminó todo) y abre la carta de Teodoro desde la firma, como al terminar el último día'))}
     ${grupo('iPhone',
       fila('Isla dinámica', sw('isla', S.isla !== false, 'Isla dinámica'))
@@ -417,7 +417,7 @@ panel.addEventListener('click', e => {
   }
   if (t.dataset.bat) { S.bateria = +t.dataset.bat; save(); go(cur?.name || 'hoy', cur?.params || {}, 'none', { scrollTop: cur?.layer.scrollTop || 0 }); return; }
   if ('premio' in t.dataset) { S.forzarPremio = t.dataset.premio; save(); return; }
-  if (t.dataset.finidioma) { S.finalIdioma = t.dataset.finidioma; save(); render(); if (/^carta/.test(cur?.name || '')) go(cur.name, cur.params || {}, 'none', { replace: true }); return; }
+  if (t.dataset.finidioma) { S.idiomaCarta = t.dataset.finidioma; save(); render(); if (/^carta/.test(cur?.name || '')) go(cur.name, cur.params || {}, 'none', { replace: true }); return; }
   if (t.dataset.tbjuego || t.dataset.mercado) {
     if (t.dataset.tbjuego) S.tbJuego = t.dataset.tbjuego === '1'; else S.mercado = t.dataset.mercado;
     save(); render(); if (['mapa', 'hoy', 'teodoro'].includes(cur?.name)) { const { theobox, ...pp } = cur.params || {}; go(cur.name, pp, 'none', { scrollTop: cur.layer.scrollTop }); } return;
