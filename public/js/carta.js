@@ -226,7 +226,8 @@ function encuadrarCierre(root, img, arriba) {
   if (img) Object.assign(img.style, { width: F.w * s + 'px', height: F.h * s + 'px', left: x0 + 'px', top: y0 + 'px', objectFit: 'fill' });
   if (img && y0 > 0) { // la franja de arriba: el mismo cielo del borde del dibujo, fundido sobre él para que no se vea la unión
     const c = F.cielo[dark() ? 'oscuro' : 'claro'], tapa = document.createElement('div'); tapa.className = 'carta-cielo-tapa'; tapa.setAttribute('aria-hidden', 'true');
-    tapa.style.cssText = `height: ${y0 + 90}px; background: linear-gradient(180deg, ${c} 0, ${c} ${y0}px, transparent ${y0 + 90}px)`;
+    const f = c.replace('rgb(', 'rgba(').replace(')', ''); // fundido largo y en curva: sin borde visible donde empieza el dibujo
+    tapa.style.cssText = `height: ${y0 + 160}px; background: linear-gradient(180deg, ${c} 0, ${c} ${y0}px, ${f},.8) ${y0 + 30}px, ${f},.5) ${y0 + 70}px, ${f},.22) ${y0 + 110}px, ${f},.06) ${y0 + 140}px, ${f},0) ${y0 + 160}px)`;
     img.after(tapa);
   }
   return { kk, izq };
