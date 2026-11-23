@@ -212,11 +212,24 @@ const FONDO_CARTA = { claro: 'assets/carta/fondo-entrega-dia.webp', oscuro: 'ass
 export function precargarCarta() { precargarAnim(TEO_CARTA); [FONDO_CARTA.claro, FONDO_CARTA.oscuro].forEach(src => { new Image().src = src; }); }
 // la sorpresa (23-nov, Drive «07 Pantalla de cierre (pesebre)»): cielo, colinas y un claro de tierra donde se para el pesebre de la
 // animación, con el camino que llega a él desde abajo a la izquierda (941 × 1672). «claro»: el centro del claro, en px del dibujo
-const FONDO_CIERRE = { claro: 'assets/carta/fondo-cierre-dia.webp', oscuro: 'assets/carta/fondo-cierre-noche.webp', w: 941, h: 1672, pos: [.5, .5], centro: [573, 913] };
-/** Un punto del dibujo del fondo en la pantalla (object-fit: cover con su object-position). */
-function enFondo(root, F, [x, y]) {
-  const W = root.clientWidth || 390, H = root.clientHeight || 844, k = Math.max(W / F.w, H / F.h);
-  return { x: (W - F.w * k) * F.pos[0] + x * k, y: (H - F.h * k) * F.pos[1] + y * k };
+const FONDO_CIERRE = { claro: 'assets/carta/fondo-cierre-dia.webp', oscuro: 'assets/carta/fondo-cierre-noche.webp', w: 941, h: 1672, centro: [578, 897], ancho: 665,
+  cielo: { claro: 'rgb(107,185,248)', oscuro: 'rgb(64,132,225)' } }; // el claro mide ~665 × 150; «cielo»: el color del borde de arriba del dibujo
+/** La sorpresa: el pesebre de la animación llena el claro del fondo. La escena del final (Teodoro junto al Niño y el pesebre) cabe entera
+ *  con 12 px a cada lado, la estrella queda justo bajo el subtítulo y el fondo se escala para que el claro mida lo mismo que la paja y
+ *  quede debajo de ella; la franja de arriba que queda se rellena con su mismo cielo (fundido). */
+function encuadrarCierre(root, img, arriba) {
+  const W = root.clientWidth || 390, H = root.clientHeight || 844, F = FONDO_CIERRE, P = TEO_CIERRE.paja, [e0, e1] = TEO_CIERRE.escena;
+  const kk = (W - 24) / (e1 - e0), izq = W / 2 - (e0 + e1) / 2 * kk;           // la escena final entera, centrada
+  const s = Math.max(H / F.h, P.ancho * kk / F.ancho);                           // el claro tan ancho como la paja (sin huecos abajo)
+  const px = izq + P.cx * kk, cy = arriba + P.cy * kk;                            // el centro de la paja en pantalla
+  const x0 = Math.min(0, Math.max(W - F.w * s, px - F.centro[0] * s)), y0 = cy - F.centro[1] * s;
+  if (img) Object.assign(img.style, { width: F.w * s + 'px', height: F.h * s + 'px', left: x0 + 'px', top: y0 + 'px', objectFit: 'fill' });
+  if (img && y0 > 0) { // la franja de arriba: el mismo cielo del borde del dibujo, fundido sobre él para que no se vea la unión
+    const c = F.cielo[dark() ? 'oscuro' : 'claro'], tapa = document.createElement('div'); tapa.className = 'carta-cielo-tapa'; tapa.setAttribute('aria-hidden', 'true');
+    tapa.style.cssText = `height: ${y0 + 90}px; background: linear-gradient(180deg, ${c} 0, ${c} ${y0}px, transparent ${y0 + 90}px)`;
+    img.after(tapa);
+  }
+  return { kk, izq };
 }
 /** La entrega al Niño y su fondo: se bajan cuando la carta ya se puede abrir (abrirCarta), antes de la sorpresa. */
 function precargarCierre() { precargarAnim(TEO_CIERRE); [FONDO_CIERRE.claro, FONDO_CIERRE.oscuro].forEach(src => { new Image().src = src; }); }
@@ -249,7 +262,7 @@ register('cartaSecreta', {
     const fondo = cielo(root, { src: FONDO_CARTA[dark() ? 'oscuro' : 'claro'], pos: FONDO_CARTA.pos, bruma: 'carta-bruma carta-bruma-fondo' });
     limpiarLienzo(fondo.img?.parentElement);
     const titulo = [...root.querySelectorAll('div')].find(d => /Teodoro le trae/.test(d.textContent) && d.children.length <= 3);
-    ponerTitulo(titulo, t.secreta);
+    ponerTitulo(titulo, t.secreta); titulo?.classList.add('carta-titulo-fondo'); // se lee sobre el dibujo
     // Teodoro es el protagonista (Lottie): grande, sobre el camino, con los pies sobre el botón. La imagen fija queda escondida por si no carga
     const quieto = imgAlt(root, /^Teodoro/); if (quieto) { quieto.alt = t.altSecreta; quieto.style.visibility = 'hidden'; }
     const capa = document.createElement('div'); capa.className = 'carta-teo-capa'; capa.setAttribute('role', 'img'); capa.setAttribute('aria-label', t.altSecreta);
@@ -429,19 +442,19 @@ register('cartaSorpresa', {
   noScroll: true,
   mount(root, p, layer) {
     const t = tx();
-    const fondo = cielo(root, { src: FONDO_CIERRE[dark() ? 'oscuro' : 'claro'], pos: FONDO_CIERRE.pos.map(v => v * 100 + '%').join(' '), bruma: 'carta-bruma carta-bruma-fondo' });
+    const fondo = cielo(root, { src: FONDO_CIERRE[dark() ? 'oscuro' : 'claro'], bruma: 'carta-bruma carta-bruma-fondo' });
     limpiarLienzo(fondo.img?.parentElement, { pesebre: false });
     const titulo = textEl(root, /^¡Mira, Lucía!$/), sub = textEl(root, /^Jesús ya nació en Belén$/);
     const todo = completa();
     if (titulo) { titulo.textContent = todo ? t.logro(S.nombre) : t.momento(S.nombre); caber(titulo); }
     if (sub) sub.textContent = todo ? t.logroSub(vistos()) : t.momentoSub(vistos());
+    titulo?.classList.add('carta-titulo-fondo'); sub?.classList.add('carta-sub-fondo'); // se leen sobre el dibujo
     // las imágenes del lienzo quedan escondidas: solo vuelven si la animación no carga
     const quietos = [imgAlt(root, /^Teodoro de espaldas/), imgAlt(root, /^El pesebre/)].filter(Boolean);
     quietos.forEach(el => { el.style.visibility = 'hidden'; });
     // el pesebre de la animación se para sobre el claro del fondo: la estrella justo bajo el subtítulo y la base de paja en el claro
-    const claro = enFondo(root, FONDO_CIERRE, FONDO_CIERRE.centro);
-    const arriba = sub ? sub.offsetTop + sub.offsetHeight + 14 : 206;
-    const kk = (claro.y + 38 - arriba) / TEO_CIERRE.base, izq = claro.x - TEO_CIERRE.centro * kk;
+    const arriba = sub ? sub.offsetTop + sub.offsetHeight + 16 : 208;
+    const { kk, izq } = encuadrarCierre(root, fondo.img, arriba);
     const enEscena = ([x, y]) => ({ x: izq + x * kk, y: arriba + y * kk });
     const capa = document.createElement('div'); capa.className = 'carta-teo-capa'; capa.setAttribute('role', 'img'); capa.setAttribute('aria-label', t.altCamina);
     fondo.bruma.after(capa);

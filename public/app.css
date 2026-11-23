@@ -1535,8 +1535,14 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 .carta-bruma { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,249,252,.94) 0%, rgba(240,249,252,.6) 20%, rgba(240,249,252,0) 38%), linear-gradient(0deg, rgba(240,249,252,.7) 0%, rgba(240,249,252,0) 20%); }
 :root[data-theme="dark"] .carta-bruma { background: linear-gradient(180deg, rgba(5,18,48,.92) 0%, rgba(5,18,48,.55) 22%, rgba(5,18,48,0) 42%), linear-gradient(0deg, rgba(5,18,48,.75) 0%, rgba(5,18,48,0) 22%); }
 /* la carta secreta y la sorpresa (fondos ilustrados): bruma solo detrás del título, para que se vean la estrella y el pesebre, y abajo para el botón */
-.carta-bruma.carta-bruma-fondo { background: linear-gradient(180deg, rgba(240,249,252,.86) 0%, rgba(240,249,252,.58) 16%, rgba(240,249,252,.2) 23%, rgba(240,249,252,0) 29%), linear-gradient(0deg, rgba(240,249,252,.55) 0%, rgba(240,249,252,0) 14%); }
-:root[data-theme="dark"] .carta-bruma.carta-bruma-fondo { background: linear-gradient(180deg, rgba(5,18,48,.82) 0%, rgba(5,18,48,.5) 16%, rgba(5,18,48,.18) 23%, rgba(5,18,48,0) 29%), linear-gradient(0deg, rgba(5,18,48,.6) 0%, rgba(5,18,48,0) 14%); }
+.carta-bruma.carta-bruma-fondo { background: linear-gradient(180deg, rgba(234,246,251,.95) 0%, rgba(234,246,251,.9) 18%, rgba(234,246,251,.55) 23.5%, rgba(234,246,251,0) 28%), linear-gradient(0deg, rgba(234,246,251,.55) 0%, rgba(234,246,251,0) 14%); }
+:root[data-theme="dark"] .carta-bruma.carta-bruma-fondo { background: linear-gradient(180deg, rgba(5,18,48,.93) 0%, rgba(5,18,48,.86) 18%, rgba(5,18,48,.5) 23.5%, rgba(5,18,48,0) 28%), linear-gradient(0deg, rgba(5,18,48,.6) 0%, rgba(5,18,48,0) 14%); }
+/* textos sobre los dibujos: un halo suave detrás de las letras; el subtítulo en azul marino y medio (no gris) */
+.carta-titulo-fondo { text-shadow: 0 0 2px rgba(255,255,255,.7), 0 1px 16px rgba(255,255,255,.9); }
+.carta-sub-fondo { color: #06325A !important; font-weight: 500 !important; text-shadow: 0 0 2px rgba(255,255,255,.7), 0 1px 12px rgba(255,255,255,.9); }
+:root[data-theme="dark"] .carta-titulo-fondo { color: #FFFFFF !important; text-shadow: 0 1px 2px rgba(0,8,43,.5), 0 2px 16px rgba(0,8,43,.75); }
+:root[data-theme="dark"] .carta-sub-fondo { color: #EEF5FF !important; text-shadow: 0 1px 2px rgba(0,8,43,.5), 0 2px 12px rgba(0,8,43,.75); }
+.carta-cielo-tapa { position: absolute; left: 0; right: 0; top: 0; pointer-events: none; }
 .carta-teo-capa { position: absolute; inset: 0; pointer-events: none; }
 /* carta · los días que faltan, juntos en un panel de vidrio */
 .carta-panel { position: absolute; left: 24px; right: 24px; padding: 12px 10px 10px; border-radius: 22px; background: rgba(255,255,255,.62); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 8px 22px rgba(2,37,79,.12); }

@@ -17,7 +17,8 @@ export const SALUDA = { nombre: 'teo-saluda', w: 432, h: 576, pie: 480, x: 216, 
 // pesebre (que viene en la animación: la Virgen, san José y el Niño se mueven un poco) y se la ofrece al Niño. Una sola vez y queda en el
 // último cuadro. Se ubica por su esquina (pie = alto del lienzo, x = suelo = 0). En px del lienzo: la base de paja del pesebre (y) y su
 // centro (x), la estrella y el Niño
-export const CIERRE = { nombre: 'teo-pesebre-cierre', w: 578, h: 720, pie: 720, x: 0, suelo: 0, ultimo: 60, base: 535, centro: 375, estrella: [368, 35], nino: [385, 315] };
+// «paja»: la elipse de paja bajo el pesebre (centro y ancho): es la que llena el claro del fondo
+export const CIERRE = { nombre: 'teo-pesebre-cierre', w: 578, h: 720, pie: 720, x: 0, suelo: 0, ultimo: 60, base: 535, centro: 375, estrella: [368, 35], nino: [385, 315], paja: { cx: 372, cy: 480, ancho: 415 }, escena: [116, 577] }; // «escena»: de dónde a dónde va en x el último cuadro (Teodoro junto al Niño + el pesebre)
 export const CARTA = { nombre: 'teo-carta', w: 298, h: 393, pie: 374, x: 140, suelo: 390, ofrece: 26, bucle: [29, 61], sobre: [58, 150] };
 // los clips de la trivia salen del mismo lienzo (426 × 600): Teodoro mide 532 de pie y apoya los pies en (266,6; 591,3) en todos,
 // así que se encadenan sin ajustar nada. «salidas»: tramos [desde, hasta) de cada bucle con la pose de unión, donde puede empezar
