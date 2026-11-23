@@ -45,7 +45,7 @@ await tocar('Firmar de nuevo'); await espera('cartaFirma'); await p.waitForTimeo
 { const c2 = await p.evaluate(() => { const r = document.querySelector('#viewport .layer:last-child .firma-caja').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
   await p.mouse.move(c2.x + 40, c2.y + 60); await p.mouse.down(); await p.mouse.move(c2.x + c2.w - 60, c2.y + 90, { steps: 12 }); await p.mouse.up(); }
 await tocar('¡Listo, firmé!'); await espera('cartaGuardada'); if ((await estado()).carta.firma === firma0) fallos.push('firmar de nuevo no cambió la firma');
-await tocar('Seguir con el día 19'); await espera('mapa'); await p.waitForTimeout(1500); await foto('4-mapa-faltan');
+await tocar('Seguir con el día 19'); await espera('mapa'); await p.waitForFunction(() => document.querySelector('#viewport .layer:last-child .carta-icono'), null, { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(400); await foto('4-mapa-faltan'); // en producción el ícono tarda un poco más en pintarse
 const ico = await p.evaluate(() => { const i = document.querySelector('#viewport .layer:last-child .carta-icono'); return i ? { clase: i.className, badge: i.querySelector('.carta-badge')?.textContent, aria: i.getAttribute('aria-label') } : null; });
 if (!ico || !/carta-faltan/.test(ico.clase) || ico.badge !== '1') fallos.push('ícono en el mapa: ' + JSON.stringify(ico));
 // termina el día 19 (el último que faltaba): se abre la sorpresa ahí mismo

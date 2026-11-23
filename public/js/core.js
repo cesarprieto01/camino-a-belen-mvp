@@ -132,7 +132,7 @@ let SECS = [];
 export const sections = () => SECS;
 const cache = new Map();
 export async function boot() {
-  MAN = await (await fetch('screens/manifest.json')).json();
+  MAN = await (await fetch('screens/manifest.json', { cache: 'no-cache' })).json();
   try { SECS = await (await fetch('screens/sections.json')).json(); } catch { SECS = []; }
 }
 const TAB_OF = { teodoro: 'teodoro', mundos: 'teodoro' };
@@ -170,7 +170,7 @@ export const manifest = () => MAN;
 export async function html(file) {
   if (!cache.has(file)) {
     // si falla la red, no se queda guardado el error: el próximo intento vuelve a pedirla
-    const p = fetch('screens/' + file + '.html').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+    const p = fetch('screens/' + file + '.html', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
     p.catch(() => cache.delete(file));
     cache.set(file, p);
   }

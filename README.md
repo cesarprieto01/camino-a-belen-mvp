@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-Abre http://localhost:5190/app.html. El panel de controles (a la derecha; en el celular, el botón de arriba a la derecha) es solo del prototipo:
+Abre http://localhost:5190/app.html. `npm run dev` levanta `tools/servidor.py`, que le pide al navegador no guardar nada (`Cache-Control: no-store`): cada recarga trae lo último. Con un servidor que no lo diga (`python3 -m http.server`, `serve`), Chrome guarda las pantallas y los `.js` un rato y se ve la versión anterior. El panel de controles (a la derecha; en el celular, el botón de arriba a la derecha) es solo del prototipo:
 
 - **Arriba, siempre a la vista:** la pantalla donde estás, Día/Noche, copiar el enlace a este estado y el día con ‹ ›.
 - **Estado:** Teodoro y su energía, la familia (plan, inscrito, panes), el tiempo (completó hasta, saltar 7 días) y «Empezar de cero».
@@ -54,6 +54,7 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   braze/slides-reto-en/  el mismo in-app en inglés (`node tools/braze-slides.mjs --en capturar` y luego `--en`)
 tools/             SOLO PROTOTIPO: pruebas de recorrido y capturas (Playwright); no van a la app
                    braze-slides.mjs arma el in-app de Braze desde el MVP («capturar» saca el arte de los slides)
+                   servidor.py es el servidor local (npm run dev), sin caché
                    carta-flujo.mjs recorre la carta como un niño; medir-audio.mjs mide el volumen real que sale (ver «Pruebas»)
 ```
 
@@ -106,7 +107,7 @@ Desde el 20 de noviembre de 2026 reemplaza al final de 3 pasos («¡Llegamos a B
 - **Los números** (`numerosCarta()`): historias de la Biblia (cuentos vistos), juegos en familia (juegos sorpresa hechos + juegos en familia vistos), estrellas ganadas, panes y tiempo juntos (minutos estimados por contenido, trivia y juego). Solo íconos que usa hoy el MVP: los de los días del mapa, la estrella dorada y el pan; la lámpara ya no va. Las filas en 0 no salen.
 - **Corregir y salir:** se puede volver a firmar desde «¡Carta firmada!» y desde la carta; la firma tiene goma, deshacer, borrar todo y 5 tintas (el color cambia también lo ya escrito). Cada paso tiene salida («Ahora no» o la X) sin perder nada.
 - **Imprimir y Compartir bajan directo:** Imprimir baja el PDF A4 «Carta al Niño Jesús» (con espacio para un dibujo) y Compartir baja la imagen 9:16 para historias. Se arman en el navegador con `vendor/html-to-image.min.js` y las fuentes incrustadas (Allura, Caveat y Gloria Hallelujah, cargadas en `index.html` y `app.html`).
-- **Teodoro firma con sus cascos** (es un burro): dos huellas de casco en el círculo dorado de la carta, el A4 y la historia, y en el sello rojo de «¡Carta firmada!». Nunca una huella de perro.
+- **Teodoro firma con la huella de su casco** (es un burro): la pared del casco en U con la ranura en V adentro, derecha (el círculo va girado -14° y el dibujo +14°), en el círculo dorado de la carta, el A4 y la historia, y en el sello rojo de «¡Carta firmada!». Nunca una huella de perro; dos cascos chicos no se entendían.
 - **Sonido:** suena la ambiental de las trivias desde que entra (no se retiene; el video del día 26 la precarga), a +9 dB en la carta y +6 al firmar (`NIVEL` en `musica.js`; en la trivia va a -6). A 0 dB quedaba a -40 dBFS y no se oía bajo las campanas y la voz; ahora queda a la altura del burrito del mapa (comprobar con `tools/medir-audio.mjs`). Voces de Teodoro, solo audio: «¡Gran aventura!» al traer la carta, «¡Qué buen trabajo!» tras el golpe del sello, «¡Increíble!» al revelarse y «¡Gran aventura!» al abrirse.
 - **Idioma:** español por defecto, como todo el MVP (`S.idiomaCarta`; la clave vieja `finalIdioma`, que la dejaba en inglés, se borra al cargar). El inglés se prueba en panel › Ajustes › Idioma. En la app, la carta sigue el idioma de la app.
 - **Lo que guarda** (`S.carta`): si la vio, la firma (PNG), el color de tinta, el día en que firmó (da la fecha: 24 dic «Nochebuena, 2026», 25 «Navidad, 2026»), si la dejó para después y si ya la abrió.

@@ -317,10 +317,10 @@ register('cartaGuardada', {
       const rehacer = () => go('cartaFirma', { rehacer: 'cartaGuardada' }, 'fade', { replace: true });
       on(root, caja, rehacer); on(root, otra, rehacer);
     }
-    // el sello: los cascos de Teodoro (es un burro) cierran la carta hasta que la abra
+    // el sello: la huella del casco de Teodoro (es un burro), derecha, cierra la carta hasta que la abra
     if (tarjeta) {
       const sello = document.createElement('div'); sello.className = 'carta-sello'; sello.setAttribute('aria-hidden', 'true');
-      sello.innerHTML = '<svg width="34" height="34" viewBox="0 0 24 24" fill="#FFF6DD"><path transform="translate(6.8 8) scale(1.12)" d="M-.95 4.9C-2.7 4.9-4.3 3.5-4.3.3-4.3-3.1-2.4-5.1 0-5.1S4.3-3.1 4.3.3C4.3 3.5 2.7 4.9.95 4.9L.42.4Q0-.25-.42.4Z"/><path transform="translate(17.2 15.8) scale(1.12)" d="M-.95 4.9C-2.7 4.9-4.3 3.5-4.3.3-4.3-3.1-2.4-5.1 0-5.1S4.3-3.1 4.3.3C4.3 3.5 2.7 4.9.95 4.9L.42.4Q0-.25-.42.4Z"/></svg>';
+      sello.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="#FFF6DD" style="transform: rotate(14deg)"><path d="M12 2.6C17.1 2.6 20.6 6.6 20.6 11.9C20.6 15.7 19.5 18.8 18 20.7C17.3 21.6 15.9 21.6 15.3 20.6L15 20C16.2 18.4 17.3 15.6 17.3 12C17.3 8.6 15.1 6 12 6S6.7 8.6 6.7 12C6.7 15.6 7.8 18.4 9 20L8.7 20.6C8.1 21.6 6.7 21.6 6 20.7C4.5 18.8 3.4 15.7 3.4 11.9C3.4 6.6 6.9 2.6 12 2.6Z"/><path d="M12 10.2C12.6 10.2 13 10.6 13.2 11.1L14.8 16.3C15 17 14.5 17.5 13.9 17.3L12 16.7L10.1 17.3C9.5 17.5 9 17 9.2 16.3L10.8 11.1C11 10.6 11.4 10.2 12 10.2Z"/></svg>';
       tarjeta.appendChild(sello);
     }
     // los días que faltan, con su ícono del mapa y un rótulo como el «✦ TIEMPO DE NAVIDAD ✦» de Adviento
