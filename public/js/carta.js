@@ -6,10 +6,10 @@
 //      7 de enero con lo que haya hecho. Teodoro entrega la carta al Niño Jesús («¡Era una carta para Jesús!») y se lee,
 //      con sus números y su firma; se puede imprimir (A4) o compartir (historia 9:16).
 // Entre los dos, el ícono de la carta vive arriba en el mapa, junto a la batería, y cuenta los días del reto por completar.
-import { S, save, A, $$, on, find, go, register, cur, toast, nota, dark, reduced, textEl, replaceText, confetti, vistos, contentDone, stars, fase } from './core.js';
+import { S, save, A, $$, on, find, go, back, register, cur, toast, nota, dark, reduced, textEl, replaceText, confetti, vistos, contentDone, stars, fase } from './core.js';
 import { DAYS, TYPES, RULES, JUEGOS, IMG, iconOf, hasTrivia } from './data.js';
 import { sparkles, goldRain } from './flow.js';
-import { teoDice, sonido, motivo } from './musica.js';
+import { teoDice, sonido, motivo, bindMute } from './musica.js';
 import { entradaSecreta, botonListo, selloCarta, coreografiaSorpresa, abrirCartaAnim, presionable } from './carta-motion.js'; // coreografía de logro
 import { teoAnimado, CARTA as TEO_CARTA, CIERRE as TEO_CIERRE, precargar as precargarAnim } from './teo-anim.js'; // Teodoro trae la carta secreta y la entrega al Niño (Lottie)
 
@@ -250,7 +250,23 @@ function cielo(root, { src = CIELO[dark() ? 'oscuro' : 'claro'], pos = '50% 50%'
   return { img, bruma };
 }
 
-const cerrarX = root => { const x = find(root, 'Cerrar'); if (x) { x.classList.add('carta-x', 'carta-toque'); presionable(x); x.setAttribute('aria-label', tx().cerrar); on(root, x, alMapa); } };
+/** La barra de arriba de la carta: a la izquierda «Volver» (a la pantalla anterior; sin el video del día 26 de por medio; si no hay,
+ *  al mapa); a la derecha «Cerrar» (al mapa) y, a su izquierda, la música y la voz de Teodoro (encender/silenciar). Los tres de vidrio. */
+const cerrarX = root => {
+  const x = find(root, 'Cerrar'); if (!x) return;
+  x.classList.add('carta-x', 'carta-toque'); presionable(x); x.setAttribute('aria-label', tx().cerrar); on(root, x, alMapa);
+  const color = x.querySelector('svg')?.getAttribute('stroke') || 'currentColor';
+  const copia = () => { const b = x.cloneNode(true); b.removeAttribute('data-bound'); x.after(b); presionable(b); return b; };
+  // volver: la misma pastilla de vidrio, a la izquierda (donde estaba la X)
+  const v = copia(); v.setAttribute('aria-label', tx().volver);
+  v.querySelector('svg').innerHTML = '<path d="m15 18-6-6 6-6"/>';
+  on(root, v, () => back('mapa', 'back', ['reproductor']));
+  // la X a la derecha y el sonido a su izquierda (10 px entre los dos)
+  Object.assign(x.style, { left: 'auto', right: '14px' });
+  const m = document.createElement('button'); m.type = 'button'; m.className = x.className; m.style.cssText = x.style.cssText; Object.assign(m.style, { right: '68px', border: '0', padding: '0', color });
+  x.before(m); presionable(m); bindMute(m);
+  m.querySelector('svg')?.setAttribute('width', '22'); m.querySelector('svg')?.setAttribute('height', '22');
+};
 
 // ---------- 1 · La carta secreta (B2) ----------
 register('cartaSecreta', {
