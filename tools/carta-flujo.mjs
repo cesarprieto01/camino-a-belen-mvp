@@ -51,7 +51,9 @@ if (!ico || !/carta-faltan/.test(ico.clase) || ico.badge !== '1') fallos.push('�
 // termina el día 19 (el último que faltaba): se abre la sorpresa ahí mismo
 await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('reproductor', { day: 19 }, 'none'); });
 await p.waitForTimeout(1200); await terminarVideo();
-await espera('cartaSorpresa'); await p.waitForTimeout(800); await foto('5-sorpresa-antes'); await p.waitForTimeout(4200); await foto('6-sorpresa-revela');
+await espera('cartaSorpresa'); await p.waitForTimeout(800); await foto('5-sorpresa-antes');
+// Teodoro camina hasta el pesebre (~5 s de animación) y después se revela: se espera el título nuevo, hasta 12 s
+await p.waitForFunction(() => /era para Jes/.test(document.querySelector('#viewport .layer:last-child')?.textContent || ''), null, { timeout: 12000 }).catch(() => {}); await p.waitForTimeout(600); await foto('6-sorpresa-revela');
 const titulo = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child div')].find(d => /para Jesús!$/.test(d.textContent) && !d.children.length)?.textContent);
 if (!titulo) fallos.push('no se reveló «¡La carta era para Jesús!»');
 await tocar('Leer la carta'); await espera('carta'); await p.waitForTimeout(1800); await foto('7-carta');

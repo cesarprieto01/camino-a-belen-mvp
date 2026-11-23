@@ -13,6 +13,11 @@ export const SALUDA = { nombre: 'teo-saluda', w: 432, h: 576, pie: 480, x: 216, 
 // la carta de Teodoro (23-nov, Drive «04 Lottie listos/teo_carta»): de frente con su cayado y el sobre escondido (0–23), lo saca y lo
 // ofrece hacia su derecha, donde está el pesebre (24–28; «ofrece» = el cuadro del brazo extendido), y lo sostiene feliz moviendo las
 // orejas (29–61, «bucle»). «sobre»: dónde queda el sobre en el lienzo cuando lo ofrece (de ahí sale la lucecita al pesebre)
+// el cierre (23-nov, Drive «07 Pantalla de cierre (pesebre)»): Teodoro de espaldas camina por el camino con su cayado y la carta hasta el
+// pesebre (que viene en la animación: la Virgen, san José y el Niño se mueven un poco) y se la ofrece al Niño. Una sola vez y queda en el
+// último cuadro. Se ubica por su esquina (pie = alto del lienzo, x = suelo = 0). En px del lienzo: la base de paja del pesebre (y) y su
+// centro (x), la estrella y el Niño
+export const CIERRE = { nombre: 'teo-pesebre-cierre', w: 578, h: 720, pie: 720, x: 0, suelo: 0, ultimo: 60, base: 535, centro: 375, estrella: [368, 35], nino: [385, 315] };
 export const CARTA = { nombre: 'teo-carta', w: 298, h: 393, pie: 374, x: 140, suelo: 390, ofrece: 26, bucle: [29, 61], sobre: [58, 150] };
 // los clips de la trivia salen del mismo lienzo (426 × 600): Teodoro mide 532 de pie y apoya los pies en (266,6; 591,3) en todos,
 // así que se encadenan sin ajustar nada. «salidas»: tramos [desde, hasta) de cada bucle con la pose de unión, donde puede empezar

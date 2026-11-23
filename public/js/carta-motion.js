@@ -319,15 +319,18 @@ function caminar({ dx, dy, s1 }) {
  * los textos y antes de animarlos (ahí se puede reajustar el título). animacionEntrega (opcional): ({ teo, pesebre, root, layer })
  * → Promise | Animation | { finished, saltar() }; si viene, reemplaza el caminar y la lucecita (el resto sigue igual).
  */
-export function coreografiaSorpresa({ root, layer, teo, pesebre, titulo, sub, boton, textos = {}, onRevelar, animacionEntrega } = {}) {
+export function coreografiaSorpresa({ root, layer, teo, pesebre, titulo, sub, boton, textos = {}, onRevelar, animacionEntrega, puntos } = {}) {
   const e = escena(root);
   if (!root) return control(e, () => {});
   const P = pesebre ? dibujo(root, pesebre) : null, T = teo ? dibujo(root, teo) : null;
   const dest = T && P ? destinoTeo(T, P) : null;
-  const nino = P ? { x: P.x + P.w * PESEBRE.nino[0], y: P.y + P.h * PESEBRE.nino[1] } : { x: 220, y: 430 };
+  // puntos (opcional): el pesebre viene en la animación de la entrega { nino, estrella, halo: { r, antes } } en vez de una imagen
+  const nino = puntos?.nino ?? (P ? { x: P.x + P.w * PESEBRE.nino[0], y: P.y + P.h * PESEBRE.nino[1] } : { x: 220, y: 430 });
   // la luz del pesebre (detrás de él) y el brillo de su estrella (encima): su estilo base es el estado final
-  const halo = P ? div('cm-halo', pesebre.parentElement, pesebre, `left: ${P.x + P.w / 2 - P.w * .62}px; top: ${P.y + P.h * PESEBRE.luz[1] - P.w * .62}px; width: ${P.w * 1.24}px; height: ${P.w * 1.24}px`) : null;
-  const estrella = P ? div('cm-estrella', root, null, `left: ${P.x + P.w * PESEBRE.estrella[0]}px; top: ${P.y + P.h * PESEBRE.estrella[1]}px`) : null;
+  const halo = P ? div('cm-halo', pesebre.parentElement, pesebre, `left: ${P.x + P.w / 2 - P.w * .62}px; top: ${P.y + P.h * PESEBRE.luz[1] - P.w * .62}px; width: ${P.w * 1.24}px; height: ${P.w * 1.24}px`)
+    : puntos?.halo ? div('cm-halo', root, puntos.halo.antes ?? null, `left: ${nino.x - puntos.halo.r}px; top: ${nino.y - puntos.halo.r}px; width: ${puntos.halo.r * 2}px; height: ${puntos.halo.r * 2}px`) : null;
+  const posEstrella = P ? { x: P.x + P.w * PESEBRE.estrella[0], y: P.y + P.h * PESEBRE.estrella[1] } : puntos?.estrella;
+  const estrella = posEstrella ? div('cm-estrella', root, null, `left: ${posEstrella.x}px; top: ${posEstrella.y}px`) : null;
   if (estrella) estrella.innerHTML = `<div class="cm-estrella-luz"></div><div class="cm-chispa cm-chispa-estrella">${CHISPA}</div>`;
   const [luzEstrella, chispaEstrella] = estrella ? [...estrella.children] : [];
   if (teo && dest) teo.style.transformOrigin = '50% 100%';

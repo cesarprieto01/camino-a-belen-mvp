@@ -11,7 +11,7 @@ import { DAYS, TYPES, RULES, JUEGOS, IMG, iconOf, hasTrivia } from './data.js';
 import { sparkles, goldRain } from './flow.js';
 import { teoDice, sonido, motivo } from './musica.js';
 import { entradaSecreta, botonListo, selloCarta, coreografiaSorpresa, abrirCartaAnim, presionable } from './carta-motion.js'; // coreografía de logro
-import { teoAnimado, CARTA as TEO_CARTA, precargar as precargarAnim } from './teo-anim.js'; // Teodoro trae la carta secreta (Lottie)
+import { teoAnimado, CARTA as TEO_CARTA, CIERRE as TEO_CIERRE, precargar as precargarAnim } from './teo-anim.js'; // Teodoro trae la carta secreta y la entrega al Niño (Lottie)
 
 // ---------- Estado ----------
 const C = () => (S.carta ||= { vista: false, firma: null, color: 1, firmadaDia: null, pospuesta: false, saltoFirma: false, abierta: false });
@@ -162,6 +162,7 @@ function vestirCarta(root, { px = 30, fs = 16, num = 20, gap = 6, firmaAlto = 40
 export function abrirCarta(anim = 'fade', opts = {}, params = {}) {
   const c = C();
   if (!c.vista) precargarCarta(); // la carta secreta viene: que Teodoro y el fondo estén bajados
+  else if (seAbre() && !c.abierta) precargarCierre(); // la sorpresa viene: la entrega al Niño y su fondo
   if (!c.vista) return go('cartaSecreta', params, anim, opts);
   if (!seAbre()) return go(c.firma ? 'cartaGuardada' : 'cartaFirma', params, anim, opts);
   if (!c.firma && !c.saltoFirma) return go('cartaFirma', { ...params, antesDeAbrir: true }, anim, opts);
@@ -209,10 +210,20 @@ const CIELO = { claro: 'assets/e61f3266236935daf349df4ae724951b.webp', oscuro: '
 const FONDO_CARTA = { claro: 'assets/carta/fondo-entrega-dia.webp', oscuro: 'assets/carta/fondo-entrega-noche.webp', pos: '8% 50%' };
 /** Teodoro con el sobre (Lottie) y el fondo del pesebre: se bajan mientras ve el video del día 26 (flow.js), así la carta secreta entra lista. */
 export function precargarCarta() { precargarAnim(TEO_CARTA); [FONDO_CARTA.claro, FONDO_CARTA.oscuro].forEach(src => { new Image().src = src; }); }
-/** Fuera del lienzo lo que el fondo del pesebre ya trae: los resplandores cálidos, el pesebre dibujado y los destellos sueltos. */
-function limpiarLienzo(contenedor) {
+// la sorpresa (23-nov, Drive «07 Pantalla de cierre (pesebre)»): cielo, colinas y un claro de tierra donde se para el pesebre de la
+// animación, con el camino que llega a él desde abajo a la izquierda (941 × 1672). «claro»: el centro del claro, en px del dibujo
+const FONDO_CIERRE = { claro: 'assets/carta/fondo-cierre-dia.webp', oscuro: 'assets/carta/fondo-cierre-noche.webp', w: 941, h: 1672, pos: [.5, .5], centro: [573, 913] };
+/** Un punto del dibujo del fondo en la pantalla (object-fit: cover con su object-position). */
+function enFondo(root, F, [x, y]) {
+  const W = root.clientWidth || 390, H = root.clientHeight || 844, k = Math.max(W / F.w, H / F.h);
+  return { x: (W - F.w * k) * F.pos[0] + x * k, y: (H - F.h * k) * F.pos[1] + y * k };
+}
+/** La entrega al Niño y su fondo: se bajan cuando la carta ya se puede abrir (abrirCarta), antes de la sorpresa. */
+function precargarCierre() { precargarAnim(TEO_CIERRE); [FONDO_CIERRE.claro, FONDO_CIERRE.oscuro].forEach(src => { new Image().src = src; }); }
+/** Fuera del lienzo lo que el fondo ya trae: los resplandores cálidos, los destellos sueltos y (si se pide) el pesebre dibujado. */
+function limpiarLienzo(contenedor, { pesebre = true } = {}) {
   [...(contenedor?.children || [])].forEach(el => { const st = el.getAttribute('style') || '';
-    if ((el.tagName === 'DIV' && !el.className && /radial-gradient/.test(st) && /border-radius: 50%/.test(st)) || (el.tagName.toLowerCase() === 'svg' && /position: absolute/.test(st)) || (el.tagName === 'IMG' && /^El pesebre/.test(el.alt || ''))) el.remove(); });
+    if ((el.tagName === 'DIV' && !el.className && /radial-gradient/.test(st) && /border-radius: 50%/.test(st)) || (el.tagName.toLowerCase() === 'svg' && /position: absolute/.test(st)) || (pesebre && el.tagName === 'IMG' && /^El pesebre/.test(el.alt || ''))) el.remove(); });
 }
 function cielo(root, { src = CIELO[dark() ? 'oscuro' : 'claro'], pos = '50% 50%', bruma: claseBruma = 'carta-bruma' } = {}) {
   const hijos = [...root.children];
@@ -411,30 +422,60 @@ register('cartaGuardada', {
 });
 
 // ---------- 2 · La sorpresa (B1): Teodoro entrega la carta al Niño Jesús ----------
-// Aquí Teodoro camina al pesebre (imagen fija con coreografía). La Lottie de Teodoro con el sobre va en la carta secreta (23-nov, César);
-// si algún día hay una de la entrega al Niño, va en ENTREGA y reemplaza el caminar.
-const ENTREGA = null; // p. ej. 'assets/lottie/teo-entrega-carta.json'
+// La entrega (23-nov): la animación trae el pesebre y a Teodoro caminando hasta él para ofrecerle la carta al Niño; se para sobre el claro
+// del fondo. Si no carga, vuelven las imágenes del lienzo (Teodoro de espaldas y el pesebre) y la revelación sigue sin el caminar.
 register('cartaSorpresa', {
   file: () => dark() ? 'CARTA-1-oscuro' : 'CARTA-1',
   noScroll: true,
   mount(root, p, layer) {
-    const t = tx(); cielo(root);
+    const t = tx();
+    const fondo = cielo(root, { src: FONDO_CIERRE[dark() ? 'oscuro' : 'claro'], pos: FONDO_CIERRE.pos.map(v => v * 100 + '%').join(' '), bruma: 'carta-bruma carta-bruma-fondo' });
+    limpiarLienzo(fondo.img?.parentElement, { pesebre: false });
     const titulo = textEl(root, /^¡Mira, Lucía!$/), sub = textEl(root, /^Jesús ya nació en Belén$/);
     const todo = completa();
     if (titulo) { titulo.textContent = todo ? t.logro(S.nombre) : t.momento(S.nombre); caber(titulo); }
     if (sub) sub.textContent = todo ? t.logroSub(vistos()) : t.momentoSub(vistos());
-    const teo = imgAlt(root, /^Teodoro de espaldas/), pesebre = imgAlt(root, /^El pesebre/);
-    if (teo) teo.alt = t.altCamina; // no dice adónde va la carta hasta la revelación
+    // las imágenes del lienzo quedan escondidas: solo vuelven si la animación no carga
+    const quietos = [imgAlt(root, /^Teodoro de espaldas/), imgAlt(root, /^El pesebre/)].filter(Boolean);
+    quietos.forEach(el => { el.style.visibility = 'hidden'; });
+    // el pesebre de la animación se para sobre el claro del fondo: la estrella justo bajo el subtítulo y la base de paja en el claro
+    const claro = enFondo(root, FONDO_CIERRE, FONDO_CIERRE.centro);
+    const arriba = sub ? sub.offsetTop + sub.offsetHeight + 14 : 206;
+    const kk = (claro.y + 38 - arriba) / TEO_CIERRE.base, izq = claro.x - TEO_CIERRE.centro * kk;
+    const enEscena = ([x, y]) => ({ x: izq + x * kk, y: arriba + y * kk });
+    const capa = document.createElement('div'); capa.className = 'carta-teo-capa'; capa.setAttribute('role', 'img'); capa.setAttribute('aria-label', t.altCamina);
+    fondo.bruma.after(capa);
+    const teoP = teoAnimado(capa, TEO_CIERRE, { cx: izq, pies: arriba, alto: TEO_CIERRE.h * kk, loop: false, autoplay: false, clase: 'carta-teo' }).then(r => {
+      if (!r || !root.isConnected) { quietos.forEach(el => { el.style.visibility = ''; }); return null; }
+      r.caja.style.opacity = '1';
+      r.anim.goToAndStop(reduced() ? TEO_CIERRE.ultimo : 0, true); // con menos movimiento: ya junto al Niño
+      return r;
+    });
     const b = boton(root, '¡Vamos a verlo!', t.leer);
     const svg = b?.querySelector('svg'); if (svg) svg.innerHTML = '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>';
     estiloMVP(b, 'prim', 727);
     if (b) on(root, b, () => go('carta', { nueva: true }, 'fade', { replace: true }));
     cerrarX(root);
     if (b) b.querySelector('svg') && b.querySelector('svg').setAttribute('stroke', '#0B748A');
-    coreografiaSorpresa({ root, layer, teo, pesebre, titulo, sub, boton: b,
-      textos: { era: t.era, eraSub: t.eraSub, altEntrega: t.altEntrega },
-      onRevelar: () => { caber(titulo); teoDice('premioGrande', { tras: .35 }); }, // «¡Increíble!»: la carta era para Jesús
-      animacionEntrega: ENTREGA || undefined });
+    // la entrega: Teodoro camina por el camino hasta el pesebre y le ofrece la carta al Niño (una vez, queda en el último cuadro);
+    // al terminar se encienden la luz del pesebre y la estrella y se revela «¡La carta era para Jesús!»
+    const entrega = () => {
+      let listo, a = null, hecho = false;
+      const finished = new Promise(ok => { listo = () => { if (!hecho) { hecho = true; ok(); } }; });
+      teoP.then(r => {
+        if (!r || !root.isConnected) return listo();
+        a = r.anim; a.loop = false;
+        a.addEventListener('complete', listo);
+        a.goToAndPlay(0, true);
+        [0, .7, 1.4, 2.1, 2.8, 3.5].forEach(s => setTimeout(() => root.isConnected && sonido('paso'), s * 1000)); // sus pasos por el camino
+      });
+      return { finished, saltar: () => { a?.goToAndStop(TEO_CIERRE.ultimo, true); listo(); } };
+    };
+    coreografiaSorpresa({ root, layer, teo: capa, pesebre: null, titulo, sub, boton: b,
+      textos: { era: t.era, eraSub: t.eraSub },
+      puntos: { nino: enEscena(TEO_CIERRE.nino), estrella: enEscena(TEO_CIERRE.estrella), halo: { r: Math.round(120 * kk), antes: capa } },
+      onRevelar: () => { caber(titulo); capa.setAttribute('aria-label', t.altEntrega); teoDice('premioGrande', { tras: .35 }); }, // «¡Increíble!»: la carta era para Jesús
+      animacionEntrega: entrega });
   },
   dismiss: () => alMapa(),
 });
