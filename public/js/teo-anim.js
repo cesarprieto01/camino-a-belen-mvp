@@ -10,6 +10,10 @@ export const CAMINA = { nombre: 'teo-caminando', w: 324, h: 600, pie: 592 }; // 
 export const CELEBRA = { nombre: 'teo-celebra', w: 875, h: 1522, pie: 1167 }; // recortado a Teodoro con sus saltos, centrado en él de pie
 // Teodoro completo saludando y meciéndose feliz (el de Theo Lectura, bucle de 2 s): otro gesto que el salto de CELEBRA (gran final, paso 3)
 export const SALUDA = { nombre: 'teo-saluda', w: 432, h: 576, pie: 480, x: 216, suelo: 515 };
+// la carta de Teodoro (23-nov, Drive «04 Lottie listos/teo_carta»): de frente con su cayado y el sobre escondido (0–23), lo saca y lo
+// ofrece hacia su derecha, donde está el pesebre (24–28; «ofrece» = el cuadro del brazo extendido), y lo sostiene feliz moviendo las
+// orejas (29–61, «bucle»). «sobre»: dónde queda el sobre en el lienzo cuando lo ofrece (de ahí sale la lucecita al pesebre)
+export const CARTA = { nombre: 'teo-carta', w: 298, h: 393, pie: 374, x: 140, suelo: 390, ofrece: 26, bucle: [29, 61], sobre: [58, 150] };
 // los clips de la trivia salen del mismo lienzo (426 × 600): Teodoro mide 532 de pie y apoya los pies en (266,6; 591,3) en todos,
 // así que se encadenan sin ajustar nada. «salidas»: tramos [desde, hasta) de cada bucle con la pose de unión, donde puede empezar
 // una transición

@@ -7,7 +7,7 @@ import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz, preca
 import { rateRow } from './games.js';
 import { celebrar, pensar, SALUDA, CELEBRA } from './teo-anim.js';
 import { tarjetaInicio } from './theobox.js';
-import { abrirCarta, trasCuento, estadoCarta, diasPendientes } from './carta.js';
+import { abrirCarta, trasCuento, estadoCarta, diasPendientes, precargarCarta } from './carta.js';
 import { deslizarCamino, deslizarAntes, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
@@ -1285,7 +1285,7 @@ register('reproductor', {
   files: F('S-05-Reproductor', 'S-05-Reproductor-oscuro'),
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
-    if (p.ultimo) precargar('nieve'); // al terminar sale la carta, con la ambiental de la trivia: que ya esté bajada
+    if (p.ultimo) { precargar('nieve'); precargarCarta(); } // al terminar sale la carta secreta, con la ambiental de la trivia: que la música, Teodoro y el fondo ya estén bajados
     setText(root, /Meditación de la Escucha/, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
     // una línea bajo el título: de qué trata el día (del cronograma)
     const tituloRep = textEl(root, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);

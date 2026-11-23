@@ -1534,6 +1534,10 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 /* carta · cielo de Mundos: bruma arriba (título) y abajo (botones) para leer sobre las nubes */
 .carta-bruma { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,249,252,.94) 0%, rgba(240,249,252,.6) 20%, rgba(240,249,252,0) 38%), linear-gradient(0deg, rgba(240,249,252,.7) 0%, rgba(240,249,252,0) 20%); }
 :root[data-theme="dark"] .carta-bruma { background: linear-gradient(180deg, rgba(5,18,48,.92) 0%, rgba(5,18,48,.55) 22%, rgba(5,18,48,0) 42%), linear-gradient(0deg, rgba(5,18,48,.75) 0%, rgba(5,18,48,0) 22%); }
+/* la carta secreta (fondo del pesebre): bruma solo detrás del título, para que se vean la estrella y el pesebre, y abajo para el botón */
+.carta-bruma.carta-bruma-fondo { background: linear-gradient(180deg, rgba(240,249,252,.82) 0%, rgba(240,249,252,.45) 14%, rgba(240,249,252,0) 25%), linear-gradient(0deg, rgba(240,249,252,.55) 0%, rgba(240,249,252,0) 14%); }
+:root[data-theme="dark"] .carta-bruma.carta-bruma-fondo { background: linear-gradient(180deg, rgba(5,18,48,.8) 0%, rgba(5,18,48,.4) 14%, rgba(5,18,48,0) 25%), linear-gradient(0deg, rgba(5,18,48,.6) 0%, rgba(5,18,48,0) 14%); }
+.carta-teo-capa { position: absolute; inset: 0; pointer-events: none; }
 /* carta · los días que faltan, juntos en un panel de vidrio */
 .carta-panel { position: absolute; left: 24px; right: 24px; padding: 12px 10px 10px; border-radius: 22px; background: rgba(255,255,255,.62); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 8px 22px rgba(2,37,79,.12); }
 :root[data-theme="dark"] .carta-panel { background: rgba(10,32,72,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 8px 22px rgba(0,6,24,.3); }

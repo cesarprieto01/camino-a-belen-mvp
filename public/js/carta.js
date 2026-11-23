@@ -11,6 +11,7 @@ import { DAYS, TYPES, RULES, JUEGOS, IMG, iconOf, hasTrivia } from './data.js';
 import { sparkles, goldRain } from './flow.js';
 import { teoDice, sonido, motivo } from './musica.js';
 import { entradaSecreta, botonListo, selloCarta, coreografiaSorpresa, abrirCartaAnim, presionable } from './carta-motion.js'; // coreografía de logro
+import { teoAnimado, CARTA as TEO_CARTA, precargar as precargarAnim } from './teo-anim.js'; // Teodoro trae la carta secreta (Lottie)
 
 // ---------- Estado ----------
 const C = () => (S.carta ||= { vista: false, firma: null, color: 1, firmadaDia: null, pospuesta: false, saltoFirma: false, abierta: false });
@@ -160,6 +161,7 @@ function vestirCarta(root, { px = 30, fs = 16, num = 20, gap = 6, firmaAlto = 40
 // ---------- Entrada única: decide qué momento toca ----------
 export function abrirCarta(anim = 'fade', opts = {}, params = {}) {
   const c = C();
+  if (!c.vista) precargarCarta(); // la carta secreta viene: que Teodoro y el fondo estén bajados
   if (!c.vista) return go('cartaSecreta', params, anim, opts);
   if (!seAbre()) return go(c.firma ? 'cartaGuardada' : 'cartaFirma', params, anim, opts);
   if (!c.firma && !c.saltoFirma) return go('cartaFirma', { ...params, antesDeAbrir: true }, anim, opts);
@@ -202,15 +204,27 @@ function estiloMVP(b, tipo, top, { left = 19, right = 19 } = {}) {
 }
 // el cielo de Mundos (nubes de día; nubes y estrellas de noche) en lugar de los rayos del lienzo, con bruma arriba y abajo para leer
 const CIELO = { claro: 'assets/e61f3266236935daf349df4ae724951b.webp', oscuro: 'assets/83988f1014aa164cda81619d4d403dd2.webp' };
-function cielo(root) {
+// la carta secreta (23-nov, Drive «teo_carta/FONDO»): el pesebre bajo la estrella a la izquierda y el camino que sube hasta él, de día
+// y de noche (1024 × 1536). Se recorta por los lados al 8 % para que el pesebre quede entero
+const FONDO_CARTA = { claro: 'assets/carta/fondo-entrega-dia.webp', oscuro: 'assets/carta/fondo-entrega-noche.webp', pos: '8% 50%' };
+/** Teodoro con el sobre (Lottie) y el fondo del pesebre: se bajan mientras ve el video del día 26 (flow.js), así la carta secreta entra lista. */
+export function precargarCarta() { precargarAnim(TEO_CARTA); [FONDO_CARTA.claro, FONDO_CARTA.oscuro].forEach(src => { new Image().src = src; }); }
+/** Fuera del lienzo lo que el fondo del pesebre ya trae: los resplandores cálidos, el pesebre dibujado y los destellos sueltos. */
+function limpiarLienzo(contenedor) {
+  [...(contenedor?.children || [])].forEach(el => { const st = el.getAttribute('style') || '';
+    if ((el.tagName === 'DIV' && !el.className && /radial-gradient/.test(st) && /border-radius: 50%/.test(st)) || (el.tagName.toLowerCase() === 'svg' && /position: absolute/.test(st)) || (el.tagName === 'IMG' && /^El pesebre/.test(el.alt || ''))) el.remove(); });
+}
+function cielo(root, { src = CIELO[dark() ? 'oscuro' : 'claro'], pos = '50% 50%', bruma: claseBruma = 'carta-bruma' } = {}) {
   const hijos = [...root.children];
   const img = hijos.find(e => e.tagName === 'IMG' && /object-fit: cover/.test(e.getAttribute('style') || ''));
-  if (img) { img.src = CIELO[dark() ? 'oscuro' : 'claro']; img.alt = ''; img.style.objectPosition = '50% 50%'; }
+  if (img) { img.src = src; img.alt = ''; img.style.objectPosition = pos; }
   // fuera las capas del lienzo que tapaban el cielo (el degradado opaco y los rayos); quedan los resplandores cálidos
   hijos.forEach(e => { const st = e.getAttribute('style') || ''; if (e.getAttribute('aria-hidden') === 'true' && (/repeating-conic-gradient/.test(st) || /inset: 0/.test(st) && /#B9E6F4|#0C244C|rgba\(255,255,255,\.35\)|rgba\(0,8,43,\.15\)/.test(st))) e.remove(); });
-  const bruma = document.createElement('div'); bruma.className = 'carta-bruma'; bruma.setAttribute('aria-hidden', 'true');
+  const bruma = document.createElement('div'); bruma.className = claseBruma; bruma.setAttribute('aria-hidden', 'true');
   if (img) img.after(bruma); else root.prepend(bruma);
+  return { img, bruma };
 }
+
 const cerrarX = root => { const x = find(root, 'Cerrar'); if (x) { x.classList.add('carta-x', 'carta-toque'); presionable(x); x.setAttribute('aria-label', tx().cerrar); on(root, x, alMapa); } };
 
 // ---------- 1 · La carta secreta (B2) ----------
@@ -219,20 +233,55 @@ register('cartaSecreta', {
   noScroll: true,
   mount(root, p, layer) {
     const c = C(), t = tx(), primera = !c.vista;
-    c.vista = true; save(); cielo(root);
+    c.vista = true; save();
+    // el pesebre bajo la estrella, de día o de noche (23-nov), con una bruma suave solo detrás del título
+    const fondo = cielo(root, { src: FONDO_CARTA[dark() ? 'oscuro' : 'claro'], pos: FONDO_CARTA.pos, bruma: 'carta-bruma carta-bruma-fondo' });
+    limpiarLienzo(fondo.img?.parentElement);
     const titulo = [...root.querySelectorAll('div')].find(d => /Teodoro le trae/.test(d.textContent) && d.children.length <= 3);
     ponerTitulo(titulo, t.secreta);
-    const teo = imgAlt(root, /^Teodoro/); if (teo) teo.alt = t.altSecreta;
+    // Teodoro es el protagonista (Lottie): grande, sobre el camino, con los pies sobre el botón. La imagen fija queda escondida por si no carga
+    const quieto = imgAlt(root, /^Teodoro/); if (quieto) { quieto.alt = t.altSecreta; quieto.style.visibility = 'hidden'; }
+    const capa = document.createElement('div'); capa.className = 'carta-teo-capa'; capa.setAttribute('role', 'img'); capa.setAttribute('aria-label', t.altSecreta);
+    fondo.bruma.after(capa);
+    const ubic = { cx: 206, pies: 708, alto: 420 }, k = ubic.alto / TEO_CARTA.pie;
+    const sobre = { x: ubic.cx + (TEO_CARTA.sobre[0] - TEO_CARTA.x) * k, y: ubic.pies + (TEO_CARTA.sobre[1] - TEO_CARTA.suelo) * k };
+    let anim = null;
+    const enBucle = () => { if (!anim) return; anim.loop = true; anim.playSegments(TEO_CARTA.bucle, true); };
+    teoAnimado(capa, TEO_CARTA, { ...ubic, loop: false, autoplay: false, clase: 'carta-teo' }).then(r => {
+      if (!r) { if (quieto) quieto.style.visibility = ''; return; }
+      if (!root.isConnected) return;
+      anim = r.anim; const caja = r.caja; caja.style.opacity = '1';
+      if (reduced()) { anim.goToAndStop(40, true); return; } // con menos movimiento: quieto, ya con el sobre en la mano
+      // sube a su sitio y, la primera vez, saca el sobre y te lo ofrece; si vuelve, ya lo tiene en la mano
+      caja.animate([{ opacity: 0, translate: '0px 40px', scale: '.96' }, { opacity: 1, translate: '0px -6px', scale: '1', offset: .6 }, { opacity: 1, translate: '0px 0px', scale: '1' }],
+        { duration: 620, easing: 'cubic-bezier(.2,.75,.35,1)' });
+      if (!primera) return enBucle();
+      anim.loop = false;
+      const ofrece = () => {
+        if (anim.currentFrame < TEO_CARTA.ofrece) return;
+        anim.removeEventListener('enterFrame', ofrece);
+        // el sobre que ofrece brilla un instante, con su campanita
+        const ch = document.createElement('div'); ch.className = 'cm-chispa'; ch.setAttribute('aria-hidden', 'true'); ch.style.cssText = `left: ${sobre.x}px; top: ${sobre.y}px`;
+        ch.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFFFFF" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
+        root.append(ch);
+        ch.animate([{ opacity: 0, scale: '.2', rotate: '-30deg' }, { opacity: 1, scale: '1.1', rotate: '15deg', offset: .45 }, { opacity: 0, scale: '.4', rotate: '60deg' }], { duration: 760, easing: 'cubic-bezier(.3,.6,.4,1)' }).finished.then(() => ch.remove(), () => ch.remove());
+        sonido('estrella', 2);
+      };
+      anim.addEventListener('enterFrame', ofrece);
+      anim.addEventListener('complete', function sigue() { anim.removeEventListener('complete', sigue); enBucle(); });
+      setTimeout(() => anim.playSegments([0, TEO_CARTA.bucle[0]], true), 520); // cuando ya subió
+    });
+    // tocar la pantalla durante la entrada: Teodoro ya con el sobre en la mano
+    root.addEventListener('pointerdown', () => { if (anim && !anim.loop && !reduced()) enBucle(); }, { once: true });
     const b = boton(root, 'Leer la carta', t.firmarBtn);
     // el ícono del botón: una pluma, no un sobre (aquí se firma, no se lee)
     const svg = b?.querySelector('svg'); if (svg) svg.innerHTML = '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>';
     estiloMVP(b, 'prim', 727);
     if (b) on(root, b, () => go('cartaFirma', {}, 'push'));
     cerrarX(root);
-    sparkles(root);
     // la ambiental de la trivia suena desde que entra (no se retiene): las campanas y la voz van encima, y la voz la aparta sola mientras habla
     if (primera && p.nochebuena && fase() !== 'recuerdo') teoDice('nochebuena', { tras: motivo('nochebuena', 1.2) + 0.2 });
-    entradaSecreta({ root, layer, titulo, teo, boton: b, primera });
+    entradaSecreta({ root, layer, titulo, teo: null, boton: b, primera }); // el título, la lluvia dorada y el latido del botón (Teodoro va aparte)
   },
 });
 
@@ -362,7 +411,8 @@ register('cartaGuardada', {
 });
 
 // ---------- 2 · La sorpresa (B1): Teodoro entrega la carta al Niño Jesús ----------
-// El JSON (Lottie) de la entrega lo pasa César: cuando llegue va en ENTREGA y reemplaza a Teodoro caminando.
+// Aquí Teodoro camina al pesebre (imagen fija con coreografía). La Lottie de Teodoro con el sobre va en la carta secreta (23-nov, César);
+// si algún día hay una de la entrega al Niño, va en ENTREGA y reemplaza el caminar.
 const ENTREGA = null; // p. ej. 'assets/lottie/teo-entrega-carta.json'
 register('cartaSorpresa', {
   file: () => dark() ? 'CARTA-1-oscuro' : 'CARTA-1',
