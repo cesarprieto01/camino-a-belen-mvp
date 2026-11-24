@@ -1481,7 +1481,7 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 .carta-dia img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(2,37,79,.18)); }
 .carta-dia b { font: 700 13px/16px 'Neue Montreal', Mulish, sans-serif; color: #06325A; font-variant-numeric: tabular-nums; }
 :root[data-theme="dark"] .carta-dia b { color: #FFF6DD; }
-.carta-mas { justify-content: flex-start; }
+.carta-mas { justify-content: center; align-self: stretch; } /* el «+N» centrado en la altura del día (ícono + número) */
 .carta-mas b { width: 46px; height: 46px; border-radius: 50%; border: 2px dashed rgba(6,50,90,.35); display: grid; place-items: center; font-size: 15px; box-sizing: border-box; }
 :root[data-theme="dark"] .carta-mas b { border-color: rgba(255,246,221,.45); }
 .carta-vista-t { position: absolute; left: 24px; right: 24px; top: 100px; text-align: center; font: 700 28px/34px 'Neue Montreal', Mulish, sans-serif; color: #00516D; }
