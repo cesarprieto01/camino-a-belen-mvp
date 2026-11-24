@@ -8,7 +8,7 @@ import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
 import { SENDERO } from './sendero.js';
 import { enCamino, avisoEnvio } from './theobox.js';
 import { juegoMapa, decorarRuleta, decorarBelen } from './tbjuego.js';
-import { iconoCarta } from './carta.js';
+import { iconoCarta, decorarCarta } from './carta.js';
 // dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
 const piesDe = teo => { const l = parseFloat(teo.style.left), t = parseFloat(teo.style.top), w = parseFloat(teo.style.width), h = parseFloat(teo.style.height); return { cx: l + w / 2, pies: t + h, alto: h }; };
 /** Teodoro (Lottie) camina por «ruta» (puntos de sus pies en el mapa) hasta «fin», mirando hacia donde va: el dibujo mira a la derecha y se voltea
@@ -320,7 +320,7 @@ register('mapa', {
     paintSheet(layer, T, params.dia);
     sheetDrag(layer);
     // TheoBox en juego: la insignia (arriba a la izquierda) y su panel; LATAM, la TheoBox junto a Belén. «Ir al camino» llega con el panel abierto
-    juegoMapa(layer, !!params.theobox); decorarBelen(root);
+    juegoMapa(layer, !!params.theobox); decorarBelen(root); decorarCarta(root); // la carta de Teodoro brilla a un ladito del pesebre
     seen('S-03-Mapa');
     if (act != null && contentDone(act) && !isDone(act)) seen('S-03b-Mapa-trivia');
     if (focus === 0) seen('V2-Mapa-dia0-claro');

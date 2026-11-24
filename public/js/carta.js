@@ -627,6 +627,21 @@ function firmaMuestra() {
 }
 
 // ---------- El ícono de la carta, arriba en el mapa (junto a la batería) ----------
+/** En el mapa, la carta apoyada a un ladito del pesebre de Belén, brillando (con sus mismos avisos que el ícono de arriba); tocarla la abre. */
+export function decorarCarta(root) {
+  root.querySelector(':scope > .carta-belen')?.remove();
+  const est = estadoCarta(); if (est === 'oculto') return;
+  const n = root.querySelector('[aria-label^="Día 26"]'); if (!n) return;
+  const t = tx(), pend = diasPendientes(), k = pend.length;
+  const b = document.createElement('button'); b.type = 'button'; b.className = `carta-belen carta-${est}`;
+  b.setAttribute('aria-label', est === 'faltan' ? t.icono.faltan(k, pend[0]) : t.icono[est]);
+  b.innerHTML = '<span class="carta-belen-luz" aria-hidden="true"></span><img alt="" src="assets/dia-icono/carta.webp"><span class="carta-belen-chispa a" aria-hidden="true">✦</span><span class="carta-belen-chispa b" aria-hidden="true">✦</span>'
+    + (est === 'faltan' ? `<span class="carta-badge" aria-hidden="true">${k}</span>` : est === 'firmar' ? '<span class="carta-punto" aria-hidden="true"></span>' : '');
+  // a la derecha de la base del pesebre, sobre el pasto (lejos del día 26, los pastores y la TheoBox de LATAM)
+  b.style.left = `${parseFloat(n.style.left) + 245}px`; b.style.top = `${parseFloat(n.style.top) - 37}px`;
+  root.appendChild(b);
+  on(root, b, () => { b.animate?.([{ scale: '.9' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.34,1.56,.64,1)' }); abrirCarta('fade'); });
+}
 export function iconoCarta(layer) {
   const est = estadoCarta(); if (est === 'oculto') return;
   const bat = layer.querySelector('[aria-label^="Energía de Teodoro"]'); if (!bat) return;
