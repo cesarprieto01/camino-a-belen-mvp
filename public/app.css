@@ -1575,10 +1575,10 @@ button.carta-dia { border: 0; padding: 4px 0; background: transparent; cursor: p
 .cm-destello { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .cm-onda { position: absolute; border-radius: 50%; pointer-events: none; z-index: 2; box-shadow: 0 0 0 2.5px rgba(200,70,63,.45); }
 
-/* la carta sobre el arbusto del pesebre del mapa: ladeada, con un resplandor dorado grande que late, un halo de rayos que gira lento,
+/* la carta sobre el arbusto del pesebre del mapa: recta con un meneo suave, con un resplandor dorado grande que late, un halo de rayos que gira lento,
    destellos y un leve flote; es el acceso a la carta en el mapa */
 .carta-belen { position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px; padding: 0; border: 0; background: none; cursor: pointer; z-index: 3; animation: carta-flota 2.8s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
-.carta-belen img { position: relative; width: 100%; display: block; transform: rotate(-12deg); filter: drop-shadow(0 0 6px rgba(255,236,170,.95)) drop-shadow(0 4px 6px rgba(110,62,0,.35)); animation: carta-late 1.9s ease-in-out infinite; }
+.carta-belen img { position: relative; width: 100%; display: block; transform-origin: 50% 85%; filter: drop-shadow(0 0 6px rgba(255,236,170,.95)) drop-shadow(0 4px 6px rgba(110,62,0,.35)); animation: carta-late 1.9s ease-in-out infinite, carta-meneo 3.6s ease-in-out infinite; }
 .carta-belen-luz { position: absolute; inset: -38px; border-radius: 50%; pointer-events: none; background: radial-gradient(closest-side, rgba(255,251,230,1) 0%, rgba(255,226,130,.85) 32%, rgba(255,214,110,.35) 62%, rgba(255,214,110,0) 100%); animation: carta-brilla 1.9s ease-in-out infinite; }
 .carta-belen-luz::after { content: ''; position: absolute; inset: 6px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255,240,180,.55) 0deg 7deg, rgba(255,240,180,0) 7deg 30deg); -webkit-mask: radial-gradient(closest-side, transparent 30%, #000 45%, transparent 100%); mask: radial-gradient(closest-side, transparent 30%, #000 45%, transparent 100%); animation: carta-rayos 14s linear infinite; }
 .carta-belen.carta-lista .carta-belen-luz { inset: -46px; }
@@ -1588,6 +1588,7 @@ button.carta-dia { border: 0; padding: 4px 0; background: transparent; cursor: p
 .carta-belen .carta-badge, .carta-belen .carta-punto { z-index: 1; }
 @keyframes carta-brilla { 0%, 100% { opacity: .75; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.12); } }
 @keyframes carta-late { 0%, 100% { scale: 1; } 50% { scale: 1.06; } }
+@keyframes carta-meneo { 0%, 100% { rotate: -4deg; } 50% { rotate: 4deg; } } /* recta, con un meneo suave de un lado a otro */
 @keyframes carta-rayos { to { rotate: 360deg; } }
 @keyframes carta-flota { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 @keyframes carta-titila { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 40%, 60% { opacity: 1; transform: scale(1) rotate(20deg); } }
