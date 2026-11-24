@@ -363,13 +363,15 @@ register('cartaFirma', {
       [...(caja?.children || [])].forEach(el => { if (el === etiqueta) return; const st = el.getAttribute('style') || ''; if (/Gloria Hallelujah/.test(st) || el.querySelector?.('svg') || el.tagName.toLowerCase() === 'svg' || /border-radius: 50%/.test(st)) el.remove(); });
       const controles = find(root, 'Borrar')?.parentElement;
       const enIngles = ingles();
-      const colores = enIngles ? [['navy blue', '#06325A'], ['teal', '#1E8DA5'], ['green', '#0A8445'], ['yellow', '#E2B33C'], ['orange', '#F0A04B']].map(([nombre, valor]) => ({ nombre, valor })) : undefined;
-      f = m.crearFirma(caja, { colores, color: c.color ?? 1, oscuro: dark(), nombre: S.nombre, onCambio: vacia => habilitar(!vacia),
+      // 3 tintas del reto que contrastan sobre el papel: azul noche (los textos), verde (las rayas del sobre) y rojo lacre (el sello)
+      const colores = (enIngles ? [['blue', '#06325A'], ['green', '#0A7A3F'], ['red', '#B83A33']] : [['azul', '#06325A'], ['verde', '#0A7A3F'], ['rojo', '#B83A33']]).map(([nombre, valor]) => ({ nombre, valor }));
+      // recolorear: false → cada trazo guarda su color: cambiar de tinta no toca lo ya escrito
+      f = m.crearFirma(caja, { colores, color: Math.min(c.color ?? 0, 2), recolorear: false, oscuro: dark(), nombre: S.nombre, onCambio: vacia => habilitar(!vacia),
         etiqueta: v => enIngles ? `${S.nombre}’s signature: ${v ? 'empty' : 'signed'}` : `Firma de ${S.nombre}: ${v ? 'vacía' : 'firmada'}` });
       f.escuchar?.(st => { if (st && c.color !== st.color) { c.color = st.color; save(); } }); // recuerda el color elegido
       if (controles && m.pintarControles) {
         controles.innerHTML = ''; controles.style.justifyContent = 'stretch';
-        m.pintarControles(controles, f, colores, { textos: enIngles ? { colores: 'Ink color', goma: 'Eraser', deshacer: 'Undo', borrar: 'Clear all' } : { colores: 'Color de la tinta', goma: 'Goma', deshacer: 'Deshacer', borrar: 'Borrar todo' } });
+        m.pintarControles(controles, f, colores, { goma: false, simple: true, textos: enIngles ? { colores: 'Ink color', color: n => `${n} ink`, deshacer: 'Undo', borrar: 'Clear all' } : { colores: 'Color de la tinta', color: n => `Tinta ${n}`, deshacer: 'Deshacer', borrar: 'Borrar todo' } });
       }
     } catch (e) { console.warn('firma', e); nota('Firma', 'El lienzo de firma no cargó'); habilitar(true); }
     const volver = () => go(p.rehacer, { recien: false }, 'fade', { replace: true }); // firmar de nuevo: vuelve a la carta o a «¡Carta firmada!»

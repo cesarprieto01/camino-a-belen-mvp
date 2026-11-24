@@ -623,6 +623,8 @@ export function pintarControles(contenedor, f, colores, opciones = {}) {
   const lista = normalizar(colores || f.colores);
   const raiz = document.createElement('div');
   raiz.className = 'firma-controles';
+  const conGoma = opciones.goma !== false, simple = !!opciones.simple; // la carta: sin goma, 3 tintas grandes y dos íconos estándar (más fácil para un niño)
+  if (simple) raiz.classList.add('firma-simple');
   if (f.oscuro === true) raiz.classList.add('firma-oscuro');
   if (f.oscuro === false) raiz.classList.add('firma-claro');
 
@@ -646,18 +648,21 @@ export function pintarControles(contenedor, f, colores, opciones = {}) {
   const botones = lista.map((c, i) => {
     const b = boton('firma-color', T.color(c.nombre));
     b.style.setProperty('--firma-c', c.valor);
+    if (simple) b.innerHTML = `<svg class="firma-check" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>` + b.innerHTML;
     b.addEventListener('click', () => f.color(i));
     grupo.appendChild(b);
     return b;
   });
   const goma = boton('firma-goma', T.goma, ICONO.goma);
   goma.addEventListener('click', () => f.herramienta(f.herramienta() === 'goma' ? 'lapiz' : 'goma'));
-  herramientas.append(grupo, goma);
+  herramientas.append(grupo); if (conGoma) herramientas.append(goma);
 
   const acciones = document.createElement('div');
   acciones.className = 'firma-acciones';
-  const deshacer = boton('firma-accion firma-deshacer', T.deshacer, ICONO.deshacer);
-  const borrar = boton('firma-accion firma-borrar', T.borrar, ICONO.borrar);
+  // íconos estándar (Lucide «undo-2» y «trash-2», ISC; el mismo dibujo que los SF Symbols arrow.uturn.backward y trash)
+  const LUCIDE = p => `<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  const deshacer = boton('firma-accion firma-deshacer', T.deshacer, simple ? LUCIDE('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>') : ICONO.deshacer);
+  const borrar = boton('firma-accion firma-borrar', T.borrar, simple ? LUCIDE('<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/>') : ICONO.borrar);
   deshacer.addEventListener('click', () => f.deshacer());
   borrar.addEventListener('click', () => f.borrar());
   acciones.append(deshacer, borrar);
@@ -670,10 +675,11 @@ export function pintarControles(contenedor, f, colores, opciones = {}) {
     botones.forEach((b, i) => b.setAttribute('aria-pressed', String(s.herramienta === 'lapiz' && i === s.color)));
     goma.setAttribute('aria-pressed', String(s.herramienta === 'goma'));
     goma.disabled = s.vacia;
+    if (!conGoma && s.herramienta === 'goma') f.herramienta('lapiz');
     deshacer.disabled = !s.puedeDeshacer;
     borrar.disabled = s.vacia;
     // el nombre accesible vive en el <span>: el título (tooltip con ratón) lo sigue aunque la pantalla lo traduzca
-    [...botones, goma, deshacer, borrar].forEach(b => { b.title = b.querySelector('.firma-sr').textContent; });
+    [...botones, goma, deshacer, borrar].forEach(b => { b.title = b.querySelector('.firma-sr')?.textContent || ''; b.setAttribute('aria-label', b.title); });
   };
   const quitar = f.escuchar(sincronizar);
   sincronizar();
