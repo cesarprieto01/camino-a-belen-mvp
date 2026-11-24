@@ -49,7 +49,7 @@ const TXT = {
     cierre: 'Esta Navidad, ilumina nuestros corazones con tu presencia.', cariño: 'Con cariño,', y: 'y',
     histT: (n, d, llego) => llego ? `¡${n} caminó ${d} días hasta Belén!` : `¡${n} caminó ${d} ${d === 1 ? 'día' : 'días'} con Teodoro!`,
     a4: 'CARTA AL NIÑO JESÚS', dibujo: 'Haz aquí un dibujo para Jesús', pie: ['El Adviento más grande del mundo', 'en la app Theo'],
-    imprimir: 'Imprimir', compartir: 'Compartir', cerrar: 'Cerrar', volver: 'Volver',
+    imprimir: 'Imprimir', compartir: 'Compartir', cerrar: 'Cerrar', volver: 'Volver', salirCarta: 'Volver al camino',
     compartirT: 'Comparte tu carta', imprimirT: 'Imprime tu carta', compartirBtn: 'Compartir', guardarImg: 'Guardar', imprimirBtn: 'Imprimir',
     shareTitulo: 'Una carta para Jesús', shareTxt: (n, d, llego) => llego ? `${n} caminó ${d} días con Teodoro hasta Belén y firmó una carta para Jesús.` : `${n} caminó ${d} días con Teodoro y firmó una carta para Jesús.`,
     archivo: n => `Carta para Jesús - ${n}`,
@@ -76,7 +76,7 @@ const TXT = {
     cierre: 'This Christmas, light up our hearts with your presence.', cariño: 'With love,', y: 'and',
     histT: (n, d, llego) => llego ? `${n} walked ${d} days to Bethlehem!` : `${n} walked ${d} ${d === 1 ? 'day' : 'days'} with Theodore!`,
     a4: 'A LETTER TO BABY JESUS', dibujo: 'Draw a picture for Jesus here', pie: ['The Biggest Advent in the World', 'on the Theo app'],
-    imprimir: 'Print', compartir: 'Share', cerrar: 'Close', volver: 'Back',
+    imprimir: 'Print', compartir: 'Share', cerrar: 'Close', volver: 'Back', salirCarta: 'Back to the journey',
     compartirT: 'Share your letter', imprimirT: 'Print your letter', compartirBtn: 'Share', guardarImg: 'Save', imprimirBtn: 'Print',
     shareTitulo: 'A letter to Jesus', shareTxt: (n, d, llego) => llego ? `${n} walked ${d} days to Bethlehem with Theodore and signed a letter to Jesus.` : `${n} walked ${d} days with Theodore and signed a letter to Jesus.`,
     archivo: n => `Letter to Jesus - ${n}`,
@@ -540,8 +540,8 @@ register('carta', {
     if (!c.abierta) { c.abierta = true; save(); }
     vestirCarta(root, { px: 28, fs: 15.5, num: 19, gap: 4, firmaAlto: 38 });
     const papel = [...root.children].find(el => /rotate\(-1deg\)/.test(el.style.transform || ''));
-    // Imprimir y Compartir lado a lado (el principal a la derecha) y debajo «Ahora no» para salir sin hacer nada; actúan de una vez
-    const imp = boton(root, 'Imprimir', t.imprimir), com = boton(root, 'Compartir', t.compartir), no = boton(root, 'Ahora no', t.ahoraNo);
+    // Imprimir y Compartir lado a lado (el principal a la derecha) y debajo «Volver al camino» para salir sin hacer nada; actúan de una vez
+    const imp = boton(root, 'Imprimir', t.imprimir), com = boton(root, 'Compartir', t.compartir), no = boton(root, 'Ahora no', t.salirCarta); // salir: se entiende que vuelve al mapa
     estiloMVP(imp, 'par', 689, { right: 201 }); estiloMVP(com, 'prim', 689, { left: 201 });
     if (no) { no.classList.add('carta-toque'); Object.assign(no.style, { top: '755px', height: '44px', left: '19px', right: '19px' }); no.querySelector('span').style.color = dark() ? '#FFFFFF' : '#0B748A'; on(root, no, alMapa); }
     // firmar de nuevo, también después: tocar su firma en la carta
