@@ -480,11 +480,18 @@ export function abrirCartaAnim({ root, layer, papel, filas = [], numeros, firma,
     e.listo(); return control(e, () => {});
   }
   if (papel) {
-    // bisagra arriba sin tocar su transform-origin: subir medio alto, girar en X y volver a bajar
-    const base = papel.style.transform || '', h = (papel.offsetHeight / 2).toFixed(1);
-    const plegado = g => `perspective(1100px) translateY(-${h}px) rotateX(${g}deg) translateY(${h}px) ${base}`.trim();
-    e.anima(papel, [{ transform: plegado(-82) }, { transform: plegado(0) }], { en: 0, ...muelle({ amortiguacion: .78, respuesta: .62 }), final: { transform: plegado(0) } });
-    e.anima(papel, [{ opacity: 0 }, { opacity: 1 }], { en: 0, duration: 200, easing: 'ease-out' });
+    // se desenrolla: el papel se revela de arriba abajo con una curva suave (arranca despacio, acelera y aterriza lento) y por delante baja un
+    // rollo de papel con su sombra, que al llegar abajo se aplana y se va
+    const DUR = 1350, CURVA = 'cubic-bezier(.55,0,.18,1)', H = papel.offsetHeight, R = getComputedStyle(papel).borderRadius || '6px';
+    e.anima(papel, [{ clipPath: `inset(0 0 calc(100% - 20px) 0 round ${R})`, opacity: 0 }, { clipPath: `inset(0 0 calc(100% - 20px) 0 round ${R})`, opacity: 1, offset: .08 }, { clipPath: `inset(0 0 0 0 round ${R})`, opacity: 1 }],
+      { en: 0, duration: DUR, easing: CURVA, final: { clipPath: 'none' } });
+    e.anima(papel, [{ translate: '0px -8px', scale: '.985' }, { translate: '0px 0px', scale: '1' }], { en: 0, duration: DUR, easing: CURVA });
+    const rollo = document.createElement('div'); rollo.className = 'cm-rollo'; rollo.setAttribute('aria-hidden', 'true');
+    Object.assign(rollo.style, { left: papel.offsetLeft + 'px', top: papel.offsetTop + 'px', width: papel.offsetWidth + 'px', transform: papel.style.transform || getComputedStyle(papel).transform.replace('none', ''), transformOrigin: getComputedStyle(papel).transformOrigin });
+    papel.after(rollo);
+    e.anima(rollo, [{ translate: '0px 0px', opacity: 0 }, { translate: '0px 6px', opacity: 1, offset: .08 }, { translate: `0px ${H - 14}px`, opacity: 1 }], { en: 0, duration: DUR, easing: CURVA, efimera: true });
+    e.anima(rollo, [{ opacity: 1, scale: '1 1' }, { opacity: 0, scale: '1 .25' }], { en: DUR - 120, duration: 260, easing: 'ease-in', efimera: true, despues: () => rollo.remove() });
+    e.en(DUR + 200, () => rollo.isConnected && rollo.remove());
   }
   // las filas: una tras otra; el número cuenta (más rápido si es chico) y la siguiente entra un poco antes de que cierre
   const bs = filas.map((f, i) => numeros?.[i] || f.querySelector('b'));
@@ -494,7 +501,7 @@ export function abrirCartaAnim({ root, layer, papel, filas = [], numeros, firma,
     Object.assign(b.style, { display: 'inline-block', fontVariantNumeric: 'tabular-nums', textAlign: 'right', transformOrigin: '100% 70%' }); // crece hacia la izquierda, pegado a su texto
     b.style.minWidth = b.offsetWidth + 'px'; b.textContent = datos[i].fmt(0);
   });
-  let t = 480;
+  let t = 700; // las filas entran mientras el rollo pasa
   filas.forEach((f, i) => {
     const b = bs[i], d = datos[i], dur = d ? Math.round(Math.min(640, Math.max(280, 200 + 70 * Math.log2(d.v + 1)))) : 300;
     aparecer(e, f, { en: t, desde: { translate: '-10px 0px' }, resorte: { amortiguacion: 1, respuesta: .36 }, fundido: 200 });

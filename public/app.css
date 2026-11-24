@@ -1612,3 +1612,6 @@ button.carta-dia { border: 0; padding: 4px 0; background: transparent; cursor: p
 .firma-simple .firma-accion:active { transform: scale(.9); }
 .firma-simple .firma-accion:disabled { opacity: .38; }
 :root[data-theme="dark"] .firma-simple .firma-accion { color: #FFFFFF; background: rgba(255,255,255,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 4px 12px rgba(0,6,24,.3); }
+
+/* el rollo de papel que baja cuando la carta se desenrolla (carta-motion.js) */
+.cm-rollo { position: absolute; height: 22px; margin-top: -11px; border-radius: 11px; pointer-events: none; z-index: 3; background: linear-gradient(180deg, #E9DDBC 0%, #FFFDF2 38%, #F6EDD3 62%, #D9CBA4 100%); box-shadow: 0 7px 12px -4px rgba(60,40,0,.32), inset 0 1px 0 rgba(255,255,255,.8); }
