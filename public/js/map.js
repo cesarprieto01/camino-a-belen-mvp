@@ -8,7 +8,7 @@ import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
 import { SENDERO } from './sendero.js';
 import { enCamino, avisoEnvio } from './theobox.js';
 import { juegoMapa, decorarRuleta, decorarBelen } from './tbjuego.js';
-import { iconoCarta, decorarCarta } from './carta.js';
+import { decorarCarta } from './carta.js';
 // dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
 const piesDe = teo => { const l = parseFloat(teo.style.left), t = parseFloat(teo.style.top), w = parseFloat(teo.style.width), h = parseFloat(teo.style.height); return { cx: l + w / 2, pies: t + h, alto: h }; };
 /** Teodoro (Lottie) camina por «ruta» (puntos de sus pies en el mapa) hasta «fin», mirando hacia donde va: el dibujo mira a la derecha y se voltea
@@ -277,7 +277,6 @@ register('mapa', {
     if (chip && fase() === 'gracia' && S.inscrito && vistos() < 26) { chip.textContent = cuentaGracia(true); chip.style.whiteSpace = 'nowrap'; chip.style.fontSize = '16px'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', cuentaGracia()); }
     if (chip && S.hoy <= 0) { chip.textContent = 'Inicia el 29'; chip.style.fontWeight = '800'; chip.style.color = dark() ? '#F5DB78' : '#0B748A'; chip.setAttribute('aria-label', 'El camino inicia el 29 de noviembre'); }
     paintEnergy(layer);
-    iconoCarta(layer); // la carta de Teodoro: arriba, junto a la batería (carta.js)
     if (recargaDe != null) layer.querySelectorAll(`img[src*="${BATTERY_IDS[S.bateria]}"]`).forEach(i => { i.src = A(BATTERY_IDS[recargaDe]); });
     bindMute(layer.querySelector('.map-head button[aria-label^="Música"]'));
     // el mapa recuerda desde dónde se entró al camino (Hoy, Teodoro, Mundos o la espera)

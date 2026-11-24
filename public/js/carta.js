@@ -627,9 +627,10 @@ function firmaMuestra() {
 }
 
 // ---------- El ícono de la carta, arriba en el mapa (junto a la batería) ----------
-/** En el mapa, la carta apoyada a un ladito del pesebre de Belén, brillando (con sus mismos avisos que el ícono de arriba); tocarla la abre. */
+/** En el mapa, la carta sobre el arbusto de la derecha del pesebre de Belén, brillando; lleva sus avisos (punto: falta firmarla; número:
+ *  días por completar; globo «¡Tu carta está lista!») y tocarla la abre. Es el único acceso a la carta en el mapa. */
 export function decorarCarta(root) {
-  root.querySelector(':scope > .carta-belen')?.remove();
+  root.querySelectorAll(':scope > .carta-belen, :scope > .carta-globo').forEach(e => e.remove());
   const est = estadoCarta(); if (est === 'oculto') return;
   const n = root.querySelector('[aria-label^="Día 26"]'); if (!n) return;
   const t = tx(), pend = diasPendientes(), k = pend.length;
@@ -637,28 +638,14 @@ export function decorarCarta(root) {
   b.setAttribute('aria-label', est === 'faltan' ? t.icono.faltan(k, pend[0]) : t.icono[est]);
   b.innerHTML = '<span class="carta-belen-luz" aria-hidden="true"></span><img alt="" src="assets/dia-icono/carta.webp"><span class="carta-belen-chispa a" aria-hidden="true">✦</span><span class="carta-belen-chispa b" aria-hidden="true">✦</span>'
     + (est === 'faltan' ? `<span class="carta-badge" aria-hidden="true">${k}</span>` : est === 'firmar' ? '<span class="carta-punto" aria-hidden="true"></span>' : '');
-  // a la derecha de la base del pesebre, sobre el pasto (lejos del día 26, los pastores y la TheoBox de LATAM)
-  b.style.left = `${parseFloat(n.style.left) + 245}px`; b.style.top = `${parseFloat(n.style.top) - 37}px`;
+  // sobre el arbusto de la derecha del pesebre
+  const x = parseFloat(n.style.left) + 187, y = parseFloat(n.style.top) - 22;
+  b.style.left = `${x}px`; b.style.top = `${y}px`;
   root.appendChild(b);
-  on(root, b, () => { b.animate?.([{ scale: '.9' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.34,1.56,.64,1)' }); abrirCarta('fade'); });
-}
-export function iconoCarta(layer) {
-  const est = estadoCarta(); if (est === 'oculto') return;
-  const bat = layer.querySelector('[aria-label^="Energía de Teodoro"]'); if (!bat) return;
-  const t = tx(), k = diasPendientes().length;
-  const b = document.createElement('button'); b.type = 'button'; b.className = `carta-icono carta-${est}`;
-  b.setAttribute('aria-label', est === 'faltan' ? t.icono.faltan(k, diasPendientes()[0]) : t.icono[est]); b.title = b.getAttribute('aria-label');
-  b.innerHTML = `<img alt="" src="assets/dia-icono/carta.webp">${est === 'faltan' ? `<span class="carta-badge" aria-hidden="true">${k}</span>` : est === 'firmar' ? '<span class="carta-punto" aria-hidden="true"></span>' : ''}`;
-  const r = bat.getBoundingClientRect(), pr = (bat.offsetParent || layer).getBoundingClientRect();
-  b.style.top = (bat.offsetTop + bat.offsetHeight + 8) + 'px';
-  b.style.left = (bat.offsetLeft + bat.offsetWidth / 2 - 24) + 'px';
-  (bat.offsetParent || bat.parentElement).appendChild(b);
-  on(layer, b, () => { b.animate?.([{ transform: 'scale(.9)' }, { transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.34,1.56,.64,1)' }); abrirCarta('fade'); });
-  if (est === 'lista') {
+  if (est === 'lista') { // el globo, a la izquierda, con la cola apuntando a la carta
     const g = document.createElement('div'); g.className = 'carta-globo'; g.setAttribute('role', 'status'); g.textContent = t.globo;
-    g.style.top = (bat.offsetTop + bat.offsetHeight + 8 + 6) + 'px'; g.style.right = (layer.clientWidth - bat.offsetLeft + 4 - bat.offsetWidth / 2 + 24 - 6) + 'px'; // la punta de la cola queda a ~10 px de la carta
-    (bat.offsetParent || bat.parentElement).appendChild(g);
-    on(layer, g, () => abrirCarta('fade'));
+    g.style.top = `${y - 46}px`; g.style.right = `${(root.clientWidth || 390) - x + 36}px`; // sobre la pared de piedra (no tapa la cuna): la cola toca la esquina de la carta
+    root.appendChild(g); on(root, g, () => abrirCarta('fade'));
   }
-  void r; void pr;
+  on(root, b, () => { b.animate?.([{ scale: '.9' }, { scale: '1' }], { duration: 220, easing: 'cubic-bezier(.34,1.56,.64,1)' }); abrirCarta('fade'); });
 }
