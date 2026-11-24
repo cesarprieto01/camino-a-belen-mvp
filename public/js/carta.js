@@ -428,7 +428,7 @@ register('cartaGuardada', {
     const fila = find(root, 'Borrar')?.parentElement;
     let kicker = null;
     if (fila) {
-      const muestra = k > 6 ? pend.slice(0, 5) : pend;
+      const muestra = k > 5 ? pend.slice(0, 4) : pend; // una sola fila: hasta 5 días, o 4 y «+N» al final (no baja a otra fila bajo el botón)
       fila.className = 'carta-pendientes'; fila.setAttribute('role', 'list'); fila.setAttribute('aria-label', t.guardadaSub(k, sig));
       // cada día se toca y lleva a ese día en el mapa (tocar = hacer)
       fila.innerHTML = muestra.map(n => `<button type="button" role="listitem" class="carta-dia carta-toque" data-dia="${n}" aria-label="Día ${n}"><img alt="" src="${iconOf(n, d) ? 'assets/' + iconOf(n, d) : A(IMG.estrella)}"><b>${n}</b></button>`).join('') + (k > muestra.length ? `<span role="listitem" class="carta-dia carta-mas" aria-label="${k - muestra.length} días más"><b>${t.mas(k - muestra.length)}</b></span>` : '');

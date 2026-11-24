@@ -1476,7 +1476,7 @@ textarea.tb-campo { height: 84px; padding: 14px 16px; resize: none; line-height:
 :root[data-theme="dark"] .carta-globo { background: #F5DB78; color: #06325A; }
 @keyframes cartaGlobo { from { opacity: 0; transform: scale(.6) translateX(10px); } to { opacity: 1; transform: none; } }
 .carta-sello { position: absolute; right: 16px; top: 14px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #E46A5F 0%, #C8463F 45%, #9E2F2A 100%); box-shadow: 0 3px 0 #7E2420, 0 8px 14px rgba(0,8,43,.25), inset 0 0 0 4px rgba(255,255,255,.12); display: grid; place-items: center; transform: rotate(-14deg); z-index: 3; }
-.carta-pendientes { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.carta-pendientes { display: flex; justify-content: center; gap: 10px; flex-wrap: nowrap; }
 .carta-dia { width: 50px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .carta-dia img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(2,37,79,.18)); }
 .carta-dia b { font: 700 13px/16px 'Neue Montreal', Mulish, sans-serif; color: #06325A; font-variant-numeric: tabular-nums; }
