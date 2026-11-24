@@ -36,16 +36,10 @@ else {
 await p.waitForTimeout(400); await foto('2-firma');
 await tocar('¡Listo, firmé!'); await espera('cartaGuardada'); await p.waitForTimeout(1300); await foto('3-guardada');
 e = await estado(); if (!(e.carta.firma > 2000)) fallos.push('la firma no se guardó: ' + e.carta.firma);
-const sub = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { txt: L.textContent.match(/Completa los \d+ días para revelar la carta/)?.[0], candado: !!L.querySelector('.carta-sello .carta-candado'), falta: L.textContent.match(/TE FALTA 1 DÍA/)?.[0] }; });
-if (!sub.txt || !sub.candado || !sub.falta) fallos.push('carta bloqueada: ' + JSON.stringify(sub));
-// corregir: «Firmar de nuevo» → «Ahora no» deja la firma como estaba; firmar otra vez la cambia
+// bloqueada: «¡Desbloquea tu sorpresa!», la carta tapada con el candado del mapa y los días que faltan; la carta no se toca
+const sub = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { titulo: /¡Desbloquea tu sorpresa!/.test(L.textContent), bloqueo: L.querySelector('.carta-bloqueo')?.textContent.trim(), candado: !!L.querySelector('.carta-bloqueo img[src*="candado"]'), falta: /TE FALTA 1 DÍA/.test(L.textContent), sinCambiar: !L.querySelector('.carta-otra-firma') }; });
+if (!sub.titulo || !/Se desbloquea al completar los 26 días/.test(sub.bloqueo || '') || !sub.candado || !sub.falta || !sub.sinCambiar) fallos.push('carta bloqueada: ' + JSON.stringify(sub));
 const firma0 = (await estado()).carta.firma;
-await tocar('Firmar de nuevo'); await espera('cartaFirma'); await p.waitForTimeout(700);
-await tocar('Ahora no'); await espera('cartaGuardada'); if ((await estado()).carta.firma !== firma0) fallos.push('«Ahora no» al firmar de nuevo cambió la firma');
-await tocar('Firmar de nuevo'); await espera('cartaFirma'); await p.waitForTimeout(700);
-{ const c2 = await p.evaluate(() => { const r = document.querySelector('#viewport .layer:last-child .firma-caja').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
-  await p.mouse.move(c2.x + 40, c2.y + 60); await p.mouse.down(); await p.mouse.move(c2.x + c2.w - 60, c2.y + 90, { steps: 12 }); await p.mouse.up(); }
-await tocar('¡Listo, firmé!'); await espera('cartaGuardada'); if ((await estado()).carta.firma === firma0) fallos.push('firmar de nuevo no cambió la firma');
 await tocar('Seguir con el día 19'); await espera('mapa'); await p.waitForFunction(() => document.querySelector('#viewport .layer:last-child .carta-belen'), null, { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(400); await foto('4-mapa-faltan'); // en producción el ícono tarda un poco más en pintarse
 const ico = await p.evaluate(() => { const i = document.querySelector('#viewport .layer:last-child .carta-belen'); return i ? { clase: i.className, badge: i.querySelector('.carta-badge')?.textContent, aria: i.getAttribute('aria-label') } : null; });
 if (!ico || !/carta-faltan/.test(ico.clase) || ico.badge !== '1') fallos.push('ícono en el mapa: ' + JSON.stringify(ico));
@@ -55,9 +49,17 @@ await p.waitForTimeout(1200); await terminarVideo();
 await espera('completado'); await p.waitForTimeout(900); await foto('5a-dia-completado');
 const salir = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a, #viewport .layer:last-child button')].map(b => (b.getAttribute('aria-label') || b.textContent).trim()).filter(Boolean));
 await tocar(salir.find(t => /Volver al camino|Seguir|camino/i.test(t)) || 'Volver al camino');
-await espera('cartaSorpresa'); await p.waitForTimeout(500);
-if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .carta-puente')))) fallos.push('no salió el puente «¡Completaste el camino!»');
-await foto('5b-puente'); await p.waitForTimeout(2400); await foto('5-sorpresa-antes');
+// terminó: vuelve a ver su carta («¡Completaste el camino!»), puede firmar de nuevo, y «Siguiente» la entrega
+await espera('cartaGuardada'); await p.waitForTimeout(1200); await foto('5b-revision');
+if (!(await p.evaluate(() => /¡Completaste el camino!/.test(document.querySelector('#viewport .layer:last-child').textContent)))) fallos.push('no salió la revisión «¡Completaste el camino!»');
+await tocar('Firmar de nuevo'); await espera('cartaFirma'); await p.waitForTimeout(700);
+await tocar('Ahora no'); await espera('cartaGuardada'); if ((await estado()).carta.firma !== firma0) fallos.push('«Ahora no» al firmar de nuevo cambió la firma');
+await tocar('Firmar de nuevo'); await espera('cartaFirma'); await p.waitForTimeout(700);
+{ const c2 = await p.evaluate(() => { const r = document.querySelector('#viewport .layer:last-child .firma-caja').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+  await p.mouse.move(c2.x + 40, c2.y + 60); await p.mouse.down(); await p.mouse.move(c2.x + c2.w - 60, c2.y + 90, { steps: 12 }); await p.mouse.up(); }
+await tocar('¡Listo, firmé!'); await espera('cartaGuardada'); if ((await estado()).carta.firma === firma0) fallos.push('firmar de nuevo no cambió la firma');
+await p.waitForTimeout(900); await tocar('Siguiente');
+await espera('cartaSorpresa'); await p.waitForTimeout(800); await foto('5-sorpresa-antes');
 // Teodoro camina hasta el pesebre (~5 s de animación) y después se revela: se espera el título nuevo, hasta 12 s
 await p.waitForFunction(() => /era para Jes/.test(document.querySelector('#viewport .layer:last-child')?.textContent || ''), null, { timeout: 12000 }).catch(() => {}); await p.waitForTimeout(600); await foto('6-sorpresa-revela');
 const titulo = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child div')].find(d => /para Jesús!$/.test(d.textContent) && !d.children.length)?.textContent);

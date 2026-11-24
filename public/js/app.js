@@ -109,6 +109,7 @@ const REC = [
   { sec: 7, t: 'Free · día gratis', mira: 'Día 11 (miércoles) · gancho gratis con trivia y ruleta; los días de pago con candado', run: day(11, 10, { plan: 'free' }), go: 'mapa', covers: [] },
   { sec: 7, t: 'Pase de Adviento', mira: 'Día 13 · compró el Pase: los 26 días y sus extras', run: day(13, 12, { plan: 'pase' }), go: 'mapa', covers: [] },
   { sec: 7, t: 'Primer día', mira: 'Día 1 · el camino recién empieza', run: day(1, 0), go: 'hoy', covers: ['V2-Mapa-completo-claro'] },
+  { sec: 8, t: 'Primer día · el compromiso', mira: 'Al terminar su primer día Teodoro trae su carta y lo invita a caminar hasta Belén → «Firmar mi compromiso» → «¡Trato hecho!» → al mapa, con la carta bloqueada junto al pesebre', run: () => { day(2, 1)(); S.carta = null; }, go: 'cartaSecreta', params: { compromiso: true }, covers: [] },
   { sec: 8, t: 'Nochebuena · firma (le faltan días)', mira: 'Día 26 visto con 20 de 26: Teodoro trae una carta sorpresa → firma con el dedo → «¡Tu carta está guardada!» con los días del reto por completar', run: () => { day(26, 20)(); }, go: 'cartaSecreta', covers: ['CARTA-2', 'CARTA-3'] },
   { sec: 8, t: 'Nochebuena · firma (terminó todo)', mira: 'Los 26 cuentos vistos: carta sorpresa → firma → Teodoro entrega la carta al Niño Jesús → «¡Era una carta para Jesús!» → la carta', run: () => { day(26, 26)(); }, go: 'cartaSecreta', covers: ['CARTA-2', 'CARTA-3', 'CARTA-1', 'CARTA-4'] },
   { sec: 8, t: 'Carta guardada · faltan 4', mira: '28 de diciembre, lleva 22 de 26 y ya firmó: el ícono de la carta arriba en el mapa cuenta 4; al tocarlo, «Completa 4 días más del reto para abrirla»', run: () => { day(30, 22)(); cartaDemo({ vista: true, firmadaDia: 26 }); }, go: 'mapa', covers: [] },
@@ -426,7 +427,7 @@ panel.addEventListener('click', e => {
     const v = t.dataset.theobox, paso = ENVIO.indexOf(v); S.theoboxReclamada = paso > 0; S.theobox = paso > 0 ? 'mia' : v; if (paso > 0) S.theoboxPaso = paso;
     save(); render(); if (['mapa', 'hoy', 'ajustes', 'tbMiTheobox'].includes(cur?.name)) go(cur.name, cur.params || {}, 'none', { scrollTop: cur.layer.scrollTop }); return; // el aviso del mapa, la card del inicio y Mi TheoBox cambian
   }
-  if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
+  if (t.dataset.scen) { const r = REC[+t.dataset.scen]; r.run(); save(); go(r.go, r.params || {}, 'fade'); nota(r.t, r.mira); closeMobile(); return; }
   if (t.dataset.go) { go(t.dataset.go, {}, 'fade'); closeMobile(); return; }
   if (t.dataset.file) { go('estatica', { file: t.dataset.file, back: cur?.name !== 'estatica' ? cur?.name : 'hoy', backParams: cur?.params }, 'fade'); closeMobile(); return; }
   const a = t.dataset.act;

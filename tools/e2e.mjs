@@ -93,6 +93,8 @@ const waitScreen = async (want, ms = 10000) => { const t0 = Date.now(); while (D
 const screen = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.dataset.screen);
 // clic por texto o aria-label dentro de la capa visible
 const tap = async (q) => {
+  // al terminar su primer día sin firma, Teodoro lo invita a firmar su compromiso: si la prueba busca otra cosa, se cierra (lo firma después)
+  if ((await screen()) === 'cartaSecreta' && !/carta|compromiso/i.test(q)) { await p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label="Cerrar"]')?.click()); await p.waitForTimeout(1000); }
   const ok = await p.evaluate((q) => {
     const L = document.querySelector('#viewport .layer:last-child');
     const norm = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -112,15 +114,11 @@ const tap = async (q) => {
 };
 // al terminar cada video o canción: calificar con 4 estrellas en «¡Terminaste!» (el siguiente paso lo toca quien llama)
 const rate = async (tag = '') => { if ((await screen()) !== 'completado' || !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rate-row')))) { errs.push(`${tag}: «¡Terminaste!» sin la fila de calificar (${await screen()})`); return; } await tap('4 de 5 estrellas'); const k = await p.evaluate(async () => (await import('/js/core.js')).S.calificaciones); if (!k || !Object.values(k).includes(4)) errs.push(`${tag}: no se guardó la calificación`); };
-// al unirse salen los slides del reto: «Siguiente» cuatro veces y, en la invitación de Teodoro, mantener presionada su huella
-// (1,2 s) lleva a «¡Ya estás dentro!»
+// al unirse salen los 4 slides del reto: «Siguiente» tres veces y «¡Vamos!» lleva a «¡Ya estás dentro!»
 const pasarSlides = async (tag) => {
   if (!(await waitScreen('retoSlides', 4000)) && !(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .rs-cta')))) { errs.push(`${tag}: al unirse no salen los slides (${await screen()})`); return; }
-  for (let i = 0; i < 4; i++) { await tap('Siguiente'); await p.waitForTimeout(250); }
-  await p.waitForTimeout(1400);
-  const bb = await p.locator('#viewport .layer:last-child button.rs-huella').boundingBox().catch(() => null);
-  if (!bb) { errs.push(`${tag}: no sale la huella de la invitación`); return; }
-  await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.waitForTimeout(1500); await p.mouse.up(); await p.waitForTimeout(1200);
+  for (let i = 0; i < 3; i++) { await tap('Siguiente'); await p.waitForTimeout(250); }
+  await tap('¡Vamos!'); await p.waitForTimeout(1200);
 };
 const scenario = async (i) => { if (!(await p.evaluate(() => document.getElementById('panel')?.classList.contains('open')))) { /* pintado pero cerrado también cuenta como cerrado */ await p.evaluate(() => document.getElementById('panelBtn')?.click()); await p.waitForTimeout(500); } await p.evaluate(() => document.querySelector(`[data-tab="rec"]`)?.click()); await p.waitForTimeout(150); await p.evaluate(t => [...document.querySelectorAll('[data-scen]')].find(b => b.querySelector('b')?.textContent.trim() === t)?.click(), i); await p.waitForTimeout(900); };
 const answerTrivia = async () => {

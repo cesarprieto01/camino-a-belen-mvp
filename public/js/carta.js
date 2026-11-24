@@ -27,7 +27,7 @@ export const diasPendientes = () => { const p = []; for (let n = 1; n <= 26; n++
 /** Estado del ícono de arriba: oculto (aún no llega el día 26) · firmar · faltan · lista · abierta. */
 export function estadoCarta() {
   const c = C();
-  if (!c.vista) return 'oculto';
+  if (!c.vista && !c.firma) return 'oculto'; // existe desde que la firma (compromiso al unirse) o desde el día 26
   if (c.abierta) return 'abierta';
   if (seAbre()) return 'lista';
   return c.firma ? 'faltan' : 'firmar';
@@ -40,7 +40,10 @@ const TXT = {
   es: {
     secreta: ['Teodoro te trae', 'una carta sorpresa'], altSecreta: 'Teodoro sostiene una carta sellada', firmarBtn: 'Firmar la carta',
     firmaT: n => `¡Ahora firma tú, ${n}!`, firmaSub: 'Escribe tu nombre con el dedo', firmaOtra: n => `Firma de nuevo, ${n}`, cambiarFirma: 'Firmar de nuevo', firmaCaja: n => `Firma de ${n}`, borrar: 'Borrar', listo: '¡Listo, firmé!', ahoraNo: 'Ahora no',
-    guardadaT: '¡Carta firmada!', guardadaSub: () => `Completa los ${DIAS_PARA_ABRIR} días para revelar la carta`,
+    guardadaT: '¡Desbloquea tu sorpresa!', guardadaSub: (k, dia) => k === 1 ? `Termina el día ${dia} para desbloquear la sorpresa que Teodoro te tiene` : `Termina los ${k} días que te faltan para desbloquear la sorpresa que Teodoro te tiene`,
+    candado: `Se desbloquea al completar los ${DIAS_PARA_ABRIR} días`, revisarT: '¡Completaste el camino!', revisarSub: 'Esta es la carta que firmaste. ¿Vamos a entregársela a Jesús?', siguiente: 'Siguiente', verCarta: 'Ver mi carta',
+    invita: ['Teodoro te invita', 'a caminar hasta Belén'], firmarCompromiso: 'Firmar mi compromiso',
+    compromisoT: () => '¡Firma tu compromiso!', compromisoSub: 'Caminaremos juntos los 26 días hasta Belén', tratoT: n => `¡Trato hecho, ${n}!`, tratoS: 'Este es nuestro compromiso: caminar juntos hasta Belén. Al final te espera una sorpresa.',
     faltanKicker: k => k === 1 ? '✦ TE FALTA 1 DÍA ✦' : `✦ TE FALTAN ${k} DÍAS ✦`, preparando: 'Preparando…',
     seguir: n => `Seguir con el día ${n}`, mas: k => `+${k}`,
     logro: n => `¡Lo lograste, ${n}!`, logroSub: d => `Caminaste los ${d} días con Teodoro`,
@@ -60,14 +63,17 @@ const TXT = {
     guardada: ['Imagen guardada', 'Ya puedes compartirla'],
     toastPospuesta: ['Tu carta te espera arriba', 'Fírmala cuando quieras'],
     diaCompleto: (n, k, sig) => [`¡Día ${n} completo!`, k === 1 ? `Solo te falta el día ${sig}` : `Te quedan ${k} días por completar`],
-    icono: { firmar: 'Carta sorpresa. Falta tu firma', faltan: (k, dia) => `Carta bloqueada. Completa los ${DIAS_PARA_ABRIR} días para revelarla: ${k === 1 ? `te falta el día ${dia}` : `te faltan ${k} días`}`, lista: 'Carta lista. Descubre para quién es', abierta: 'Tu carta para Jesús. Leerla otra vez' },
+    icono: { firmar: 'Carta sorpresa. Falta tu firma', faltan: (k, dia) => `Carta bloqueada. ${k === 1 ? `Termina el día ${dia}` : `Termina los ${k} días que te faltan`} para desbloquear la sorpresa`, lista: 'Carta lista. Descubre para quién es', abierta: 'Tu carta para Jesús. Leerla otra vez' },
     globo: '¡Tu carta está lista!',
     puente: ['¡Completaste el camino!', 'Teodoro tiene una sorpresa para ti'],
   },
   en: {
     secreta: ['Theodore brings you', 'a surprise letter'], altSecreta: 'Theodore holds a sealed letter', firmarBtn: 'Sign the letter',
     firmaT: n => `Now you sign, ${n}!`, firmaSub: 'Write your name with your finger', firmaOtra: n => `Sign again, ${n}`, cambiarFirma: 'Sign again', firmaCaja: n => `${n}’s signature`, borrar: 'Clear', listo: 'I signed it!', ahoraNo: 'Not now',
-    guardadaT: 'Letter signed!', guardadaSub: () => `Complete all ${DIAS_PARA_ABRIR} days to reveal the letter`,
+    guardadaT: 'Unlock your surprise!', guardadaSub: (k, dia) => k === 1 ? `Finish day ${dia} to unlock the surprise Theodore has for you` : `Finish the ${k} days you have left to unlock the surprise Theodore has for you`,
+    candado: `Unlocks when you complete all ${DIAS_PARA_ABRIR} days`, revisarT: 'You finished the journey!', revisarSub: 'This is the letter you signed. Ready to give it to Jesus?', siguiente: 'Next', verCarta: 'See my letter',
+    invita: ['Theodore invites you', 'to walk to Bethlehem'], firmarCompromiso: 'Sign my promise',
+    compromisoT: () => 'Sign your promise!', compromisoSub: 'We’ll walk together all 26 days to Bethlehem', tratoT: n => `It’s a deal, ${n}!`, tratoS: 'This is our promise: to walk together to Bethlehem. A surprise is waiting for you at the end.',
     faltanKicker: k => k === 1 ? '✦ 1 DAY LEFT TO FINISH ✦' : `✦ ${k} DAYS LEFT TO FINISH ✦`, preparando: 'Getting it ready…',
     seguir: n => `Continue with day ${n}`, mas: k => `+${k}`,
     logro: n => `You did it, ${n}!`, logroSub: d => `You walked all ${d} days with Theodore`,
@@ -87,7 +93,7 @@ const TXT = {
     guardada: ['Image saved', 'Now you can share it'],
     toastPospuesta: ['Your letter is waiting up top', 'Sign it whenever you like'],
     diaCompleto: (n, k, sig) => [`Day ${n} done!`, k === 1 ? `Only day ${sig} left` : `${k} more days to complete`],
-    icono: { firmar: 'Surprise letter. It needs your signature', faltan: (k, dia) => `Locked letter. Complete all ${DIAS_PARA_ABRIR} days to reveal it: ${k === 1 ? `day ${dia} left` : `${k} days left`}`, lista: 'Your letter is ready. Find out who it’s for', abierta: 'Your letter to Jesus. Read it again' },
+    icono: { firmar: 'Surprise letter. It needs your signature', faltan: (k, dia) => `Locked letter. ${k === 1 ? `Finish day ${dia}` : `Finish the ${k} days you have left`} to unlock the surprise`, lista: 'Your letter is ready. Find out who it’s for', abierta: 'Your letter to Jesus. Read it again' },
     globo: 'Your letter is ready!',
     puente: ['You finished the journey!', 'Teodoro has a surprise for you'],
   },
@@ -169,15 +175,20 @@ export function abrirCarta(anim = 'fade', opts = {}, params = {}) {
   const c = C();
   if (!c.vista) precargarCarta(); // la carta sorpresa viene: que Teodoro y el fondo estén bajados
   else if (seAbre() && !c.abierta) precargarCierre(); // la sorpresa viene: la entrega al Niño y su fondo
-  if (!c.vista) return go('cartaSecreta', params, anim, opts);
-  if (!seAbre()) return go(c.firma ? 'cartaGuardada' : 'cartaFirma', params, anim, opts);
+  // el día 26 Teodoro trae la carta (la primera vez); si ya la firmó al unirse, desde ahí la ve
+  if (!c.vista && (!c.firma || params.nochebuena)) return go('cartaSecreta', params, anim, opts);
+  if (!seAbre()) return go(c.firma ? 'cartaGuardada' : 'cartaFirma', params, anim, opts); // bloqueada (o le falta firmar)
   if (!c.firma && !c.saltoFirma) return go('cartaFirma', { ...params, antesDeAbrir: true }, anim, opts);
-  return go(c.abierta ? 'carta' : 'cartaSorpresa', params, anim, opts);
+  if (c.abierta) return go('carta', params, anim, opts);
+  // terminó: primero vuelve a ver la carta que firmó (puede firmar de nuevo) y con «Siguiente» se la entrega a Jesús
+  return go(c.firma && !c.revisada ? 'cartaGuardada' : 'cartaSorpresa', params, anim, opts);
 }
 /** Al terminar un cuento: si era el último que faltaba, la sorpresa queda pendiente y el día sigue normal (completado, trivia, juego);
  *  cuando el día termina de verdad, el desvío entra al final. Si no era el último, «¡Uno menos!». true = ya navegó. */
 export function trasCuento(n) {
   const c = C();
+  // su primer día (1–25, sin la casa del intro): al terminarlo Teodoro lo invita a firmar su compromiso en la carta (Rodrigo y César, 24-nov)
+  if (!c.firma && !c.compromisoVisto && n >= 1 && n <= 25 && fase() !== 'recuerdo') { c.compromisoPendiente = true; save(); precargarCarta(); }
   if (!c.vista || c.abierta || n === 26) return false;
   if (completa()) { c.sorpresaPendiente = true; save(); precargarCierre(); return false; }
   const pend = diasPendientes(), k = pend.length; if (k > 0 && k <= 25) { const [a, b] = tx().diaCompleto(n, k, pend[0]); setTimeout(() => toast(a, b), 900); }
@@ -187,9 +198,12 @@ const alMapa = () => go('mapa', {}, 'down', { replace: true });
 // el día que completaba el reto terminó (vuelve al mapa, a «Mañana seguimos» o a una pestaña): entra al final, con el puente
 const FIN_DEL_DIA = new Set(['mapa', 'cerrado', 'hoy', 'teodoro', 'mundos']);
 ponerDesvio(name => {
-  const c = S.carta; if (!c?.sorpresaPendiente || !FIN_DEL_DIA.has(name) || /^carta/.test(cur?.name || '')) return null;
+  const c = S.carta; if (!FIN_DEL_DIA.has(name) || /^carta/.test(cur?.name || '')) return null;
+  if (c?.compromisoPendiente) { c.compromisoPendiente = false; c.compromisoVisto = true; save(); if (!c.firma) return ['cartaSecreta', { compromiso: true }, 'fade', { replace: true }]; }
+  if (!c?.sorpresaPendiente) return null;
   c.sorpresaPendiente = false; save();
   if (c.abierta || !seAbre()) return null;
+  if (c.firma && !c.revisada) return ['cartaGuardada', { fin: true }, 'fade', { replace: true }];
   return [c.firma || c.saltoFirma ? 'cartaSorpresa' : 'cartaFirma', c.firma || c.saltoFirma ? { puente: true } : { antesDeAbrir: true }, 'fade', { replace: true }];
 });
 const entra = (el, { de = 'translateY(18px)', t = '', ms = 520, delay = 0 } = {}) => {
@@ -288,13 +302,13 @@ register('cartaSecreta', {
   file: () => dark() ? 'CARTA-2-oscuro' : 'CARTA-2',
   noScroll: true,
   mount(root, p, layer) {
-    const c = C(), t = tx(), primera = !c.vista;
-    c.vista = true; save();
+    const c = C(), t = tx(), primera = !c.vista && !p.compromiso;
+    if (!p.compromiso) { c.vista = true; save(); }
     // el pesebre bajo la estrella, de día o de noche (23-nov), con una bruma suave solo detrás del título
     const fondo = cielo(root, { src: FONDO_CARTA[dark() ? 'oscuro' : 'claro'], pos: FONDO_CARTA.pos, bruma: 'carta-bruma carta-bruma-fondo' });
     limpiarLienzo(fondo.img?.parentElement);
     const titulo = [...root.querySelectorAll('div')].find(d => /Teodoro le trae/.test(d.textContent) && d.children.length <= 3);
-    ponerTitulo(titulo, t.secreta); titulo?.classList.add('carta-titulo-fondo'); // se lee sobre el dibujo
+    ponerTitulo(titulo, p.compromiso ? t.invita : t.secreta); titulo?.classList.add('carta-titulo-fondo'); // se lee sobre el dibujo
     // Teodoro es el protagonista (Lottie): grande, sobre el camino, con los pies sobre el botón. La imagen fija queda escondida por si no carga
     const quieto = imgAlt(root, /^Teodoro/); if (quieto) { quieto.alt = t.altSecreta; quieto.style.visibility = 'hidden'; }
     const capa = document.createElement('div'); capa.className = 'carta-teo-capa'; capa.setAttribute('role', 'img'); capa.setAttribute('aria-label', t.altSecreta);
@@ -333,7 +347,9 @@ register('cartaSecreta', {
     // el ícono del botón: una pluma, no un sobre (aquí se firma, no se lee)
     const svg = b?.querySelector('svg'); if (svg) svg.innerHTML = '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>';
     estiloMVP(b, 'prim', 727);
-    if (b) on(root, b, () => go('cartaFirma', {}, 'push'));
+    if (b && p.compromiso) { b.querySelector('span') ? b.querySelector('span').textContent = t.firmarCompromiso : (b.lastChild.textContent = t.firmarCompromiso); b.setAttribute('aria-label', t.firmarCompromiso); }
+    else if (b && c.firma) { b.querySelector('span') ? b.querySelector('span').textContent = t.verCarta : (b.lastChild.textContent = t.verCarta); b.setAttribute('aria-label', t.verCarta); }
+    if (b) on(root, b, () => p.compromiso ? go('cartaFirma', { compromiso: true }, 'push') : c.firma ? abrirCarta('push') : go('cartaFirma', {}, 'push'));
     cerrarX(root);
     // la ambiental de la trivia suena desde que entra (no se retiene): las campanas y la voz van encima, y la voz la aparta sola mientras habla
     if (primera && p.nochebuena && fase() !== 'recuerdo') teoDice('nochebuena', { tras: motivo('nochebuena', 1.2) + 0.2 });
@@ -347,8 +363,8 @@ register('cartaFirma', {
   noScroll: true,
   async mount(root, p, layer) {
     const c = C(), t = tx(); cielo(root);
-    const titulo = textEl(root, /^¡Ahora firma tú/); if (titulo) titulo.textContent = p.rehacer ? t.firmaOtra(S.nombre) : t.firmaT(S.nombre);
-    const sub = textEl(root, /^Con tu dedo/); if (sub) sub.textContent = t.firmaSub;
+    const titulo = textEl(root, /^¡Ahora firma tú/); if (titulo) { titulo.textContent = p.compromiso ? t.compromisoT(S.nombre) : p.rehacer ? t.firmaOtra(S.nombre) : t.firmaT(S.nombre); caber(titulo); }
+    const sub = textEl(root, /^Con tu dedo/); if (sub) sub.textContent = p.compromiso ? t.compromisoSub : t.firmaSub;
     const cariño = textEl(root, /^Con cariño,$/); if (cariño && ingles()) cariño.textContent = 'With love,';
     // el rótulo de la caja punteada (no el título: «Firma de nuevo…» también empieza por «Firma de»)
     const etiqueta = [...root.querySelectorAll('div')].find(d => /^Firma de /.test(d.textContent.trim()) && /dashed/.test(d.parentElement?.getAttribute('style') || ''));
@@ -382,12 +398,14 @@ register('cartaFirma', {
     if (p.rehacer) { const x = find(root, 'Cerrar'); if (x) { const x2 = x.cloneNode(true); x.replaceWith(x2); x2.setAttribute('aria-label', t.ahoraNo); on(root, x2, volver); } }
     if (listo) on(root, listo, () => {
       if (f && f.vacia()) return;
-      c.firma = f ? f.png({ recorte: true }) : null; c.pospuesta = false; if (!p.rehacer) c.firmadaDia = Math.min(S.hoy, 39); save();
+      c.firma = f ? f.png({ recorte: true }) : null; c.pospuesta = false; if (!p.rehacer && !p.compromiso) c.firmadaDia = Math.min(S.hoy, 39); if (p.compromiso) c.compromiso = true; save();
       sonido('acierto'); try { navigator.vibrate?.(20); } catch { /* */ }
+      if (p.compromiso) return trato(root, layer, t, () => go('mapa', {}, 'fade', { replace: true })); // Teodoro: «¡Trato hecho!» y al mapa (la carta queda junto al pesebre)
       if (p.rehacer) return go(p.rehacer, { firmaNueva: true }, 'fade', { replace: true });
       seAbre() ? go('cartaSorpresa', {}, 'fade', { replace: true }) : go('cartaGuardada', { recien: true }, 'fade', { replace: true });
     });
-    if (no && p.rehacer) on(root, no, volver);
+    if (no && p.compromiso) on(root, no, alMapa); // firma después (al ver el día 26)
+    else if (no && p.rehacer) on(root, no, volver);
     else if (no) on(root, no, () => {
       if (seAbre()) { c.saltoFirma = true; save(); go('cartaSorpresa', {}, 'fade', { replace: true }); return; }
       c.pospuesta = true; save(); alMapa(); const [a, b] = t.toastPospuesta; setTimeout(() => toast(a, b), 500);
@@ -395,8 +413,17 @@ register('cartaFirma', {
     if (layer) layer.addEventListener('transitionend', () => {}, { once: true });
     root.__firma = f;
   },
-  dismiss: () => cur?.params?.rehacer ? go(cur.params.rehacer, {}, 'fade', { replace: true }) : alMapa(),
+  dismiss: () => cur?.params?.compromiso ? alMapa() : cur?.params?.rehacer ? go(cur.params.rehacer, {}, 'fade', { replace: true }) : alMapa(),
 });
+/** «¡Trato hecho!»: Teodoro le dice al niño que firmó su compromiso (al unirse); se va solo o al tocar. */
+function trato(root, layer, t, luego) {
+  const pu = document.createElement('div'); pu.className = 'carta-puente'; pu.setAttribute('role', 'status');
+  pu.innerHTML = `<img class="carta-trato-teo" src="${A('345591e97560d37b84ead12837ff9c75')}" alt=""><div class="carta-puente-t">${esc(t.tratoT(S.nombre))}</div><div class="carta-puente-s">${esc(t.tratoS)}</div>`;
+  root.append(pu); goldRain(layer); teoDice('sello', { tras: .3 });
+  if (!reduced()) { pu.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' }); [...pu.children].forEach((el, i) => el.animate([{ opacity: 0, translate: '0 14px', scale: '.94' }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 520, delay: 100 + i * 140, easing: 'cubic-bezier(.2,.75,.35,1)', fill: 'backwards' })); }
+  let ido = false; const irse = () => { if (ido) return; ido = true; luego(); };
+  pu.addEventListener('pointerdown', irse, { once: true }); setTimeout(irse, 3200);
+}
 
 // ---------- 1 · Carta guardada: faltan días del reto (pantalla nueva, con el sistema de la firma) ----------
 register('cartaGuardada', {
@@ -404,10 +431,11 @@ register('cartaGuardada', {
   noScroll: true,
   mount(root, p, layer) {
     const c = C(), t = tx(), pend = diasPendientes(), k = pend.length, sig = pend[0], d = dark(); cielo(root);
-    if (!k || seAbre()) { setTimeout(() => abrirCarta('fade', { replace: true }), 0); return; } // ya no le falta nada: directo a la sorpresa
+    const revisar = seAbre(); // terminó: vuelve a ver su carta antes de entregarla; si no, está bloqueada
+    if (revisar && (!c.firma || c.abierta)) { setTimeout(() => abrirCarta('fade', { replace: true }), 0); return; }
     const titulo = textEl(root, /^¡Ahora firma tú/), sub = textEl(root, /^Con tu dedo/);
-    if (titulo) titulo.textContent = t.guardadaT;
-    if (sub) { sub.textContent = t.guardadaSub(k, sig); Object.assign(sub.style, { left: '30px', right: '30px', fontSize: '18px', lineHeight: '25px', fontWeight: '500' }); }
+    if (titulo) titulo.textContent = revisar ? t.revisarT : t.guardadaT;
+    if (sub) { sub.textContent = revisar ? t.revisarSub : t.guardadaSub(k, sig); Object.assign(sub.style, { left: '30px', right: '30px', fontSize: '18px', lineHeight: '25px', fontWeight: '500' }); }
     const cariño = textEl(root, /^Con cariño,$/); if (cariño) cariño.textContent = t.cariño;
     const etiqueta = [...root.querySelectorAll('div')].find(x => /^Firma de /.test(x.textContent.trim()) && /dashed/.test(x.parentElement?.getAttribute('style') || '')), caja = etiqueta?.parentElement, tarjeta = caja?.closest('div[style*="box-shadow"]');
     // su firma, centrada en la carta (ya firmada: sin la caja punteada)
@@ -416,8 +444,8 @@ register('cartaGuardada', {
       caja.innerHTML = c.firma ? `<img alt="${esc(t.firmaCaja(S.nombre))}" src="${c.firma}" style="max-width: 92%; max-height: min(100%, 110px); object-fit: contain">`
         : `<span style="font-family: 'Gloria Hallelujah', cursive; font-size: 44px; line-height: 1; color: #1E8DA5; transform: rotate(-5deg)">${nombre()}</span>`;
     }
-    // ¿no le gustó cómo firmó? tocar la firma (o «Firmar de nuevo») vuelve a la firma; lo demás queda como estaba
-    if (caja && tarjeta) {
+    // ¿no le gustó cómo firmó? al final (revisión) tocar la firma o «Firmar de nuevo» vuelve a la firma; bloqueada, la carta no se toca
+    if (caja && tarjeta && revisar) {
       caja.classList.add('carta-firma-tocable'); caja.setAttribute('role', 'button'); caja.setAttribute('aria-label', t.cambiarFirma); caja.tabIndex = 0;
       const otra = document.createElement('button'); otra.type = 'button'; otra.className = 'carta-otra-firma carta-toque'; otra.innerHTML = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span>${esc(t.cambiarFirma)}</span>`;
       tarjeta.appendChild(otra);
@@ -429,8 +457,13 @@ register('cartaGuardada', {
       const sello = document.createElement('div'); sello.className = 'carta-sello'; sello.setAttribute('aria-hidden', 'true');
       sello.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="#FFF6DD" style="transform: rotate(14deg)"><path d="M12 2.6C17.1 2.6 20.6 6.6 20.6 11.9C20.6 15.7 19.5 18.8 18 20.7C17.3 21.6 15.9 21.6 15.3 20.6L15 20C16.2 18.4 17.3 15.6 17.3 12C17.3 8.6 15.1 6 12 6S6.7 8.6 6.7 12C6.7 15.6 7.8 18.4 9 20L8.7 20.6C8.1 21.6 6.7 21.6 6 20.7C4.5 18.8 3.4 15.7 3.4 11.9C3.4 6.6 6.9 2.6 12 2.6Z"/><path d="M12 10.2C12.6 10.2 13 10.6 13.2 11.1L14.8 16.3C15 17 14.5 17.5 13.9 17.3L12 16.7L10.1 17.3C9.5 17.5 9 17 9.2 16.3L10.8 11.1C11 10.6 11.4 10.2 12 10.2Z"/></svg>';
       // bloqueada: un candado sobre el sello hasta completar los días (Rodrigo, 24-nov)
-      sello.insertAdjacentHTML('beforeend', `<span class="carta-candado"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#06325A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5" fill="#06325A"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>`);
       tarjeta.appendChild(sello);
+    }
+    // bloqueada: la carta tapada con un velo y el mismo candado de los días bloqueados del mapa; no se ve ni se toca hasta terminar
+    if (tarjeta && !revisar) {
+      const bl = document.createElement('div'); bl.className = 'carta-bloqueo'; bl.setAttribute('role', 'img'); bl.setAttribute('aria-label', t.candado);
+      bl.innerHTML = `<img src="assets/candado.webp" alt=""><span>${esc(t.candado)}</span>`;
+      tarjeta.appendChild(bl);
     }
     // los días que faltan, con su ícono del mapa y un rótulo como el «✦ TIEMPO DE NAVIDAD ✦» de Adviento
     const fila = find(root, 'Borrar')?.parentElement;
@@ -446,8 +479,10 @@ register('cartaGuardada', {
       const panel = document.createElement('div'); panel.className = 'carta-panel'; fila.replaceWith(panel); panel.append(kicker, fila);
       fila.querySelectorAll('[data-dia]').forEach(b => on(root, b, () => go('mapa', { dia: +b.dataset.dia }, 'down', { replace: true })));
     }
-    const listo = boton(root, '¡Listo, firmé!', sig ? t.seguir(sig) : t.cerrar);
-    if (listo) { listo.querySelector('svg')?.remove(); on(root, listo, () => go('mapa', sig ? { dia: sig } : {}, 'down', { replace: true })); }
+    if (revisar) root.querySelector('.carta-panel')?.remove();
+    const listo = boton(root, '¡Listo, firmé!', revisar ? t.siguiente : sig ? t.seguir(sig) : t.cerrar);
+    if (listo) { listo.querySelector('svg')?.remove(); on(root, listo, () => revisar ? (c.revisada = true, save(), go('cartaSorpresa', {}, 'fade', { replace: true })) : go('mapa', sig ? { dia: sig } : {}, 'down', { replace: true })); }
+    if (revisar && (p.fin || p.recien === undefined) && layer) setTimeout(() => layer.isConnected && goldRain(layer), 300); // terminó el camino: lluvia dorada
     const no = boton(root, 'Ahora no', t.ahoraNo); if (no) on(root, no, alMapa);
     estiloMVP(listo, 'prim', 689); estiloMVP(no, 'sec', 755);
     cerrarX(root);
@@ -667,7 +702,7 @@ export function decorarCarta(root) {
   const b = document.createElement('button'); b.type = 'button'; b.className = `carta-belen carta-${est}`;
   b.setAttribute('aria-label', est === 'faltan' ? t.icono.faltan(k, pend[0]) : t.icono[est]);
   b.innerHTML = '<span class="carta-belen-luz" aria-hidden="true"></span><img alt="" src="assets/dia-icono/carta.webp"><span class="carta-belen-chispa a" aria-hidden="true">✦</span><span class="carta-belen-chispa b" aria-hidden="true">✦</span>'
-    + (est === 'faltan' ? `<span class="carta-badge" aria-hidden="true">${k}</span><span class="carta-candado carta-candado-mapa" aria-hidden="true"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#06325A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5" fill="#06325A"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>` : est === 'firmar' ? '<span class="carta-punto" aria-hidden="true"></span>' : '');
+    + (est === 'faltan' ? `<span class="carta-badge" aria-hidden="true">${k}</span><img class="carta-candado carta-candado-mapa" alt="" src="assets/candado.webp">` : est === 'firmar' ? '<span class="carta-punto" aria-hidden="true"></span>' : '');
   // sobre el arbusto de la derecha del pesebre
   const x = parseFloat(n.style.left) + 187, y = parseFloat(n.style.top) - 22;
   b.style.left = `${x}px`; b.style.top = `${y}px`;
