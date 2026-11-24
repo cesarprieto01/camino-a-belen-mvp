@@ -502,23 +502,24 @@ register('cartaSorpresa', {
     if (b) b.querySelector('svg') && b.querySelector('svg').setAttribute('stroke', '#0B748A');
     // la entrega: Teodoro camina por el camino hasta el pesebre y le ofrece la carta al Niño (una vez, queda en el último cuadro);
     // al terminar se encienden la luz del pesebre y la estrella y se revela «¡La carta era para Jesús!»
-    const entrega = () => {
-      let listo, a = null, hecho = false;
-      const finished = new Promise(ok => { listo = () => { if (!hecho) { hecho = true; ok(); } }; });
-      teoP.then(r => {
-        if (!r || !root.isConnected) return listo();
-        a = r.anim; a.loop = false;
-        a.addEventListener('complete', listo);
-        a.goToAndPlay(0, true);
-        [0, .7, 1.4, 2.1, 2.8, 3.5].forEach(s => setTimeout(() => root.isConnected && sonido('paso'), s * 1000)); // sus pasos por el camino
-      });
-      return { finished, saltar: () => { a?.goToAndStop(TEO_CIERRE.ultimo, true); listo(); } };
-    };
-    const arrancar = () => coreografiaSorpresa({ root, layer, teo: capa, pesebre: null, titulo, sub, boton: b,
+    // Teodoro arranca a caminar en cuanto empieza la escena (no espera); la revelación sale cuando ya llegó al Niño con la carta
+    // («llega», ~3 s), sin esperar el final de la animación, que sigue debajo y queda en su último cuadro
+    let anim = null, llego = null;
+    const llegada = new Promise(ok => { llego = ok; });
+    const caminar = () => teoP.then(r => {
+      if (!r || !root.isConnected) return llego();
+      anim = r.anim; anim.loop = false;
+      const vigila = () => { if (anim.currentFrame >= TEO_CIERRE.llega) { anim.removeEventListener('enterFrame', vigila); llego(); } };
+      anim.addEventListener('enterFrame', vigila); anim.addEventListener('complete', () => llego());
+      anim.goToAndPlay(0, true);
+      [0, .7, 1.4, 2.1, 2.8].forEach(s => setTimeout(() => root.isConnected && sonido('paso'), s * 1000)); // sus pasos por el camino
+    });
+    const entrega = () => ({ finished: llegada, saltar: () => { anim?.goToAndStop(TEO_CIERRE.ultimo, true); llego(); } });
+    const arrancar = () => { caminar(); return coreografiaSorpresa({ root, layer, teo: capa, pesebre: null, titulo, sub, boton: b,
       textos: { era: t.era, eraSub: t.eraSub },
       puntos: { nino: enEscena(TEO_CIERRE.nino), estrella: enEscena(TEO_CIERRE.estrella), halo: { r: Math.round(120 * kk), antes: capa } },
       onRevelar: () => { caber(titulo); capa.setAttribute('aria-label', t.altEntrega); teoDice('premioGrande', { tras: .35 }); }, // «¡Increíble!»: la carta era para Jesús
-      animacionEntrega: entrega });
+      animacionEntrega: entrega, esperaEntrega: 0 }); };
     // el puente: venía de terminar el último día que faltaba. Un instante de logro antes de la sorpresa (se salta al tocar)
     if (!p.puente || reduced()) return arrancar();
     const [pt, ps] = t.puente, pu = document.createElement('div'); pu.className = 'carta-puente'; pu.setAttribute('role', 'status');
@@ -528,7 +529,7 @@ register('cartaSorpresa', {
     [...pu.children].forEach((el, i) => el.animate([{ opacity: 0, translate: '0 14px', scale: '.94' }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 520, delay: 120 + i * 140, easing: 'cubic-bezier(.2,.75,.35,1)', fill: 'backwards' }));
     let ido = false;
     const irse = () => { if (ido) return; ido = true; pu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, easing: 'ease-in' }).finished.then(() => pu.remove(), () => pu.remove()); arrancar(); };
-    pu.addEventListener('pointerdown', irse, { once: true }); setTimeout(irse, 2200);
+    pu.addEventListener('pointerdown', irse, { once: true }); setTimeout(irse, 1800);
   },
   dismiss: () => alMapa(),
 });

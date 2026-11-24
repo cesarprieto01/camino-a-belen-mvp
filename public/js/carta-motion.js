@@ -319,7 +319,7 @@ function caminar({ dx, dy, s1 }) {
  * los textos y antes de animarlos (ahí se puede reajustar el título). animacionEntrega (opcional): ({ teo, pesebre, root, layer })
  * → Promise | Animation | { finished, saltar() }; si viene, reemplaza el caminar y la lucecita (el resto sigue igual).
  */
-export function coreografiaSorpresa({ root, layer, teo, pesebre, titulo, sub, boton, textos = {}, onRevelar, animacionEntrega, puntos } = {}) {
+export function coreografiaSorpresa({ root, layer, teo, pesebre, titulo, sub, boton, textos = {}, onRevelar, animacionEntrega, puntos, esperaEntrega = T_PASOS } = {}) {
   const e = escena(root);
   if (!root) return control(e, () => {});
   const P = pesebre ? dibujo(root, pesebre) : null, T = teo ? dibujo(root, teo) : null;
@@ -371,7 +371,7 @@ export function coreografiaSorpresa({ root, layer, teo, pesebre, titulo, sub, bo
       { opacity: 0, scale: '.2', rotate: '-25deg', easing: 'cubic-bezier(.2,.7,.3,1)' }, { opacity: 1, scale: '1.15', rotate: '10deg', offset: .16, easing: 'cubic-bezier(.4,0,.6,1)' },
       { opacity: .8, scale: '.88', rotate: '20deg', offset: .4, easing: 'cubic-bezier(.2,.7,.3,1)' }, { opacity: 1, scale: '1.22', rotate: '35deg', offset: .55, easing: 'cubic-bezier(.4,0,.6,1)' },
       { opacity: 0, scale: '.5', rotate: '70deg' }], { en: t + 150, duration: 1500, efimera: true });
-    let llega = t + 500;
+    let llega = t + 300;
     if (conLuz && dest) {
       // se inclina hacia el pesebre para ofrecer la carta
       inclina = e.anima(teo, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(2.2deg)' }], { en: t + 100, ...muelle({ amortiguacion: 1, respuesta: .55 }), alTerminar: 'mantener', final: { transform: 'none' } });
@@ -427,13 +427,13 @@ export function coreografiaSorpresa({ root, layer, teo, pesebre, titulo, sub, bo
     }
     e.en(t + 150, () => layer?.isConnected && confetti(layer, (P ? P.x + P.w * .15 : 90), nino.y + 30, 16));
     e.en(t + 260, () => layer?.isConnected && confetti(layer, (P ? P.x + P.w * .85 : 300), nino.y + 30, 16));
-    if (subeBoton) subeBoton.startTime = e.T0 + t + 420; // (e)
-    else e.en(t + 420, botonListoYa, { clave: true });
+    if (subeBoton) subeBoton.startTime = e.T0 + t + 220; // (e) el botón sube enseguida del título
+    else e.en(t + 220, botonListoYa, { clave: true });
   };
 
   // (b) camina al pesebre (o la animación de la entrega, cuando César la pase)
   if (animacionEntrega && teo) {
-    e.en(T_PASOS, () => {
+    e.en(esperaEntrega, () => { // la entrega con animación ya corre desde el principio: no espera los pasos
       try { entrega = animacionEntrega({ teo, pesebre, root, layer }); } catch (err) { console.warn('animacionEntrega', err); }
       const fin = entrega?.finished ?? (typeof entrega?.then === 'function' ? entrega : null);
       if (fin) fin.then(() => { if (!e.cerrada && !revelado) faseLuz(e.t() + 80, false); }, () => {}); else faseLuz(e.t() + 80, false);
