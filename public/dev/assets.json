@@ -11,6 +11,18 @@
   "tipo": "lottie",
   "w": 324
  },
+ "anim/teo-carta.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 61,
+  "descripcion": "Carta secreta: Teodoro de frente con su cayado saca el sobre que tenía escondido y lo ofrece (cuadros 0–28) y lo sostiene feliz moviendo las orejas (29–61, en bucle). Fondo transparente",
+  "fps": 12,
+  "h": 393,
+  "nombre": "animacion-teodoro-trae-la-carta",
+  "segundos": 5.08,
+  "tipo": "lottie",
+  "w": 298
+ },
  "anim/teo-celebra.json": {
   "adviento": true,
   "categoria": "animaciones",
@@ -22,6 +34,18 @@
   "segundos": 5.04,
   "tipo": "lottie",
   "w": 875
+ },
+ "anim/teo-pesebre-cierre.json": {
+  "adviento": true,
+  "categoria": "animaciones",
+  "cuadros": 61,
+  "descripcion": "Sorpresa: el pesebre (la Virgen, san José y el Niño se mueven un poco) y Teodoro de espaldas que camina por el camino hasta él y le ofrece la carta al Niño. Una sola vez; queda en el último cuadro. Fondo transparente",
+  "fps": 12,
+  "h": 720,
+  "nombre": "animacion-teodoro-entrega-la-carta",
+  "segundos": 5.08,
+  "tipo": "lottie",
+  "w": 578
  },
  "anim/teo-trivia-celebra-a-mapa.json": {
   "adviento": true,
@@ -1171,6 +1195,24 @@
    700
   ]
  },
+ "assets/52ce2cde73eb5a381236881facc7a651.webp": {
+  "adviento": true,
+  "categoria": "personajes",
+  "descripcion": "Teodoro de frente con su cayado y la carta, en la imagen para compartir (9:16) y en el PDF A4",
+  "drive": "09 carta/teodoro-con-la-carta@3x.png",
+  "nombre": "teodoro-con-la-carta",
+  "pantallas": [
+   "09 carta"
+  ],
+  "pt": [
+   93,
+   180
+  ],
+  "px": [
+   464,
+   900
+  ]
+ },
  "assets/5395dc871861741f74c551c3a1031492.webp": {
   "adviento": true,
   "categoria": "ruleta-y-premios",
@@ -1466,6 +1508,24 @@
   "px": [
    768,
    570
+  ]
+ },
+ "assets/6d3e354eb9d5811ba0100187a3004b2d.webp": {
+  "adviento": true,
+  "categoria": "escenas",
+  "descripcion": "El pesebre con la Virgen María, san José y el Niño Jesús, en la imagen para compartir (9:16) y en el PDF A4 de la carta",
+  "drive": "09 carta/carta-pesebre-sagrada-familia@3x.png",
+  "nombre": "carta-pesebre-sagrada-familia",
+  "pantallas": [
+   "09 carta"
+  ],
+  "pt": [
+   150,
+   180
+  ],
+  "px": [
+   749,
+   900
   ]
  },
  "assets/6df2148c948b9e13282e803016c2035c.webp": {
@@ -2590,6 +2650,78 @@
   "px": [
    101,
    120
+  ]
+ },
+ "assets/carta/fondo-cierre-dia.webp": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo de la sorpresa (Teodoro entrega la carta), de día: colinas y un claro de tierra donde se para el pesebre de la animación; el camino llega desde abajo a la izquierda. El claro mide ~665 × 150 px y su centro está en (578, 897) del dibujo",
+  "drive": "09 carta/fondo-carta-sorpresa-dia@3x.jpg",
+  "nombre": "fondo-carta-sorpresa-dia",
+  "pantallas": [
+   "09 carta"
+  ],
+  "pt": [
+   390,
+   693
+  ],
+  "px": [
+   941,
+   1672
+  ]
+ },
+ "assets/carta/fondo-cierre-noche.webp": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo de la sorpresa, de noche (el mismo encuadre que el de día)",
+  "drive": "09 carta/fondo-carta-sorpresa-noche@3x.jpg",
+  "nombre": "fondo-carta-sorpresa-noche",
+  "pantallas": [
+   "09 carta"
+  ],
+  "pt": [
+   390,
+   693
+  ],
+  "px": [
+   941,
+   1672
+  ]
+ },
+ "assets/carta/fondo-entrega-dia.webp": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo de la carta secreta, de día: el pesebre bajo la estrella a la izquierda y el camino que sube hasta él. A pantalla completa (cover), recortado por los lados al 8 % para que el pesebre quede entero",
+  "drive": "09 carta/fondo-carta-secreta-dia@3x.jpg",
+  "nombre": "fondo-carta-secreta-dia",
+  "pantallas": [
+   "09 carta"
+  ],
+  "pt": [
+   390,
+   585
+  ],
+  "px": [
+   1024,
+   1536
+  ]
+ },
+ "assets/carta/fondo-entrega-noche.webp": {
+  "adviento": true,
+  "categoria": "fondos",
+  "descripcion": "Fondo de la carta secreta, de noche (el mismo encuadre que el de día)",
+  "drive": "09 carta/fondo-carta-secreta-noche@3x.jpg",
+  "nombre": "fondo-carta-secreta-noche",
+  "pantallas": [
+   "09 carta"
+  ],
+  "pt": [
+   390,
+   585
+  ],
+  "px": [
+   1024,
+   1536
   ]
  },
  "assets/cba48c50b2291a53680ba08e575b8cdb.webp": {
@@ -4288,6 +4420,24 @@
   "px": [
    768,
    1024
+  ]
+ },
+ "assets/reloj-arena.webp": {
+  "adviento": true,
+  "categoria": "mundos",
+  "descripcion": "Reloj de arena de la lengüeta «Quedan N días» bajo la card de Adviento en Mundos (31 dic – 6 ene). «Hourglass not done» de Microsoft Fluent Emoji, licencia MIT",
+  "drive": "09 carta/reloj-arena-mundos@3x.png",
+  "nombre": "reloj-arena-mundos",
+  "pantallas": [
+   "09 carta"
+  ],
+  "pt": [
+   26,
+   26
+  ],
+  "px": [
+   78,
+   78
   ]
  },
  "assets/ruleta/otra-vez.webp": {
