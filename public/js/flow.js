@@ -809,6 +809,9 @@ const SLIDES = [
   { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día junto a Teodoro hasta el pesebre.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
   { vis: 'aprende', t: 'Mira, juega, canta… y ama', d: 'Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.', alt: 'Un cuento de la oveja perdida, el ángel con los pastores y una trivia' },
   { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.', alt: 'La ruleta de premios con el traje de Adviento, el traje de Natividad y una trivia perfecta de tres estrellas y diez panes' },
+  // la invitación (feedback de Rodrigo, 24-nov): Teodoro invita y el niño acepta manteniendo presionada su huella (el compromiso del
+  // principio; al final firma la carta con su nombre)
+  { vis: 'invita', t: '¡Teodoro te invita!', d: '¿Caminas conmigo los 26 días hasta Belén?', alt: 'Teodoro te saluda y te invita al reto de Adviento' },
 ];
 // chispas de cuatro puntas: [left, top, tamaño, opacidad]
 const chispas = (l, clase = '') => l.map(([x, y, s, o = 1]) => `<svg class="rs-chispa ${clase}" viewBox="0 0 24 24" style="left:${x}px;top:${y}px;width:${s}px;height:${s}px;opacity:${o}"><path d="M12 1.5 14 10 22.5 12 14 14 12 22.5 10 14 1.5 12 10 10Z"/></svg>`).join('');
@@ -849,6 +852,8 @@ function slidesEn(root, caja, listo) {
       <div class="rs-mazo rs-centro"></div>
       <div class="rs-card rs-centro rs-angel-card"><img class="rs-angel" src="${A('47459af67a4b5599e33f6147ecedf0f3')}" alt="">
         ${chispas([[84, 108, 12], [150, 96, 10, .85]], 'rs-suave')}<div class="rs-card-velo"></div><span class="rs-chip">${PLAY}Especial de Navidad</span></div>`,
+    invita: `<div class="rs-luz"></div><img class="rs-teo-invita" src="${A('345591e97560d37b84ead12837ff9c75')}" alt="">
+      <button type="button" class="rs-huella" aria-label="Mantén presionada la huella de Teodoro para aceptar el reto"><svg class="rs-huella-aro" viewBox="0 0 100 100" aria-hidden="true"><circle class="rs-aro-fondo" cx="50" cy="50" r="46"/><circle class="rs-aro-lleno" cx="50" cy="50" r="46" pathLength="100"/></svg><svg class="rs-huella-casco" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6C17.1 2.6 20.6 6.6 20.6 11.9C20.6 15.7 19.5 18.8 18 20.7C17.3 21.6 15.9 21.6 15.3 20.6L15 20C16.2 18.4 17.3 15.6 17.3 12C17.3 8.6 15.1 6 12 6S6.7 8.6 6.7 12C6.7 15.6 7.8 18.4 9 20L8.7 20.6C8.1 21.6 6.7 21.6 6 20.7C4.5 18.8 3.4 15.7 3.4 11.9C3.4 6.6 6.9 2.6 12 2.6Z"/><path d="M12 10.2C12.6 10.2 13 10.6 13.2 11.1L14.8 16.3C15 17 14.5 17.5 13.9 17.3L12 16.7L10.1 17.3C9.5 17.5 9 17 9.2 16.3L10.8 11.1C11 10.6 11.4 10.2 12 10.2Z"/></svg></button>`,
     gana: `<div class="rs-rayos"></div><div class="rs-brillo"></div>
       <div class="rs-ruleta"><div class="rs-rueda"><img src="assets/ruleta/rueda8.webp" alt="">${casillas(279)}</div></div><img class="rs-puntero" src="${A('3fdb655b7743b5a7a821153429c4d733')}" alt="">
       <img class="rs-premio rs-izq rs-traje" src="assets/premios/traje-adviento.webp" alt=""><img class="rs-premio rs-der rs-traje" src="assets/premios/traje-natividad.webp" alt="">
@@ -899,6 +904,12 @@ function slidesEn(root, caja, listo) {
         ...brillan(n, 520),
       ];
     },
+    // la invitación: Teodoro sube saludando y la huella aparece y late una vez, invitando a tocarla
+    invita: n => [
+      anima(en(n, '.rs-teo-invita'), [{ opacity: 0, transform: 'translateY(30px) scale(.94)' }, { opacity: 1, transform: 'translateY(0px) scale(1)' }], { duration: 620, delay: 120 }),
+      anima(en(n, '.rs-huella'), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 520, delay: 520 }),
+      anima(en(n, '.rs-huella'), [{ transform: 'scale(1)' }, { transform: 'scale(1.08)', offset: .4 }, { transform: 'scale(1)' }], { duration: 700, delay: 1300, easing: 'ease-in-out', fill: 'none' }),
+    ],
     // A3 · la ruleta gira y frena, el puntero rebota y salen los premios con confeti
     gana: n => [
       anima(en(n, '.rs-rayos'), [{ opacity: 0, transform: 'rotate(-40deg)' }, { opacity: 1, transform: 'rotate(0deg)' }], { duration: 1600, delay: 150, easing: 'cubic-bezier(.15,.85,.25,1)' }),
@@ -919,11 +930,42 @@ function slidesEn(root, caja, listo) {
     else poner(-i * W, anim ? 380 : 0);
     slides.forEach((sl, n) => { sl.inert = n !== i; sl.setAttribute('aria-hidden', String(n !== i)); });
     puntos.forEach((pt, n) => pt.classList.toggle('on', n === i));
-    cta.textContent = i < N - 1 ? 'Siguiente' : '¡Vamos!';
+    const enHuella = SLIDES[i].vis === 'invita';
+    cta.textContent = enHuella ? 'Mantén presionada la huella' : i < N - 1 ? 'Siguiente' : '¡Vamos!';
+    cta.classList.toggle('rs-cta-pista', enHuella); cta.tabIndex = enHuella ? -1 : 0; cta.setAttribute('aria-hidden', String(enHuella));
     estrenar(i);
   };
   const ir = n => { i = Math.max(0, Math.min(N - 1, n)); pintar(); };
-  on(root, cta, () => i < N - 1 ? ir(i + 1) : listo());
+  on(root, cta, () => { if (SLIDES[i].vis === 'invita') return; i < N - 1 ? ir(i + 1) : listo(); });
+  // la huella: se mantiene presionada 1,2 s (el aro se llena); si se suelta antes, se vacía. Al completar, golpe de sello y adentro
+  const boton = caja.querySelector('button.rs-huella');
+  if (boton) {
+    const aro = boton.querySelector('.rs-aro-lleno'), MS = 1200;
+    let llenado = null, hecho = false;
+    const aceptar = () => {
+      if (hecho) return; hecho = true; S.huellaAceptada = true; save();
+      boton.classList.add('rs-huella-ok'); sonido('sello'); try { navigator.vibrate?.([18, 50, 28]); } catch { /* */ }
+      if (!quieto) boton.animate([{ transform: 'scale(1)' }, { transform: 'scale(.86)', offset: .35 }, { transform: 'scale(1.08)', offset: .7 }, { transform: 'scale(1)' }], { duration: 460, easing: 'ease-out' });
+      setTimeout(listo, quieto ? 250 : 650);
+    };
+    const empezar = e => {
+      if (hecho || e.button > 0) return; e.preventDefault(); e.stopPropagation(); boton.setPointerCapture?.(e.pointerId); // el carrusel no se lleva el gesto
+      const desde = parseFloat(getComputedStyle(aro).strokeDashoffset) || 100;
+      llenado?.cancel(); try { navigator.vibrate?.(8); } catch { /* */ }
+      llenado = aro.animate([{ strokeDashoffset: desde }, { strokeDashoffset: 0 }], { duration: MS * desde / 100, easing: 'linear', fill: 'forwards' });
+      llenado.onfinish = aceptar;
+    };
+    const soltarHuella = () => {
+      if (hecho || !llenado) return;
+      const va = parseFloat(getComputedStyle(aro).strokeDashoffset); llenado.cancel();
+      llenado = aro.animate([{ strokeDashoffset: va }, { strokeDashoffset: 100 }], { duration: 260, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }); llenado.onfinish = null;
+    };
+    boton.dataset.bound = '1';
+    boton.addEventListener('pointerdown', empezar);
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => boton.addEventListener(ev, soltarHuella));
+    boton.addEventListener('click', e => { if (e.detail === 0) aceptar(); }); // VoiceOver o teclado: un toque acepta
+    boton.addEventListener('contextmenu', e => e.preventDefault());
+  }
   on(root, caja.querySelector('.rs-cerrar'), listo);
   caja.addEventListener('keydown', e => { if (e.key === 'ArrowRight') ir(i + 1); if (e.key === 'ArrowLeft') ir(i - 1); });
   const goma = (d, dim = W, c = .55) => (d * dim * c) / (dim + c * Math.abs(d));
@@ -1285,7 +1327,7 @@ register('reproductor', {
   files: F('S-05-Reproductor', 'S-05-Reproductor-oscuro'),
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
-    if (p.ultimo) { precargar('nieve'); precargarCarta(); } // al terminar sale la carta secreta, con la ambiental de la trivia: que la música, Teodoro y el fondo ya estén bajados
+    if (p.ultimo) { precargar('nieve'); precargarCarta(); } // al terminar sale la carta sorpresa, con la ambiental de la trivia: que la música, Teodoro y el fondo ya estén bajados
     setText(root, /Meditación de la Escucha/, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
     // una línea bajo el título: de qué trata el día (del cronograma)
     const tituloRep = textEl(root, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);

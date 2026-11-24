@@ -184,7 +184,7 @@ function escribir(e, img, en, dur = 650) {
     { en, duration: dur, easing: 'cubic-bezier(.42,.08,.38,1)', despues: limpiar });
 }
 
-// ---------- 1 · La carta secreta ----------
+// ---------- 1 · La carta sorpresa ----------
 /** Teodoro sube con la carta sellada y se asienta; la carta brilla y el botón «Firmar la carta» late: de la carta al botón. */
 export function entradaSecreta({ root, layer, titulo, teo, boton, primera = false } = {}) {
   const e = escena(root);

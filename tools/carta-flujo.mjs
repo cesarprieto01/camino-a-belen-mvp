@@ -36,7 +36,8 @@ else {
 await p.waitForTimeout(400); await foto('2-firma');
 await tocar('¡Listo, firmé!'); await espera('cartaGuardada'); await p.waitForTimeout(1300); await foto('3-guardada');
 e = await estado(); if (!(e.carta.firma > 2000)) fallos.push('la firma no se guardó: ' + e.carta.firma);
-const sub = await p.evaluate(() => document.querySelector('#viewport .layer:last-child').textContent.match(/Termina el día \d+/)?.[0]); if (!/Termina el día 19/.test(sub || '')) fallos.push('sub de guardada: ' + sub);
+const sub = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { txt: L.textContent.match(/Completa los \d+ días para revelar la carta/)?.[0], candado: !!L.querySelector('.carta-sello .carta-candado'), falta: L.textContent.match(/TE FALTA 1 DÍA/)?.[0] }; });
+if (!sub.txt || !sub.candado || !sub.falta) fallos.push('carta bloqueada: ' + JSON.stringify(sub));
 // corregir: «Firmar de nuevo» → «Ahora no» deja la firma como estaba; firmar otra vez la cambia
 const firma0 = (await estado()).carta.firma;
 await tocar('Firmar de nuevo'); await espera('cartaFirma'); await p.waitForTimeout(700);

@@ -1,7 +1,8 @@
 // La carta de Teodoro: el gran final del reto (lienzo «Gran final · 26 días», opción B). Reemplaza al final de 3 pasos.
 // Dos momentos:
 //  1 · La firma: la primera vez que el niño termina el cuento del día 26 (Nochebuena), aunque le falten días. Teodoro trae
-//      una carta SECRETA (no se dice para quién es) y el niño la firma sin leerla: todavía no hay números que contar.
+//      una carta SORPRESA (no se dice para quién es) y el niño la firma sin leerla: todavía no hay números que contar.
+//      («sorpresa», nunca «secreto»: feedback de Rodrigo, 24-nov, nada de secretos entre niños y adultos)
 //  2 · La sorpresa: justo al terminar el último cuento que le falte, el día que sea (no tiene que volver al 26), o desde el
 //      7 de enero con lo que haya hecho. Teodoro entrega la carta al Niño Jesús («¡Era una carta para Jesús!») y se lee,
 //      con sus números y su firma; se puede imprimir (A4) o compartir (historia 9:16).
@@ -11,11 +12,14 @@ import { DAYS, TYPES, RULES, JUEGOS, IMG, iconOf, hasTrivia } from './data.js';
 import { sparkles, goldRain } from './flow.js';
 import { teoDice, sonido, motivo, bindMute } from './musica.js';
 import { entradaSecreta, botonListo, selloCarta, coreografiaSorpresa, abrirCartaAnim, presionable } from './carta-motion.js'; // coreografía de logro
-import { teoAnimado, CARTA as TEO_CARTA, CIERRE as TEO_CIERRE, precargar as precargarAnim } from './teo-anim.js'; // Teodoro trae la carta secreta y la entrega al Niño (Lottie)
+import { teoAnimado, CARTA as TEO_CARTA, CIERRE as TEO_CIERRE, precargar as precargarAnim } from './teo-anim.js'; // Teodoro trae la carta sorpresa y la entrega al Niño (Lottie)
 
 // ---------- Estado ----------
 const C = () => (S.carta ||= { vista: false, firma: null, color: 1, firmadaDia: null, pospuesta: false, saltoFirma: false, abierta: false });
-const completa = () => vistos() >= 26;
+// La carta se revela al completar los 26 días del reto (o desde el 7 de enero con lo que haya hecho). Es la regla del diseño actual:
+// Rodrigo pidió «Completa al menos X días»; si el umbral cambia, se ajusta solo aquí (POR CONFIRMAR, 24-nov)
+export const DIAS_PARA_ABRIR = 26;
+const completa = () => vistos() >= DIAS_PARA_ABRIR;
 /** Desde el 7 de enero la carta se abre con lo que haya hecho: nadie pierde la carta que firmó. */
 const seAbre = () => completa() || fase() === 'recuerdo';
 /** Días del reto que le faltan por completar (cuentos sin ver), en orden. */
@@ -34,9 +38,9 @@ export function estadoCarta() {
 // nunca como espera («te faltan 4 días» se lee «en 4 días se abre»). El texto de la carta es el del lienzo (opción B).
 const TXT = {
   es: {
-    secreta: ['Teodoro te trae', 'una carta secreta'], altSecreta: 'Teodoro sostiene una carta sellada', firmarBtn: 'Firmar la carta',
+    secreta: ['Teodoro te trae', 'una carta sorpresa'], altSecreta: 'Teodoro sostiene una carta sellada', firmarBtn: 'Firmar la carta',
     firmaT: n => `¡Ahora firma tú, ${n}!`, firmaSub: 'Escribe tu nombre con el dedo', firmaOtra: n => `Firma de nuevo, ${n}`, cambiarFirma: 'Firmar de nuevo', firmaCaja: n => `Firma de ${n}`, borrar: 'Borrar', listo: '¡Listo, firmé!', ahoraNo: 'Ahora no',
-    guardadaT: '¡Carta firmada!', guardadaSub: (k, dia) => k === 1 ? `Termina el día ${dia} y descubre la sorpresa que Teodoro te tiene` : `Termina los ${k} días que te faltan y descubre la sorpresa que Teodoro te tiene`,
+    guardadaT: '¡Carta firmada!', guardadaSub: () => `Completa los ${DIAS_PARA_ABRIR} días para revelar la carta`,
     faltanKicker: k => k === 1 ? '✦ TE FALTA 1 DÍA ✦' : `✦ TE FALTAN ${k} DÍAS ✦`, preparando: 'Preparando…',
     seguir: n => `Seguir con el día ${n}`, mas: k => `+${k}`,
     logro: n => `¡Lo lograste, ${n}!`, logroSub: d => `Caminaste los ${d} días con Teodoro`,
@@ -56,14 +60,14 @@ const TXT = {
     guardada: ['Imagen guardada', 'Ya puedes compartirla'],
     toastPospuesta: ['Tu carta te espera arriba', 'Fírmala cuando quieras'],
     diaCompleto: (n, k, sig) => [`¡Día ${n} completo!`, k === 1 ? `Solo te falta el día ${sig}` : `Te quedan ${k} días por completar`],
-    icono: { firmar: 'Carta secreta. Falta tu firma', faltan: (k, dia) => k === 1 ? `Carta firmada. Termina el día ${dia} y descubre la sorpresa que Teodoro te tiene` : `Carta firmada. Termina los ${k} días que te faltan y descubre la sorpresa que Teodoro te tiene`, lista: 'Carta lista. Descubre para quién es', abierta: 'Tu carta para Jesús. Leerla otra vez' },
+    icono: { firmar: 'Carta sorpresa. Falta tu firma', faltan: (k, dia) => `Carta bloqueada. Completa los ${DIAS_PARA_ABRIR} días para revelarla: ${k === 1 ? `te falta el día ${dia}` : `te faltan ${k} días`}`, lista: 'Carta lista. Descubre para quién es', abierta: 'Tu carta para Jesús. Leerla otra vez' },
     globo: '¡Tu carta está lista!',
     puente: ['¡Completaste el camino!', 'Teodoro tiene una sorpresa para ti'],
   },
   en: {
-    secreta: ['Theodore brings you', 'a secret letter'], altSecreta: 'Theodore holds a sealed letter', firmarBtn: 'Sign the letter',
+    secreta: ['Theodore brings you', 'a surprise letter'], altSecreta: 'Theodore holds a sealed letter', firmarBtn: 'Sign the letter',
     firmaT: n => `Now you sign, ${n}!`, firmaSub: 'Write your name with your finger', firmaOtra: n => `Sign again, ${n}`, cambiarFirma: 'Sign again', firmaCaja: n => `${n}’s signature`, borrar: 'Clear', listo: 'I signed it!', ahoraNo: 'Not now',
-    guardadaT: 'Letter signed!', guardadaSub: (k, dia) => k === 1 ? `Finish day ${dia} to discover the surprise Theodore has for you` : `Finish the ${k} days you have left to discover the surprise Theodore has for you`,
+    guardadaT: 'Letter signed!', guardadaSub: () => `Complete all ${DIAS_PARA_ABRIR} days to reveal the letter`,
     faltanKicker: k => k === 1 ? '✦ 1 DAY LEFT TO FINISH ✦' : `✦ ${k} DAYS LEFT TO FINISH ✦`, preparando: 'Getting it ready…',
     seguir: n => `Continue with day ${n}`, mas: k => `+${k}`,
     logro: n => `You did it, ${n}!`, logroSub: d => `You walked all ${d} days with Theodore`,
@@ -83,7 +87,7 @@ const TXT = {
     guardada: ['Image saved', 'Now you can share it'],
     toastPospuesta: ['Your letter is waiting up top', 'Sign it whenever you like'],
     diaCompleto: (n, k, sig) => [`Day ${n} done!`, k === 1 ? `Only day ${sig} left` : `${k} more days to complete`],
-    icono: { firmar: 'Secret letter. It needs your signature', faltan: (k, dia) => k === 1 ? `Signed letter. Finish day ${dia} to discover Theodore’s surprise` : `Signed letter. Finish the ${k} days you have left to discover Theodore’s surprise`, lista: 'Your letter is ready. Find out who it’s for', abierta: 'Your letter to Jesus. Read it again' },
+    icono: { firmar: 'Surprise letter. It needs your signature', faltan: (k, dia) => `Locked letter. Complete all ${DIAS_PARA_ABRIR} days to reveal it: ${k === 1 ? `day ${dia} left` : `${k} days left`}`, lista: 'Your letter is ready. Find out who it’s for', abierta: 'Your letter to Jesus. Read it again' },
     globo: 'Your letter is ready!',
     puente: ['You finished the journey!', 'Teodoro has a surprise for you'],
   },
@@ -163,7 +167,7 @@ function vestirCarta(root, { px = 30, fs = 16, num = 20, gap = 6, firmaAlto = 40
 // ---------- Entrada única: decide qué momento toca ----------
 export function abrirCarta(anim = 'fade', opts = {}, params = {}) {
   const c = C();
-  if (!c.vista) precargarCarta(); // la carta secreta viene: que Teodoro y el fondo estén bajados
+  if (!c.vista) precargarCarta(); // la carta sorpresa viene: que Teodoro y el fondo estén bajados
   else if (seAbre() && !c.abierta) precargarCierre(); // la sorpresa viene: la entrega al Niño y su fondo
   if (!c.vista) return go('cartaSecreta', params, anim, opts);
   if (!seAbre()) return go(c.firma ? 'cartaGuardada' : 'cartaFirma', params, anim, opts);
@@ -216,10 +220,10 @@ function estiloMVP(b, tipo, top, { left = 19, right = 19 } = {}) {
 }
 // el cielo de Mundos (nubes de día; nubes y estrellas de noche) en lugar de los rayos del lienzo, con bruma arriba y abajo para leer
 const CIELO = { claro: 'assets/e61f3266236935daf349df4ae724951b.webp', oscuro: 'assets/83988f1014aa164cda81619d4d403dd2.webp' };
-// la carta secreta (23-nov, Drive «teo_carta/FONDO»): el pesebre bajo la estrella a la izquierda y el camino que sube hasta él, de día
+// la carta sorpresa (23-nov, Drive «teo_carta/FONDO»): el pesebre bajo la estrella a la izquierda y el camino que sube hasta él, de día
 // y de noche (1024 × 1536). Se recorta por los lados al 8 % para que el pesebre quede entero
 const FONDO_CARTA = { claro: 'assets/carta/fondo-entrega-dia.webp', oscuro: 'assets/carta/fondo-entrega-noche.webp', pos: '8% 50%' };
-/** Teodoro con el sobre (Lottie) y el fondo del pesebre: se bajan mientras ve el video del día 26 (flow.js), así la carta secreta entra lista. */
+/** Teodoro con el sobre (Lottie) y el fondo del pesebre: se bajan mientras ve el video del día 26 (flow.js), así la carta sorpresa entra lista. */
 export function precargarCarta() { precargarAnim(TEO_CARTA); [FONDO_CARTA.claro, FONDO_CARTA.oscuro].forEach(src => { new Image().src = src; }); }
 // la sorpresa (23-nov, Drive «07 Pantalla de cierre (pesebre)»): cielo, colinas y un claro de tierra donde se para el pesebre de la
 // animación, con el camino que llega a él desde abajo a la izquierda (941 × 1672). «claro»: el centro del claro, en px del dibujo
@@ -279,7 +283,7 @@ const cerrarX = root => {
   m.querySelector('svg')?.setAttribute('width', '22'); m.querySelector('svg')?.setAttribute('height', '22');
 };
 
-// ---------- 1 · La carta secreta (B2) ----------
+// ---------- 1 · La carta sorpresa (B2) ----------
 register('cartaSecreta', {
   file: () => dark() ? 'CARTA-2-oscuro' : 'CARTA-2',
   noScroll: true,
@@ -424,6 +428,8 @@ register('cartaGuardada', {
     if (tarjeta) {
       const sello = document.createElement('div'); sello.className = 'carta-sello'; sello.setAttribute('aria-hidden', 'true');
       sello.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="#FFF6DD" style="transform: rotate(14deg)"><path d="M12 2.6C17.1 2.6 20.6 6.6 20.6 11.9C20.6 15.7 19.5 18.8 18 20.7C17.3 21.6 15.9 21.6 15.3 20.6L15 20C16.2 18.4 17.3 15.6 17.3 12C17.3 8.6 15.1 6 12 6S6.7 8.6 6.7 12C6.7 15.6 7.8 18.4 9 20L8.7 20.6C8.1 21.6 6.7 21.6 6 20.7C4.5 18.8 3.4 15.7 3.4 11.9C3.4 6.6 6.9 2.6 12 2.6Z"/><path d="M12 10.2C12.6 10.2 13 10.6 13.2 11.1L14.8 16.3C15 17 14.5 17.5 13.9 17.3L12 16.7L10.1 17.3C9.5 17.5 9 17 9.2 16.3L10.8 11.1C11 10.6 11.4 10.2 12 10.2Z"/></svg>';
+      // bloqueada: un candado sobre el sello hasta completar los días (Rodrigo, 24-nov)
+      sello.insertAdjacentHTML('beforeend', `<span class="carta-candado"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#06325A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5" fill="#06325A"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>`);
       tarjeta.appendChild(sello);
     }
     // los días que faltan, con su ícono del mapa y un rótulo como el «✦ TIEMPO DE NAVIDAD ✦» de Adviento
@@ -661,7 +667,7 @@ export function decorarCarta(root) {
   const b = document.createElement('button'); b.type = 'button'; b.className = `carta-belen carta-${est}`;
   b.setAttribute('aria-label', est === 'faltan' ? t.icono.faltan(k, pend[0]) : t.icono[est]);
   b.innerHTML = '<span class="carta-belen-luz" aria-hidden="true"></span><img alt="" src="assets/dia-icono/carta.webp"><span class="carta-belen-chispa a" aria-hidden="true">✦</span><span class="carta-belen-chispa b" aria-hidden="true">✦</span>'
-    + (est === 'faltan' ? `<span class="carta-badge" aria-hidden="true">${k}</span>` : est === 'firmar' ? '<span class="carta-punto" aria-hidden="true"></span>' : '');
+    + (est === 'faltan' ? `<span class="carta-badge" aria-hidden="true">${k}</span><span class="carta-candado carta-candado-mapa" aria-hidden="true"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#06325A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5" fill="#06325A"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>` : est === 'firmar' ? '<span class="carta-punto" aria-hidden="true"></span>' : '');
   // sobre el arbusto de la derecha del pesebre
   const x = parseFloat(n.style.left) + 187, y = parseFloat(n.style.top) - 22;
   b.style.left = `${x}px`; b.style.top = `${y}px`;

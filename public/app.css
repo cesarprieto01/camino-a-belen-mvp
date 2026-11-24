@@ -1615,3 +1615,24 @@ button.carta-dia { border: 0; padding: 4px 0; background: transparent; cursor: p
 
 /* el rollo de papel que baja cuando la carta se desenrolla (carta-motion.js) */
 .cm-rollo { position: absolute; height: 22px; margin-top: -11px; border-radius: 11px; pointer-events: none; z-index: 3; background: linear-gradient(180deg, #E9DDBC 0%, #FFFDF2 38%, #F6EDD3 62%, #D9CBA4 100%); box-shadow: 0 7px 12px -4px rgba(60,40,0,.32), inset 0 1px 0 rgba(255,255,255,.8); }
+
+/* la invitación de Teodoro (último slide del reto): Teodoro saluda y el niño acepta manteniendo presionada su huella */
+.rs-teo-invita { position: absolute; left: 50%; top: 66px; height: 268px; translate: -50% 0; filter: drop-shadow(0 10px 16px rgba(0,8,43,.28)); }
+.rs-huella { position: absolute; left: 50%; top: 348px; width: 104px; height: 104px; margin-left: -52px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  color: #06325A; background: rgba(255,255,255,.9); box-shadow: 0 0 0 6px rgba(245,219,120,.25), 0 10px 24px rgba(0,8,43,.3), inset 0 1px 0 #FFFFFF; }
+.rs-huella-casco { width: 52px; height: 52px; fill: currentColor; transition: transform .2s cubic-bezier(.34,1.56,.64,1); }
+.rs-huella:active .rs-huella-casco { transform: scale(.92); }
+.rs-huella-aro { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); rotate: -90deg; pointer-events: none; }
+.rs-aro-fondo { fill: none; stroke: rgba(245,219,120,.28); stroke-width: 5; }
+.rs-aro-lleno { fill: none; stroke: #F5DB78; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; filter: drop-shadow(0 0 4px rgba(245,219,120,.8)); }
+.rs-huella-ok { background: #F5DB78; color: #0B748A; }
+.rs-huella:focus-visible { outline: 3px solid #F5DB78; outline-offset: 10px; }
+.rs-claro .rs-huella { box-shadow: 0 0 0 6px rgba(11,116,138,.12), 0 10px 24px rgba(2,37,79,.18), inset 0 1px 0 #FFFFFF; }
+.rs-cta.rs-cta-pista { background: transparent; color: rgba(255,255,255,.85); font: 600 16px 'Neue Montreal', Mulish, system-ui, sans-serif; pointer-events: none; }
+.rs-claro .rs-cta.rs-cta-pista { color: #3E5F6B; }
+@media (prefers-reduced-motion: reduce) { .rs-huella-casco { transition: none; } }
+
+/* la carta bloqueada: un candado sobre el sello (y en la carta del mapa) hasta completar los días */
+.carta-candado { position: absolute; right: -4px; bottom: -4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #F5DB78; box-shadow: 0 0 0 2px #FFFFFF, 0 3px 6px rgba(2,37,79,.3); transform: rotate(14deg); }
+.carta-candado-mapa { right: auto; left: -6px; bottom: -4px; width: 22px; height: 22px; transform: none; z-index: 1; }
+.carta-candado-mapa svg { width: 13px; height: 13px; }
