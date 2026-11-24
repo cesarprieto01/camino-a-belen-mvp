@@ -48,10 +48,15 @@ await tocar('¡Listo, firmé!'); await espera('cartaGuardada'); if ((await estad
 await tocar('Seguir con el día 19'); await espera('mapa'); await p.waitForFunction(() => document.querySelector('#viewport .layer:last-child .carta-belen'), null, { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(400); await foto('4-mapa-faltan'); // en producción el ícono tarda un poco más en pintarse
 const ico = await p.evaluate(() => { const i = document.querySelector('#viewport .layer:last-child .carta-belen'); return i ? { clase: i.className, badge: i.querySelector('.carta-badge')?.textContent, aria: i.getAttribute('aria-label') } : null; });
 if (!ico || !/carta-faltan/.test(ico.clase) || ico.badge !== '1') fallos.push('ícono en el mapa: ' + JSON.stringify(ico));
-// termina el día 19 (el último que faltaba): se abre la sorpresa ahí mismo
+// termina el día 19 (el último que faltaba): el día sigue normal (completado) y, al volver al camino, entra al final con el puente
 await p.evaluate(async () => { const c = await import('/js/core.js'); c.go('reproductor', { day: 19 }, 'none'); });
 await p.waitForTimeout(1200); await terminarVideo();
-await espera('cartaSorpresa'); await p.waitForTimeout(800); await foto('5-sorpresa-antes');
+await espera('completado'); await p.waitForTimeout(900); await foto('5a-dia-completado');
+const salir = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child a, #viewport .layer:last-child button')].map(b => (b.getAttribute('aria-label') || b.textContent).trim()).filter(Boolean));
+await tocar(salir.find(t => /Volver al camino|Seguir|camino/i.test(t)) || 'Volver al camino');
+await espera('cartaSorpresa'); await p.waitForTimeout(500);
+if (!(await p.evaluate(() => !!document.querySelector('#viewport .layer:last-child .carta-puente')))) fallos.push('no salió el puente «¡Completaste el camino!»');
+await foto('5b-puente'); await p.waitForTimeout(2400); await foto('5-sorpresa-antes');
 // Teodoro camina hasta el pesebre (~5 s de animación) y después se revela: se espera el título nuevo, hasta 12 s
 await p.waitForFunction(() => /era para Jes/.test(document.querySelector('#viewport .layer:last-child')?.textContent || ''), null, { timeout: 12000 }).catch(() => {}); await p.waitForTimeout(600); await foto('6-sorpresa-revela');
 const titulo = await p.evaluate(() => [...document.querySelectorAll('#viewport .layer:last-child div')].find(d => /para Jesús!$/.test(d.textContent) && !d.children.length)?.textContent);

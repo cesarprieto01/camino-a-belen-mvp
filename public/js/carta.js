@@ -6,7 +6,7 @@
 //      7 de enero con lo que haya hecho. Teodoro entrega la carta al Niño Jesús («¡Era una carta para Jesús!») y se lee,
 //      con sus números y su firma; se puede imprimir (A4) o compartir (historia 9:16).
 // Entre los dos, el ícono de la carta vive arriba en el mapa, junto a la batería, y cuenta los días del reto por completar.
-import { S, save, A, $$, on, find, go, back, register, cur, toast, nota, dark, reduced, textEl, replaceText, confetti, vistos, contentDone, stars, fase } from './core.js';
+import { S, save, A, $$, on, find, go, back, ponerDesvio, register, cur, toast, nota, dark, reduced, textEl, replaceText, confetti, vistos, contentDone, stars, fase } from './core.js';
 import { DAYS, TYPES, RULES, JUEGOS, IMG, iconOf, hasTrivia } from './data.js';
 import { sparkles, goldRain } from './flow.js';
 import { teoDice, sonido, motivo, bindMute } from './musica.js';
@@ -58,6 +58,7 @@ const TXT = {
     diaCompleto: (n, k, sig) => [`¡Día ${n} completo!`, k === 1 ? `Solo te falta el día ${sig}` : `Te quedan ${k} días por completar`],
     icono: { firmar: 'Carta secreta. Falta tu firma', faltan: (k, dia) => k === 1 ? `Carta firmada. Termina el día ${dia} y descubre la sorpresa que Teodoro te tiene` : `Carta firmada. Termina los ${k} días que te faltan y descubre la sorpresa que Teodoro te tiene`, lista: 'Carta lista. Descubre para quién es', abierta: 'Tu carta para Jesús. Leerla otra vez' },
     globo: '¡Tu carta está lista!',
+    puente: ['¡Completaste el camino!', 'Teodoro tiene una sorpresa para ti'],
   },
   en: {
     secreta: ['Theodore brings you', 'a secret letter'], altSecreta: 'Theodore holds a sealed letter', firmarBtn: 'Sign the letter',
@@ -84,6 +85,7 @@ const TXT = {
     diaCompleto: (n, k, sig) => [`Day ${n} done!`, k === 1 ? `Only day ${sig} left` : `${k} more days to complete`],
     icono: { firmar: 'Secret letter. It needs your signature', faltan: (k, dia) => k === 1 ? `Signed letter. Finish day ${dia} to discover Theodore’s surprise` : `Signed letter. Finish the ${k} days you have left to discover Theodore’s surprise`, lista: 'Your letter is ready. Find out who it’s for', abierta: 'Your letter to Jesus. Read it again' },
     globo: 'Your letter is ready!',
+    puente: ['You finished the journey!', 'Teodoro has a surprise for you'],
   },
 };
 const ingles = () => S.idiomaCarta === 'en'; // la carta va en español; el inglés se elige en panel › Ajustes › Idioma
@@ -168,15 +170,24 @@ export function abrirCarta(anim = 'fade', opts = {}, params = {}) {
   if (!c.firma && !c.saltoFirma) return go('cartaFirma', { ...params, antesDeAbrir: true }, anim, opts);
   return go(c.abierta ? 'carta' : 'cartaSorpresa', params, anim, opts);
 }
-/** Al terminar un cuento: si era el último que faltaba, se abre la sorpresa; si no, «¡Uno menos!». true = ya navegó. */
+/** Al terminar un cuento: si era el último que faltaba, la sorpresa queda pendiente y el día sigue normal (completado, trivia, juego);
+ *  cuando el día termina de verdad, el desvío entra al final. Si no era el último, «¡Uno menos!». true = ya navegó. */
 export function trasCuento(n) {
   const c = C();
   if (!c.vista || c.abierta || n === 26) return false;
-  if (completa()) { abrirCarta('fade', { replace: true }); return true; }
+  if (completa()) { c.sorpresaPendiente = true; save(); precargarCierre(); return false; }
   const pend = diasPendientes(), k = pend.length; if (k > 0 && k <= 25) { const [a, b] = tx().diaCompleto(n, k, pend[0]); setTimeout(() => toast(a, b), 900); }
   return false;
 }
 const alMapa = () => go('mapa', {}, 'down', { replace: true });
+// el día que completaba el reto terminó (vuelve al mapa, a «Mañana seguimos» o a una pestaña): entra al final, con el puente
+const FIN_DEL_DIA = new Set(['mapa', 'cerrado', 'hoy', 'teodoro', 'mundos']);
+ponerDesvio(name => {
+  const c = S.carta; if (!c?.sorpresaPendiente || !FIN_DEL_DIA.has(name) || /^carta/.test(cur?.name || '')) return null;
+  c.sorpresaPendiente = false; save();
+  if (c.abierta || !seAbre()) return null;
+  return [c.firma || c.saltoFirma ? 'cartaSorpresa' : 'cartaFirma', c.firma || c.saltoFirma ? { puente: true } : { antesDeAbrir: true }, 'fade', { replace: true }];
+});
 const entra = (el, { de = 'translateY(18px)', t = '', ms = 520, delay = 0 } = {}) => {
   if (!el || reduced()) return;
   el.animate([{ opacity: 0, transform: `${t} ${de}`.trim() }, { opacity: 1, transform: t || 'none' }], { duration: ms, delay, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'backwards' });
@@ -501,11 +512,21 @@ register('cartaSorpresa', {
       });
       return { finished, saltar: () => { a?.goToAndStop(TEO_CIERRE.ultimo, true); listo(); } };
     };
-    coreografiaSorpresa({ root, layer, teo: capa, pesebre: null, titulo, sub, boton: b,
+    const arrancar = () => coreografiaSorpresa({ root, layer, teo: capa, pesebre: null, titulo, sub, boton: b,
       textos: { era: t.era, eraSub: t.eraSub },
       puntos: { nino: enEscena(TEO_CIERRE.nino), estrella: enEscena(TEO_CIERRE.estrella), halo: { r: Math.round(120 * kk), antes: capa } },
       onRevelar: () => { caber(titulo); capa.setAttribute('aria-label', t.altEntrega); teoDice('premioGrande', { tras: .35 }); }, // «¡Increíble!»: la carta era para Jesús
       animacionEntrega: entrega });
+    // el puente: venía de terminar el último día que faltaba. Un instante de logro antes de la sorpresa (se salta al tocar)
+    if (!p.puente || reduced()) return arrancar();
+    const [pt, ps] = t.puente, pu = document.createElement('div'); pu.className = 'carta-puente'; pu.setAttribute('role', 'status');
+    pu.innerHTML = `<div class="carta-puente-t">${esc(pt)}</div><div class="carta-puente-s">${esc(ps)}</div>`;
+    root.append(pu); goldRain(layer); sonido('llena'); try { navigator.vibrate?.([18, 50, 28]); } catch { /* */ }
+    pu.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' });
+    [...pu.children].forEach((el, i) => el.animate([{ opacity: 0, translate: '0 14px', scale: '.94' }, { opacity: 1, translate: '0 0', scale: '1' }], { duration: 520, delay: 120 + i * 140, easing: 'cubic-bezier(.2,.75,.35,1)', fill: 'backwards' }));
+    let ido = false;
+    const irse = () => { if (ido) return; ido = true; pu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, easing: 'ease-in' }).finished.then(() => pu.remove(), () => pu.remove()); arrancar(); };
+    pu.addEventListener('pointerdown', irse, { once: true }); setTimeout(irse, 2200);
   },
   dismiss: () => alMapa(),
 });

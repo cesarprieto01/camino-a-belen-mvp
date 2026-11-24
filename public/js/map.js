@@ -8,7 +8,7 @@ import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
 import { SENDERO } from './sendero.js';
 import { enCamino, avisoEnvio } from './theobox.js';
 import { juegoMapa, decorarRuleta, decorarBelen } from './tbjuego.js';
-import { decorarCarta } from './carta.js';
+import { decorarCarta, estadoCarta } from './carta.js';
 // dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
 const piesDe = teo => { const l = parseFloat(teo.style.left), t = parseFloat(teo.style.top), w = parseFloat(teo.style.width), h = parseFloat(teo.style.height); return { cx: l + w / 2, pies: t + h, alto: h }; };
 /** Teodoro (Lottie) camina por «ruta» (puntos de sus pies en el mapa) hasta «fin», mirando hacia donde va: el dibujo mira a la derecha y se voltea
@@ -334,6 +334,7 @@ register('mapa', {
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
     if (params.dia != null && nodes[params.dia]) { const el = nodes[params.dia].el; el.style.boxShadow = (T.selShadow || '0 0 0 6px rgba(245,219,120,.8)'); scrollToNode(params.dia, false); }
+    else if (estadoCarta() === 'lista' && nodes[26]) scrollToNode(26, false); // la carta espera brillando junto al pesebre: el mapa abre en Belén
     else if (teoN == null) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(desde ?? focus, false);
 
     // 7) Animación: el día recién hecho se marca; Teodoro solo camina si avanzó el calendario

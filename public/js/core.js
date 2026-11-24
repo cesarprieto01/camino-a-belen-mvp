@@ -202,7 +202,11 @@ export const DE_PASO = new Set(['completado', 'triviaFin', 'trivia', 'ruletaPop'
   'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin',
   'desafioIntro', 'desafio', 'desafioFin', 'juegoPasos', 'juegoCarta', 'juegoFin', 'cerrado', 'calificacion', 'estatica', 'compartir']);
 const dePaso = name => DE_PASO.has(name) || (name === 'teaser' && S.inscrito);
+/** Un desvío de la navegación: (name, params, opts) → [name, params, anim, opts] o null. Lo pone carta.js: al terminar el día que
+ *  completaba el reto, la vuelta al mapa (o a «Mañana seguimos», o a una pestaña) entra al final. */
+let desvio = null; export const ponerDesvio = f => { desvio = f; };
 export function go(name, params = {}, anim = 'push', opts = {}) {
+  const d = desvio?.(name, params, opts); if (d) { [name, params, anim, opts] = d; }
   if (name === 'teodoro' && S.mascota === false) name = 'hoy'; // sin mascota el camino vive en Hoy
   if (inFlight === name) return busy; // doble toque
   if (cur && !opts.fromBack && !opts.replace && !dePaso(cur.name)) {
