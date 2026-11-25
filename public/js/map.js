@@ -8,6 +8,7 @@ import { teoAnimado, precargar, CAMINA, CELEBRA } from './teo-anim.js';
 import { SENDERO } from './sendero.js';
 import { enCamino, avisoEnvio } from './theobox.js';
 import { juegoMapa, decorarRuleta, decorarBelen } from './tbjuego.js';
+import { decorarCarta, estadoCarta } from './carta.js';
 // dónde tiene los pies Teodoro en el mapa y cuánto mide de pie (el dibujo llena el alto de su caja y apoya los pies abajo)
 const piesDe = teo => { const l = parseFloat(teo.style.left), t = parseFloat(teo.style.top), w = parseFloat(teo.style.width), h = parseFloat(teo.style.height); return { cx: l + w / 2, pies: t + h, alto: h }; };
 /** Teodoro (Lottie) camina por «ruta» (puntos de sus pies en el mapa) hasta «fin», mirando hacia donde va: el dibujo mira a la derecha y se voltea
@@ -318,7 +319,7 @@ register('mapa', {
     paintSheet(layer, T, params.dia);
     sheetDrag(layer);
     // TheoBox en juego: la insignia (arriba a la izquierda) y su panel; LATAM, la TheoBox junto a Belén. «Ir al camino» llega con el panel abierto
-    juegoMapa(layer, !!params.theobox); decorarBelen(root);
+    juegoMapa(layer, !!params.theobox); decorarBelen(root); decorarCarta(root); // la carta de Teodoro brilla a un ladito del pesebre
     seen('S-03-Mapa');
     if (act != null && contentDone(act) && !isDone(act)) seen('S-03b-Mapa-trivia');
     if (focus === 0) seen('V2-Mapa-dia0-claro');
@@ -333,6 +334,7 @@ register('mapa', {
       scroller.scrollTo({ top, behavior: smooth && !reduced() ? 'smooth' : 'auto' });
     };
     if (params.dia != null && nodes[params.dia]) { const el = nodes[params.dia].el; el.style.boxShadow = (T.selShadow || '0 0 0 6px rgba(245,219,120,.8)'); scrollToNode(params.dia, false); }
+    else if (estadoCarta() === 'lista' && nodes[26]) scrollToNode(26, false); // la carta espera brillando junto al pesebre: el mapa abre en Belén
     else if (teoN == null) scroller.scrollTop = scroller.scrollHeight; else scrollToNode(desde ?? focus, false);
 
     // 7) Animación: el día recién hecho se marca; Teodoro solo camina si avanzó el calendario
@@ -583,7 +585,6 @@ function paintSheet(layer, T, dia) {
   if (act === 26 && !contentDone(26) && T.sheet26) {
     const t = document.createElement('template'); t.innerHTML = T.sheet26;
     const s26 = t.content.firstElementChild; s26.dataset.sheet = '1'; sheet.replaceWith(s26); sheet = s26;
-    replaceText(sheet, /¡Llegamos a Belén!/, S.hoy <= 27 ? 'Hoy nace Jesús' : 'El nacimiento');
     const a = sheet.querySelector('a'); if (a) on(layer, a, () => startDay(26));
     sheet.classList.add('in-up');
     return;
@@ -773,7 +774,7 @@ function sheetDrag(layer) {
     const eyebrow = s.dataset.day === '0' ? 'Intro' : s.dataset.day ? `Día ${s.dataset.day}` : (head?.children[0]?.textContent || '').trim();
     const title = head?.children[1]?.firstChild?.textContent.trim() || ''; // sin la cita
     const verbo = (cta?.textContent.trim() || '').replace(/^▶\s*/, '');
-    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar amigos': 'Invitar', 'Ver el nacimiento': 'Nacimiento', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
+    const CORTOS = { 'Escuchar el Evangelio': 'Escuchar', 'Escuchar canción': 'Escuchar', 'Ir al juego sorpresa': 'Jugar', 'Invitar amigos': 'Invitar', 'Ver mi logro': 'Mi logro', 'Abrir la carta': 'Mi carta', 'Leer la carta': 'Mi carta', 'Ver el último día': 'Último día', 'Jugar con Teodoro': 'Jugar', 'Volver al inicio': 'Inicio' };
     const corto = CORTOS[verbo] || (verbo.length > 15 ? verbo.split(' ')[0] : verbo);
     const play = !!cta?.querySelector('svg') && cta.querySelector('svg').style.display !== 'none';
     // imagen, un texto corto y el botón; lo pendiente es un punto, no una frase

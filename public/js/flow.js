@@ -3,10 +3,11 @@ import { S, save, A, cur, $, $$, on, find, go, back, register, seen, toast, nota
   lastDay, fase, dark, stars, wait, reduced, animate, replaceText, setText, textEl, swapImg, floaty, confetti,
   addPanes, setBateria, recargar, doneCount, frag, racha, vistos, cuentaGracia, GRACIA_FIN, puedeDia, conTodo, conTheobox } from './core.js';
 import { DAYS, TYPES, RULES, PRENDAS, FONDO, sortearPremio, IMG, dateOf, iconOf, hasTrivia, usaHub, pantallaDia, JUEGOS, BATTERY_IDS } from './data.js';
-import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz } from './musica.js'; // música, voces de Teodoro y efectos
+import { teoDice, sonido, motivo, agacha, levanta, retener, soltarTrasVoz, precargar } from './musica.js'; // música, voces de Teodoro y efectos
 import { rateRow } from './games.js';
-import { celebrar, pensar } from './teo-anim.js';
+import { celebrar, pensar, SALUDA, CELEBRA } from './teo-anim.js';
 import { tarjetaInicio } from './theobox.js';
+import { abrirCarta, trasCuento, estadoCarta, diasPendientes, precargarCarta } from './carta.js';
 import { deslizarCamino, deslizarAntes, cardPapas, mercado, semanaCompleta, juegoActivo, ruletaActual } from './tbjuego.js';
 
 const F = (claro, oscuro) => [claro, oscuro];
@@ -17,10 +18,10 @@ export const panesContenido = () => premium() ? RULES.panes.contenidoPremium : R
 /** Empieza (o retoma) el día n desde el mapa. */
 export function startDay(n) {
   const d = DAYS[n];
-  // desde el 7 de enero: lo hecho se vuelve a ver; lo que faltó ya no se abre (el nacimiento siempre)
+  // desde el 7 de enero: lo hecho se vuelve a ver; lo que faltó ya no se abre (el último día siempre)
   if (fase() === 'recuerdo' && n < 26 && !contentDone(n)) { toast('El camino de este año terminó', 'Nos vemos el próximo año'); return; }
   if (!puedeDia(n)) { go('free', { back: 'mapa', dia: n }, 'page'); return; }
-  if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, nacimiento: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; }
+  if (n === 26) { go(contentDone(26) ? 'final' : 'reproductor', { day: 26, ultimo: !contentDone(26) }, contentDone(26) ? 'fade' : 'up'); return; } // «ultimo»: al terminarlo sale el gran final
   if (!contentDone(n)) {
     go(pantallaDia(n), { day: n }, 'up');
     return;
@@ -39,13 +40,13 @@ export function ctaLabel(n) {
   const d = DAYS[n];
   const verbo = TYPES[d.type].verbo;
   if (!puedeDia(n)) return { text: 'Desbloquear el día', go: () => startDay(n) };
-  if (n === 26 && !contentDone(26)) return fase() === 'recuerdo' ? { text: 'Ver el nacimiento', play: true, go: () => go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') } : { text: 'Comenzar', play: true, go: () => startDay(26) };
+  if (n === 26 && !contentDone(26)) return fase() === 'recuerdo' ? { text: 'Ver el último día', play: true, go: () => go('reproductor', { day: 26, ultimo: true, replay: true }, 'up') } : { text: 'Comenzar', play: true, go: () => startDay(26) };
   if (!contentDone(n)) return { text: verbo, play: true, go: () => startDay(n) };
   if (!isDone(n)) return { text: 'Jugar la trivia', go: () => startDay(n) };
   if (RULES.sorpresa[n] && S.sorpresas[n] !== 'hecha') return { text: 'Ir al juego sorpresa', go: () => openSorpresa(n) };
   const a = activeDay();
   if (a != null) return { text: `Seguir al día ${a}`, go: () => startDay(a) };
-  if (S.hoy >= 26) return { text: 'Ver el nacimiento', go: () => go('final', { day: 26 }, 'fade') };
+  if (S.hoy >= 26) { const ec = estadoCarta(); return { text: ec === 'lista' ? 'Abrir la carta' : ec === 'abierta' ? 'Leer la carta' : 'Ver mi logro', go: () => abrirCarta('fade') }; }
   return { text: 'Hasta mañana', go: () => go('hoy', {}, 'down', { tab: true }) };
 }
 /** Termina el contenido del día: suma batería y panes. */
@@ -104,11 +105,18 @@ export function cardState() {
   if (S.hoy >= 27) {
     // gracia (25 dic – 6 ene): se invita a terminar, con el contador de días que quedan; desde el 7 de enero, recuerdo
     const v = vistos(), recuerdo = fase() === 'recuerdo';
-    if (!S.inscrito) return recuerdo ? { key: 7, title: 'Adviento', sub: 'Nos vemos el próximo año', cta: 'Ver el nacimiento' }
+    if (!S.inscrito) return recuerdo ? { key: 7, title: 'Adviento', sub: 'Nos vemos el próximo año', cta: 'Ver el último día' }
       : { key: 4, title: '¡Aún llegas a Belén!', sub: cuentaGracia(true), cta: 'Unirme gratis', cuenta: true };
-    if (v >= 26) return { key: 5, title: S.hoy === 27 ? '¡Feliz Navidad!' : 'Adviento', sub: '¡Llegaste a Belén!', cta: 'Ver el nacimiento' }; // «¡Feliz Navidad!» solo el 25
+    if (v >= 26) { // «¡Feliz Navidad!» solo el 25; con la carta de Teodoro: lista para abrir o ya abierta (carta.js)
+      const ec = estadoCarta(), title = S.hoy === 27 ? '¡Feliz Navidad!' : 'Adviento';
+      if (ec === 'lista') return { key: 5, title, sub: '¡Tu carta está lista!', cta: 'Abrir la carta' };
+      if (ec === 'abierta') return { key: 5, title, sub: 'Tu carta para Jesús', cta: 'Leer la carta' };
+      return { key: 5, title, sub: '¡Llegaste a Belén!', cta: 'Ver mi logro' };
+    }
     if (recuerdo) return v ? { key: 8, title: 'Adviento', sub: `Caminaste ${v} ${v === 1 ? 'día' : 'días'} con Teodoro`, cta: 'Ver tu camino' }
-      : { key: 7, title: 'Adviento', sub: 'Nos vemos el próximo año', cta: 'Ver el nacimiento' };
+      : { key: 7, title: 'Adviento', sub: 'Nos vemos el próximo año', cta: 'Ver el último día' };
+    // ya firmó la carta y le faltan días del reto: cuántos por completar (no «quedan N días», que se lee como espera)
+    if (estadoCarta() === 'faltan') { const pend = diasPendientes(); return { key: 6, title: 'Adviento', sub: pend.length === 1 ? `Completa el día ${pend[0]} y descubre para quién es tu carta` : `Completa ${pend.length} días más y descubre para quién es tu carta`, cuenta: true }; }
     return { key: 6, title: 'Adviento', sub: cuentaGracia(true).replace('Último día', '¡Último día!'), cuenta: true }; // mismo diseño que en el camino: barra y «Continuar la aventura»
   }
   if (!S.inscrito) return { key: 4, title: '¡Ya salimos! ¿Vienes?', sub: 'Aún llegas a Belén', cta: 'Unirme gratis' };
@@ -416,9 +424,9 @@ async function heroeNuevo(root) {
   const unirse = !S.inscrito;
   // sin empezar (sin unirse, antes del 29 o sin ningún cuento visto): invitación que cambia cada día entre el farol y la fiesta
   const sinEmpezar = unirse || antes || vistos() === 0;
-  const recuerdo = fase() === 'recuerdo' && sinEmpezar; // ya no hay a qué unirse: el regalo es el nacimiento
+  const recuerdo = fase() === 'recuerdo' && sinEmpezar; // ya no hay a qué unirse: se puede ver el último día
   // ya dentro y antes del 29: «Saber más» (Learn more), porque aún no hay aventura que seguir
-  const texto = recuerdo ? 'Ver el nacimiento' : unirse ? 'Unirme gratis' : antes ? (S.inscrito && S.hoy === 0 ? 'Ver el intro' : 'Saber más') : vistos() === 0 ? 'Iniciar la aventura' : (st.cta && !/^Unirme/.test(st.cta)) ? st.cta : 'Seguir la aventura';
+  const texto = recuerdo ? 'Ver el último día' : unirse ? 'Unirme gratis' : antes ? (S.inscrito && S.hoy === 0 ? 'Ver el intro' : 'Saber más') : vistos() === 0 ? 'Iniciar la aventura' : (st.cta && !/^Unirme/.test(st.cta)) ? st.cta : 'Seguir la aventura';
   const tema = dark() ? 'noche' : 'dia';
   const recarga = S.pilaVista != null && S.bateria > S.pilaVista;
   const escena = sinEmpezar
@@ -426,7 +434,7 @@ async function heroeNuevo(root) {
     : `assets/pila/${recarga ? 'reactivado' : `dias-${pasoTeodoro()}`}-${tema}.webp`;
   const original = antes ? find(card, S.inscrito ? 'Entrar' : 'Unirme gratis') : [...card.querySelectorAll('a')].find(x => x.getAttribute('aria-label') !== 'Ver el camino' && !/Energía/.test(x.getAttribute('aria-label') || ''));
   const ver = card.querySelector('a[aria-label="Ver el camino"]');
-  const accion = () => { if (recuerdo) { go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up'); return; } if (antes && S.inscrito) { if (S.hoy === 0) entrar('hoy'); else go('listo', {}, 'push'); return; } (original || ver)?.click(); };
+  const accion = () => { if (recuerdo) { go('reproductor', { day: 26, ultimo: true, replay: true }, 'up'); return; } if (antes && S.inscrito) { if (S.hoy === 0) entrar('hoy'); else go('listo', {}, 'push'); return; } (original || ver)?.click(); };
   const capa = document.createElement('div'); capa.className = 'heroe-pre';
   const flecha = unirse && !recuerdo ? '' : '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   const destello = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24"><path fill="#F5DB78" d="M12 0c.9 6.6 4.8 10.6 12 12-7.2 1.4-11.1 5.4-12 12-.9-6.6-4.8-10.6-12-12C7.2 10.6 11.1 6.6 12 0Z"/></svg>';
@@ -451,7 +459,7 @@ async function heroeNuevo(root) {
   pensar(capa); // póster de Nochebuena: Teodoro con su mapa se mueve en bucle
   capa.querySelector('.hp-boton').addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); accion(); });
   capa.addEventListener('click', ev => { if (ev.target.closest('.hp-boton')) return; ev.preventDefault(); accion(); });
-  card.setAttribute('aria-label', `Adviento, ${evento ? 'El Adviento más grande del mundo' : poster ? poster.kicker : 'En familia con Teodoro'}:${recuerdo ? 'ver el nacimiento' : unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
+  card.setAttribute('aria-label', `Adviento, ${evento ? 'El Adviento más grande del mundo' : poster ? poster.kicker : 'En familia con Teodoro'}:${recuerdo ? 'ver el último día' : unirse ? 'únete gratis' : antes ? 'ya estás dentro, empieza el 29 de noviembre' : texto.toLowerCase()}`);
 }
 
 /** Póster del evento («El Adviento más grande del mundo», tablero del pre registro) sin su botón: la publicidad del reto. */
@@ -613,7 +621,6 @@ register('hoy', {
       on(root, 'Ver el mapa', () => { close(); go('mapa', { from: 'hoy', despierta: true }, 'push'); });
       on(root, 'Cerrar', () => { close(); go('hoy', {}, 'fade', { replace: true }); });
       const teo = $$(root, 'img').find(i => i.src.includes(IMG.tCelebra));
-      teo?.classList.add('a-hop');
       requestAnimationFrame(() => celebrar(root, i => i === teo)); // salta en bucle (Lottie) donde estaba el dibujo quieto
     }
   },
@@ -693,15 +700,8 @@ export function paintCaminoCard(card, from) {
   const primerDia = vistos() === 0; // aún no ha visto ningún cuento (no ha empezado)
   const label = st.cta ? st.cta : st.sorpresa ? 'Ir al juego sorpresa' : st.done ? 'Ver el camino' : primerDia ? 'Iniciar la aventura' : 'Continuar la aventura';
   const span = btn?.querySelector('span'); if (span) span.textContent = label; else if (btn) setText(btn, /Continuar la Aventura/i, label);
-  // Navidad: el pesebre en la tarjeta
-  if (S.hoy >= 27 && scene && st.key !== 6 && st.key !== 4 && st.key !== 8) {
-    const land = $$(scene, 'img').find(i => !/^Teodoro/i.test(i.alt || ''));
-    if (land) { land.src = A(IMG.nacimiento); land.alt = 'El nacimiento de Jesús'; Object.assign(land.style, { left: '0', top: '0', width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 35%' }); }
-    if (teo) teo.style.display = 'none';
-    $$(scene, 'span').forEach(sp => { sp.style.display = 'none'; });
-  }
-  const pesebre = S.hoy >= 27 && st.key !== 6 && st.key !== 4 && st.key !== 8;
-  if (scene && !pesebre && fase() !== 'antes') escenaPila(card, scene);
+  // en Navidad la tarjeta sigue con su escena y Teodoro (nunca la escena del nacimiento: César, 17-nov)
+  if (scene && fase() !== 'antes') escenaPila(card, scene);
   // pieza grande (Hoy y tab Teodoro, la misma): título del evento y en qué día va
   if (!card.closest('.theo-heroe') && fase() !== 'antes' && !card.querySelector('.card-titulo')) {
     const panel = $$(card, 'div').find(d => /blur/.test(d.style.backdropFilter || d.style.webkitBackdropFilter || ''));
@@ -715,7 +715,7 @@ export function paintCaminoCard(card, from) {
       if (!isNaN(tp)) panel.style.top = (tp - 34) + 'px';
     }
   }
-  const toMap = () => st.key === 5 || st.key === 7 ? go('reproductor', { day: 26, nacimiento: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar(from);
+  const toMap = () => st.key === 5 ? abrirCarta('fade') : st.key === 7 ? go('reproductor', { day: 26, ultimo: true, replay: true }, 'up') : st.sorpresa ? openSorpresa(Math.min(S.hoy, 26)) : entrar(from);
   if (scene) on(card, scene, toMap);
   if (btn) on(card, btn, toMap);
   const en = card.querySelector('a[aria-label^="Energía de Teodoro"]');
@@ -802,12 +802,12 @@ register('teaser', {
 // Slides que cuentan de qué trata el reto: salen al unirse y su «¡Vamos!» (o cerrar) lleva a «¡Ya estás dentro!». En la app los
 // envía Braze como in-app de código, disparado al unirse (braze/slides-reto/: mismo diseño y textos). Usan la misma ventana que la invitación.
 // Diseño aprobado en el lienzo «Slides del reto · Adviento» (dirección A, claro y oscuro): el pesebre vacío bajo la estrella (A0),
-// el mapa con Teodoro en el día de hoy, lo que mira y juega (un cuento, el nacimiento de Jesús y una trivia, cada uno con su mazo
+// el mapa con Teodoro en el día de hoy, lo que mira y juega (un cuento, el ángel con los pastores y una trivia, cada uno con su mazo
 // detrás) y la ruleta con premios de verdad.
 const SLIDES = [
   { vis: 'pesebre', t: '¡Jesús está por llegar!', d: 'Preparemos juntos el corazón para recibirlo en Navidad.', alt: 'El pesebre vacío bajo la estrella de Belén, esperando al Niño Jesús' },
   { vis: 'camino', t: '¡Rumbo a Belén!', d: '26 días, un paso nuevo cada día junto a Teodoro hasta el pesebre.', alt: 'El mapa del camino: Teodoro en el día de hoy, los días hechos con sus estrellas y los que vienen con candado' },
-  { vis: 'aprende', t: 'Mira, juega, canta… y ama', d: 'Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.', alt: 'Un cuento de la oveja perdida, el nacimiento de Jesús y una trivia' },
+  { vis: 'aprende', t: 'Mira, juega, canta… y ama', d: 'Historias de la Biblia, trivias, juegos, canciones y una misión de amor al día.', alt: 'Un cuento de la oveja perdida, el ángel con los pastores y una trivia' },
   { vis: 'gana', t: '¡Gira la ruleta y gana!', d: 'Completa cada día, gira y gana estrellas, panes para Teodoro y sorpresas.', alt: 'La ruleta de premios con el traje de Adviento, el traje de Natividad y una trivia perfecta de tres estrellas y diez panes' },
 ];
 // chispas de cuatro puntas: [left, top, tamaño, opacidad]
@@ -847,8 +847,8 @@ function slidesEn(root, caja, listo) {
       <div class="rs-card rs-der rs-trivia"><div class="rs-trivia-luz"></div><img class="rs-sorpresa" src="assets/ruleta/sorpresa.webp" alt="">
         ${chispas([[16, 24, 14], [104, 108, 12, .85]], 'rs-suave')}<span class="rs-chip">${PREGUNTA}Trivia</span></div>
       <div class="rs-mazo rs-centro"></div>
-      <div class="rs-card rs-centro"><img class="rs-nacimiento" src="assets/poster/navidad.webp" alt="">
-        ${chispas([[84, 108, 12], [150, 96, 10, .85]], 'rs-suave')}<div class="rs-card-velo"></div><span class="rs-chip">${PLAY}El nacimiento de Jesús</span></div>`,
+      <div class="rs-card rs-centro rs-angel-card"><img class="rs-angel" src="${A('47459af67a4b5599e33f6147ecedf0f3')}" alt="">
+        ${chispas([[84, 108, 12], [150, 96, 10, .85]], 'rs-suave')}<div class="rs-card-velo"></div><span class="rs-chip">${PLAY}Especial de Navidad</span></div>`,
     gana: `<div class="rs-rayos"></div><div class="rs-brillo"></div>
       <div class="rs-ruleta"><div class="rs-rueda"><img src="assets/ruleta/rueda8.webp" alt="">${casillas(279)}</div></div><img class="rs-puntero" src="${A('3fdb655b7743b5a7a821153429c4d733')}" alt="">
       <img class="rs-premio rs-izq rs-traje" src="assets/premios/traje-adviento.webp" alt=""><img class="rs-premio rs-der rs-traje" src="assets/premios/traje-natividad.webp" alt="">
@@ -1194,6 +1194,7 @@ register('mundos', {
       adv?.setAttribute('aria-label', n === 0 ? 'Adviento: el intro. Entrar al camino' : `Adviento: día ${n} de 26. Entrar al camino`);
       on(root, adv, () => tocarIsla(adv, () => entrar('mundos')));
       adv?.querySelector('img[alt^="Teodoro"]')?.classList.add('a-bob');
+      cierreMundo(adv); // del 31 dic al 6 ene: «Quedan N días» en una lengüeta blanca que sale de la amarilla
     }
     on(root, 'Volver al cuarto de Teodoro', () => back('teodoro'));
     // Enero aún no se abre: el candado se sacude y un globo lo dice sobre la isla (no un aviso abajo)
@@ -1202,6 +1203,28 @@ register('mundos', {
     if (p.nueva && adv) resaltarIsla(adv); // recién unida: Adviento se resalta al llegar
   },
 });
+/** Últimos 7 días antes de que Adviento quede como recuerdo (31 dic – 6 ene): bajo la tarjeta amarilla asoma una lengüeta
+ *  blanca, angosta y centrada, como si saliera de ella, con el reloj de arena y la cuenta («Quedan N días» / «¡Último día!»,
+ *  la misma de Hoy) centrados. El conjunto sube un poco para quedar centrado. Si ya llegó a Belén no hay prisa: no sale
+ *  (como en Hoy y en el mapa). Fuera de esos días Mundos no cambia.
+ *  Reloj de arena: «Hourglass not done» 3D de Microsoft Fluent Emoji (github.com/microsoft/fluentui-emoji, licencia MIT,
+ *  © Microsoft Corporation), pasado a webp de 78 px (@3x de 26 px) en assets/reloj-arena.webp. */
+function cierreMundo(adv) {
+  const card = adv?.querySelector(':scope > span');
+  const q = GRACIA_FIN - S.hoy + 1;
+  if (!card || fase() !== 'gracia' || q > 7 || vistos() >= 26) return;
+  // la lengüeta es un div (no span) para que no le toquen las reglas «a[aria-label^="Adviento:"] > span» de la amarilla
+  const lengueta = document.createElement('div'); lengueta.className = 'mundos-cierre'; lengueta.setAttribute('aria-hidden', 'true');
+  lengueta.innerHTML = `<img src="assets/reloj-arena.webp" alt="" width="26" height="26"><span>${cuentaGracia(true).replace('Último día', '¡Último día!')}</span>`;
+  adv.classList.add('mundos-cierre-con'); // sube el conjunto (estilos al final de app.css)
+  card.before(lengueta); // antes en el DOM = debajo de la amarilla: asoma por su borde de abajo
+  adv.setAttribute('aria-label', adv.getAttribute('aria-label').replace('. Entrar', `. ${cuentaGracia()}. Entrar`));
+  // al llegar sale desde debajo de la amarilla: arranca escondida entera tras ella (cabe en su tramo recto, así que no
+  // asoma por las esquinas) y baja lo que asoma, 38 px. Sin movimiento, solo aparece
+  const quieto = reduced();
+  lengueta.animate(quieto ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: 'translateY(-38px)' }, { transform: 'translateY(0)' }],
+    { duration: quieto ? 200 : 520, delay: quieto ? 120 : 260, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
+}
 /** Tocar una isla: se hunde y rebota, y luego pasa lo que toca (se ve que el toque llegó). */
 function tocarIsla(el, luego) {
   if (reduced()) return luego();
@@ -1262,10 +1285,11 @@ register('reproductor', {
   files: F('S-05-Reproductor', 'S-05-Reproductor-oscuro'),
   mount(root, p, layer) {
     const n = p.day; const d = DAYS[n];
-    setText(root, /Meditación de la Escucha/, p.nacimiento ? 'El nacimiento de Jesús' : p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
+    if (p.ultimo) { precargar('nieve'); precargarCarta(); } // al terminar sale la carta sorpresa, con la ambiental de la trivia: que la música, Teodoro y el fondo ya estén bajados
+    setText(root, /Meditación de la Escucha/, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
     // una línea bajo el título: de qué trata el día (del cronograma)
-    const tituloRep = textEl(root, p.nacimiento ? 'El nacimiento de Jesús' : p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
-    if (tituloRep && (d.cita || d.sub) && !p.nacimiento && !p.extra) { const sb = document.createElement('span'); sb.className = 'rep-sub'; sb.textContent = d.cita || d.sub; tituloRep.appendChild(sb); } // la cita (domingos) o de qué trata el día
+    const tituloRep = textEl(root, p.extra === 'cancion' ? 'Canción para cantar en familia' : n === 0 ? '¿Qué es el Adviento?' : d.title);
+    if (tituloRep && (d.cita || d.sub) && !p.extra) { const sb = document.createElement('span'); sb.className = 'rep-sub'; sb.textContent = d.cita || d.sub; tituloRep.appendChild(sb); } // la cita (domingos) o de qué trata el día
     // el bloque del título crece hacia arriba: siempre 12px sobre la barra de avance, tenga 1 o 2 líneas y subtítulo
     const barraRep = root.querySelector('[role=slider]');
     const bloqueTit = barraRep?.previousElementSibling;
@@ -1273,8 +1297,7 @@ register('reproductor', {
     if (bloqueTit && barraRep) requestAnimationFrame(() => { bloqueTit.style.top = 'auto'; bloqueTit.style.bottom = bloqueTit.offsetParent.clientHeight - barraRep.offsetTop + 12 + 'px'; });
     const scene = $$(root, 'img').find(i => i.alt && i.alt.length > 10);
     if (scene) {
-      if (p.nacimiento) { scene.src = A(IMG.nacimiento); scene.alt = 'El nacimiento de Jesús'; }
-      else if (d.scene) { scene.src = A(d.scene); scene.alt = d.title; }
+      if (d.scene) { scene.src = A(n === 26 && dark() ? 'dia26-belen-noche.webp' : d.scene); scene.alt = n === 26 ? 'Belén bajo la estrella' : d.title; }
       // sin escena propia (día 0, 1 y 2 en el lienzo): Teodoro camina hacia Belén
       else { scene.src = A('67947142d31d9fb5442ef113320694e6'); scene.alt = 'Teodoro camina hacia Belén bajo la estrella'; }
       scene.style.transition = 'transform 9s linear'; requestAnimationFrame(() => { scene.style.transform = 'scale(1.06)'; });
@@ -1306,10 +1329,11 @@ register('reproductor', {
     let ended = false;
     const end = () => {
       if (ended) return; ended = true; cancelAnimationFrame(raf);
-      if (p.nacimiento) { if (p.replay) back('hoy', 'down'); else go('final', { day: 26 }, 'fade', { replace: true }); return; }
+      if (p.ultimo) { if (p.replay) back('hoy', 'down'); else { const primera = !contentDone(26); if (primera && fase() !== 'recuerdo') { finishContent(26); S.pasoAnimado = null; save(); } abrirCarta('fade', { replace: true }, { nochebuena: primera }); } return; } // la carta de Teodoro (carta.js)
       if (p.extra === 'cancion') { toast('¡Qué bonito cantan!'); go(JUEGOS[n] ? 'juegoIntro' : 'hub', { day: n }, 'down', { replace: true }); return; }
       if (p.replay) { const suma = fase() !== 'recuerdo' && n > 0; if (suma) { recargar(); S.sinCaminar = 0; S.regresoAvisado = false; S.ultimoJugado = S.hoy; save(); } toast('¡Otra vez con Teodoro!', suma ? 'Teodoro quedó al 100%' : ''); go('mapa', {}, 'down', { replace: true }); return; }
       finishContent(n);
+      if (trasCuento(n)) return; // era el último cuento que faltaba: se abre la sorpresa de la carta
       go('completado', { day: n }, 'fade', { replace: true });
     };
     on(root, play, () => setPlaying(!playing));
@@ -1325,7 +1349,7 @@ register('reproductor', {
       el.setAttribute('aria-pressed', String(on)); el.dataset.on = on ? '1' : ''; };
     ['Texto', 'Voz', 'Repetir'].forEach(k => { const el = find(root, k); if (el) pintaCtl(el, k === 'Voz'); });
     ['Texto', 'Voz', 'Repetir'].forEach(k => on(root, k, (ev, el) => { pintaCtl(el, !el.dataset.on); nota(k, 'Control del reproductor de Theo (ya existe)'); }));
-    const cerrar = () => { cancelAnimationFrame(raf); if (p.nacimiento || p.extra === 'cancion') back('mapa', 'down'); else go('mapa', {}, 'down', { replace: true }); };
+    const cerrar = () => { cancelAnimationFrame(raf); if (p.ultimo || p.extra === 'cancion') back('mapa', 'down'); else go('mapa', {}, 'down', { replace: true }); };
     const barrita = root.querySelector('a[aria-label="Bajar el reproductor"]');
     if (barrita) { on(root, barrita, cerrar); barrita.setAttribute('aria-hidden', 'true'); barrita.tabIndex = -1; }
     const x = document.createElement('button');
@@ -1791,7 +1815,7 @@ register('premioCuarto', {
 
 // ---------- Nochebuena ----------
 /** Lluvia dorada: la llegada a Belén no es un festejo más. */
-function goldRain(layer) {
+export function goldRain(layer) {
   const box = document.createElement('div'); box.className = 'gold-rain'; box.setAttribute('aria-hidden', 'true');
   for (let i = 0; i < 34; i++) {
     const s = document.createElement('i');
@@ -1803,59 +1827,6 @@ function goldRain(layer) {
   }
   layer.appendChild(box); setTimeout(() => box.remove(), 3600);
 }
-register('final', {
-  files: F('V2-Final-claro', 'V2-Final'),
-  async mount(root, p, layer) {
-    const first = !contentDone(26);
-    if (first && fase() !== 'recuerdo') { finishContent(26); S.pasoAnimado = null; save(); } // como cualquier día: energía, panes y caminar
-    // la llegada a Belén se celebra con los 26 cuentos; si faltan, Teodoro espera en el primero sin ver
-    if (vistos() < 26) {
-      const sig = walkDay();
-      setTimeout(() => toast('¡Jesús nació!', sig && fase() !== 'recuerdo' ? `Teodoro te espera en el día ${sig}` : 'Nos vemos el próximo año'), 300);
-      go('mapa', {}, 'fade', { replace: true }); return;
-    }
-    replaceText(root, /Lucía/g, S.nombre);
-    setText(root, /^26$/, String(vistos())); // cuentos vistos: al llegar a Belén siempre son 26
-    // Nochebuena, la primera vez: 1,2 s de silencio, el motivo que se resuelve en «Noche de paz», «¡Gran aventura!» y entra la música
-    if (first && fase() !== 'recuerdo') { retener(12000); teoDice('nochebuena', { tras: motivo('nochebuena', 1.2) + 0.2 }); soltarTrasVoz(800); }
-    const scene = $$(root, 'img')[0];
-    if (first && !reduced()) {
-      scene?.animate([{ opacity: 0, transform: 'scale(1.04)' }, { opacity: 1, transform: 'none' }], { duration: 1200, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
-      $$(root, 'a').filter(a => a.getAttribute('aria-label') !== 'Cerrar').forEach(a => a.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 600, easing: 'cubic-bezier(.23,1,.32,1)', fill: 'backwards' }));
-      setTimeout(() => layer.isConnected && goldRain(layer), 600);
-      setTimeout(() => layer.isConnected && goldRain(layer), 1400);
-    }
-    sparkles(root);
-    on(root, 'Ver el nacimiento', () => go('reproductor', { day: 26, nacimiento: true }, 'up'));
-    on(root, 'Compartir con la familia', () => go('finalCompartir', {}, 'push'));
-    on(root, 'Cerrar', () => go('mapa', {}, 'down', { replace: true }));
-  },
-});
-
-register('finalCompartir', {
-  files: F('V2-Final-compartir-claro', 'V2-Final-compartir'),
-  mount(root, p, layer) {
-    const dias = vistos();
-    const estrellas = Object.keys(S.completos).reduce((s, k) => s + stars(+k), 0); // solo los días con trivia tienen estrellas
-    replaceText(root, /Lucía/g, S.nombre);
-    textEl(root, 'Así la verá tu familia')?.style.setProperty('visibility', 'hidden'); // explicaba la pantalla
-    const card = root.querySelector('[role=img][aria-label^="Tarjeta"]');
-    if (card) {
-      card.setAttribute('aria-label', `Tarjeta: Llegamos a Belén con Teodoro. ${dias} días y ${estrellas} estrellas`);
-      const nums = [...card.querySelectorAll('div')].filter(x => x.childElementCount === 0 && /^\d+$/.test(x.textContent.trim()));
-      if (nums[0]) nums[0].textContent = String(dias);
-      if (nums[1]) nums[1].textContent = String(estrellas);
-      card.classList.add('a-pop');
-    }
-    sparkles(root);
-    on(root, 'Compartir', async () => {
-      try { if (navigator.share) await navigator.share({ title: '¡Llegamos a Belén!', text: `${S.nombre} caminó ${dias} días con Teodoro hasta Belén y ganó ${estrellas} estrellas.` }); else nota('Compartir', 'En el celular se abre el menú para compartir'); } catch { /* cancelado */ }
-    });
-    on(root, 'Ahora no', () => back('final'));
-    on(root, 'Volver', () => back('final'));
-  },
-});
-
 /** Descargable del día (todos los días tienen uno): premium lo abre; free ve la hoja de Premium. */
 export function abrirDescargable(n, from = 'mapa') {
   // en los retos de acción, el «descargable» son los pasos del reto

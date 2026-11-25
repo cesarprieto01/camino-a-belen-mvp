@@ -26,11 +26,12 @@ const CAMINO = new Set(['mapa', 'cerrado', 'ruletaPop', 'ruletaPremio', 'premioC
 // trivias, juegos y actividades del día, y Nochebuena. No suena en la adivinanza ni en «Busquen la estrella»: ahí habla la familia (César);
 // tampoco en los videos y canciones (traen su sonido), en el paywall ni en las pantallas de Theo
 const ACTIVIDADES = new Set(['trivia', 'triviaFin', 'completado', 'calificacion', 'hub', 'juegoIntro', 'juegoPasos', 'juegoFin',
-  'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'final', 'finalCompartir']);
+  'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanzaFin', 'desafioIntro', 'desafio', 'desafioFin', 'cartaSecreta', 'cartaFirma', 'cartaGuardada', 'cartaSorpresa', 'carta']); // la carta de Teodoro: la ambiental de las trivias
 // cuánto suena cada pantalla respecto a su pista (dB; el mapa en 0) y su filtro (Hz): en los pop-ups se oye a través del velo
 const NIVEL = { cerrado: -6, ruletaPop: -5, ruletaPremio: -5, premioCuarto: -5, tbGano: -5, tbDatos: -10, tbDireccion: -10, tbEnCamino: -6, tbCompartir: -6, tbMiTheobox: -10, completado: -3, triviaFin: -3, memoramaFin: -3, adivinanzaFin: -3,
   desafioFin: -3, juegoFin: -3, trivia: -6, memoramaReglas: -6, memorama: -6, adivinanzaIntro: -6, desafioIntro: -6, juegoIntro: -6, juegoPasos: -6,
-  final: -6, hub: -8, calificacion: -8, finalCompartir: -8, desafio: -10 };
+  hub: -8, calificacion: -8, desafio: -10,
+  cartaSecreta: 9, cartaFirma: 6, cartaGuardada: 9, cartaSorpresa: 9, carta: 9 }; // la carta: la ambiental de la trivia +9 dB (medido: queda a la altura del burrito en el mapa; a 0 dB se perdía bajo las campanas y la voz), 3 dB menos al firmar
 const FILTRO = { ruletaPop: 3000, ruletaPremio: 3000, premioCuarto: 3000, cerrado: 1800 };
 // reposo: a los [baja] s sin tocar nada baja 6 dB y a los [calla] s se calla (en el reto en familia se fueron a hacerlo)
 const REPOSO_PANTALLA = { cerrado: [10, 25], hub: [30, 60], desafio: [30, 60] };
@@ -176,9 +177,11 @@ function quizaDormir() {
   dormir = setTimeout(() => { dormir = null; if (!actual && !vozActual && performance.now() - ultimoSonido > 2500) ctx.suspend?.(); }, 3000);
 }
 
+let pantallaPrevia = null;
 let desbloqueado = false, retenida = false, retenidaEn = null, dormida = false, tRet = null;
 /** Suena o no, y cuál pista, según la pantalla. Lo llama la navegación (onChange de core) cada vez que cambia la pantalla. */
 export function musicaPara(nombre = cur?.name) {
+  if (nombre !== pantallaPrevia) { pantallaPrevia = nombre; despertarReposo(); } // cambiar de pantalla es actividad: tras un video largo sin tocar, la música no entra callada
   // iPhone: el interruptor de silencio calla el reto (y no corta el pódcast del papá); los videos siguen como siempre
   try { if (navigator.audioSession) navigator.audioSession.type = nombre === 'reproductor' ? 'auto' : 'ambient'; } catch { /* Safari viejo */ }
   const id = desbloqueado && S.musica !== false && !document.hidden && !retenida && !dormida ? pistaDe(nombre) : null;
@@ -187,6 +190,8 @@ export function musicaPara(nombre = cur?.name) {
 /** La música espera (el ritual del mapa, Nochebuena). Se suelta sola a los maxMs por si algo sale mal. */
 export function retener(maxMs = 10000) { retenida = true; retenidaEn = cur?.layer; clearTimeout(tRet); tRet = setTimeout(() => soltar(), maxMs); musicaPara(); }
 export function soltar(ms = 0) { clearTimeout(tRet); tRet = setTimeout(() => { retenida = false; musicaPara(); }, ms); }
+/** Baja una pista antes de que haga falta (el video del día 26 precarga la ambiental de la carta: suena en cuanto entra). */
+export function precargar(id) { if (desbloqueado && ctx && est[id]) cargar(id); }
 /** Suelta la música cuando Teodoro termine de hablar (y ms después). */
 export function soltarTrasVoz(ms = 600) { soltar(Math.max(0, finVoz - performance.now()) + ms); }
 
@@ -199,6 +204,7 @@ function tocar() {
   if (ctx) ir(gReposo.gain, 1, 0.6);
   if (despierta) musicaPara();
 }
+function despertarReposo() { ultimo = performance.now(); if (!bajada && !dormida) return; bajada = dormida = false; if (ctx) ir(gReposo.gain, 1, 0.6); }
 ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => addEventListener(ev, tocar, { capture: true, passive: true }));
 setInterval(() => {
   if (!actual || actual === 'cierre') return;

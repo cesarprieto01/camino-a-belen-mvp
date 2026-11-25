@@ -93,6 +93,8 @@ const waitScreen = async (want, ms = 10000) => { const t0 = Date.now(); while (D
 const screen = () => p.evaluate(() => document.querySelector('#viewport .layer:last-child')?.dataset.screen);
 // clic por texto o aria-label dentro de la capa visible
 const tap = async (q) => {
+  // al terminar su primer día sin firma, Teodoro lo invita a firmar su compromiso: si la prueba busca otra cosa, se cierra (lo firma después)
+  if ((await screen()) === 'cartaSecreta' && !/carta|compromiso/i.test(q)) { await p.evaluate(() => document.querySelector('#viewport .layer:last-child [aria-label="Cerrar"]')?.click()); await p.waitForTimeout(1000); }
   const ok = await p.evaluate((q) => {
     const L = document.querySelector('#viewport .layer:last-child');
     const norm = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -326,7 +328,7 @@ const flows = {
   },
   async regreso() { await scenario('Regreso tras una semana'); await shot('regreso'); await tap('Empezar por hoy'); await shot('mapa'); },
   async atrasado() { await scenario('Va atrasado'); await shot('hoy-atrasado'); await tap('Continuar la aventura'); await shot('mapa'); },
-  async nochebuena() { await scenario('Nochebuena'); await shot('mapa'); await tap('Comenzar'); await p.waitForTimeout(800); await shot('final'); },
+  async nochebuena() { await scenario('Nochebuena · firma (le faltan días)'); await shot('carta-secreta'); if (!(await tap('Sign the letter'))) { errs.pop(); await tap('Firmar la carta'); } await p.waitForTimeout(900); await shot('carta-firma'); await scenario('La carta de Teodoro'); await shot('carta'); }, // la carta de Teodoro (carta.js)
   async oscuro() {
     await p.evaluate(() => document.querySelector('[data-tema="oscuro"]')?.click()); await p.waitForTimeout(900); await shot('hoy');
     await tap('Continuar la aventura'); await shot('mapa'); await tap('Ver video'); await shot('repro');
@@ -454,7 +456,7 @@ const flows = {
             const t = await sheetCta();
             if (t && /Hasta mañana/.test(t)) done = true;
             if (!t) errs.push(`día ${d}: mapa sin botón`);
-            if (d === 26 && t && /Ver el nacimiento/.test(t)) done = true;
+            if (d === 26 && t && /Ver mi logro|Abrir la carta|Leer la carta/.test(t)) done = true;
             break; }
           case 'ruletaPop': await tap('¡Girar!'); await p.waitForTimeout(5200); break;
           case 'ruletaPremio': case 'premioCuarto': if (!(await clickYellow())) errs.push(`día ${d}: premio sin botón`); break;
@@ -475,7 +477,7 @@ const flows = {
           case 'desafio': await tap('¡Lo hicimos!'); await p.waitForTimeout(1900); break;
           case 'adivinanzaFin': case 'memoramaFin': case 'desafioFin': await tap('Volver al camino'); break;
           case 'cerrado': if (rw >= 0 && !girada && await toca()) { await p.goBack(); await p.waitForTimeout(900); break; } await tap('Hasta mañana'); done = true; break;
-          case 'final': await shot('c-belen'); done = true; break;
+          case 'final': case 'cartaSecreta': case 'cartaFirma': case 'cartaSorpresa': case 'carta': await shot('c-belen'); done = true; break;
           case 'hoy': await tap('Continuar la aventura'); break;
           default: errs.push(`día ${d}: pantalla inesperada ${c.s}`); done = true;
         }

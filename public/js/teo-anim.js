@@ -8,6 +8,19 @@ const LIB = 'vendor/lottie_light.min.js';
 // el lienzo de cada animación y lo que mide Teodoro de pie dentro de él (los pies tocan el borde de abajo)
 export const CAMINA = { nombre: 'teo-caminando', w: 324, h: 600, pie: 592 }; // mira a la derecha: hacia la izquierda se voltea
 export const CELEBRA = { nombre: 'teo-celebra', w: 875, h: 1522, pie: 1167 }; // recortado a Teodoro con sus saltos, centrado en él de pie
+// Teodoro completo saludando y meciéndose feliz (el de Theo Lectura, bucle de 2 s): otro gesto que el salto de CELEBRA (gran final, paso 3)
+export const SALUDA = { nombre: 'teo-saluda', w: 432, h: 576, pie: 480, x: 216, suelo: 515 };
+// la carta de Teodoro (23-nov, Drive «04 Lottie listos/teo_carta»): de frente con su cayado y el sobre escondido (0–23), lo saca y lo
+// ofrece hacia su derecha, donde está el pesebre (24–28; «ofrece» = el cuadro del brazo extendido), y lo sostiene feliz moviendo las
+// orejas (29–61, «bucle»). «sobre»: dónde queda el sobre en el lienzo cuando lo ofrece (de ahí sale la lucecita al pesebre)
+// el cierre (23-nov, Drive «07 Pantalla de cierre (pesebre)»): Teodoro de espaldas camina por el camino con su cayado y la carta hasta el
+// pesebre (que viene en la animación: la Virgen, san José y el Niño se mueven un poco) y se la ofrece al Niño. Una sola vez y queda en el
+// último cuadro. Se ubica por su esquina (pie = alto del lienzo, x = suelo = 0). En px del lienzo: la base de paja del pesebre (y) y su
+// centro (x), la estrella y el Niño
+// «paja»: la elipse de paja bajo el pesebre (centro y ancho): es la que llena el claro del fondo
+export const CIERRE = { nombre: 'teo-pesebre-cierre', w: 578, h: 720, pie: 720, x: 0, suelo: 0, ultimo: 60, llega: 36, // «llega»: ya está junto al Niño con la carta (ahí se revela)
+  base: 535, centro: 375, estrella: [368, 35], nino: [385, 315], paja: { cx: 372, cy: 480, ancho: 415 }, escena: [109, 577] }; // «escena»: de dónde a dónde va en x el último cuadro (Teodoro junto al Niño + el pesebre)
+export const CARTA = { nombre: 'teo-carta', w: 298, h: 393, pie: 374, x: 140, suelo: 390, ofrece: 26, bucle: [29, 61], sobre: [58, 150] };
 // los clips de la trivia salen del mismo lienzo (426 × 600): Teodoro mide 532 de pie y apoya los pies en (266,6; 591,3) en todos,
 // así que se encadenan sin ajustar nada. «salidas»: tramos [desde, hasta) de cada bucle con la pose de unión, donde puede empezar
 // una transición
@@ -189,9 +202,9 @@ export async function pasarA(img, transicion, bucle) {
 }
 
 /** Cambia el Teodoro quieto que celebra (alt «Teodoro celebra…») por el que salta, en bucle: mismos pies y mismo alto de pie. */
-export function celebrar(root, cual = img => /^Teodoro celebra/.test(img.alt || '')) {
+export function celebrar(root, cual = img => /^Teodoro celebra/.test(img.alt || ''), anim = CELEBRA, { alto = .96 } = {}) {
   if (reduced()) return;
-  $$(root, 'img').filter(i => cual(i) && i.offsetParent && i.offsetHeight).forEach(img => sobreDibujo(img, CELEBRA, { alto: .96 }));
+  $$(root, 'img').filter(i => cual(i) && i.offsetParent && i.offsetHeight).forEach(img => sobreDibujo(img, anim, { alto }));
 }
 
 /** Cambia a Teodoro con su mapa, pensando (IMG.tPregunta), por el que se mueve en bucle: trivia, «¿Jugamos?», el juego del teléfono

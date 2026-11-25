@@ -40,6 +40,7 @@ export const DEFAULT = () => ({
   tbJuego: true,       // «TheoBox en juego» (tbjuego.js): insignia del mapa, lámina del inicio, TheoBox en las ruletas; panel › TheoBox en juego
   mercado: 'usa',      // 'usa': una TheoBox por ruleta · 'latam': una sola, en un sorteo al cerrar el camino
   musica: true,        // música de fondo del mapa y la trivia (on/off)
+  idiomaCarta: 'es',   // textos de la carta de Teodoro (gran final): 'es' (por defecto, como todo el MVP) | 'en'; panel › Ajustes › Idioma
   notas: {}, huecos: [], vistas: {},
 });
 export let S = load();
@@ -57,11 +58,12 @@ function migrar(s) {
   Object.keys(s.ruletas || {}).forEach(d => { if (viejas[s.ruletas[d]]) s.ruletas[d] = viejas[s.ruletas[d]]; });
   if (s.traje && !s.prendas.includes(s.traje)) s.traje = null;
   s.prendasVistas = Math.min(s.prendasVistas || 0, s.prendas.length);
+  delete s.finalIdioma; // la clave vieja dejaba la carta en inglés por defecto: ahora es idiomaCarta y arranca en español
   if (!['', 'fondo', 'adviento', 'natividad', 'panes', 'otra', 'theobox'].includes(s.forzarPremio || '')) s.forzarPremio = '';
   return s;
 }
 export function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* navegador privado */ } emit(); }
-export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas, tbJuego: S.tbJuego, mercado: S.mercado, theoboxAdviento: S.theoboxAdviento }; S = Object.assign(DEFAULT(), keep, over); save(); }
+export function reset(over = {}) { const keep = { notas: S.notas, huecos: S.huecos, tema: S.tema, vistas: S.vistas, musica: S.musica, isla: S.isla, zonas: S.zonas, tbJuego: S.tbJuego, mercado: S.mercado, theoboxAdviento: S.theoboxAdviento, idiomaCarta: S.idiomaCarta }; S = Object.assign(DEFAULT(), keep, over); save(); }
 export function shareURL() {
   const { notas, huecos, ...rest } = S;
   return location.origin + location.pathname + '#estado=' + btoa(unescape(encodeURIComponent(JSON.stringify(rest)))) + '&pantalla=' + (cur?.name || 'hoy');
@@ -130,7 +132,7 @@ let SECS = [];
 export const sections = () => SECS;
 const cache = new Map();
 export async function boot() {
-  MAN = await (await fetch('screens/manifest.json')).json();
+  MAN = await (await fetch('screens/manifest.json', { cache: 'no-cache' })).json();
   try { SECS = await (await fetch('screens/sections.json')).json(); } catch { SECS = []; }
 }
 const TAB_OF = { teodoro: 'teodoro', mundos: 'teodoro' };
@@ -168,7 +170,7 @@ export const manifest = () => MAN;
 export async function html(file) {
   if (!cache.has(file)) {
     // si falla la red, no se queda guardado el error: el próximo intento vuelve a pedirla
-    const p = fetch('screens/' + file + '.html').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+    const p = fetch('screens/' + file + '.html', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
     p.catch(() => cache.delete(file));
     cache.set(file, p);
   }
@@ -200,7 +202,11 @@ export const DE_PASO = new Set(['completado', 'triviaFin', 'trivia', 'ruletaPop'
   'memoramaReglas', 'memorama', 'memoramaFin', 'adivinanzaIntro', 'adivinanza', 'adivinanzaTiempo', 'adivinanzaFin',
   'desafioIntro', 'desafio', 'desafioFin', 'juegoPasos', 'juegoCarta', 'juegoFin', 'cerrado', 'calificacion', 'estatica', 'compartir']);
 const dePaso = name => DE_PASO.has(name) || (name === 'teaser' && S.inscrito);
+/** Un desvío de la navegación: (name, params, opts) → [name, params, anim, opts] o null. Lo pone carta.js: al terminar el día que
+ *  completaba el reto, la vuelta al mapa (o a «Mañana seguimos», o a una pestaña) entra al final. */
+let desvio = null; export const ponerDesvio = f => { desvio = f; };
 export function go(name, params = {}, anim = 'push', opts = {}) {
+  const d = desvio?.(name, params, opts); if (d) { [name, params, anim, opts] = d; }
   if (name === 'teodoro' && S.mascota === false) name = 'hoy'; // sin mascota el camino vive en Hoy
   if (inFlight === name) return busy; // doble toque
   if (cur && !opts.fromBack && !opts.replace && !dePaso(cur.name)) {

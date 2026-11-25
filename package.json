@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npx --yes serve@14.2.4 public -l 5190",
+    "dev": "python3 -I tools/servidor.py 5190",
     "shots": "node tools/shots.mjs"
   },
   "devDependencies": {

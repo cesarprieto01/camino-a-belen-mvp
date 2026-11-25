@@ -3,7 +3,7 @@
 Prototipo navegable de **Adviento** («El Adviento más grande del mundo»): 26 días de camino hasta Belén con Teodoro, el burrito de la app Theo, para familias católicas. Antes se llamó «Camino a Belén»; el repositorio y la URL conservan ese nombre.
 
 - En vivo: https://camino-a-belen-mvp.vercel.app
-- La rama `main` es siempre lo que está publicado.
+- Lo publicado sale de la rama `mvp` (`main` quedó atrás). Se publica a mano desde un commit, nunca con archivos sin commit: `git archive <commit> | tar -x -C <carpeta limpia>`, copiar `.vercel/` ahí y `vercel deploy --prod --yes`; después se comparan los md5 de los archivos en producción con los del commit.
 
 ## Correrlo
 
@@ -12,12 +12,12 @@ npm install
 npm run dev
 ```
 
-Abre http://localhost:5190/app.html. El panel de controles (a la derecha; en el celular, el botón de arriba a la derecha) es solo del prototipo:
+Abre http://localhost:5190/app.html. `npm run dev` levanta `tools/servidor.py`, que le pide al navegador no guardar nada (`Cache-Control: no-store`): cada recarga trae lo último. Con un servidor que no lo diga (`python3 -m http.server`, `serve`), Chrome guarda las pantallas y los `.js` un rato y se ve la versión anterior. El panel de controles (a la derecha; en el celular, el botón de arriba a la derecha) es solo del prototipo:
 
 - **Arriba, siempre a la vista:** la pantalla donde estás, Día/Noche, copiar el enlace a este estado y el día con ‹ ›.
 - **Estado:** Teodoro y su energía, la familia (plan, inscrito, panes), el tiempo (completó hasta, saltar 7 días) y «Empezar de cero».
-- **Ajustes:** variantes para comparar (canción del mapa), qué sale en la ruleta y girarla otra vez, la isla dinámica y las zonas seguras del iPhone, y las reglas que usa el MVP.
-- **Al pie, para el equipo:** Recorridos (escenarios del lienzo: antes del 29, un día con trivia, ruleta, juegos sorpresa, Navidad, gracia, free…), Pantallas (las del lienzo vistas y por ver) y Notas.
+- **Ajustes:** variantes para comparar (canción del mapa), qué sale en la ruleta y girarla otra vez, la isla dinámica y las zonas seguras del iPhone, el idioma de la carta de Teodoro (español por defecto; inglés para probar) y las reglas que usa el MVP.
+- **Al pie, para el equipo:** Recorridos (escenarios del lienzo: antes del 29, un día con trivia, ruleta, juegos sorpresa, Navidad, la carta de Teodoro, gracia, Mundos antes de cerrarse, free…), Pantallas (las del lienzo vistas y por ver) y Notas.
 
 ## Qué hay en el repo
 
@@ -29,6 +29,10 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   js/theobox.js    TheoBox, el gran premio de la ruleta: «¡Ganaste!», datos de envío en dos pasos, «Va en camino», «Comparte tu premio», «Mi TheoBox» y Ajustes (pantallas screens/TB-*.html, claras en TB-*-claro.html)
   js/map.js        el mapa del camino (diseño «Mapa Diozen» del Figma) y la hoja de cada día
   js/games.js      trivia, memorama, adivinanza, desafío en familia y calificación
+  js/carta.js      la carta de Teodoro (el gran final): carta sorpresa, firma, «¡Carta firmada!», sorpresa, la carta con sus números,
+                   Imprimir (PDF A4) y Compartir (imagen 9:16), y su ícono arriba en el mapa (ver «La carta de Teodoro»)
+  js/carta-motion.js  la coreografía de logro de la carta: resortes interrumpibles, sonidos y confeti; respeta movimiento reducido
+  js/firma.js      firmar con el dedo: 5 tintas, goma, deshacer, borrar todo y cambiar el color de lo ya escrito
   js/tabbar.js     la barra de pestañas de Theo
   js/musica.js     el sonido: música, voces de Teodoro, efectos y motivo de Adviento
   js/teo-anim.js   Teodoro animado (Lottie): camina en el mapa, salta donde celebra y en la trivia cambia de pose con transiciones
@@ -47,8 +51,11 @@ public/            la app (HTML, CSS y JavaScript sin framework)
   audio/           «Burrito Sabanero» de Teodoro (mapa), «Quiet Snow Village» (trivias y actividades) y teo/ (9 reacciones de voz de Teodoro)
   anim/            las animaciones Lottie de Teodoro (ver «Teodoro animado»)
   braze/slides-reto/  el in-app de Braze con los slides del reto (al unirse): braze.html se pega en Braze; ver su LEEME.md
+  braze/slides-reto-en/  el mismo in-app en inglés (`node tools/braze-slides.mjs --en capturar` y luego `--en`)
 tools/             SOLO PROTOTIPO: pruebas de recorrido y capturas (Playwright); no van a la app
                    braze-slides.mjs arma el in-app de Braze desde el MVP («capturar» saca el arte de los slides)
+                   servidor.py es el servidor local (npm run dev), sin caché
+                   carta-flujo.mjs recorre la carta como un niño; medir-audio.mjs mide el volumen real que sale (ver «Pruebas»)
 ```
 
 Todo lo que está en `public/` lo usa la app o el panel del prototipo (`raw.html` y `sheet.html` son para las capturas de `tools/`). El 26 de octubre de 2026 se borró lo que no se usaba: imágenes y pantallas que nadie pedía, la página «Basura» del lienzo, los archivos fuente del lienzo (`design-source/`, con su conversor `tools/convert.py`) y scripts temporales. Todo sigue en el historial de git.
@@ -89,6 +96,33 @@ Las animaciones son Lottie (lottie-web 5.12.2, versión light, en `vendor/`) hec
 - **Bajo un pop-up** (el resultado de la trivia) la pantalla de abajo queda borrosa y en pausa: no compiten dos Teodoros.
 - **Cambiar un clip:** reemplaza el JSON en `public/anim/` con el mismo nombre. Si el nuevo no sale del mismo lienzo (426 × 600, Teodoro de 532 px con los pies en 266,6 · 591,3), hay que medirlo y ajustar `LIENZO` en `teo-anim.js`.
 
+### La carta de Teodoro (el gran final)
+
+Desde el 20 de noviembre de 2026 reemplaza al final de 3 pasos («¡Llegamos a Belén!»). Diseño: lienzo «Gran final · 26 días», opción B (pantallas `screens/CARTA-1…4`, `CARTA-HIST` y `CARTA-A4`, claras y oscuras). Código: `js/carta.js`, `js/carta-motion.js` y `js/firma.js`. Las reglas completas, con cada texto, están en Drive, «02 REFERENCIA/00 Como funciona cada seccion.md», sección «Día 26 y la carta de Teodoro».
+
+- **Dos momentos.** 1) La firma: la primera vez que termina el video del día 26, aunque le falten días, Teodoro trae una carta sorpresa (no dice para quién es) y el niño la firma con el dedo sin leerla. 2) La sorpresa: al terminar el último cuento que le falte, el día que sea (no vuelve al 26), o desde el 7 de enero con lo que haya hecho: Teodoro le entrega la carta al Niño Jesús («¡La carta era para Jesús!») y se lee con sus números y su firma.
+- **La carta sorpresa (la primera pantalla):** Teodoro es el protagonista, de frente y grande (Lottie `anim/teo-carta.json`, `CARTA` en `teo-anim.js`), sobre el fondo del pesebre bajo la estrella, de día o de noche (`assets/carta/fondo-entrega-dia.webp` y `-noche.webp`; originales en Drive «07 ANIMACIONES TEODORO (trivia)/04 Lottie listos/teo_carta»). La primera vez sube a su sitio, saca el sobre y se lo ofrece al niño (cuadros 0–28, con un destello en el sobre) y queda feliz con el sobre en bucle (29–61); si vuelve, entra directo al bucle; tocar la pantalla salta la entrada; con menos movimiento queda quieto con el sobre. El video del día 26 precarga la animación y el fondo (`precargarCarta()`).
+- **La sorpresa (la entrega al Niño):** la animación `anim/teo-pesebre-cierre.json` (`CIERRE` en `teo-anim.js`; Drive «07 ANIMACIONES TEODORO (trivia)/07 Pantalla de cierre (pesebre)») trae el pesebre con la Virgen, san José y el Niño, y a Teodoro de espaldas caminando por el camino hasta él para ofrecerle la carta al Niño. Va sobre el fondo del claro de día o de noche (`assets/carta/fondo-cierre-dia.webp` y `-noche.webp`): el pesebre llena el claro (`encuadrarCierre()`: la escena final, Teodoro junto al Niño y el pesebre, cabe entera con 12 px a cada lado; la estrella queda justo bajo el subtítulo; el fondo se escala para que el claro mida lo mismo que la paja y la franja de cielo que sobra arriba se rellena con su mismo color, fundido). Los textos de la carta sorpresa y de la sorpresa llevan un velo del color del cielo detrás y un halo suave (`.carta-titulo-fondo`, `.carta-sub-fondo`): sobre el dibujo no se leían. Arranca al entrar, se juega una vez (~5 s) y queda en el último cuadro; cuando Teodoro llega al Niño con la carta (cuadro 36, ~3 s) se encienden la luz y la estrella, se revela «¡La carta era para Jesús!» y el botón sube enseguida (~4 s en total). Tocar la pantalla salta al final; con menos movimiento ya está junto al Niño. Si no carga, vuelven las imágenes del lienzo. Se precarga desde `abrirCarta()` cuando la carta ya se puede abrir.
+- **Cuándo entra al final:** al terminar el último cuento que le falte (el 26 u otro, por ejemplo el 7), el día sigue normal (completado, trivia, juego) y, cuando el día termina de verdad (vuelve al mapa, a «Mañana seguimos» o a una pestaña), entra solo a la sorpresa con un puente de ~2 s: «¡Completaste el camino! · Teodoro tiene una sorpresa para ti», con lluvia dorada (se salta al tocar). Lo hace `ponerDesvio()` de `core.js`, que pone `carta.js` (`S.carta.sorpresaPendiente`). Si cierra la sorpresa sin abrir la carta, el mapa abre arriba, en Belén, con la carta brillando y su globo.
+- **Feedback de Rodrigo y César (24-nov):** «sorpresa», nunca «secreto», en todo el copy. **El compromiso:** al terminar su primer día (1–25), cuando el día termina, Teodoro aparece con su carta («Teodoro te invita a caminar hasta Belén» · «Firmar mi compromiso»); el niño firma («¡Firma tu compromiso!») y Teodoro le dice «¡Trato hecho! Este es nuestro compromiso…»; vuelve al mapa con la carta junto al pesebre. Si no firma, firma al ver el día 26. **Bloqueada:** la carta existe desde que la firma; en el mapa lleva el candado de los días bloqueados y, al tocarla, «¡Desbloquea tu sorpresa!» · «Cada día te acerca a Belén» (si falta uno: «¡Ya casi llegas a Belén!»); el número va solo en el panel «✦ TE FALTAN N DÍAS ✦»; botones «Ir al día N» y «Volver al mapa», con la carta tapada por un velo y el candado grande («Podrás revelarla al completar el reto de Adviento»; `DIAS_PARA_ABRIR`, por confirmar). **Al terminar:** vuelve a ver su carta («¡Completaste el camino!» · «Esta es la carta que firmaste. ¿Vamos a entregársela a Jesús?»), puede firmar de nuevo, y «Siguiente» lleva a la entrega. Estado: `S.carta.compromiso`, `compromisoVisto`, `revisada`.
+- **Pantallas:** `cartaSecreta` → `cartaFirma` → `cartaGuardada` («¡Carta firmada!», con los días que faltan; cada uno se toca) → `cartaSorpresa` → `carta`. `abrirCarta()` decide a cuál ir según el estado; `trasCuento(n)` abre la sorpresa si el cuento terminado era el último que faltaba.
+- **En el mapa, sobre el arbusto de la derecha del pesebre de Belén** (`decorarCarta()`): la carta recta con un meneo suave (±4°), con un resplandor dorado grande que late, un halo de rayos que gira lento, destellos y un leve flote (quieta con menos movimiento). Es el único acceso a la carta en el mapa (ya no hay ícono arriba): lleva el punto si falta firmarla, el número de días por completar y, cuando está lista, el globo «¡Tu carta está lista!» sobre la pared del pesebre con la cola hacia ella. Tocarla abre la carta.
+- **Regla de los textos:** lo que falta se dice como días del reto por completar («Termina los 4 días que te faltan y descubre la sorpresa que Teodoro te tiene»), nunca como espera («te faltan 4 días para abrirla» se lee «en 4 días se abre»).
+- **Los números** (`numerosCarta()`): historias de la Biblia (cuentos vistos), juegos en familia (juegos sorpresa hechos + juegos en familia vistos), estrellas ganadas, panes y tiempo juntos (minutos estimados por contenido, trivia y juego). Solo íconos que usa hoy el MVP: los de los días del mapa, la estrella dorada y el pan; la lámpara ya no va. Las filas en 0 no salen.
+- **La barra de arriba (todas las pantallas de la carta):** a la izquierda «Volver» (a la pantalla anterior, sin el video del día 26 de por medio; si no hay, al mapa); a la derecha «Cerrar» (al mapa) y, a su izquierda, la música y la voz de Teodoro (`bindMute`). Los tres son del mismo vidrio, de 44 px (`cerrarX()` en `carta.js`).
+- **Corregir y salir:** la firma es simple para un niño: 3 tintas del reto que contrastan en el papel (azul noche, verde y rojo lacre; la elegida con aro y ✓) y dos íconos estándar de vidrio, deshacer (el último trazo) y borrar todo (Lucide, como los SF Symbols); cada trazo guarda su color (cambiar de tinta no recolorea lo ya escrito). Se puede volver a firmar desde «¡Carta firmada!» y desde la carta. Cada paso tiene salida («Ahora no» o la X) sin perder nada.
+- **Imprimir y Compartir bajan directo:** Imprimir baja el PDF A4 «Carta al Niño Jesús» (con espacio para un dibujo) y Compartir baja la imagen 9:16 para historias. Se arman en el navegador con `vendor/html-to-image.min.js` y las fuentes incrustadas (Allura, Caveat y Gloria Hallelujah, cargadas en `index.html` y `app.html`).
+- **Teodoro firma con la huella de su casco** (es un burro): la pared del casco en U con la ranura en V adentro, derecha (el círculo va girado -14° y el dibujo +14°), en el círculo dorado de la carta, el A4 y la historia, y en el sello rojo de «¡Carta firmada!». Nunca una huella de perro; dos cascos chicos no se entendían.
+- **Sonido:** suena la ambiental de las trivias desde que entra (no se retiene; el video del día 26 la precarga), a +9 dB en la carta y +6 al firmar (`NIVEL` en `musica.js`; en la trivia va a -6). A 0 dB quedaba a -40 dBFS y no se oía bajo las campanas y la voz; ahora queda a la altura del burrito del mapa (comprobar con `tools/medir-audio.mjs`). Voces de Teodoro, solo audio: «¡Gran aventura!» al traer la carta, «¡Qué buen trabajo!» tras el golpe del sello, «¡Increíble!» al revelarse y «¡Gran aventura!» al abrirse.
+- **Idioma:** español por defecto, como todo el MVP (`S.idiomaCarta`; la clave vieja `finalIdioma`, que la dejaba en inglés, se borra al cargar). El inglés se prueba en panel › Ajustes › Idioma. En la app, la carta sigue el idioma de la app.
+- **Lo que guarda** (`S.carta`): si la vio, la firma (PNG), el color de tinta, el día en que firmó (da la fecha: 24 dic «Nochebuena, 2026», 25 «Navidad, 2026»), si la dejó para después y si ya la abrió.
+- **Imágenes para la app:** todas las del flujo en una sola carpeta de Drive, «01 PARA LA APP/09 final/0 La carta de Teodoro (nuevo final)» (fondos en JPG, lo transparente en PNG, @3x y @2x, las dos Lottie y un LEEME pantalla por pantalla; también en `INDICE.csv`). En el modo developer salen con su nombre (`dev/assets.json`, archivos en `dev/app/09 carta/`) y cada pantalla las baja con «Descargar pantalla».
+- **Por definir (César):** con plan free los días de pago cuentan como pendientes, así que ese niño no la abre antes del 7 de enero; y los textos que propuso la revisión de copy.
+
+### Mundos: los días antes de cerrarse
+
+Del 31 de diciembre al 6 de enero, si faltan cuentos, debajo de la card amarilla de Adviento asoma una lengüeta más chica y centrada (blanca de día, azul #274E7C de noche) con un reloj de arena: «Quedan N días» y el 6 de enero «¡Último día!». Sale desde debajo de la amarilla; con movimiento reducido solo aparece. Código: `cierreMundo()` en `js/flow.js` y `.mundos-cierre` en `app.css`. El reloj es «Hourglass not done» de Microsoft Fluent Emoji (licencia MIT), en `assets/reloj-arena.webp`.
+
 ## Reglas principales
 
 - **Calendario:** 26 días, del domingo 29 de noviembre al 24 de diciembre. Antes del 29 hay invitación y cuenta regresiva, y el 28 (día 0, un día antes) además se abre el intro en la casa del mapa: video y trivia de presentación con sus 3 estrellas, sin panes; Teodoro espera ahí y el 29 camina al día 1.
@@ -97,12 +131,12 @@ Las animaciones son Lottie (lottie-web 5.12.2, versión light, en `vendor/`) hec
 - **Juego sorpresa** cada 3 días: Memorama, Adivinanza y Desafío en familia.
 - **Ruleta** de 8 casillas los días 4, 11, 18 y 24, solo al tocarla en el mapa y después de ver el cuento de su día (antes dice «Termina el día N»; en el recuerdo, «Cerrada»): fondo nuevo, prenda al azar, prenda de la semana, otra oportunidad y panes.
 - **Energía de Teodoro:** un contenido lo deja lleno; cada día sin caminar baja una rayita y cambia su escena (`assets/pila`, de feliz a congelado en 10 días). Teodoro siempre está en el día del calendario, aunque la familia vaya atrasada.
-- **Gracia:** del 25 de diciembre al 6 de enero se puede terminar el camino («Quedan N días»). Desde el 7 de enero queda como recuerdo.
+- **Gracia:** del 25 de diciembre al 6 de enero se puede terminar el camino («Quedan N días»); los últimos 7 días Mundos lo cuenta bajo la card de Adviento. Desde el 7 de enero queda como recuerdo (y la carta firmada se abre con lo que hizo).
 - **Free y Premium (igual en US y LATAM):** gratis los días 0, 1, 4, 8, 11, 15, 18, 22, 25 y 26; el resto con Theo Premium o el Pase de Adviento (US$19,99, pago único).
 - **Destacado del inicio:** del 29 de noviembre al 6 de enero es el póster de la temporada (Esperanza, Paz, Alegría, Amor, Nochebuena, «¡Feliz Navidad!» solo el 25 y Tiempo de Navidad). La energía de Teodoro se ve en la pieza grande de Hoy y en el tab Teodoro.
 - Al terminar cada video o canción: «¿Te gustó…?» con 5 estrellas y Compartir.
 - **TheoBox (gran premio de la ruleta):** una sola para todo el reto, en la casilla dorada; solo sale en la ruleta del día 24, una vez (en la app la decide el servidor; en el panel, «Qué sale al girar › TheoBox»). Al salir, la rueda se oscurece menos la casilla dorada («¡Cayó en la dorada!») y se abre «¡Ganaste la TheoBox!» → «Reclamar mi TheoBox» → quién la recibe (para un adulto) → dirección (estado y ciudad según el país) → «Va en camino» → «Comparte tu premio» con la imagen para historias (assets/theobox/historia.jpg, 1080 × 1920; se comparte con las opciones del teléfono o se guarda). Abajo lleva el ícono de la app y el logo dorado de Theo, siempre sobre blanco (assets/marca/); la imagen sale de tools/historia-theobox.html con `node tools/historia-theobox.mjs`. Con «Ahora no», la TheoBox espera en vidrio encima de la hoja del día hasta reclamarla. Ya reclamada, mientras viaja (`S.theoboxPaso`: 2 la preparan, 3 salió, 4 llegó) el mismo aviso del mapa dice «Tu TheoBox va en camino · Ver envío», el inicio muestra una card entre Adviento y Misiones Diarias, y el engrane abre Ajustes con «Mis premios › Mi TheoBox»; los tres llevan a «Mi TheoBox» (seguimiento por pasos, guía de la paquetería desde que sale, a quién se entrega y soporte). Cada pantalla tiene versión clara y oscura. En el panel: «TheoBox (gran premio)» llega hasta «Salió hacia la casa» y «Ya llegó». Diseño aprobado en el lienzo «TheoBox · Gran premio».
-- **Sonido** (propuesta de diseño sonoro en Drive «05 MUSICA»): el mapa con «Burrito Sabanero» de Teodoro (al 12,5 % del master, muy ambiental) y las trivias y actividades con «Quiet Snow Village»; igual de día y de noche. En modo noche el ícono de silencio queda blanco también al tocarlo. La música se aparta cuando habla Teodoro o gira la ruleta, baja sola si nadie toca y calla donde habla la familia (adivinanza, «Busquen la estrella»). Ritual del día: Teodoro camina en silencio, dice «¡Vamos a la aventura!» y entra la canción; en «Mañana seguimos» se despide con su final. 9 reacciones de voz de Teodoro, sin globos de texto, con reglas (una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma seguida, nunca encima de un diálogo de la canción), 8 efectos sintetizados y el motivo «La estrella de Teodoro». El botón de silencio calla la música y las reacciones de voz de Teodoro (los efectos siguen).
+- **Sonido** (propuesta de diseño sonoro en Drive «05 MUSICA»): el mapa con «Burrito Sabanero» de Teodoro (al 12,5 % del master, muy ambiental) y las trivias y actividades con «Quiet Snow Village»; igual de día y de noche. En modo noche el ícono de silencio queda blanco también al tocarlo. La música se aparta cuando habla Teodoro o gira la ruleta, baja sola si nadie toca y calla donde habla la familia (adivinanza, «Busquen la estrella»). Ritual del día: Teodoro camina en silencio, dice «¡Vamos a la aventura!» y entra la canción; en «Mañana seguimos» se despide con su final. 9 reacciones de voz de Teodoro, sin globos de texto, con reglas (una a la vez, 8 s entre voces, 6 de paso al día, nunca la misma seguida, nunca encima de un diálogo de la canción), 8 efectos sintetizados y el motivo «La estrella de Teodoro». El botón de silencio calla la música y las reacciones de voz de Teodoro (los efectos siguen). En la carta de Teodoro suena la ambiental de las trivias más alta (ver «La carta de Teodoro»). Cambiar de pantalla cuenta como actividad para el reposo: después de un video largo sin tocar, la música no entra callada.
 
 ## Pruebas
 
@@ -113,6 +147,14 @@ node tools/e2e.mjs dia /tmp/e2e mobile
 ```
 
 Recorridos: `dia ruleta memorama adivinanza desafio juegos antes reto regreso atrasado nochebuena oscuro post nav cerrado inicio paginas hoja volver libre sintrivia titulos teodoro vidrio poster completo`. `completo` es la familia entera de punta a punta (teaser, inscripción, el intro del 28, los 26 días con sus trivias, juegos y ruletas, Nochebuena y Navidad) y tarda unos 30 minutos. Las herramientas buscan Chrome en `~/Library/Caches/ms-playwright/chromium-1243`; en otro computador, cambia esa ruta.
+
+La carta de Teodoro tiene su propio recorrido, como un niño (día 26 con un día pendiente → firma → «¡Carta firmada!» → termina el día que faltaba → sorpresa → carta, Imprimir y Compartir con sus descargas), y el sonido se mide de verdad en la salida del audio:
+
+```bash
+node tools/carta-flujo.mjs /tmp/carta      # termina con «FALLOS: ninguno · ERRORES: ninguno»
+node tools/medir-audio.mjs                 # dBFS reales en trivia, carta y mapa
+BASE=https://camino-a-belen-mvp.vercel.app node tools/carta-flujo.mjs /tmp/carta   # lo mismo contra producción
+```
 
 ## Dónde está lo demás
 
