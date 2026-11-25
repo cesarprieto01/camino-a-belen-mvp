@@ -40,7 +40,7 @@ const TXT = {
   es: {
     secreta: ['Teodoro te trae', 'una carta sorpresa'], altSecreta: 'Teodoro sostiene una carta sellada', firmarBtn: 'Firmar la carta',
     firmaT: n => `¡Ahora firma tú, ${n}!`, firmaSub: 'Escribe tu nombre con el dedo', firmaOtra: n => `Firma de nuevo, ${n}`, cambiarFirma: 'Firmar de nuevo', firmaCaja: n => `Firma de ${n}`, borrar: 'Borrar', listo: '¡Listo, firmé!', ahoraNo: 'Ahora no',
-    guardadaT: '¡Desbloquea tu sorpresa!', guardadaSub: (k, dia) => k === 1 ? `Termina el día ${dia} para desbloquear la sorpresa que Teodoro te tiene` : `Termina los ${k} días que te faltan para desbloquear la sorpresa que Teodoro te tiene`,
+    guardadaT: '¡Desbloquea tu sorpresa!', guardadaSub: (k, dia) => k === 1 ? `Te falta el día ${dia} para abrirla` : `Te faltan ${k} días para abrirla`,
     candado: `Se desbloquea al completar los ${DIAS_PARA_ABRIR} días`, revisarT: '¡Completaste el camino!', revisarSub: 'Esta es la carta que firmaste. ¿Vamos a entregársela a Jesús?', siguiente: 'Siguiente', verCarta: 'Ver mi carta',
     invita: ['Teodoro te invita', 'a caminar hasta Belén'], firmarCompromiso: 'Firmar mi compromiso',
     compromisoT: () => '¡Firma tu compromiso!', compromisoSub: 'Caminaremos juntos los 26 días hasta Belén', tratoT: n => `¡Trato hecho, ${n}!`, tratoS: 'Este es nuestro compromiso: caminar juntos hasta Belén. Al final te espera una sorpresa.',
@@ -70,7 +70,7 @@ const TXT = {
   en: {
     secreta: ['Theodore brings you', 'a surprise letter'], altSecreta: 'Theodore holds a sealed letter', firmarBtn: 'Sign the letter',
     firmaT: n => `Now you sign, ${n}!`, firmaSub: 'Write your name with your finger', firmaOtra: n => `Sign again, ${n}`, cambiarFirma: 'Sign again', firmaCaja: n => `${n}’s signature`, borrar: 'Clear', listo: 'I signed it!', ahoraNo: 'Not now',
-    guardadaT: 'Unlock your surprise!', guardadaSub: (k, dia) => k === 1 ? `Finish day ${dia} to unlock the surprise Theodore has for you` : `Finish the ${k} days you have left to unlock the surprise Theodore has for you`,
+    guardadaT: 'Unlock your surprise!', guardadaSub: (k, dia) => k === 1 ? `Finish day ${dia} to open it` : `${k} days left to open it`,
     candado: `Unlocks when you complete all ${DIAS_PARA_ABRIR} days`, revisarT: 'You finished the journey!', revisarSub: 'This is the letter you signed. Ready to give it to Jesus?', siguiente: 'Next', verCarta: 'See my letter',
     invita: ['Theodore invites you', 'to walk to Bethlehem'], firmarCompromiso: 'Sign my promise',
     compromisoT: () => 'Sign your promise!', compromisoSub: 'We’ll walk together all 26 days to Bethlehem', tratoT: n => `It’s a deal, ${n}!`, tratoS: 'This is our promise: to walk together to Bethlehem. A surprise is waiting for you at the end.',
