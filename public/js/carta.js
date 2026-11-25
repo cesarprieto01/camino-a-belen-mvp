@@ -40,12 +40,12 @@ const TXT = {
   es: {
     secreta: ['Teodoro te trae', 'una carta sorpresa'], altSecreta: 'Teodoro sostiene una carta sellada', firmarBtn: 'Firmar la carta',
     firmaT: n => `¡Ahora firma tú, ${n}!`, firmaSub: 'Escribe tu nombre con el dedo', firmaOtra: n => `Firma de nuevo, ${n}`, cambiarFirma: 'Firmar de nuevo', firmaCaja: n => `Firma de ${n}`, borrar: 'Borrar', listo: '¡Listo, firmé!', ahoraNo: 'Ahora no',
-    guardadaT: '¡Desbloquea tu sorpresa!', guardadaSub: (k, dia) => k === 1 ? `Te falta el día ${dia} para abrirla` : `Te faltan ${k} días para abrirla`,
+    guardadaT: '¡Desbloquea tu sorpresa!', guardadaSub: k => k === 1 ? '¡Ya casi llegas a Belén!' : 'Cada día te acerca a Belén', volverMapa: 'Volver al mapa',
     candado: 'Podrás revelarla al completar el reto de Adviento', revisarT: '¡Completaste el camino!', revisarSub: 'Esta es la carta que firmaste. ¿Vamos a entregársela a Jesús?', siguiente: 'Siguiente', verCarta: 'Ver mi carta',
     invita: ['Teodoro te invita', 'a caminar hasta Belén'], firmarCompromiso: 'Firmar mi compromiso',
     compromisoT: () => '¡Firma tu compromiso!', compromisoSub: 'Caminaremos juntos los 26 días hasta Belén', tratoT: n => `¡Trato hecho, ${n}!`, tratoS: 'Este es nuestro compromiso: caminar juntos hasta Belén. Al final te espera una sorpresa.',
     faltanKicker: k => k === 1 ? '✦ TE FALTA 1 DÍA ✦' : `✦ TE FALTAN ${k} DÍAS ✦`, preparando: 'Preparando…',
-    seguir: n => `Seguir con el día ${n}`, mas: k => `+${k}`,
+    seguir: n => `Ir al día ${n}`, mas: k => `+${k}`,
     logro: n => `¡Lo lograste, ${n}!`, logroSub: d => `Caminaste los ${d} días con Teodoro`,
     momento: n => `¡Llegó el momento, ${n}!`, momentoSub: d => d === 1 ? 'Caminaste 1 día con Teodoro' : `Caminaste ${d} días con Teodoro`,
     altCamina: 'Teodoro, de espaldas, mira el pesebre', altEntrega: 'Teodoro le entrega la carta al Niño Jesús en el pesebre',
@@ -63,19 +63,19 @@ const TXT = {
     guardada: ['Imagen guardada', 'Ya puedes compartirla'],
     toastPospuesta: ['Tu carta te espera arriba', 'Fírmala cuando quieras'],
     diaCompleto: (n, k, sig) => [`¡Día ${n} completo!`, k === 1 ? `Solo te falta el día ${sig}` : `Te quedan ${k} días por completar`],
-    icono: { firmar: 'Carta sorpresa. Falta tu firma', faltan: (k, dia) => `Carta bloqueada. ${k === 1 ? `Termina el día ${dia}` : `Termina los ${k} días que te faltan`} para desbloquear la sorpresa`, lista: 'Carta lista. Descubre para quién es', abierta: 'Tu carta para Jesús. Leerla otra vez' },
+    icono: { firmar: 'Carta sorpresa. Falta tu firma', faltan: (k, dia) => `Carta bloqueada. ${k === 1 ? `Te falta el día ${dia}` : `Te faltan ${k} días`}`, lista: 'Carta lista. Descubre para quién es', abierta: 'Tu carta para Jesús. Leerla otra vez' },
     globo: '¡Tu carta está lista!',
     puente: ['¡Completaste el camino!', 'Teodoro tiene una sorpresa para ti'],
   },
   en: {
     secreta: ['Theodore brings you', 'a surprise letter'], altSecreta: 'Theodore holds a sealed letter', firmarBtn: 'Sign the letter',
     firmaT: n => `Now you sign, ${n}!`, firmaSub: 'Write your name with your finger', firmaOtra: n => `Sign again, ${n}`, cambiarFirma: 'Sign again', firmaCaja: n => `${n}’s signature`, borrar: 'Clear', listo: 'I signed it!', ahoraNo: 'Not now',
-    guardadaT: 'Unlock your surprise!', guardadaSub: (k, dia) => k === 1 ? `Finish day ${dia} to open it` : `${k} days left to open it`,
+    guardadaT: 'Unlock your surprise!', guardadaSub: k => k === 1 ? 'You’re almost in Bethlehem!' : 'Every day brings you closer to Bethlehem', volverMapa: 'Back to the map',
     candado: 'You can reveal it when you complete the Advent challenge', revisarT: 'You finished the journey!', revisarSub: 'This is the letter you signed. Ready to give it to Jesus?', siguiente: 'Next', verCarta: 'See my letter',
     invita: ['Theodore invites you', 'to walk to Bethlehem'], firmarCompromiso: 'Sign my promise',
     compromisoT: () => 'Sign your promise!', compromisoSub: 'We’ll walk together all 26 days to Bethlehem', tratoT: n => `It’s a deal, ${n}!`, tratoS: 'This is our promise: to walk together to Bethlehem. A surprise is waiting for you at the end.',
     faltanKicker: k => k === 1 ? '✦ 1 DAY LEFT TO FINISH ✦' : `✦ ${k} DAYS LEFT TO FINISH ✦`, preparando: 'Getting it ready…',
-    seguir: n => `Continue with day ${n}`, mas: k => `+${k}`,
+    seguir: n => `Go to day ${n}`, mas: k => `+${k}`,
     logro: n => `You did it, ${n}!`, logroSub: d => `You walked all ${d} days with Theodore`,
     momento: n => `It’s time, ${n}!`, momentoSub: d => d === 1 ? 'You walked 1 day with Theodore' : `You walked ${d} days with Theodore`,
     altCamina: 'Theodore, seen from behind, looks at the manger', altEntrega: 'Theodore gives the letter to Baby Jesus in the manger',
@@ -93,7 +93,7 @@ const TXT = {
     guardada: ['Image saved', 'Now you can share it'],
     toastPospuesta: ['Your letter is waiting up top', 'Sign it whenever you like'],
     diaCompleto: (n, k, sig) => [`Day ${n} done!`, k === 1 ? `Only day ${sig} left` : `${k} more days to complete`],
-    icono: { firmar: 'Surprise letter. It needs your signature', faltan: (k, dia) => `Locked letter. ${k === 1 ? `Finish day ${dia}` : `Finish the ${k} days you have left`} to unlock the surprise`, lista: 'Your letter is ready. Find out who it’s for', abierta: 'Your letter to Jesus. Read it again' },
+    icono: { firmar: 'Surprise letter. It needs your signature', faltan: (k, dia) => `Locked letter. ${k === 1 ? `Day ${dia} left` : `${k} days left`}`, lista: 'Your letter is ready. Find out who it’s for', abierta: 'Your letter to Jesus. Read it again' },
     globo: 'Your letter is ready!',
     puente: ['You finished the journey!', 'Teodoro has a surprise for you'],
   },
@@ -470,7 +470,7 @@ register('cartaGuardada', {
     let kicker = null;
     if (fila) {
       const muestra = k > 5 ? pend.slice(0, 4) : pend; // una sola fila: hasta 5 días, o 4 y «+N» al final (no baja a otra fila bajo el botón)
-      fila.className = 'carta-pendientes'; fila.setAttribute('role', 'list'); fila.setAttribute('aria-label', t.guardadaSub(k, sig));
+      fila.className = 'carta-pendientes'; fila.setAttribute('role', 'list'); fila.setAttribute('aria-label', t.icono.faltan(k, sig));
       // cada día se toca y lleva a ese día en el mapa (tocar = hacer)
       fila.innerHTML = muestra.map(n => `<button type="button" role="listitem" class="carta-dia carta-toque" data-dia="${n}" aria-label="Día ${n}"><img alt="" src="${iconOf(n, d) ? 'assets/' + iconOf(n, d) : A(IMG.estrella)}"><b>${n}</b></button>`).join('') + (k > muestra.length ? `<span role="listitem" class="carta-dia carta-mas" aria-label="${k - muestra.length} días más"><b>${t.mas(k - muestra.length)}</b></span>` : '');
       fila.removeAttribute('style');
@@ -483,7 +483,7 @@ register('cartaGuardada', {
     const listo = boton(root, '¡Listo, firmé!', revisar ? t.siguiente : sig ? t.seguir(sig) : t.cerrar);
     if (listo) { listo.querySelector('svg')?.remove(); on(root, listo, () => revisar ? (c.revisada = true, save(), go('cartaSorpresa', {}, 'fade', { replace: true })) : go('mapa', sig ? { dia: sig } : {}, 'down', { replace: true })); }
     if (revisar && (p.fin || p.recien === undefined) && layer) setTimeout(() => layer.isConnected && goldRain(layer), 300); // terminó el camino: lluvia dorada
-    const no = boton(root, 'Ahora no', t.ahoraNo); if (no) on(root, no, alMapa);
+    const no = boton(root, 'Ahora no', t.volverMapa); if (no) on(root, no, alMapa);
     estiloMVP(listo, 'prim', 689); estiloMVP(no, 'sec', 755);
     cerrarX(root);
     // reparto vertical: el título, el texto (2 o 3 líneas), la carta, el rótulo y los días, sin hueco antes de los botones
