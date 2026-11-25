@@ -38,7 +38,7 @@ await tocar('¡Listo, firmé!'); await espera('cartaGuardada'); await p.waitForT
 e = await estado(); if (!(e.carta.firma > 2000)) fallos.push('la firma no se guardó: ' + e.carta.firma);
 // bloqueada: «¡Desbloquea tu sorpresa!», la carta tapada con el candado del mapa y los días que faltan; la carta no se toca
 const sub = await p.evaluate(() => { const L = document.querySelector('#viewport .layer:last-child'); return { titulo: /¡Desbloquea tu sorpresa!/.test(L.textContent), bloqueo: L.querySelector('.carta-bloqueo')?.textContent.trim(), candado: !!L.querySelector('.carta-bloqueo img[src*="candado"]'), falta: /TE FALTA 1 DÍA/.test(L.textContent), sinCambiar: !L.querySelector('.carta-otra-firma') }; });
-if (!sub.titulo || !/Se desbloquea al completar los 26 días/.test(sub.bloqueo || '') || !sub.candado || !sub.falta || !sub.sinCambiar) fallos.push('carta bloqueada: ' + JSON.stringify(sub));
+if (!sub.titulo || !/Podrás revelarla al completar el reto de Adviento/.test(sub.bloqueo || '') || !sub.candado || !sub.falta || !sub.sinCambiar) fallos.push('carta bloqueada: ' + JSON.stringify(sub));
 const firma0 = (await estado()).carta.firma;
 await tocar('Seguir con el día 19'); await espera('mapa'); await p.waitForFunction(() => document.querySelector('#viewport .layer:last-child .carta-belen'), null, { timeout: 8000 }).catch(() => {}); await p.waitForTimeout(400); await foto('4-mapa-faltan'); // en producción el ícono tarda un poco más en pintarse
 const ico = await p.evaluate(() => { const i = document.querySelector('#viewport .layer:last-child .carta-belen'); return i ? { clase: i.className, badge: i.querySelector('.carta-badge')?.textContent, aria: i.getAttribute('aria-label') } : null; });
